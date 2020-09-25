@@ -103,4 +103,7 @@ define_instructions! {
     pub const CALL;
     pub const CLOSURE;
     pub const RETURN;
+
+    // NOTE: Dice will support a full suite of type assertions, for now only bool is supported.
+    pub const ASSERT_BOOL;
 }

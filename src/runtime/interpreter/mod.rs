@@ -70,7 +70,7 @@ impl Runtime {
                 Instruction::BUILD_LIST => self.build_list(&mut cursor),
 
                 Instruction::NEG => self.neg(),
-                Instruction::NOT => self.not(),
+                Instruction::NOT => self.not()?,
 
                 Instruction::MUL => arithmetic_op!(self.stack, OP_MUL),
                 Instruction::DIV => arithmetic_op!(self.stack, OP_DIV),
@@ -102,6 +102,12 @@ impl Runtime {
                 Instruction::CALL => self.call_fn(&mut cursor)?,
                 Instruction::RETURN => break,
 
+                Instruction::ASSERT_BOOL => match self.stack.peek(0) {
+                    Value::Bool(_) => continue,
+                    // TODO: Give this a better error type.
+                    _ => return Err(RuntimeError::Aborted(String::from("RHS must evaluate to a boolean."))),
+                },
+
                 unknown => return Err(RuntimeError::UnknownInstruction(unknown.value())),
             }
         }
@@ -118,11 +124,13 @@ impl Runtime {
         Ok(self.stack.pop())
     }
 
-    fn not(&mut self) {
+    fn not(&mut self) -> Result<(), RuntimeError> {
         match self.stack.peek(0) {
             Value::Bool(value) => *value = !*value,
-            _ => todo!(),
+            _ => return Err(RuntimeError::Aborted(String::from("LHS must be a boolean value."))),
         }
+
+        Ok(())
     }
 
     fn neg(&mut self) {

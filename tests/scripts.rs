@@ -63,7 +63,6 @@ fn test_lazy_and_lhs_none_fails() -> Result<(), DiceError> {
 }
 
 #[test]
-#[ignore]
 fn test_lazy_and_rhs_none_fails() -> Result<(), DiceError> {
     let mut runtime = Dice::default();
     let result = runtime.run_script("true && none");
@@ -126,7 +125,6 @@ fn test_lazy_or_both_false() -> Result<(), DiceError> {
 }
 
 #[test]
-#[ignore]
 fn test_lazy_or_lhs_none_fails() -> Result<(), DiceError> {
     let mut runtime = Dice::default();
     let result = runtime.run_script("none || false");
@@ -137,7 +135,6 @@ fn test_lazy_or_lhs_none_fails() -> Result<(), DiceError> {
 }
 
 #[test]
-#[ignore]
 fn test_lazy_or_rhs_none_fails() -> Result<(), DiceError> {
     let mut runtime = Dice::default();
     let result = runtime.run_script("false || none");
@@ -693,7 +690,7 @@ fn test_while_loop() -> Result<(), DiceError> {
 
     assert!(matches! {
         result,
-        Value::Int(q0)
+        Value::Int(10)
     });
 
     Ok(())

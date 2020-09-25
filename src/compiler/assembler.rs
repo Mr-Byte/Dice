@@ -270,6 +270,11 @@ impl Assembler {
         self.data.put_u8(Instruction::RETURN.value());
     }
 
+    pub fn assert_bool(&mut self, span: Span) {
+        self.source_map.insert(self.data.len() as u64, span);
+        self.data.put_u8(Instruction::ASSERT_BOOL.value());
+    }
+
     fn make_constant(&mut self, value: Value) -> Result<u8, CompilerError> {
         let position = if let Some(position) = self.constants.iter().position(|current| *current == value) {
             position
