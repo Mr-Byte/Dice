@@ -89,7 +89,7 @@ impl Runtime {
                     let offset = cursor.read_offset();
                     cursor.offset_position(offset);
                 }
-                Instruction::JUMP_IF_FALSE => self.jump_if_false(&mut cursor),
+                Instruction::JUMP_IF_FALSE => self.jump_if_false(&mut cursor)?,
 
                 Instruction::LOAD_LOCAL => self.load_local(&stack_frame, &mut cursor),
                 Instruction::STORE_LOCAL => self.store_local(&stack_frame, &mut cursor),
@@ -146,16 +146,22 @@ impl Runtime {
         self.stack.push(value);
     }
 
-    fn jump_if_false(&mut self, cursor: &mut BytecodeCursor) {
+    fn jump_if_false(&mut self, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
         let offset = cursor.read_offset();
         let value = match self.stack.pop() {
             Value::Bool(value) => value,
-            _ => unreachable!("JUMP_IF_FALSE requires a boolean operand."),
+            _ => {
+                return Err(RuntimeError::Aborted(String::from(
+                    "JUMP_IF_FALSE requires a boolean operand.",
+                )));
+            }
         };
 
         if !value {
             cursor.offset_position(offset)
         }
+
+        Ok(())
     }
 
     fn load_local(&mut self, stack_frame: &Range<usize>, cursor: &mut BytecodeCursor) {

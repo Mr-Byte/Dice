@@ -12,7 +12,7 @@ pub enum RuntimeError {
     InvalidGlobalNameType,
 
     #[error("Runtime Error: Execution unexpectedly aborted.")]
-    Aborted(#[from] Box<dyn Error>),
+    Aborted(String),
     #[error("Runtime Error: The target type {0} is not an object.")]
     NotAnObject(Symbol),
     #[error("Runtime Error: The target type is not a function.")]
@@ -29,8 +29,7 @@ pub enum RuntimeError {
     InvalidType(Symbol, Symbol),
     #[error("Runtime Error: Keys must be either Int or String. Found: {0}.")]
     InvalidKeyType(Symbol),
-    // #[error("Runtime Error: {0}")]
-    // ParseError(#[from] ParserError),
+
     #[error("Runtime Error: Variable {0} not found.")]
     VariableNotFound(Symbol),
     #[error("Runtime Error: Type {0} not found.")]
