@@ -1,7 +1,7 @@
 [package]
 authors = ["Joshua Rodgers <bytemr@gmail.com>"]
 edition = "2018"
-name = "worp-dice"
+name = "dice"
 version = "0.1.0"
 
 [dependencies]
