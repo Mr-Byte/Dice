@@ -28,7 +28,9 @@ impl NodeVisitor<&LitIdent> for Compiler {
         }
 
         let context = self.context()?;
-        context.assembler().load_global(Value::String(name.clone()), *span)?;
+        context
+            .assembler()
+            .load_global(Value::String(name.clone().into()), *span)?;
 
         Ok(())
     }

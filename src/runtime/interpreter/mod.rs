@@ -27,6 +27,9 @@ pub struct Runtime {
     globals: HashMap<Symbol, Value>,
 }
 
+// TODO: Split off the main interpreter loop and associated functions into their own module
+// TODO: Add a public function to allow native code to execute scripted functions
+//     fn run_fn(target: Value, args: &[Value]) -> Result<Value, RuntimeError>
 impl Runtime {
     pub(crate) fn run_bytecode(&mut self, bytecode: Bytecode) -> Result<Value, RuntimeError> {
         let stack_frame = self.stack.reserve_slots(bytecode.slot_count());
@@ -103,11 +106,13 @@ impl Runtime {
                 Instruction::CALL => self.call_fn(&mut cursor)?,
                 Instruction::RETURN => break,
 
-                Instruction::ASSERT_BOOL => match self.stack.peek(0) {
-                    Value::Bool(_) => continue,
-                    // TODO: Give this a better error type.
-                    _ => return Err(RuntimeError::Aborted(String::from("RHS must evaluate to a boolean."))),
-                },
+                Instruction::ASSERT_BOOL => {
+                    if !self.stack.peek(0).is_bool() {
+                        return Err(RuntimeError::Aborted(String::from(
+                            "Right hand side must evaluate to a boolean.",
+                        )));
+                    }
+                }
 
                 unknown => return Err(RuntimeError::UnknownInstruction(unknown.value())),
             }
@@ -255,11 +260,12 @@ impl Runtime {
         let value = &bytecode.constants()[const_pos];
 
         if let Value::String(global) = value {
+            let global = Symbol::new((**global).clone());
             let value = self
                 .globals
-                .get(&Symbol::new(global))
+                .get(&global)
                 .cloned()
-                .ok_or_else(|| RuntimeError::VariableNotFound(Symbol::new(global)))?;
+                .ok_or_else(|| RuntimeError::VariableNotFound(global))?;
 
             self.stack.push(value);
         } else {
