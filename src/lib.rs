@@ -1,5 +1,9 @@
+use crate::common::span::Span;
+pub use compiler::error::CompilerError;
 use compiler::{CompilationKind, Compiler};
-use runtime::{interpreter::Runtime, lib::NativeFn};
+use runtime::lib::NativeFn;
+pub use runtime::{core::Value, error::RuntimeError, interpreter::Runtime};
+pub use syntax::SyntaxError;
 
 #[macro_use]
 mod macros;
@@ -7,11 +11,6 @@ mod common;
 mod compiler;
 mod runtime;
 mod syntax;
-
-use crate::common::span::Span;
-pub use compiler::error::CompilerError;
-pub use runtime::{core::Value, error::RuntimeError};
-pub use syntax::SyntaxError;
 
 #[derive(Default)]
 pub struct Dice {
@@ -21,7 +20,7 @@ pub struct Dice {
 impl Dice {
     pub fn run_script(&mut self, input: &str) -> Result<Value, DiceError> {
         let bytecode = Compiler::compile_str(input, CompilationKind::Script)?;
-        self.runtime.run_script(bytecode).map_err(From::from)
+        self.runtime.run_bytecode(bytecode).map_err(From::from)
     }
 
     pub fn disassemble_script(&self, input: &str) -> Result<String, DiceError> {
@@ -45,7 +44,10 @@ pub enum DiceError {
 }
 
 impl DiceError {
-    pub fn span() -> Span {
-        todo!()
+    pub fn span(&self) -> Span {
+        match self {
+            DiceError::SyntaxError(err) => err.span(),
+            _ => todo!(),
+        }
     }
 }

@@ -1,7 +1,8 @@
+use crate::runtime::interpreter::Runtime;
 use crate::{RuntimeError, Value};
 use std::fmt::{Debug, Display};
 
-pub type NativeFn = fn(&mut [Value]) -> Result<Value, RuntimeError>;
+pub type NativeFn = fn(&mut Runtime, &[Value]) -> Result<Value, RuntimeError>;
 
 #[derive(Clone)]
 pub struct FnNative(NativeFn);
@@ -12,8 +13,8 @@ impl FnNative {
     }
 
     #[inline]
-    pub fn call(&self, args: &mut [Value]) -> Result<Value, RuntimeError> {
-        self.0(args)
+    pub fn call(&self, runtime: &mut Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
+        self.0(runtime, args)
     }
 }
 

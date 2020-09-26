@@ -28,7 +28,7 @@ pub struct Runtime {
 }
 
 impl Runtime {
-    pub fn run_script(&mut self, bytecode: Bytecode) -> Result<Value, RuntimeError> {
+    pub(crate) fn run_bytecode(&mut self, bytecode: Bytecode) -> Result<Value, RuntimeError> {
         let stack_frame = self.stack.reserve_slots(bytecode.slot_count());
         let result = self.execute_bytecode(&bytecode, stack_frame, None);
         self.stack.release_slots(bytecode.slot_count());
@@ -36,7 +36,7 @@ impl Runtime {
         Ok(result?)
     }
 
-    pub fn register_native_fn(&mut self, name: String, native_fn: NativeFn) {
+    pub(crate) fn register_native_fn(&mut self, name: String, native_fn: NativeFn) {
         self.globals
             .insert(Symbol::new(name), Value::FnNative(FnNative::new(native_fn)));
     }
@@ -332,9 +332,10 @@ impl Runtime {
             }
             Value::FnNative(fn_native) => {
                 let fn_native = fn_native.clone();
+                let mut args: Vec<_> = self.stack.pop_count(arg_count);
+                let result = fn_native.call(self, &mut args)?;
 
-                let result = fn_native.call(self.stack.peek_n(arg_count - 1))?;
-                self.stack.release_slots(arg_count + 1);
+                self.stack.release_slots(1);
                 self.stack.push(result);
 
                 return Ok(());

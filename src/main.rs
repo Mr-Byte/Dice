@@ -1,4 +1,4 @@
-use dice::{Dice, RuntimeError, Value};
+use dice::{Dice, Runtime, RuntimeError, Value};
 use std::io::Write;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -34,7 +34,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 }
 
-fn print_value(args: &mut [Value]) -> Result<Value, RuntimeError> {
+fn print_value(_runtime: &mut Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
     if let [arg, ..] = args {
         println!("{}", arg);
     }
