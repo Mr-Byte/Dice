@@ -1,8 +1,9 @@
 use super::NodeVisitor;
 use crate::{
+    common::symbol::Symbol,
     compiler::Compiler,
     syntax::{Assignment, AssignmentOperator, LitIdent, SyntaxNode},
-    CompilerError, Symbol,
+    CompilerError,
 };
 
 impl NodeVisitor<&Assignment> for Compiler {

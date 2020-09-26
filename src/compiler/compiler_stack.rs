@@ -3,7 +3,8 @@ use super::{
     scope_stack::{ScopeKind, ScopeStack},
     upvalue::UpvalueDescriptor,
 };
-use crate::{runtime::interpreter::bytecode::Bytecode, CompilerError, Symbol};
+use crate::common::symbol::Symbol;
+use crate::{runtime::interpreter::bytecode::Bytecode, CompilerError};
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub enum CompilerKind {

@@ -1,4 +1,4 @@
-use crate::{CompilerError, Symbol};
+use crate::{common::symbol::Symbol, CompilerError};
 
 #[derive(Clone)]
 pub struct ScopeVariable {

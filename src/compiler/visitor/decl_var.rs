@@ -1,8 +1,9 @@
 use super::NodeVisitor;
 use crate::{
+    common::symbol::Symbol,
     compiler::{scope_stack::State, Compiler},
     syntax::VarDecl,
-    CompilerError, Symbol,
+    CompilerError,
 };
 
 impl NodeVisitor<&VarDecl> for Compiler {

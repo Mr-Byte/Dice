@@ -1,4 +1,4 @@
-use crate::{compiler::Compiler, syntax::LitIdent, CompilerError, Symbol, Value};
+use crate::{common::symbol::Symbol, compiler::Compiler, syntax::LitIdent, CompilerError, Value};
 
 use super::NodeVisitor;
 
@@ -10,7 +10,7 @@ impl NodeVisitor<&LitIdent> for Compiler {
             let context = self.context()?;
             if let Some(scope_variable) = context.scope_stack().local(name_symbol.clone()) {
                 if !scope_variable.is_initialized() {
-                    return Err(CompilerError::UnitiailizedVariable(scope_variable.name.clone()));
+                    return Err(CompilerError::UninitializedVariable(scope_variable.name.clone()));
                 }
 
                 let slot = scope_variable.slot as u8;

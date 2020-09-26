@@ -1,6 +1,5 @@
-use crate::runtime::core::Span;
-
 use super::lexer::Token;
+use crate::common::span::Span;
 
 #[derive(thiserror::Error, Debug)]
 pub enum SyntaxError {

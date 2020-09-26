@@ -1,4 +1,4 @@
-use crate::runtime::core::span::Span;
+use crate::common::span::Span;
 use logos::Logos;
 use std::iter::Iterator;
 

@@ -1,6 +1,6 @@
 mod node;
 
-use crate::runtime::core::Span;
+use crate::common::span::Span;
 use id_arena::{Arena, Id};
 pub use node::*;
 use std::rc::Rc;

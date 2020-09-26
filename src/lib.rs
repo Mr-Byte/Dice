@@ -3,15 +3,14 @@ use runtime::{interpreter::Runtime, lib::NativeFn};
 
 #[macro_use]
 mod macros;
+mod common;
 mod compiler;
 mod runtime;
 mod syntax;
 
+use crate::common::span::Span;
 pub use compiler::error::CompilerError;
-pub use runtime::{
-    core::{Symbol, Value},
-    error::RuntimeError,
-};
+pub use runtime::{core::Value, error::RuntimeError};
 pub use syntax::SyntaxError;
 
 #[derive(Default)]
@@ -43,4 +42,10 @@ pub enum DiceError {
     CompilerError(#[from] CompilerError),
     #[error(transparent)]
     SyntaxError(#[from] SyntaxError),
+}
+
+impl DiceError {
+    pub fn span() -> Span {
+        todo!()
+    }
 }

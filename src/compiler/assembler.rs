@@ -1,6 +1,6 @@
 use crate::{
     runtime::{
-        core::{Span, Value},
+        core::Value,
         interpreter::{bytecode::Bytecode, instruction::Instruction},
     },
     CompilerError,
@@ -9,6 +9,7 @@ use bytes::BufMut as _;
 use std::collections::HashMap;
 
 use super::upvalue::UpvalueDescriptor;
+use crate::common::span::Span;
 
 #[derive(Default)]
 pub struct Assembler {

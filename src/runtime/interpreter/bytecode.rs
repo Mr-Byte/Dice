@@ -1,9 +1,10 @@
 mod cursor;
 
 use super::instruction::Instruction;
-use crate::runtime::core::{Span, Value};
+use crate::runtime::core::Value;
 use std::{collections::HashMap, fmt::Display, rc::Rc};
 
+use crate::common::span::Span;
 pub use cursor::BytecodeCursor;
 
 #[derive(Debug)]

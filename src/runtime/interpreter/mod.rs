@@ -5,8 +5,9 @@ use super::{
     lib::NativeFn,
 };
 use crate::{
+    common::symbol::Symbol,
     runtime::{core::Value, interpreter::bytecode::BytecodeCursor},
-    RuntimeError, Symbol,
+    RuntimeError,
 };
 use bytecode::Bytecode;
 use instruction::Instruction;

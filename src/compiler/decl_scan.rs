@@ -1,9 +1,9 @@
-use crate::{
-    syntax::{Block, FnDecl, SyntaxNode},
-    CompilerError, Symbol,
-};
-
 use super::{scope_stack::State, Compiler};
+use crate::{
+    common::symbol::Symbol,
+    syntax::{Block, FnDecl, SyntaxNode},
+    CompilerError,
+};
 
 impl Compiler {
     /// Scan through all the declared items in a block and add slots for any functions and classes ahead of time.

@@ -1,5 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use worp_dice::Dice;
+use dice::Dice;
 
 fn loop_in_place_addition(criterion: &mut Criterion) {
     let mut dice = Dice::default();

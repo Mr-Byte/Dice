@@ -1,8 +1,9 @@
 use crate::{
+    common::symbol::Symbol,
     compiler::{scope_stack::State, Compiler},
     runtime::lib::FnScript,
     syntax::LitAnonymousFn,
-    CompilerError, Symbol, Value,
+    CompilerError, Value,
 };
 
 use super::NodeVisitor;

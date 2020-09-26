@@ -1,4 +1,4 @@
-use crate::{runtime::core::Symbol, SyntaxError};
+use crate::{common::symbol::Symbol, SyntaxError};
 
 #[derive(thiserror::Error, Debug)]
 pub enum CompilerError {
@@ -12,7 +12,7 @@ pub enum CompilerError {
     #[error("Cannot assign to immutable variable {0}.")]
     ImmutableVariable(Symbol),
     #[error("Variable {0} has not been initialized.")]
-    UnitiailizedVariable(Symbol),
+    UninitializedVariable(Symbol),
     #[error("Invalid assignment target.")]
     InvalidAssignmentTarget,
 

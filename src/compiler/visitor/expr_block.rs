@@ -1,11 +1,12 @@
 use super::NodeVisitor;
 use crate::{
+    common::symbol::Symbol,
     compiler::{
         scope_stack::{ScopeKind, State},
         Compiler,
     },
     syntax::Block,
-    CompilerError, Symbol,
+    CompilerError,
 };
 
 pub enum BlockKind<'args, T: AsRef<str>> {
