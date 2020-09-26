@@ -16,6 +16,14 @@ uuid = {version = "0.8", features = ["v4", "wasm-bindgen"]}
 [dev-dependencies]
 criterion = "0.3"
 
+[lib]
+name = "dice"
+path = "src/lib.rs"
+
+[[bin]]
+name = "dice-cli"
+path = "src/main.rs"
+
 [[bench]]
 harness = false
 name = "dice-bench"
