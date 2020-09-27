@@ -1,0 +1,22 @@
+[package]
+name = "dice"
+version = "0.1.0"
+authors = ["Josh Rodgers <bytemr@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+thiserror = "1.0"
+dice-syntax = {path = "../dice-syntax"}
+dice-compiler = {path = "../dice-compiler"}
+dice-runtime = {path = "../dice-runtime"}
+dice-core = {path = "../dice-core"}
+
+[dev-dependencies]
+criterion = "0.3"
+
+[profile.release]
+lto = "fat"
+
+[[bench]]
+harness = false
+name = "dice-bench"
