@@ -14,9 +14,7 @@ dice-core = {path = "../dice-core"}
 [dev-dependencies]
 criterion = "0.3"
 
-[profile.release]
-lto = "fat"
-
 [[bench]]
 harness = false
 name = "dice-bench"
+

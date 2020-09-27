@@ -12,3 +12,15 @@ default-members = [
     "dice",
     "dice-cli"
 ]
+
+[profile.release]
+codegen-units = 1
+debug = true
+
+[profile.bench]
+lto = "fat"
+codegen-units = 1
+
+[pofile.bench.package."*"]
+lto = "fat"
+codegen-units = 1

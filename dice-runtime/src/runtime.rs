@@ -80,8 +80,8 @@ impl Runtime {
                 }
                 Instruction::JUMP_IF_FALSE => self.jump_if_false(&mut cursor)?,
 
-                Instruction::LOAD_LOCAL => self.load_local(&stack_frame, &mut cursor),
-                Instruction::STORE_LOCAL => self.store_local(&stack_frame, &mut cursor),
+                Instruction::LOAD_LOCAL => self.load_local(stack_frame.clone(), &mut cursor),
+                Instruction::STORE_LOCAL => self.store_local(stack_frame.clone(), &mut cursor),
                 Instruction::LOAD_UPVALUE => self.load_upvalue(&mut closure, &mut cursor),
                 Instruction::STORE_UPVALUE => self.store_upvalue(&mut closure, &mut cursor),
                 Instruction::CLOSE_UPVALUE => self.close_upvalue(&stack_frame, &mut cursor),
@@ -163,7 +163,7 @@ impl Runtime {
         Ok(())
     }
 
-    fn load_local(&mut self, stack_frame: &Range<usize>, cursor: &mut BytecodeCursor) {
+    fn load_local(&mut self, stack_frame: Range<usize>, cursor: &mut BytecodeCursor) {
         // TODO Bounds check the slot?
         let slot = cursor.read_u8() as usize;
         let frame = self.stack.slots(stack_frame.clone());
@@ -171,15 +171,12 @@ impl Runtime {
         self.stack.push(value);
     }
 
-    fn store_local(&mut self, stack_frame: &Range<usize>, cursor: &mut BytecodeCursor) {
-        // TODO Bounds check the slot?
-        let slot = cursor.read_u8() as usize;
+    fn store_local(&mut self, stack_frame: Range<usize>, cursor: &mut BytecodeCursor) {
         let value = self.stack.pop();
-        let frame = self.stack.slots(stack_frame.clone());
+        let slot = cursor.read_u8() as usize;
 
-        frame[slot] = value;
-        let result = frame[slot].clone();
-        self.stack.push(result);
+        self.stack.slots(stack_frame)[slot] = value.clone();
+        self.stack.push(value);
     }
 
     fn load_upvalue(&mut self, closure: &mut Option<FnClosure>, cursor: &mut BytecodeCursor) {
