@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 thiserror = "1.0"
-uuid = {version = "0.8", features = ["v4"]}
+uuid = {version = "0.8", features = ["v4", "wasm-bindgen"]}
 bytes = "0.5"
 dice-syntax = {path = "../dice-syntax"}
 dice-core = {path = "../dice-core"}
