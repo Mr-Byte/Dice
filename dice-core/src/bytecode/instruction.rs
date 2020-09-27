@@ -62,9 +62,8 @@ define_instructions! {
     pub const POP;
     pub const DUP;
 
-    pub const BUILD_TUPLE;
-    pub const BUILD_LIST;
-    pub const BUILD_OBJECT;
+    pub const CREATE_LIST;
+    pub const CREATE_OBJECT;
 
     // NOTE: Dice only supports immutable globals defined by the runtime.
     pub const LOAD_GLOBAL;

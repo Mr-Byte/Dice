@@ -28,13 +28,18 @@ impl<'a> BytecodeCursor<'a> {
     }
 
     #[inline]
-    pub fn read_offset(&mut self) -> i16 {
-        self.cursor.get_i16()
+    pub fn read_u8(&mut self) -> u8 {
+        self.cursor.get_u8()
     }
 
     #[inline]
-    pub fn read_u8(&mut self) -> u8 {
-        self.cursor.get_u8()
+    pub fn read_type_id(&mut self) -> u64 {
+        self.cursor.get_u64()
+    }
+
+    #[inline]
+    pub fn read_offset(&mut self) -> i16 {
+        self.cursor.get_i16()
     }
 
     #[inline]

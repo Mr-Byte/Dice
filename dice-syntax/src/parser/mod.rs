@@ -5,7 +5,7 @@ use super::{
     LitAnonymousFn, LitBool, LitFloat, LitIdent, LitInt, LitList, LitNone, LitObject, LitString, LitUnit, Return,
     SyntaxNode, SyntaxNodeId, SyntaxTree, Unary, UnaryOperator, VarDecl, WhileLoop,
 };
-use crate::Span;
+use crate::{FieldAccess, Span};
 use id_arena::Arena;
 
 type SyntaxNodeResult = Result<SyntaxNodeId, SyntaxError>;
@@ -60,6 +60,7 @@ impl ParserRule {
 
             // Objects
             TokenKind::Object => ParserRule::new(Some(Parser::object), None, RulePrecedence::Object),
+            // TODO: Add infix parser for field access.
             TokenKind::LeftSquare => ParserRule::new(Some(Parser::list), None, RulePrecedence::Object),
 
             // Grouping
@@ -90,6 +91,9 @@ impl ParserRule {
             TokenKind::DiceRoll => ParserRule::new(Some(Parser::unary), Some(Parser::binary), RulePrecedence::DiceRoll),
             TokenKind::Not => ParserRule::new(Some(Parser::unary), None, RulePrecedence::Unary),
 
+            // Accessors
+            TokenKind::Dot => ParserRule::new(None, Some(Parser::field_access), RulePrecedence::Access),
+
             // Setup reserved keywords and sequence with a parser that returns a friendly error.
 
             // End of input
@@ -115,6 +119,7 @@ pub enum RulePrecedence {
     DiceRoll,
     Unary,
     Call,
+    Access,
     Object,
     Primary,
 }
@@ -133,7 +138,8 @@ impl RulePrecedence {
             RulePrecedence::Factor => RulePrecedence::DiceRoll,
             RulePrecedence::DiceRoll => RulePrecedence::Unary,
             RulePrecedence::Unary => RulePrecedence::Call,
-            RulePrecedence::Call => RulePrecedence::Object,
+            RulePrecedence::Call => RulePrecedence::Access,
+            RulePrecedence::Access => RulePrecedence::Object,
             RulePrecedence::Object => RulePrecedence::Primary,
             RulePrecedence::Primary => RulePrecedence::Primary,
         }
@@ -526,6 +532,24 @@ impl Parser {
         Ok(self.arena.alloc(node))
     }
 
+    fn field_access(&mut self, lhs: SyntaxNodeId, span_start: Span) -> SyntaxNodeResult {
+        self.lexer.consume(TokenKind::Dot)?;
+
+        let field = match self.lexer.next().kind {
+            TokenKind::Identifier(value) => value,
+            TokenKind::DiceRoll => String::from("d"),
+            _ => todo!(),
+        };
+        let span_end = self.lexer.current().span();
+        let node = SyntaxNode::FieldAccess(FieldAccess {
+            expression: lhs,
+            field,
+            span: span_start + span_end,
+        });
+
+        Ok(self.arena.alloc(node))
+    }
+
     fn grouping(&mut self, _: bool) -> SyntaxNodeResult {
         let span_start = self.lexer.consume(TokenKind::LeftParen)?.span();
 
@@ -581,7 +605,15 @@ impl Parser {
         let mut properties = Vec::new();
 
         while self.lexer.peek().kind != TokenKind::RightCurly {
-            let key = self.parse_precedence(RulePrecedence::Primary)?;
+            let key = match self.lexer.next().kind {
+                TokenKind::String(value) => value.trim_matches('"').to_owned(),
+                TokenKind::Integer(value) => value.to_string(),
+                TokenKind::Identifier(value) => value,
+                // TODO: Add a way to recognize certain keywords as identifiers in certain contexts.
+                TokenKind::DiceRoll => String::from("d"),
+                _ => return Err(SyntaxError::UnexpectedToken(self.lexer.current().clone())),
+            };
+
             self.lexer.consume(TokenKind::Colon)?;
             let value = self.parse_precedence(RulePrecedence::Assignment)?;
 

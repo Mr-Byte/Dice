@@ -2,6 +2,7 @@ pub use fn_closure::*;
 pub use fn_native::*;
 pub use fn_script::*;
 pub use list::*;
+pub use object::*;
 use std::fmt::Display;
 use std::rc::Rc;
 
@@ -9,6 +10,7 @@ mod fn_closure;
 mod fn_native;
 mod fn_script;
 mod list;
+mod object;
 
 #[derive(Clone, Debug)]
 pub enum Value {
@@ -22,6 +24,7 @@ pub enum Value {
     FnNative(FnNative),
     List(List),
     String(Rc<String>),
+    Object(Object),
 }
 
 static_assertions::assert_eq_size!([u8; 16], Value);
@@ -87,7 +90,7 @@ impl PartialEq for Value {
 
 impl Display for Value {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match &self {
+        match self {
             Value::None => write!(fmt, "None"),
             Value::Unit => write!(fmt, "Unit"),
             Value::Bool(bool) => bool.fmt(fmt),
@@ -98,6 +101,7 @@ impl Display for Value {
             Value::FnNative(func) => func.fmt(fmt),
             Value::List(list) => list.fmt(fmt),
             Value::String(string) => string.fmt(fmt),
+            Value::Object(object) => object.fmt(fmt),
         }
     }
 }

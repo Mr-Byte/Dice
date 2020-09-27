@@ -15,7 +15,7 @@ pub struct LitList {
 
 #[derive(Debug, Clone)]
 pub struct LitObject {
-    pub items: Vec<(SyntaxNodeId, SyntaxNodeId)>,
+    pub items: Vec<(String, SyntaxNodeId)>,
     pub span: Span,
 }
 

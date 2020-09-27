@@ -3,7 +3,7 @@ use crate::stack::Stack;
 use dice_core::bytecode::instruction::Instruction;
 use dice_core::bytecode::{Bytecode, BytecodeCursor};
 use dice_core::upvalue::{Upvalue, UpvalueState};
-use dice_core::value::{FnClosure, FnNative, NativeFn, Value};
+use dice_core::value::{FnClosure, FnNative, NativeFn, Object, Value};
 use std::{collections::HashMap, collections::VecDeque, ops::Range};
 
 #[derive(Default)]
@@ -56,7 +56,8 @@ impl Runtime {
                     let value = self.stack.peek(0).clone();
                     self.stack.push(value);
                 }
-                Instruction::BUILD_LIST => self.build_list(&mut cursor),
+                Instruction::CREATE_LIST => self.create_list(&mut cursor),
+                Instruction::CREATE_OBJECT => self.create_object(&mut cursor),
 
                 Instruction::NEG => self.neg(),
                 Instruction::NOT => self.not()?,
@@ -86,6 +87,8 @@ impl Runtime {
                 Instruction::STORE_UPVALUE => self.store_upvalue(&mut closure, &mut cursor),
                 Instruction::CLOSE_UPVALUE => self.close_upvalue(&stack_frame, &mut cursor),
                 Instruction::LOAD_GLOBAL => self.load_global(bytecode, &mut cursor)?,
+                Instruction::LOAD_FIELD => self.load_field(bytecode, &mut cursor)?,
+                Instruction::STORE_FIELD => self.store_field(bytecode, &mut cursor)?,
 
                 Instruction::CLOSURE => self.closure(bytecode, &stack_frame, &mut closure, &mut cursor)?,
                 Instruction::CALL => self.call_fn(&mut cursor)?,
@@ -132,11 +135,18 @@ impl Runtime {
         }
     }
 
-    fn build_list(&mut self, cursor: &mut BytecodeCursor) {
+    fn create_list(&mut self, cursor: &mut BytecodeCursor) {
         let count = cursor.read_u8() as usize;
         let items = self.stack.pop_count(count);
 
         self.stack.push(Value::List(items.into()));
+    }
+
+    fn create_object(&mut self, cursor: &mut BytecodeCursor) {
+        let type_id = cursor.read_type_id();
+        let object = Object::new(type_id);
+
+        self.stack.push(Value::Object(object));
     }
 
     fn push_const(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) {
@@ -253,6 +263,43 @@ impl Runtime {
         } else {
             return Err(RuntimeError::InvalidGlobalNameType);
         }
+
+        Ok(())
+    }
+
+    fn store_field(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
+        let key_index = cursor.read_u8() as usize;
+        if let Value::String(key) = &bytecode.constants()[key_index] {
+            let value = self.stack.pop();
+            if let Value::Object(object) = self.stack.peek(0) {
+                object.fields_mut().insert((**key).clone(), value);
+            } else {
+                todo!("Throw an error if the target is not an object.")
+            }
+        } else {
+            todo!("Throw an error if the key value is not a string.")
+        }
+
+        Ok(())
+    }
+
+    fn load_field(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
+        let key_index = cursor.read_u8() as usize;
+        let value = if let Value::String(key) = &bytecode.constants()[key_index] {
+            if let Value::Object(object) = self.stack.pop() {
+                if let Some(field) = object.fields().get(&**key) {
+                    field.clone()
+                } else {
+                    todo!("Throw an error if the field does not exist.")
+                }
+            } else {
+                todo!("Throw an error if the target is not an object.")
+            }
+        } else {
+            todo!("Throw an error if the key value is not a string.")
+        };
+
+        self.stack.push(value);
 
         Ok(())
     }

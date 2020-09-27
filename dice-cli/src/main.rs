@@ -27,7 +27,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         match runtime.run_script(&input) {
             Ok(result) => {
                 let elapsed = start.elapsed();
-                println!("Result ({} ms): {}", (elapsed.as_micros() as f64 / 1000.0), result);
+                println!("Result ({} ms): {:?}", (elapsed.as_micros() as f64 / 1000.0), result);
             }
             Err(err) => eprintln!("{}", err),
         };

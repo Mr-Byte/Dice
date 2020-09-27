@@ -13,7 +13,7 @@ pub enum RuntimeError {
     #[error("Runtime Error: Variable {0} not found.")]
     VariableNotFound(String),
 
-    #[error("Unknown instruction: {0:2X}")]
+    #[error("Unknown instruction: {0:#04X}")]
     UnknownInstruction(u8),
 
     #[error(transparent)]

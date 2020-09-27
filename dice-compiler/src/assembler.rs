@@ -107,10 +107,16 @@ impl Assembler {
         self.data.put_u8(Instruction::DUP.value());
     }
 
-    pub fn build_list(&mut self, length: u8, span: Span) {
+    pub fn create_list(&mut self, length: u8, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::BUILD_LIST.value());
+        self.data.put_u8(Instruction::CREATE_LIST.value());
         self.data.put_u8(length);
+    }
+
+    pub fn create_object(&mut self, type_id: u64, span: Span) {
+        self.source_map.insert(self.data.len() as u64, span);
+        self.data.put_u8(Instruction::CREATE_OBJECT.value());
+        self.data.put_u64(type_id);
     }
 
     pub fn mul(&mut self, span: Span) {
@@ -244,6 +250,24 @@ impl Assembler {
         self.source_map.insert(self.data.len() as u64, span);
         self.data.put_u8(Instruction::CLOSE_UPVALUE.value());
         self.data.put_u8(index);
+    }
+
+    pub fn store_field(&mut self, field: &str, span: Span) -> Result<(), CompilerError> {
+        self.source_map.insert(self.data.len() as u64, span);
+        let const_slot = self.make_constant(Value::String(field.to_owned().into()))?;
+        self.data.put_u8(Instruction::STORE_FIELD.value());
+        self.data.put_u8(const_slot);
+
+        Ok(())
+    }
+
+    pub fn load_field(&mut self, field: &str, span: Span) -> Result<(), CompilerError> {
+        self.source_map.insert(self.data.len() as u64, span);
+        let const_slot = self.make_constant(Value::String(field.to_owned().into()))?;
+        self.data.put_u8(Instruction::LOAD_FIELD.value());
+        self.data.put_u8(const_slot);
+
+        Ok(())
     }
 
     pub fn load_global(&mut self, global: Value, span: Span) -> Result<(), CompilerError> {
