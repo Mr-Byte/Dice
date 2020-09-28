@@ -268,7 +268,6 @@ impl Runtime {
     }
 
     fn store_field(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
-        // TODO: Make store pop instead of store. feenBrain
         let key_index = cursor.read_u8() as usize;
         match &bytecode.constants()[key_index] {
             Value::String(key) => {

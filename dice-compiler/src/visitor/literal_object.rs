@@ -12,6 +12,7 @@ impl NodeVisitor<&LitObject> for Compiler {
             self.context()?.assembler().dup(*span);
             self.visit(*value)?;
             self.context()?.assembler().store_field(field, *span)?;
+            self.context()?.assembler().pop(*span);
         }
 
         Ok(())
