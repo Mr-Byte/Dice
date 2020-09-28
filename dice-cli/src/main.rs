@@ -39,5 +39,5 @@ fn print_value(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, Nati
         println!("{}", arg);
     }
 
-    return Ok(Value::Unit);
+    Ok(Value::Unit)
 }

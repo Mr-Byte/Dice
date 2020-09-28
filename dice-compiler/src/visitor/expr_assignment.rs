@@ -141,7 +141,7 @@ impl Compiler {
             }
         }
 
-        return Ok(());
+        Ok(())
     }
 
     fn assign_local(
@@ -186,6 +186,6 @@ impl Compiler {
             }
         }
 
-        return Ok(());
+        Ok(())
     }
 }

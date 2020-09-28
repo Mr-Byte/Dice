@@ -36,7 +36,7 @@ impl NodeVisitor<&FnDecl> for Compiler {
             local.slot as u8
         };
 
-        if upvalues.len() > 0 {
+        if !upvalues.is_empty() {
             context.assembler().closure(value, &upvalues, node.span)?;
         } else {
             context.assembler().push_const(value, node.span)?;

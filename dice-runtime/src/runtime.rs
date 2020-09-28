@@ -181,7 +181,7 @@ impl Runtime {
     fn load_local(&mut self, stack_frame: Range<usize>, cursor: &mut BytecodeCursor) {
         // TODO Bounds check the slot?
         let slot = cursor.read_u8() as usize;
-        let frame = self.stack.slots(stack_frame.clone());
+        let frame = self.stack.slots(stack_frame);
         let value = frame[slot].clone();
         self.stack.push(value);
     }

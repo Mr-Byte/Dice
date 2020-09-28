@@ -22,7 +22,7 @@ impl NodeVisitor<&LitIdent> for Compiler {
             }
         }
 
-        if let Some(upvalue) = self.compiler_stack.resolve_upvalue(name_symbol.clone(), 0) {
+        if let Some(upvalue) = self.compiler_stack.resolve_upvalue(name_symbol, 0) {
             let context = self.context()?;
             context.assembler().load_upvalue(upvalue as u8, *span);
 
