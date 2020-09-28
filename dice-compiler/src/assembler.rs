@@ -107,6 +107,11 @@ impl Assembler {
         self.data.put_u8(Instruction::DUP.value());
     }
 
+    pub fn swap(&mut self, span: Span) {
+        self.source_map.insert(self.data.len() as u64, span);
+        self.data.put_u8(Instruction::SWAP.value());
+    }
+
     pub fn create_list(&mut self, length: u8, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
         self.data.put_u8(Instruction::CREATE_LIST.value());

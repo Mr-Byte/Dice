@@ -61,6 +61,7 @@ define_instructions! {
 
     pub const POP;
     pub const DUP;
+    pub const SWAP;
 
     pub const CREATE_LIST;
     pub const CREATE_OBJECT;

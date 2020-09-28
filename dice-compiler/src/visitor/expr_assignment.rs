@@ -34,6 +34,42 @@ impl Compiler {
                 self.visit(assignment.rhs_expression)?;
                 self.context()?.assembler().store_field(&target.field, target.span)?;
             }
+            AssignmentOperator::MulAssignment => {
+                self.context()?.assembler().dup(target.span);
+                self.context()?.assembler().load_field(&target.field, target.span)?;
+                self.visit(assignment.rhs_expression)?;
+                // NOTE: Swap the order of operands to preserve correct order of operations
+                self.context()?.assembler().swap(target.span);
+                self.context()?.assembler().mul(assignment.span);
+                self.context()?.assembler().store_field(&target.field, target.span)?;
+            }
+            AssignmentOperator::DivAssignment => {
+                self.context()?.assembler().dup(target.span);
+                self.context()?.assembler().load_field(&target.field, target.span)?;
+                self.visit(assignment.rhs_expression)?;
+                // NOTE: Swap the order of operands to preserve correct order of operations
+                self.context()?.assembler().swap(target.span);
+                self.context()?.assembler().div(assignment.span);
+                self.context()?.assembler().store_field(&target.field, target.span)?;
+            }
+            AssignmentOperator::AddAssignment => {
+                self.context()?.assembler().dup(target.span);
+                self.context()?.assembler().load_field(&target.field, target.span)?;
+                self.visit(assignment.rhs_expression)?;
+                // NOTE: Swap the order of operands to preserve correct order of operations
+                self.context()?.assembler().swap(target.span);
+                self.context()?.assembler().add(assignment.span);
+                self.context()?.assembler().store_field(&target.field, target.span)?;
+            }
+            AssignmentOperator::SubAssignment => {
+                self.context()?.assembler().dup(target.span);
+                self.context()?.assembler().load_field(&target.field, target.span)?;
+                self.visit(assignment.rhs_expression)?;
+                // NOTE: Swap the order of operands to preserve correct order of operations
+                self.context()?.assembler().swap(target.span);
+                self.context()?.assembler().sub(assignment.span);
+                self.context()?.assembler().store_field(&target.field, target.span)?;
+            }
             _ => todo!("Implement in-place assignment operators for fields."),
         }
 
