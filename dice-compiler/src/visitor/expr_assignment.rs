@@ -36,8 +36,6 @@ impl Compiler {
                 self.context()?.assembler().dup(target.span);
                 self.context()?.assembler().load_field(&target.field, target.span)?;
                 self.visit(assignment.rhs_expression)?;
-                // NOTE: Swap the order of operands to preserve correct order of operations
-                self.context()?.assembler().swap(target.span);
                 self.context()?.assembler().mul(assignment.span);
                 self.context()?.assembler().store_field(&target.field, target.span)?;
             }
@@ -45,8 +43,6 @@ impl Compiler {
                 self.context()?.assembler().dup(target.span);
                 self.context()?.assembler().load_field(&target.field, target.span)?;
                 self.visit(assignment.rhs_expression)?;
-                // NOTE: Swap the order of operands to preserve correct order of operations
-                self.context()?.assembler().swap(target.span);
                 self.context()?.assembler().div(assignment.span);
                 self.context()?.assembler().store_field(&target.field, target.span)?;
             }
@@ -54,8 +50,6 @@ impl Compiler {
                 self.context()?.assembler().dup(target.span);
                 self.context()?.assembler().load_field(&target.field, target.span)?;
                 self.visit(assignment.rhs_expression)?;
-                // NOTE: Swap the order of operands to preserve correct order of operations
-                self.context()?.assembler().swap(target.span);
                 self.context()?.assembler().add(assignment.span);
                 self.context()?.assembler().store_field(&target.field, target.span)?;
             }
@@ -63,12 +57,9 @@ impl Compiler {
                 self.context()?.assembler().dup(target.span);
                 self.context()?.assembler().load_field(&target.field, target.span)?;
                 self.visit(assignment.rhs_expression)?;
-                // NOTE: Swap the order of operands to preserve correct order of operations
-                self.context()?.assembler().swap(target.span);
                 self.context()?.assembler().sub(assignment.span);
                 self.context()?.assembler().store_field(&target.field, target.span)?;
             }
-            _ => todo!("Implement in-place assignment operators for fields."),
         }
 
         Ok(())
@@ -110,30 +101,32 @@ impl Compiler {
         if !self.context()?.upvalues()[upvalue].is_mutable() {
             return Err(CompilerError::ImmutableVariable(target));
         }
-
-        self.visit(rhs_expression)?;
-
         match operator {
             AssignmentOperator::Assignment => {
+                self.visit(rhs_expression)?;
                 self.context()?.assembler().store_upvalue(upvalue as u8, span);
             }
             AssignmentOperator::MulAssignment => {
                 self.context()?.assembler().load_upvalue(upvalue as u8, span);
+                self.visit(rhs_expression)?;
                 self.context()?.assembler().mul(span);
                 self.context()?.assembler().store_upvalue(upvalue as u8, span);
             }
             AssignmentOperator::DivAssignment => {
                 self.context()?.assembler().load_upvalue(upvalue as u8, span);
+                self.visit(rhs_expression)?;
                 self.context()?.assembler().div(span);
                 self.context()?.assembler().store_upvalue(upvalue as u8, span);
             }
             AssignmentOperator::AddAssignment => {
                 self.context()?.assembler().load_upvalue(upvalue as u8, span);
+                self.visit(rhs_expression)?;
                 self.context()?.assembler().add(span);
                 self.context()?.assembler().store_upvalue(upvalue as u8, span);
             }
             AssignmentOperator::SubAssignment => {
                 self.context()?.assembler().load_upvalue(upvalue as u8, span);
+                self.visit(rhs_expression)?;
                 self.context()?.assembler().sub(span);
                 self.context()?.assembler().store_upvalue(upvalue as u8, span);
             }
@@ -156,29 +149,32 @@ impl Compiler {
             return Err(CompilerError::ImmutableVariable(target));
         }
 
-        self.visit(rhs_expression)?;
-
         match operator {
             AssignmentOperator::Assignment => {
+                self.visit(rhs_expression)?;
                 self.context()?.assembler().store_local(slot, span);
             }
             AssignmentOperator::MulAssignment => {
                 self.context()?.assembler().load_local(slot, span);
+                self.visit(rhs_expression)?;
                 self.context()?.assembler().mul(span);
                 self.context()?.assembler().store_local(slot, span);
             }
             AssignmentOperator::DivAssignment => {
                 self.context()?.assembler().load_local(slot, span);
+                self.visit(rhs_expression)?;
                 self.context()?.assembler().div(span);
                 self.context()?.assembler().store_local(slot, span);
             }
             AssignmentOperator::AddAssignment => {
                 self.context()?.assembler().load_local(slot, span);
+                self.visit(rhs_expression)?;
                 self.context()?.assembler().add(span);
                 self.context()?.assembler().store_local(slot, span);
             }
             AssignmentOperator::SubAssignment => {
                 self.context()?.assembler().load_local(slot, span);
+                self.visit(rhs_expression)?;
                 self.context()?.assembler().sub(span);
                 self.context()?.assembler().store_local(slot, span);
             }

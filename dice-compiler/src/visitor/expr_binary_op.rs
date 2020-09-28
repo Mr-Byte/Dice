@@ -44,8 +44,8 @@ impl NodeVisitor<&Binary> for Compiler {
                     .patch_jump(short_circuit_jump);
             }
             _ => {
-                self.visit(*rhs_expression)?;
                 self.visit(*lhs_expression)?;
+                self.visit(*rhs_expression)?;
 
                 match operator {
                     BinaryOperator::DiceRoll => todo!(),

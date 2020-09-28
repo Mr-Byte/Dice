@@ -212,12 +212,9 @@ fn test_precedence() -> Result<(), DiceError> {
 #[test]
 fn test_subtraction() -> Result<(), DiceError> {
     let mut runtime = Dice::default();
-    let result = runtime.run_script("5-5")?;
+    let result = runtime.run_script("5-2")?;
 
-    assert!(matches! {
-        result,
-        Value::Int(0)
-    });
+    assert_eq!(result, Value::Int(3));
 
     Ok(())
 }
@@ -225,12 +222,9 @@ fn test_subtraction() -> Result<(), DiceError> {
 #[test]
 fn test_add_negative() -> Result<(), DiceError> {
     let mut runtime = Dice::default();
-    let result = runtime.run_script("5+-5")?;
+    let result = runtime.run_script("5+-2")?;
 
-    assert!(matches! {
-        result,
-        Value::Int(0)
-    });
+    assert_eq!(result, Value::Int(3));
 
     Ok(())
 }
@@ -240,10 +234,7 @@ fn test_negate() -> Result<(), DiceError> {
     let mut runtime = Dice::default();
     let result = runtime.run_script("- -5")?;
 
-    assert!(matches! {
-        result,
-        Value::Int(5)
-    });
+    assert_eq!(result, Value::Int(5));
 
     Ok(())
 }
@@ -253,10 +244,7 @@ fn test_not() -> Result<(), DiceError> {
     let mut runtime = Dice::default();
     let result = runtime.run_script("!true")?;
 
-    assert!(matches! {
-        result,
-        Value::Bool(false)
-    });
+    assert_eq!(result, Value::Bool(false));
 
     Ok(())
 }
@@ -266,10 +254,7 @@ fn test_equality() -> Result<(), DiceError> {
     let mut runtime = Dice::default();
     let result = runtime.run_script("2 + 3 == 5")?;
 
-    assert!(matches! {
-        result,
-        Value::Bool(true)
-    });
+    assert_eq!(result, Value::Bool(true));
 
     Ok(())
 }
