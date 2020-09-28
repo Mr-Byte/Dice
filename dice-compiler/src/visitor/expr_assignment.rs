@@ -1,7 +1,5 @@
 use super::NodeVisitor;
-use crate::compiler::Compiler;
-use crate::error::CompilerError;
-use crate::scope_stack::ScopeVariable;
+use crate::{compiler::Compiler, error::CompilerError, scope_stack::ScopeVariable};
 use dice_syntax::{Assignment, AssignmentOperator, FieldAccess, Span, SyntaxNode, SyntaxNodeId};
 
 impl NodeVisitor<&Assignment> for Compiler {

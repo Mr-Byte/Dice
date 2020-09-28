@@ -1,5 +1,7 @@
-use std::fmt::{Debug, Display};
-use std::ops::{Add, Range};
+use std::{
+    fmt::{Debug, Display},
+    ops::{Add, Range},
+};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct Span {

@@ -1,6 +1,5 @@
 use super::NodeVisitor;
-use crate::compiler::Compiler;
-use crate::error::CompilerError;
+use crate::{compiler::Compiler, error::CompilerError};
 use dice_syntax::FieldAccess;
 
 impl NodeVisitor<&FieldAccess> for Compiler {

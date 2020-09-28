@@ -1,9 +1,12 @@
-use dice_compiler::compiler::{CompilationKind, Compiler};
-use dice_compiler::error::CompilerError;
-pub use dice_core::runtime::NativeError;
-pub use dice_core::runtime::Runtime;
+use dice_compiler::{
+    compiler::{CompilationKind, Compiler},
+    error::CompilerError,
+};
 use dice_core::value::NativeFn;
-pub use dice_core::value::Value;
+pub use dice_core::{
+    runtime::{NativeError, Runtime},
+    value::Value,
+};
 pub use dice_runtime::error::RuntimeError;
 use dice_syntax::SyntaxError;
 

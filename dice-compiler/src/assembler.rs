@@ -1,9 +1,10 @@
 use super::upvalue::UpvalueDescriptor;
 use crate::error::CompilerError;
 use bytes::BufMut as _;
-use dice_core::bytecode::instruction::Instruction;
-use dice_core::bytecode::Bytecode;
-use dice_core::value::Value;
+use dice_core::{
+    bytecode::{instruction::Instruction, Bytecode},
+    value::Value,
+};
 use dice_syntax::Span;
 use std::collections::HashMap;
 

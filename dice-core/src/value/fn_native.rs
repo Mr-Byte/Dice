@@ -1,5 +1,7 @@
-use crate::runtime::{NativeError, Runtime};
-use crate::value::Value;
+use crate::{
+    runtime::{NativeError, Runtime},
+    value::Value,
+};
 use std::fmt::{Debug, Display};
 
 pub type NativeFn = fn(&mut dyn Runtime, &[Value]) -> Result<Value, NativeError>;

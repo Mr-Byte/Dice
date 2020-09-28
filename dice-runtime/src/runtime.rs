@@ -1,10 +1,13 @@
-use crate::error::RuntimeError;
-use crate::stack::Stack;
-use dice_core::bytecode::instruction::Instruction;
-use dice_core::bytecode::{Bytecode, BytecodeCursor};
-use dice_core::upvalue::{Upvalue, UpvalueState};
-use dice_core::value::{FnClosure, FnNative, NativeFn, Object, Value};
-use std::{collections::HashMap, collections::VecDeque, ops::Range};
+use crate::{error::RuntimeError, stack::Stack};
+use dice_core::{
+    bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
+    upvalue::{Upvalue, UpvalueState},
+    value::{FnClosure, FnNative, NativeFn, Object, Value},
+};
+use std::{
+    collections::{HashMap, VecDeque},
+    ops::Range,
+};
 
 #[derive(Default)]
 pub struct Runtime {

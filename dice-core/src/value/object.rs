@@ -1,10 +1,12 @@
 use crate::value::Value;
 use static_assertions::_core::fmt::Formatter;
-use std::cell::{Ref, RefCell, RefMut};
-use std::collections::HashMap;
-use std::fmt::Display;
-use std::ops::Deref;
-use std::rc::Rc;
+use std::{
+    cell::{Ref, RefCell, RefMut},
+    collections::HashMap,
+    fmt::Display,
+    ops::Deref,
+    rc::Rc,
+};
 
 #[derive(Clone, Debug)]
 pub struct Object {

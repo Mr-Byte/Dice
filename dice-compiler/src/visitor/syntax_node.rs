@@ -1,6 +1,5 @@
 use super::{expr_block::BlockKind, NodeVisitor};
-use crate::compiler::Compiler;
-use crate::error::CompilerError;
+use crate::{compiler::Compiler, error::CompilerError};
 use dice_syntax::{SyntaxNode, SyntaxNodeId};
 
 impl NodeVisitor<SyntaxNodeId> for Compiler {

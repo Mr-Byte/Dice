@@ -1,7 +1,9 @@
 use super::NodeVisitor;
-use crate::compiler::Compiler;
-use crate::error::CompilerError;
-use crate::scope_stack::{ScopeKind, State};
+use crate::{
+    compiler::Compiler,
+    error::CompilerError,
+    scope_stack::{ScopeKind, State},
+};
 use dice_syntax::Block;
 
 pub enum BlockKind<'args, T: AsRef<str>> {

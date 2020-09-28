@@ -3,8 +3,7 @@ pub use fn_native::*;
 pub use fn_script::*;
 pub use list::*;
 pub use object::*;
-use std::fmt::Display;
-use std::rc::Rc;
+use std::{fmt::Display, rc::Rc};
 
 mod fn_closure;
 mod fn_native;
