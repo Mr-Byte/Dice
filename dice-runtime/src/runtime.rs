@@ -269,15 +269,17 @@ impl Runtime {
 
     fn store_field(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
         let key_index = cursor.read_u8() as usize;
-        if let Value::String(key) = &bytecode.constants()[key_index] {
-            let value = self.stack.pop();
-            if let Value::Object(object) = self.stack.peek(0) {
-                object.fields_mut().insert((**key).clone(), value);
-            } else {
-                todo!("Throw an error if the target is not an object.")
+        match &bytecode.constants()[key_index] {
+            Value::String(key) => {
+                let value = self.stack.pop();
+                match self.stack.peek(0) {
+                    Value::Object(object) => {
+                        object.fields_mut().insert((**key).clone(), value);
+                    }
+                    _ => todo!("Throw an error if the target is not an object."),
+                }
             }
-        } else {
-            todo!("Throw an error if the key value is not a string.")
+            _ => todo!("Throw an error if the key value is not a string."),
         }
 
         Ok(())
@@ -285,18 +287,15 @@ impl Runtime {
 
     fn load_field(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
         let key_index = cursor.read_u8() as usize;
-        let value = if let Value::String(key) = &bytecode.constants()[key_index] {
-            if let Value::Object(object) = self.stack.pop() {
-                if let Some(field) = object.fields().get(&**key) {
-                    field.clone()
-                } else {
-                    todo!("Throw an error if the field does not exist.")
-                }
-            } else {
-                todo!("Throw an error if the target is not an object.")
-            }
-        } else {
-            todo!("Throw an error if the key value is not a string.")
+        let value = match &bytecode.constants()[key_index] {
+            Value::String(key) => match self.stack.pop() {
+                Value::Object(object) => match object.fields().get(&**key) {
+                    Some(field) => field.clone(),
+                    None => todo!("Throw an error if the field does not exist."),
+                },
+                _ => todo!("Throw an error if the target is not an object."),
+            },
+            _ => todo!("Throw an error if the key value is not a string."),
         };
 
         self.stack.push(value);

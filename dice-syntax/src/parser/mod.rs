@@ -11,7 +11,8 @@ use id_arena::Arena;
 type SyntaxNodeResult = Result<SyntaxNodeId, SyntaxError>;
 
 type PrefixParser = fn(&mut Parser, can_assign: bool) -> Result<SyntaxNodeId, SyntaxError>;
-type InfixParser = fn(&mut Parser, lhs: SyntaxNodeId, span: Span) -> Result<SyntaxNodeId, SyntaxError>;
+type InfixParser =
+    fn(&mut Parser, lhs: SyntaxNodeId, can_assign: bool, span: Span) -> Result<SyntaxNodeId, SyntaxError>;
 
 #[derive(Default)]
 struct ParserRule {
@@ -236,7 +237,7 @@ impl Parser {
 
             node = rule
                 .infix
-                .map(|infix| infix(self, node, span_start))
+                .map(|infix| infix(self, node, precedence <= RulePrecedence::Assignment, span_start))
                 .unwrap_or_else(|| Err(SyntaxError::UnexpectedToken(next_token)))?;
         }
 
@@ -319,55 +320,14 @@ impl Parser {
     fn variable(&mut self, can_assign: bool) -> SyntaxNodeResult {
         let next_token = self.lexer.next();
         let span_start = next_token.span();
-        let mut lhs_expression = if let TokenKind::Identifier(name) = next_token.kind {
+        let lhs_expression = if let TokenKind::Identifier(name) = next_token.kind {
             self.arena
                 .alloc(SyntaxNode::LitIdent(LitIdent { name, span: span_start }))
         } else {
             return Err(SyntaxError::UnexpectedToken(next_token));
         };
 
-        let next_token_kind = self.lexer.peek().kind;
-        let is_assignment = matches!(
-            next_token_kind,
-            TokenKind::Assign
-                | TokenKind::MulAssign
-                | TokenKind::DivAssign
-                | TokenKind::AddAssign
-                | TokenKind::SubAssign
-        );
-
-        if can_assign && is_assignment {
-            let kind = self
-                .lexer
-                .consume_one_of(&[
-                    TokenKind::Assign,
-                    TokenKind::MulAssign,
-                    TokenKind::DivAssign,
-                    TokenKind::AddAssign,
-                    TokenKind::SubAssign,
-                ])?
-                .kind;
-
-            let rhs_expression = self.expression()?;
-            let span_end = self.lexer.current().span();
-            let operator = match kind {
-                TokenKind::Assign => AssignmentOperator::Assignment,
-                TokenKind::MulAssign => AssignmentOperator::MulAssignment,
-                TokenKind::DivAssign => AssignmentOperator::DivAssignment,
-                TokenKind::AddAssign => AssignmentOperator::AddAssignment,
-                TokenKind::SubAssign => AssignmentOperator::SubAssignment,
-                kind => unreachable!("Unexpected token {:?} encountered.", kind),
-            };
-
-            lhs_expression = self.arena.alloc(SyntaxNode::Assignment(Assignment {
-                operator,
-                lhs_expression,
-                rhs_expression,
-                span: span_start + span_end,
-            }));
-        }
-
-        Ok(lhs_expression)
+        self.parse_assignment(lhs_expression, can_assign, span_start)
     }
 
     fn variable_decl(&mut self) -> SyntaxNodeResult {
@@ -477,7 +437,7 @@ impl Parser {
         Ok(self.arena.alloc(node))
     }
 
-    fn binary(&mut self, lhs: SyntaxNodeId, span_start: Span) -> SyntaxNodeResult {
+    fn binary(&mut self, lhs: SyntaxNodeId, _: bool, span_start: Span) -> SyntaxNodeResult {
         let token = self.lexer.next();
         let rule = ParserRule::for_token(&token)?;
         let operator = match token.kind {
@@ -532,13 +492,13 @@ impl Parser {
         Ok(self.arena.alloc(node))
     }
 
-    fn field_access(&mut self, lhs: SyntaxNodeId, span_start: Span) -> SyntaxNodeResult {
+    fn field_access(&mut self, lhs: SyntaxNodeId, can_assign: bool, span_start: Span) -> SyntaxNodeResult {
         self.lexer.consume(TokenKind::Dot)?;
 
         let field = match self.lexer.next().kind {
             TokenKind::Identifier(value) => value,
             TokenKind::DiceRoll => String::from("d"),
-            _ => todo!(),
+            _ => todo!("Parse more tokens as idents"),
         };
         let span_end = self.lexer.current().span();
         let node = SyntaxNode::FieldAccess(FieldAccess {
@@ -546,8 +506,9 @@ impl Parser {
             field,
             span: span_start + span_end,
         });
+        let lhs_expression = self.arena.alloc(node);
 
-        Ok(self.arena.alloc(node))
+        self.parse_assignment(lhs_expression, can_assign, span_start)
     }
 
     fn grouping(&mut self, _: bool) -> SyntaxNodeResult {
@@ -572,7 +533,7 @@ impl Parser {
         }
     }
 
-    fn fn_call(&mut self, lhs: SyntaxNodeId, span_start: Span) -> SyntaxNodeResult {
+    fn fn_call(&mut self, lhs: SyntaxNodeId, _: bool, span_start: Span) -> SyntaxNodeResult {
         self.lexer.consume(TokenKind::LeftParen)?;
 
         let mut args = Vec::new();
@@ -680,6 +641,56 @@ impl Parser {
         };
 
         Ok(self.arena.alloc(literal))
+    }
+
+    fn parse_assignment(
+        &mut self,
+        lhs_expression: SyntaxNodeId,
+        can_assign: bool,
+        span_start: Span,
+    ) -> SyntaxNodeResult {
+        let next_token_kind = self.lexer.peek().kind;
+        let is_assignment = matches!(
+            next_token_kind,
+            TokenKind::Assign
+                | TokenKind::MulAssign
+                | TokenKind::DivAssign
+                | TokenKind::AddAssign
+                | TokenKind::SubAssign
+        );
+
+        if can_assign && is_assignment {
+            let kind = self
+                .lexer
+                .consume_one_of(&[
+                    TokenKind::Assign,
+                    TokenKind::MulAssign,
+                    TokenKind::DivAssign,
+                    TokenKind::AddAssign,
+                    TokenKind::SubAssign,
+                ])?
+                .kind;
+
+            let rhs_expression = self.expression()?;
+            let span_end = self.lexer.current().span();
+            let operator = match kind {
+                TokenKind::Assign => AssignmentOperator::Assignment,
+                TokenKind::MulAssign => AssignmentOperator::MulAssignment,
+                TokenKind::DivAssign => AssignmentOperator::DivAssignment,
+                TokenKind::AddAssign => AssignmentOperator::AddAssignment,
+                TokenKind::SubAssign => AssignmentOperator::SubAssignment,
+                kind => unreachable!("Unexpected token {:?} encountered.", kind),
+            };
+
+            Ok(self.arena.alloc(SyntaxNode::Assignment(Assignment {
+                operator,
+                lhs_expression,
+                rhs_expression,
+                span: span_start + span_end,
+            })))
+        } else {
+            Ok(lhs_expression)
+        }
     }
 }
 

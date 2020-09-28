@@ -138,7 +138,7 @@ pub struct Assignment {
     pub span: Span,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub enum AssignmentOperator {
     Assignment,
     MulAssignment,
