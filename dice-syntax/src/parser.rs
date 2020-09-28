@@ -93,7 +93,7 @@ impl ParserRule {
             TokenKind::Not => ParserRule::new(Some(Parser::unary), None, RulePrecedence::Unary),
 
             // Accessors
-            TokenKind::Dot => ParserRule::new(None, Some(Parser::field_access), RulePrecedence::Access),
+            TokenKind::Dot => ParserRule::new(None, Some(Parser::field_access), RulePrecedence::Call),
 
             // Setup reserved keywords and sequence with a parser that returns a friendly error.
 
@@ -120,7 +120,6 @@ pub enum RulePrecedence {
     DiceRoll,
     Unary,
     Call,
-    Access,
     Object,
     Primary,
 }
@@ -139,8 +138,7 @@ impl RulePrecedence {
             RulePrecedence::Factor => RulePrecedence::DiceRoll,
             RulePrecedence::DiceRoll => RulePrecedence::Unary,
             RulePrecedence::Unary => RulePrecedence::Call,
-            RulePrecedence::Call => RulePrecedence::Access,
-            RulePrecedence::Access => RulePrecedence::Object,
+            RulePrecedence::Call => RulePrecedence::Object,
             RulePrecedence::Object => RulePrecedence::Primary,
             RulePrecedence::Primary => RulePrecedence::Primary,
         }
