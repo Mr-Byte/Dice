@@ -84,9 +84,8 @@ impl Compiler {
         rhs_expression: SyntaxNodeId,
         span: Span,
     ) -> Result<(), CompilerError> {
-        self.visit(lhs_expression)?;
         self.visit(rhs_expression)?;
-        self.context()?.assembler().swap(span);
+        self.visit(lhs_expression)?;
         self.context()?.assembler().call(1, span);
 
         Ok(())
