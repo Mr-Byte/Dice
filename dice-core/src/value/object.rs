@@ -30,6 +30,16 @@ impl Deref for Object {
     }
 }
 
+impl PartialEq for Object {
+    fn eq(&self, other: &Self) -> bool {
+        self.type_id == other.type_id
+            && std::ptr::eq(
+                &*self.inner as *const ObjectInner as *const u8,
+                &*other.inner as *const ObjectInner as *const u8,
+            )
+    }
+}
+
 impl Display for Object {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         // TODO: Should this print more useful info?

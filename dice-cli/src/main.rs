@@ -1,4 +1,4 @@
-use dice::{Dice, NativeError, Runtime, RuntimeError, Value};
+use dice::{Dice, NativeError, Runtime, Value};
 use std::io::Write;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

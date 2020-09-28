@@ -83,6 +83,7 @@ impl PartialEq for Value {
             (Value::FnScript(lhs), Value::FnScript(rhs)) => lhs == rhs,
             (Value::List(lhs), Value::List(rhs)) => lhs == rhs,
             (Value::String(lhs), Value::String(rhs)) => lhs == rhs,
+            (Value::Object(lhs), Value::Object(rhs)) => lhs == rhs,
             _ => false,
         }
     }

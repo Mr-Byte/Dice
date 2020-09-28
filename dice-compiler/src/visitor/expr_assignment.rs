@@ -2,7 +2,7 @@ use super::NodeVisitor;
 use crate::compiler::Compiler;
 use crate::error::CompilerError;
 use crate::scope_stack::ScopeVariable;
-use dice_syntax::{Assignment, AssignmentOperator, Span, SyntaxNode, SyntaxNodeId};
+use dice_syntax::{Assignment, AssignmentOperator, FieldAccess, Span, SyntaxNode, SyntaxNodeId};
 
 impl NodeVisitor<&Assignment> for Compiler {
     fn visit(&mut self, assignment: &Assignment) -> Result<(), CompilerError> {
@@ -17,29 +17,51 @@ impl NodeVisitor<&Assignment> for Compiler {
                 let target = lit_ident.name.clone();
                 self.assign_ident(target, assignment)
             }
-            SyntaxNode::FieldAccess(_field_access) => todo!("Field assignment not implemented"),
+            SyntaxNode::FieldAccess(field_access) => {
+                let field_access = field_access.clone();
+                self.assign_field(field_access, assignment)
+            }
             _ => Err(CompilerError::InvalidAssignmentTarget),
         }
     }
 }
 
 impl Compiler {
-    fn assign_ident(
-        &mut self,
-        target: String,
-        Assignment {
-            operator,
-            rhs_expression,
-            span,
-            ..
-        }: &Assignment,
-    ) -> Result<(), CompilerError> {
+    fn assign_field(&mut self, target: FieldAccess, assignment: &Assignment) -> Result<(), CompilerError> {
+        self.visit(target.expression)?;
+
+        // TODO: Match operator and do the appropriate bytecode.
+
+        match assignment.operator {
+            AssignmentOperator::Assignment => {
+                self.visit(assignment.rhs_expression)?;
+                self.context()?.assembler().store_field(&target.field, target.span)?;
+            }
+            _ => todo!("Implement in-place assignment operators for fields."),
+        }
+
+        Ok(())
+    }
+
+    fn assign_ident(&mut self, target: String, assignment: &Assignment) -> Result<(), CompilerError> {
         {
             if let Some(local) = self.context()?.scope_stack().local(target.clone()) {
                 let local = local.clone();
-                self.assign_local(target, *operator, *rhs_expression, *span, local)
+                self.assign_local(
+                    target,
+                    assignment.operator,
+                    assignment.rhs_expression,
+                    assignment.span,
+                    local,
+                )
             } else if let Some(upvalue) = self.compiler_stack.resolve_upvalue(target.clone(), 0) {
-                self.assign_upvalue(target, *operator, *rhs_expression, *span, upvalue)
+                self.assign_upvalue(
+                    target,
+                    assignment.operator,
+                    assignment.rhs_expression,
+                    assignment.span,
+                    upvalue,
+                )
             } else {
                 Err(CompilerError::UndeclaredVariable(target))
             }
