@@ -11,7 +11,6 @@ impl NodeVisitor<&Assignment> for Compiler {
             .get(assignment.lhs_expression)
             .expect("Node should exist.");
 
-        // TODO: Decompose this down into smaller functions.
         match lhs {
             SyntaxNode::LitIdent(lit_ident) => {
                 let target = lit_ident.name.clone();
@@ -29,8 +28,6 @@ impl NodeVisitor<&Assignment> for Compiler {
 impl Compiler {
     fn assign_field(&mut self, target: FieldAccess, assignment: &Assignment) -> Result<(), CompilerError> {
         self.visit(target.expression)?;
-
-        // TODO: Match operator and do the appropriate bytecode.
 
         match assignment.operator {
             AssignmentOperator::Assignment => {

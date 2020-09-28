@@ -61,7 +61,7 @@ impl ParserRule {
 
             // Objects
             TokenKind::Object => ParserRule::new(Some(Parser::object), None, RulePrecedence::Object),
-            // TODO: Add infix parser for field access.
+            TokenKind::Dot => ParserRule::new(None, Some(Parser::field_access), RulePrecedence::Call),
             TokenKind::LeftSquare => ParserRule::new(Some(Parser::list), None, RulePrecedence::Object),
 
             // Grouping
@@ -91,9 +91,6 @@ impl ParserRule {
             TokenKind::Minus => ParserRule::new(Some(Parser::unary), Some(Parser::binary), RulePrecedence::Term),
             TokenKind::DiceRoll => ParserRule::new(Some(Parser::unary), Some(Parser::binary), RulePrecedence::DiceRoll),
             TokenKind::Not => ParserRule::new(Some(Parser::unary), None, RulePrecedence::Unary),
-
-            // Accessors
-            TokenKind::Dot => ParserRule::new(None, Some(Parser::field_access), RulePrecedence::Call),
 
             // Setup reserved keywords and sequence with a parser that returns a friendly error.
 

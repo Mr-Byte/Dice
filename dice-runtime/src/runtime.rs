@@ -275,7 +275,8 @@ impl Runtime {
                 let value = self.stack.pop();
                 match self.stack.pop() {
                     Value::Object(object) => {
-                        object.fields_mut().insert((**key).clone(), value);
+                        object.fields_mut().insert((**key).clone(), value.clone());
+                        self.stack.push(value);
                     }
                     _ => todo!("Throw an error if the target is not an object."),
                 }

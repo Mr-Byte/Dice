@@ -6,7 +6,6 @@ use dice_syntax::{SyntaxNode, WhileLoop};
 
 impl NodeVisitor<&WhileLoop> for Compiler {
     fn visit(&mut self, WhileLoop { condition, body, span }: &WhileLoop) -> Result<(), CompilerError> {
-        // TODO: Use the new block visitor with a special Loop kind to visit this block.
         if let Some(SyntaxNode::Block(block)) = self.syntax_tree.get(*body) {
             let block = block.clone();
             let loop_start = self.context()?.assembler().current_position();
@@ -19,7 +18,6 @@ impl NodeVisitor<&WhileLoop> for Compiler {
             let loop_end = self.context()?.assembler().jump_if_false(*span);
 
             self.visit((&block, BlockKind::<&str>::Loop))?;
-
             self.context()?.assembler().jump_back(loop_start, *span);
             self.context()?.assembler().patch_jump(loop_end);
 

@@ -12,7 +12,6 @@ impl NodeVisitor<&LitObject> for Compiler {
             self.context()?.assembler().dup(*span);
             self.visit(*value)?;
             self.context()?.assembler().store_field(field, *span)?;
-            // TODO: Reload the object back on to the stack.
         }
 
         Ok(())
