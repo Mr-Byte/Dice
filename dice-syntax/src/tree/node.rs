@@ -109,7 +109,7 @@ pub struct Binary {
     pub span: Span,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub enum BinaryOperator {
     DiceRoll,
     Multiply,
@@ -128,6 +128,7 @@ pub enum BinaryOperator {
     RangeInclusive,
     RangeExclusive,
     Coalesce,
+    Pipeline,
 }
 
 #[derive(Debug, Clone)]

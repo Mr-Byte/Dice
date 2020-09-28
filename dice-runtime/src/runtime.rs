@@ -147,7 +147,7 @@ impl Runtime {
         let count = cursor.read_u8() as usize;
         let items = self.stack.pop_count(count);
 
-        self.stack.push(Value::List(items.into()));
+        self.stack.push(Value::List(items.to_vec().into()));
     }
 
     fn create_object(&mut self, cursor: &mut BytecodeCursor) {
@@ -375,7 +375,7 @@ impl Runtime {
             }
             Value::FnNative(fn_native) => {
                 let fn_native = fn_native.clone();
-                let mut args: Vec<_> = self.stack.pop_count(arg_count);
+                let mut args = self.stack.pop_count(arg_count);
                 let result = fn_native.call(self, &mut args)?;
 
                 self.stack.release_slots(1);

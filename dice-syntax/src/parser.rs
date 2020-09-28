@@ -73,6 +73,7 @@ impl ParserRule {
             TokenKind::LeftCurly => ParserRule::new(Some(Parser::block_expression), None, RulePrecedence::None),
 
             // Operators
+            TokenKind::Pipeline => ParserRule::new(None, Some(Parser::binary), RulePrecedence::Pipeline),
             TokenKind::Coalesce => ParserRule::new(None, Some(Parser::binary), RulePrecedence::Coalesce),
             TokenKind::ExclusiveRange => ParserRule::new(None, Some(Parser::binary), RulePrecedence::Range),
             TokenKind::InclusiveRange => ParserRule::new(None, Some(Parser::binary), RulePrecedence::Range),
@@ -107,6 +108,7 @@ impl ParserRule {
 pub enum RulePrecedence {
     None,
     Assignment,
+    Pipeline,
     Coalesce,
     Range,
     Or,
@@ -125,7 +127,8 @@ impl RulePrecedence {
     fn increment(self) -> Self {
         match self {
             RulePrecedence::None => RulePrecedence::Assignment,
-            RulePrecedence::Assignment => RulePrecedence::Coalesce,
+            RulePrecedence::Assignment => RulePrecedence::Pipeline,
+            RulePrecedence::Pipeline => RulePrecedence::Coalesce,
             RulePrecedence::Coalesce => RulePrecedence::Range,
             RulePrecedence::Range => RulePrecedence::Or,
             RulePrecedence::Or => RulePrecedence::And,
@@ -436,6 +439,7 @@ impl Parser {
         let token = self.lexer.next();
         let rule = ParserRule::for_token(&token)?;
         let operator = match token.kind {
+            TokenKind::Pipeline => BinaryOperator::Pipeline,
             TokenKind::Coalesce => BinaryOperator::Coalesce,
             TokenKind::ExclusiveRange => BinaryOperator::RangeExclusive,
             TokenKind::InclusiveRange => BinaryOperator::RangeInclusive,

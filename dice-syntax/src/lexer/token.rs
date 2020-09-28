@@ -106,6 +106,8 @@ pub enum TokenKind {
     DiceRoll,
     #[token("&&")]
     LazyAnd,
+    #[token("|>")]
+    Pipeline,
     // Keywords
     #[token("object")]
     Object,
