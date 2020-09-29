@@ -22,7 +22,7 @@ impl NodeVisitor<&Binary> for Compiler {
             BinaryOperator::DiceRoll => self.dice_roll(*lhs_expression, *rhs_expression, *span)?,
             BinaryOperator::RangeInclusive => todo!(),
             BinaryOperator::RangeExclusive => todo!(),
-            BinaryOperator::Coalesce => todo!(),
+            BinaryOperator::Coalesce => self.coalesce(*lhs_expression, *rhs_expression, *span)?,
             operator => self.binary(*operator, *lhs_expression, *rhs_expression, *span)?,
         }
 
@@ -103,6 +103,25 @@ impl Compiler {
         self.visit(lhs_expression)?;
         self.visit(rhs_expression)?;
         self.context()?.assembler().call(2, span);
+
+        Ok(())
+    }
+
+    fn coalesce(
+        &mut self,
+        lhs_expression: SyntaxNodeId,
+        rhs_expression: SyntaxNodeId,
+        span: Span,
+    ) -> Result<(), CompilerError> {
+        self.visit(lhs_expression)?;
+        self.context()?.assembler().dup(span);
+        self.context()?.assembler().push_none(span);
+        self.context()?.assembler().eq(span);
+
+        let coalesce_jump = self.context()?.assembler().jump_if_false(span);
+        self.context()?.assembler().pop(span);
+        self.visit(rhs_expression)?;
+        self.context()?.assembler().patch_jump(coalesce_jump);
 
         Ok(())
     }

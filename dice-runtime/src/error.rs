@@ -2,7 +2,7 @@ use dice_core::runtime::NativeError;
 
 #[derive(thiserror::Error, Debug)]
 pub enum RuntimeError {
-    #[error("Runtime Error: Execution unexpectedly aborted.")]
+    #[error("Runtime Error: Execution unexpectedly aborted. Reason: {0}")]
     Aborted(String),
     #[error("Invalid global name type.")]
     InvalidGlobalNameType,
