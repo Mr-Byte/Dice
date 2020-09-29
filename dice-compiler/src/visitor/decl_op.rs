@@ -1,15 +1,19 @@
 use super::NodeVisitor;
 use crate::{compiler::Compiler, error::CompilerError};
+use dice_core::operator::OPERATORS;
 use dice_core::value::{FnScript, Value};
 use dice_syntax::OpDecl;
 
 impl NodeVisitor<&OpDecl> for Compiler {
     fn visit(&mut self, node: &OpDecl) -> Result<(), CompilerError> {
-        // TODO: Enforce operator names.
-
         let body = self.syntax_tree.child(node.body).expect("Node should not be missing.");
         let mut op_context = self.compile_fn(body, &node.args)?;
         let name = format!("#{}", node.name);
+
+        if !OPERATORS.contains(&&*name) {
+            return Err(CompilerError::InvalidOperatorName(name, node.span));
+        }
+
         let upvalues = op_context.upvalues().clone();
         let bytecode = op_context.finish();
         let value = Value::FnScript(FnScript::new(

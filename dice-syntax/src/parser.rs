@@ -398,10 +398,9 @@ impl Parser {
     fn fn_decl(&mut self) -> SyntaxNodeResult {
         let span_start = self.lexer.consume(TokenKind::Function)?.span();
         let name_token = self.lexer.next();
-        let name = if let TokenKind::Identifier(ref name) = name_token.kind {
-            name.clone()
-        } else {
-            return Err(SyntaxError::UnexpectedToken(name_token));
+        let name = match name_token.kind {
+            TokenKind::Identifier(ref name) => name.clone(),
+            _ => return Err(SyntaxError::UnexpectedToken(name_token)),
         };
         let args = self.parse_args(name_token, name.clone())?;
         let body = self.block_expression(false)?;
@@ -522,7 +521,14 @@ impl Parser {
 
         let field = match self.lexer.next().kind {
             TokenKind::Identifier(value) => value,
-            TokenKind::DiceRoll => String::from("d"),
+            TokenKind::DiceRoll => {
+                if let TokenKind::Identifier(_) = self.lexer.peek().kind {
+                    let (_, token) = self.lexer.consume_ident()?;
+                    format!("d{}", token)
+                } else {
+                    "d".into()
+                }
+            }
             _ => todo!("Parse more tokens as idents"),
         };
         let span_end = self.lexer.current().span();
@@ -596,7 +602,14 @@ impl Parser {
                 TokenKind::Integer(value) => value.to_string(),
                 TokenKind::Identifier(value) => value,
                 // TODO: Add a way to recognize certain keywords as identifiers in certain contexts.
-                TokenKind::DiceRoll => String::from("d"),
+                TokenKind::DiceRoll => {
+                    if let TokenKind::Identifier(_) = self.lexer.peek().kind {
+                        let (_, token) = self.lexer.consume_ident()?;
+                        format!("d{}", token)
+                    } else {
+                        "d".into()
+                    }
+                }
                 _ => return Err(SyntaxError::UnexpectedToken(self.lexer.current().clone())),
             };
 

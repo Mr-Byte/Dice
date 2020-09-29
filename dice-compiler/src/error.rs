@@ -1,4 +1,4 @@
-use dice_syntax::SyntaxError;
+use dice_syntax::{Span, SyntaxError};
 
 #[derive(thiserror::Error, Debug)]
 pub enum CompilerError {
@@ -15,6 +15,8 @@ pub enum CompilerError {
     UninitializedVariable(String),
     #[error("Invalid assignment target.")]
     InvalidAssignmentTarget,
+    #[error("Invalid operator name {0}.")]
+    InvalidOperatorName(String, Span),
 
     #[error("The break keyword can only be used inside loops.")]
     InvalidBreak,

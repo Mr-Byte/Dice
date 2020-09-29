@@ -189,7 +189,7 @@ pub enum TokenKind {
     Export,
 
     // Literals,
-    #[regex("[_a-ce-zA-Z][_a-zA-Z0-9]*", |lex| lex.slice().to_owned())]
+    #[regex("(d[_a-zA-Z][_a-zA-Z0-9]*)|([_a-ce-zA-Z][_a-zA-Z0-9]*)", |lex| lex.slice().to_owned())]
     Identifier(String),
     #[regex("[0-9]+", |lex| lex.slice().parse())]
     Integer(i64),

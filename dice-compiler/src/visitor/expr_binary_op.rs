@@ -1,5 +1,6 @@
 use super::NodeVisitor;
 use crate::{compiler::Compiler, error::CompilerError};
+use dice_core::operator::DICE_ROLL;
 use dice_core::value::Value;
 use dice_syntax::{Binary, BinaryOperator, Span, SyntaxNodeId};
 
@@ -98,7 +99,7 @@ impl Compiler {
     ) -> Result<(), CompilerError> {
         self.context()?
             .assembler()
-            .load_global(Value::new_string("#binary_dice_roll"), span)?;
+            .load_global(Value::new_string(DICE_ROLL), span)?;
         self.visit(lhs_expression)?;
         self.visit(rhs_expression)?;
         self.context()?.assembler().call(2, span);
