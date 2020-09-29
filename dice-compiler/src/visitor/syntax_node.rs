@@ -29,6 +29,7 @@ impl NodeVisitor<SyntaxNodeId> for Compiler {
             SyntaxNode::Binary(binary) => self.visit(binary)?,
             SyntaxNode::VarDecl(variable) => self.visit(variable)?,
             SyntaxNode::FnDecl(func) => self.visit(func)?,
+            SyntaxNode::OpDecl(func) => self.visit(func)?,
             SyntaxNode::IfExpression(conditional) => self.visit(conditional)?,
             SyntaxNode::WhileLoop(while_loop) => self.visit(while_loop)?,
             SyntaxNode::ForLoop(_) => todo!(),

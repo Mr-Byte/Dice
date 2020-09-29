@@ -5,7 +5,7 @@ use super::{
     LitAnonymousFn, LitBool, LitFloat, LitIdent, LitInt, LitList, LitNone, LitObject, LitString, LitUnit, Return,
     SyntaxNode, SyntaxNodeId, SyntaxTree, Unary, UnaryOperator, VarDecl, WhileLoop,
 };
-use crate::{FieldAccess, Span};
+use crate::{FieldAccess, OpDecl, Span};
 use id_arena::Arena;
 
 type SyntaxNodeResult = Result<SyntaxNodeId, SyntaxError>;
@@ -183,6 +183,7 @@ impl Parser {
                 TokenKind::While => self.while_statement()?,
                 TokenKind::Let => self.variable_decl()?,
                 TokenKind::Function => self.fn_decl()?,
+                TokenKind::Operator => self.op_decl()?,
                 TokenKind::Return | TokenKind::Break | TokenKind::Continue => self.control_flow()?,
                 _ => self.expression()?,
             };
@@ -361,6 +362,7 @@ impl Parser {
     fn anonymous_fn(&mut self, _: bool) -> SyntaxNodeResult {
         let span_start = self.lexer.consume(TokenKind::Pipe)?.span();
 
+        // TODO: Parameterize the tokens of parse_args and use it here.
         let mut args = Vec::new();
 
         while self.lexer.peek().kind != TokenKind::Pipe {
@@ -401,7 +403,41 @@ impl Parser {
         } else {
             return Err(SyntaxError::UnexpectedToken(name_token));
         };
+        let args = self.parse_args(name_token, name.clone())?;
+        let body = self.block_expression(false)?;
+        let span_end = self.lexer.current().span();
+        let node = SyntaxNode::FnDecl(FnDecl {
+            name,
+            args,
+            body,
+            span: span_start + span_end,
+        });
 
+        Ok(self.arena.alloc(node))
+    }
+
+    fn op_decl(&mut self) -> SyntaxNodeResult {
+        let span_start = self.lexer.consume(TokenKind::Operator)?.span();
+        self.lexer.consume(TokenKind::Hash)?;
+        let name_token = self.lexer.next();
+        let name = match name_token.kind {
+            TokenKind::Identifier(ref name) => name.clone(),
+            _ => return Err(SyntaxError::UnexpectedToken(name_token)),
+        };
+        let args = self.parse_args(name_token, name.clone())?;
+        let body = self.block_expression(false)?;
+        let span_end = self.lexer.current().span();
+        let node = SyntaxNode::OpDecl(OpDecl {
+            name,
+            args,
+            body,
+            span: span_start + span_end,
+        });
+
+        Ok(self.arena.alloc(node))
+    }
+
+    fn parse_args(&mut self, name_token: Token, name: String) -> Result<Vec<String>, SyntaxError> {
         self.lexer.consume(TokenKind::LeftParen)?;
 
         let mut args = Vec::new();
@@ -422,17 +458,7 @@ impl Parser {
         }
 
         self.lexer.consume(TokenKind::RightParen)?;
-
-        let body = self.block_expression(false)?;
-        let span_end = self.lexer.current().span();
-        let node = SyntaxNode::FnDecl(FnDecl {
-            name,
-            args,
-            body,
-            span: span_start + span_end,
-        });
-
-        Ok(self.arena.alloc(node))
+        Ok(args)
     }
 
     fn binary(&mut self, lhs: SyntaxNodeId, _: bool, span_start: Span) -> SyntaxNodeResult {

@@ -63,6 +63,7 @@ pub enum SyntaxNode {
     // Declarations
     VarDecl(VarDecl),
     FnDecl(FnDecl),
+    OpDecl(OpDecl),
 
     // Control flow
     IfExpression(IfExpression),
@@ -96,6 +97,7 @@ impl SyntaxNode {
             SyntaxNode::Assignment(Assignment { span, .. }) => *span,
             SyntaxNode::VarDecl(VarDecl { span, .. }) => *span,
             SyntaxNode::FnDecl(FnDecl { span, .. }) => *span,
+            SyntaxNode::OpDecl(OpDecl { span, .. }) => *span,
             SyntaxNode::IfExpression(IfExpression { span, .. }) => *span,
             SyntaxNode::WhileLoop(WhileLoop { span, .. }) => *span,
             SyntaxNode::ForLoop(ForLoop { span, .. }) => *span,

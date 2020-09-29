@@ -53,6 +53,8 @@ pub enum TokenKind {
     Comma,
     #[token("|")]
     Pipe,
+    #[token("#")]
+    Hash,
     // Operators
     #[token("..")]
     ExclusiveRange,
@@ -151,7 +153,7 @@ pub enum TokenKind {
     Trait,
     #[token("in")]
     In,
-    #[token("operator")]
+    #[token("op")]
     Operator,
     #[token("static")]
     Static,

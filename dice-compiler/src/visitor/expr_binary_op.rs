@@ -1,5 +1,6 @@
 use super::NodeVisitor;
 use crate::{compiler::Compiler, error::CompilerError};
+use dice_core::value::Value;
 use dice_syntax::{Binary, BinaryOperator, Span, SyntaxNodeId};
 
 impl NodeVisitor<&Binary> for Compiler {
@@ -17,7 +18,7 @@ impl NodeVisitor<&Binary> for Compiler {
             BinaryOperator::LogicalAnd => self.logical_and(*lhs_expression, *rhs_expression, *span)?,
             BinaryOperator::LogicalOr => self.logical_or(*lhs_expression, *rhs_expression, *span)?,
             BinaryOperator::Pipeline => self.pipeline(*lhs_expression, *rhs_expression, *span)?,
-            BinaryOperator::DiceRoll => todo!(),
+            BinaryOperator::DiceRoll => self.dice_roll(*lhs_expression, *rhs_expression, *span)?,
             BinaryOperator::RangeInclusive => todo!(),
             BinaryOperator::RangeExclusive => todo!(),
             BinaryOperator::Coalesce => todo!(),
@@ -75,9 +76,7 @@ impl Compiler {
 
         Ok(())
     }
-}
 
-impl Compiler {
     fn pipeline(
         &mut self,
         lhs_expression: SyntaxNodeId,
@@ -90,9 +89,23 @@ impl Compiler {
 
         Ok(())
     }
-}
 
-impl Compiler {
+    fn dice_roll(
+        &mut self,
+        lhs_expression: SyntaxNodeId,
+        rhs_expression: SyntaxNodeId,
+        span: Span,
+    ) -> Result<(), CompilerError> {
+        self.context()?
+            .assembler()
+            .load_global(Value::new_string("#binary_dice_roll"), span)?;
+        self.visit(lhs_expression)?;
+        self.visit(rhs_expression)?;
+        self.context()?.assembler().call(2, span);
+
+        Ok(())
+    }
+
     fn binary(
         &mut self,
         operator: BinaryOperator,

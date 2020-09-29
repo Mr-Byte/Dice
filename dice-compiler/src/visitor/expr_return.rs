@@ -6,7 +6,7 @@ impl NodeVisitor<&Return> for Compiler {
     fn visit(&mut self, expr_return: &Return) -> Result<(), CompilerError> {
         let context = self.context()?;
 
-        if context.kind() != CompilerKind::Function {
+        if !matches!(context.kind(), CompilerKind::Function { .. }) {
             return Err(CompilerError::InvalidReturn);
         }
 

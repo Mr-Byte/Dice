@@ -1,4 +1,5 @@
 mod decl_fn;
+mod decl_op;
 mod decl_var;
 mod expr_assignment;
 mod expr_binary_op;

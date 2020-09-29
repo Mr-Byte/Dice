@@ -165,6 +165,14 @@ pub struct FnDecl {
 }
 
 #[derive(Debug, Clone)]
+pub struct OpDecl {
+    pub name: String,
+    pub args: Vec<String>,
+    pub body: SyntaxNodeId,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone)]
 pub struct IfExpression {
     pub condition: SyntaxNodeId,
     pub primary: SyntaxNodeId,

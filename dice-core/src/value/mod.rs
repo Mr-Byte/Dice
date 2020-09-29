@@ -29,6 +29,10 @@ pub enum Value {
 static_assertions::assert_eq_size!([u8; 16], Value);
 
 impl Value {
+    pub fn new_string(string: impl Into<String>) -> Self {
+        Self::String(string.into().into())
+    }
+
     #[inline]
     pub fn is_none(&self) -> bool {
         matches!(self, Value::None)
