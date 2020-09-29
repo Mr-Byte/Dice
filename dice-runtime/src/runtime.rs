@@ -1,4 +1,5 @@
 use crate::{error::RuntimeError, stack::Stack};
+use dice_core::operator::ADD;
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
     upvalue::{Upvalue, UpvalueState},
@@ -74,7 +75,7 @@ impl Runtime {
                 Instruction::MUL => arithmetic_op!(self.stack, OP_MUL),
                 Instruction::DIV => arithmetic_op!(self.stack, OP_DIV),
                 Instruction::REM => arithmetic_op!(self.stack, OP_REM),
-                Instruction::ADD => arithmetic_op!(self.stack, OP_ADD),
+                Instruction::ADD => self.add()?,
                 Instruction::SUB => arithmetic_op!(self.stack, OP_SUB),
 
                 Instruction::GT => comparison_op!(self.stack, OP_GT),
@@ -101,7 +102,10 @@ impl Runtime {
                 Instruction::STORE_FIELD => self.store_field(bytecode, &mut cursor)?,
 
                 Instruction::CLOSURE => self.closure(bytecode, &stack_frame, &mut closure, &mut cursor)?,
-                Instruction::CALL => self.call_fn(&mut cursor)?,
+                Instruction::CALL => {
+                    let arg_count = cursor.read_u8() as usize;
+                    self.call(arg_count)?;
+                }
                 Instruction::RETURN => break,
 
                 Instruction::ASSERT_BOOL => {
@@ -128,6 +132,7 @@ impl Runtime {
         Ok(self.stack.pop())
     }
 
+    #[inline]
     fn not(&mut self) -> Result<(), RuntimeError> {
         match self.stack.peek(0) {
             Value::Bool(value) => *value = !*value,
@@ -137,12 +142,33 @@ impl Runtime {
         Ok(())
     }
 
+    #[inline]
     fn neg(&mut self) {
         match self.stack.peek(0) {
             Value::Int(value) => *value = -*value,
             Value::Float(value) => *value = -*value,
             _ => todo!(),
         }
+    }
+
+    #[inline]
+    fn add(&mut self) -> Result<(), RuntimeError> {
+        match (self.stack.pop(), self.stack.peek(0)) {
+            (Value::Int(rhs), Value::Int(lhs)) => *lhs = *lhs + rhs,
+            (Value::Float(rhs), Value::Float(lhs)) => *lhs = *lhs + rhs,
+            (rhs, _) => match self.globals.get(ADD) {
+                Some(value) => {
+                    let lhs = self.stack.pop();
+                    self.stack.push(value.clone());
+                    self.stack.push(lhs);
+                    self.stack.push(rhs);
+                    self.call(2)?;
+                }
+                None => todo!(),
+            },
+        }
+
+        Ok(())
     }
 
     fn create_list(&mut self, cursor: &mut BytecodeCursor) {
@@ -376,8 +402,7 @@ impl Runtime {
     }
 
     // TODO: Replace this mutually recursive call with an execution stack to prevent the thread's stack from overflowing.
-    fn call_fn(&mut self, cursor: &mut BytecodeCursor<'_>) -> Result<(), RuntimeError> {
-        let arg_count = cursor.read_u8() as usize;
+    fn call(&mut self, arg_count: usize) -> Result<(), RuntimeError> {
         let target = self.stack.peek(arg_count);
         let (bytecode, closure) = match target {
             Value::FnClosure(closure) => {
