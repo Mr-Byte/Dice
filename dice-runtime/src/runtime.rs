@@ -4,6 +4,7 @@ use dice_core::{
     upvalue::{Upvalue, UpvalueState},
     value::{FnClosure, FnNative, NativeFn, Object, Value},
 };
+use std::collections::hash_map::Entry;
 use std::{
     collections::{HashMap, VecDeque},
     ops::Range,
@@ -95,6 +96,7 @@ impl Runtime {
                 Instruction::STORE_UPVALUE => self.store_upvalue(&mut closure, &mut cursor),
                 Instruction::CLOSE_UPVALUE => self.close_upvalue(&stack_frame, &mut cursor),
                 Instruction::LOAD_GLOBAL => self.load_global(bytecode, &mut cursor)?,
+                Instruction::STORE_GLOBAL => self.store_global(bytecode, &mut cursor)?,
                 Instruction::LOAD_FIELD => self.load_field(bytecode, &mut cursor)?,
                 Instruction::STORE_FIELD => self.store_field(bytecode, &mut cursor)?,
 
@@ -253,6 +255,27 @@ impl Runtime {
                 upvalue.close(value);
             }
         }
+    }
+
+    fn store_global(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
+        let const_pos = cursor.read_u8() as usize;
+        let value = &bytecode.constants()[const_pos];
+
+        if let Value::String(global) = value {
+            let global_name = (**global).clone();
+            let global = self.stack.pop();
+
+            match self.globals.entry(global_name) {
+                Entry::Occupied(_) => todo!("Return error that global already exists."),
+                Entry::Vacant(entry) => {
+                    entry.insert(global);
+                }
+            }
+        } else {
+            return Err(RuntimeError::InvalidGlobalNameType);
+        }
+
+        Ok(())
     }
 
     fn load_global(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {

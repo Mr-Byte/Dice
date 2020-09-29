@@ -66,8 +66,9 @@ define_instructions! {
     pub const CREATE_LIST;
     pub const CREATE_OBJECT;
 
-    // NOTE: Dice only supports immutable globals defined by the runtime.
     pub const LOAD_GLOBAL;
+    // NOTE: Globals are write-once, if they don't already exist.
+    pub const STORE_GLOBAL;
 
     pub const LOAD_LOCAL;
     pub const STORE_LOCAL;

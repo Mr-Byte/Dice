@@ -80,6 +80,7 @@ impl Display for Bytecode {
                 | Instruction::LOAD_GLOBAL
                 | Instruction::LOAD_LOCAL
                 | Instruction::LOAD_FIELD
+                | Instruction::STORE_GLOBAL
                 | Instruction::STORE_LOCAL
                 | Instruction::STORE_FIELD
                 | Instruction::CREATE_LIST

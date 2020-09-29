@@ -35,24 +35,11 @@ impl Dice {
 
 impl Default for Dice {
     fn default() -> Self {
-        let mut runtime = runtime::Runtime::default();
+        let runtime = runtime::Runtime::default();
 
-        runtime.register_native_fn(String::from("#binary_dice_roll"), binary_dice_roll);
+        // TODO: Load the prelude into the runtime.
 
         Self { runtime }
-    }
-}
-
-// TODO: Make this actually roll a list of dice.
-// Should probably use runtime to resolve the dice list type.
-fn binary_dice_roll(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, NativeError> {
-    if let [lhs, rhs, ..] = args {
-        match (lhs, rhs) {
-            (Value::Int(lhs), Value::Int(rhs)) => Ok(Value::Int(lhs + rhs)),
-            _ => todo!(),
-        }
-    } else {
-        todo!()
     }
 }
 

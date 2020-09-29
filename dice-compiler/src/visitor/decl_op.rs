@@ -1,48 +1,34 @@
 use super::NodeVisitor;
-use crate::{compiler::Compiler, error::CompilerError, scope_stack::State};
+use crate::{compiler::Compiler, error::CompilerError};
 use dice_core::value::{FnScript, Value};
 use dice_syntax::OpDecl;
 
 impl NodeVisitor<&OpDecl> for Compiler {
     fn visit(&mut self, node: &OpDecl) -> Result<(), CompilerError> {
+        // TODO: Enforce operator names.
+
         let body = self.syntax_tree.child(node.body).expect("Node should not be missing.");
-        let op_context = self.compile_fn(body, &node.args)?;
-        let _bytecode = op_context.finish();
+        let mut op_context = self.compile_fn(body, &node.args)?;
+        let name = format!("#{}", node.name);
+        let upvalues = op_context.upvalues().clone();
+        let bytecode = op_context.finish();
+        let value = Value::FnScript(FnScript::new(
+            name.clone(),
+            node.args.len(),
+            bytecode,
+            uuid::Uuid::new_v4(),
+        ));
+        let context = self.context()?;
 
-        // TODO: Store the parsed operator as a global.
+        if !upvalues.is_empty() {
+            context.assembler().closure(value, &upvalues, node.span)?;
+        } else {
+            context.assembler().push_const(value, node.span)?;
+        }
 
-        // let value = Value::FnScript(FnScript::new(
-        //     node.name.clone(),
-        //     node.args.len(),
-        //     bytecode,
-        //     uuid::Uuid::new_v4(),
-        // ));
-        // let context = self.context()?;
-        // let slot = {
-        //     let fn_name = node.name.clone();
-        //     let local = context.scope_stack().local(fn_name.clone()).ok_or_else(|| {
-        //         CompilerError::InternalCompilerError(String::from("Function not already declared in scope."))
-        //     })?;
-        //
-        //     // NOTE: Check if a function of the given name has already been initialized.
-        //     if let State::Function { ref mut is_initialized } = &mut local.state {
-        //         if *is_initialized {
-        //             return Err(CompilerError::ItemAlreadyDeclared(fn_name));
-        //         }
-        //
-        //         *is_initialized = true;
-        //     }
-        //
-        //     local.slot as u8
-        // };
-        //
-        // if !upvalues.is_empty() {
-        //     context.assembler().closure(value, &upvalues, node.span)?;
-        // } else {
-        //     context.assembler().push_const(value, node.span)?;
-        // }
-        //
-        // context.assembler().store_local(slot as u8, node.span);
+        context.assembler().store_global(Value::new_string(name), node.span)?;
+        // NOTE: Operators exist as temporaries and should produce a unit on the stack.
+        context.assembler().push_unit(node.span);
 
         Ok(())
     }

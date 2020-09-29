@@ -276,6 +276,16 @@ impl Assembler {
         Ok(())
     }
 
+    pub fn store_global(&mut self, global: Value, span: Span) -> Result<(), CompilerError> {
+        let const_slot = self.make_constant(global)?;
+
+        self.source_map.insert(self.data.len() as u64, span);
+        self.data.put_u8(Instruction::STORE_GLOBAL.value());
+        self.data.put_u8(const_slot);
+
+        Ok(())
+    }
+
     pub fn load_global(&mut self, global: Value, span: Span) -> Result<(), CompilerError> {
         let const_slot = self.make_constant(global)?;
 
