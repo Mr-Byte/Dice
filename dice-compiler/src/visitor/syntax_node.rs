@@ -13,7 +13,7 @@ impl NodeVisitor<SyntaxNodeId> for Compiler {
         match &node {
             SyntaxNode::LitIdent(literal) => self.visit(literal)?,
             SyntaxNode::LitUnit(literal) => self.visit(literal)?,
-            SyntaxNode::LitNone(literal) => self.visit(literal)?,
+            SyntaxNode::LitNull(literal) => self.visit(literal)?,
             SyntaxNode::LitBool(literal) => self.visit(literal)?,
             SyntaxNode::LitInt(literal) => self.visit(literal)?,
             SyntaxNode::LitFloat(literal) => self.visit(literal)?,
@@ -21,7 +21,7 @@ impl NodeVisitor<SyntaxNodeId> for Compiler {
             SyntaxNode::LitAnonymousFn(literal) => self.visit(literal)?,
             SyntaxNode::LitObject(literal) => self.visit(literal)?, //self.visit(literal)?,
             SyntaxNode::LitList(literal) => self.visit(literal)?,
-            SyntaxNode::SafeAccess(_) => todo!(),
+            SyntaxNode::SafeAccess(safe_access) => self.visit(safe_access)?,
             SyntaxNode::FieldAccess(field_access) => self.visit(field_access)?,
             SyntaxNode::Index(_) => todo!(),
             SyntaxNode::Assignment(assignment) => self.visit(assignment)?,

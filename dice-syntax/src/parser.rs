@@ -2,10 +2,10 @@ use super::{
     error::SyntaxError,
     lexer::{Lexer, Token, TokenKind},
     Assignment, AssignmentOperator, Binary, BinaryOperator, Block, Break, Continue, FnDecl, FunctionCall, IfExpression,
-    LitAnonymousFn, LitBool, LitFloat, LitIdent, LitInt, LitList, LitNone, LitObject, LitString, LitUnit, Return,
+    LitAnonymousFn, LitBool, LitFloat, LitIdent, LitInt, LitList, LitNull, LitObject, LitString, LitUnit, Return,
     SyntaxNode, SyntaxNodeId, SyntaxTree, Unary, UnaryOperator, VarDecl, WhileLoop,
 };
-use crate::{FieldAccess, OpDecl, Span};
+use crate::{FieldAccess, OpDecl, SafeAccess, Span};
 use id_arena::Arena;
 
 type SyntaxNodeResult = Result<SyntaxNodeId, SyntaxError>;
@@ -51,7 +51,7 @@ impl ParserRule {
             TokenKind::Integer(_) => ParserRule::new(Some(Parser::literal), None, RulePrecedence::Primary),
             TokenKind::Float(_) => ParserRule::new(Some(Parser::literal), None, RulePrecedence::Primary),
             TokenKind::String(_) => ParserRule::new(Some(Parser::literal), None, RulePrecedence::Primary),
-            TokenKind::None => ParserRule::new(Some(Parser::literal), None, RulePrecedence::Primary),
+            TokenKind::Null => ParserRule::new(Some(Parser::literal), None, RulePrecedence::Primary),
             TokenKind::False => ParserRule::new(Some(Parser::literal), None, RulePrecedence::Primary),
             TokenKind::True => ParserRule::new(Some(Parser::literal), None, RulePrecedence::Primary),
             TokenKind::Identifier(_) => ParserRule::new(Some(Parser::variable), None, RulePrecedence::Primary),
@@ -61,8 +61,9 @@ impl ParserRule {
 
             // Objects
             TokenKind::Object => ParserRule::new(Some(Parser::object), None, RulePrecedence::Object),
-            TokenKind::Dot => ParserRule::new(None, Some(Parser::field_access), RulePrecedence::Call),
             TokenKind::LeftSquare => ParserRule::new(Some(Parser::list), None, RulePrecedence::Object),
+            TokenKind::Dot => ParserRule::new(None, Some(Parser::field_access), RulePrecedence::Call),
+            TokenKind::SafeDot => ParserRule::new(None, Some(Parser::safe_field_access), RulePrecedence::Call),
 
             // Grouping
             TokenKind::LeftParen => {
@@ -521,14 +522,6 @@ impl Parser {
 
         let field = match self.lexer.next().kind {
             TokenKind::Identifier(value) => value,
-            TokenKind::DiceRoll => {
-                if let TokenKind::Identifier(_) = self.lexer.peek().kind {
-                    let (_, token) = self.lexer.consume_ident()?;
-                    format!("d{}", token)
-                } else {
-                    "d".into()
-                }
-            }
             _ => todo!("Parse more tokens as idents"),
         };
         let span_end = self.lexer.current().span();
@@ -540,6 +533,24 @@ impl Parser {
         let lhs_expression = self.arena.alloc(node);
 
         self.parse_assignment(lhs_expression, can_assign, span_start)
+    }
+
+    fn safe_field_access(&mut self, lhs: SyntaxNodeId, _: bool, span_start: Span) -> SyntaxNodeResult {
+        self.lexer.consume(TokenKind::SafeDot)?;
+
+        let field = match self.lexer.next().kind {
+            TokenKind::Identifier(value) => value,
+            _ => todo!("Parse more tokens as idents"),
+        };
+        let span_end = self.lexer.current().span();
+        let node = SyntaxNode::SafeAccess(SafeAccess {
+            expression: lhs,
+            field,
+            span: span_start + span_end,
+        });
+        let lhs_expression = self.arena.alloc(node);
+
+        Ok(lhs_expression)
     }
 
     fn grouping(&mut self, _: bool) -> SyntaxNodeResult {
@@ -601,15 +612,6 @@ impl Parser {
                 TokenKind::String(value) => value.trim_matches('"').to_owned(),
                 TokenKind::Integer(value) => value.to_string(),
                 TokenKind::Identifier(value) => value,
-                // TODO: Add a way to recognize certain keywords as identifiers in certain contexts.
-                TokenKind::DiceRoll => {
-                    if let TokenKind::Identifier(_) = self.lexer.peek().kind {
-                        let (_, token) = self.lexer.consume_ident()?;
-                        format!("d{}", token)
-                    } else {
-                        "d".into()
-                    }
-                }
                 _ => return Err(SyntaxError::UnexpectedToken(self.lexer.current().clone())),
             };
 
@@ -674,7 +676,7 @@ impl Parser {
             }),
             TokenKind::False => SyntaxNode::LitBool(LitBool { value: false, span }),
             TokenKind::True => SyntaxNode::LitBool(LitBool { value: true, span }),
-            TokenKind::None => SyntaxNode::LitNone(LitNone { span }),
+            TokenKind::Null => SyntaxNode::LitNull(LitNull { span }),
             _ => return Err(SyntaxError::UnexpectedToken(token.clone())),
         };
 

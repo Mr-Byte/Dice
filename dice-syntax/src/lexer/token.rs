@@ -117,8 +117,8 @@ pub enum TokenKind {
     False,
     #[token("true")]
     True,
-    #[token("none")]
-    None,
+    #[token("null")]
+    Null,
     #[token("if")]
     If,
     #[token("else")]

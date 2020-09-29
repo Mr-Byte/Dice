@@ -50,11 +50,11 @@ macro_rules! arithmetic_op {
 macro_rules! comparison_op {
     ($stack:expr, OP_EQ) => {
         match ($stack.pop(), $stack.pop()) {
-            (dice_core::value::Value::None, dice_core::value::Value::None) => {
+            (dice_core::value::Value::Null, dice_core::value::Value::Null) => {
                 $stack.push(dice_core::value::Value::Bool(true))
             }
-            (dice_core::value::Value::None, _) => $stack.push(dice_core::value::Value::Bool(false)),
-            (_, dice_core::value::Value::None) => $stack.push(dice_core::value::Value::Bool(false)),
+            (dice_core::value::Value::Null, _) => $stack.push(dice_core::value::Value::Bool(false)),
+            (_, dice_core::value::Value::Null) => $stack.push(dice_core::value::Value::Bool(false)),
             (dice_core::value::Value::Unit, dice_core::value::Value::Unit) => {
                 $stack.push(dice_core::value::Value::Bool(true))
             }
@@ -78,11 +78,11 @@ macro_rules! comparison_op {
 
     ($stack:expr, OP_NEQ) => {
         match ($stack.pop(), $stack.pop()) {
-            (dice_core::value::Value::None, dice_core::value::Value::None) => {
+            (dice_core::value::Value::Null, dice_core::value::Value::Null) => {
                 $stack.push(dice_core::value::Value::Bool(false))
             }
-            (dice_core::value::Value::None, _) => $stack.push(dice_core::value::Value::Bool(true)),
-            (_, dice_core::value::Value::None) => $stack.push(dice_core::value::Value::Bool(true)),
+            (dice_core::value::Value::Null, _) => $stack.push(dice_core::value::Value::Bool(true)),
+            (_, dice_core::value::Value::Null) => $stack.push(dice_core::value::Value::Bool(true)),
             (dice_core::value::Value::Unit, dice_core::value::Value::Unit) => {
                 $stack.push(dice_core::value::Value::Bool(false))
             }

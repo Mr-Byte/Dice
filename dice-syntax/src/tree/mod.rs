@@ -40,7 +40,7 @@ impl SyntaxTree {
 pub enum SyntaxNode {
     // Literals
     LitIdent(LitIdent),
-    LitNone(LitNone),
+    LitNull(LitNull),
     LitUnit(LitUnit),
     LitInt(LitInt),
     LitFloat(LitFloat),
@@ -80,7 +80,7 @@ impl SyntaxNode {
     pub fn span(&self) -> Span {
         match self {
             SyntaxNode::LitIdent(LitIdent { span, .. }) => *span,
-            SyntaxNode::LitNone(LitNone { span, .. }) => *span,
+            SyntaxNode::LitNull(LitNull { span, .. }) => *span,
             SyntaxNode::LitUnit(LitUnit { span, .. }) => *span,
             SyntaxNode::LitInt(LitInt { span, .. }) => *span,
             SyntaxNode::LitFloat(LitFloat { span, .. }) => *span,

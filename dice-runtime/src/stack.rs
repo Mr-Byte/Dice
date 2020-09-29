@@ -20,11 +20,11 @@ impl Stack {
     #[inline]
     pub fn pop(&mut self) -> Value {
         self.stack_ptr -= 1;
-        std::mem::replace(&mut self.values[self.stack_ptr], Value::None)
+        std::mem::replace(&mut self.values[self.stack_ptr], Value::Null)
     }
 
     pub fn pop_count(&mut self, count: usize) -> Vec<Value> {
-        let mut result = vec![Value::None; count];
+        let mut result = vec![Value::Null; count];
         let items_to_pop = &mut self.values[self.stack_ptr - count..self.stack_ptr];
         self.stack_ptr -= count;
 
@@ -48,7 +48,7 @@ impl Stack {
     pub fn release_slots(&mut self, count: usize) {
         let new_stack_ptr = self.stack_ptr - count;
         for value in &mut self.values[new_stack_ptr..self.stack_ptr] {
-            *value = Value::None;
+            *value = Value::Null;
         }
 
         self.stack_ptr = new_stack_ptr;
@@ -82,7 +82,7 @@ impl Stack {
 impl Default for Stack {
     fn default() -> Self {
         Self {
-            values: vec![Value::None; MAX_STACK_SIZE].into_boxed_slice(),
+            values: vec![Value::Null; MAX_STACK_SIZE].into_boxed_slice(),
             stack_ptr: 0,
         }
     }

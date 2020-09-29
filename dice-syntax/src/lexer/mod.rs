@@ -178,7 +178,7 @@ pub mod test {
 
         assert_next_token!(tokens, TokenKind::False);
         assert_next_token!(tokens, TokenKind::True);
-        assert_next_token!(tokens, TokenKind::None);
+        assert_next_token!(tokens, TokenKind::Null);
         assert_next_token!(tokens, TokenKind::If);
         assert_next_token!(tokens, TokenKind::Else);
         assert_next_token!(tokens, TokenKind::While);

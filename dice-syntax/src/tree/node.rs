@@ -31,7 +31,7 @@ pub struct LitUnit {
 }
 
 #[derive(Debug, Clone)]
-pub struct LitNone {
+pub struct LitNull {
     pub span: Span,
 }
 

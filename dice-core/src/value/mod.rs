@@ -13,7 +13,7 @@ mod object;
 
 #[derive(Clone, Debug)]
 pub enum Value {
-    None,
+    Null,
     Unit,
     Bool(bool),
     Int(i64),
@@ -34,8 +34,8 @@ impl Value {
     }
 
     #[inline]
-    pub fn is_none(&self) -> bool {
-        matches!(self, Value::None)
+    pub fn is_null(&self) -> bool {
+        matches!(self, Value::Null)
     }
 
     #[inline]
@@ -76,14 +76,14 @@ impl Value {
 
 impl Default for Value {
     fn default() -> Self {
-        Value::None
+        Value::Null
     }
 }
 
 impl PartialEq for Value {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (Value::None, Value::None) => true,
+            (Value::Null, Value::Null) => true,
             (Value::Unit, Value::Unit) => true,
             (Value::Bool(lhs), Value::Bool(rhs)) => lhs == rhs,
             (Value::Int(lhs), Value::Int(rhs)) => lhs == rhs,
@@ -101,7 +101,7 @@ impl PartialEq for Value {
 impl Display for Value {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Value::None => write!(fmt, "None"),
+            Value::Null => write!(fmt, "null"),
             Value::Unit => write!(fmt, "Unit"),
             Value::Bool(bool) => bool.fmt(fmt),
             Value::Int(int) => int.fmt(fmt),

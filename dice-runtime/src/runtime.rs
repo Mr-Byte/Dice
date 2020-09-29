@@ -45,7 +45,7 @@ impl Runtime {
 
         while let Some(instruction) = cursor.read_instruction() {
             match instruction {
-                Instruction::PUSH_NONE => self.stack.push(Value::None),
+                Instruction::PUSH_NONE => self.stack.push(Value::Null),
                 Instruction::PUSH_UNIT => self.stack.push(Value::Unit),
                 Instruction::PUSH_FALSE => self.stack.push(Value::Bool(false)),
                 Instruction::PUSH_TRUE => self.stack.push(Value::Bool(true)),
@@ -264,7 +264,7 @@ impl Runtime {
 
     fn close_upvalue(&mut self, stack_frame: &Range<usize>, cursor: &mut BytecodeCursor) {
         let offset = cursor.read_u8() as usize;
-        let value = std::mem::replace(&mut self.stack.slots(stack_frame.clone())[offset], Value::None);
+        let value = std::mem::replace(&mut self.stack.slots(stack_frame.clone())[offset], Value::Null);
         let offset = stack_frame.start + offset;
         let mut found_index = None;
 
