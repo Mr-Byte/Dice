@@ -1,12 +1,13 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use dice::Dice;
+use std::time::Duration;
 
 fn loop_in_place_addition(criterion: &mut Criterion) {
     let mut dice = Dice::default();
 
     criterion.bench_function("in-place-addition", |bencher| {
         bencher.iter(|| {
-            dice.run_script(black_box("let mut x = 0; while x < 1000 { x += 1; }"))
+            dice.run_script(black_box("let mut x = 0; while x < 100000 { x += 1; }"))
                 .unwrap()
         })
     });
@@ -17,7 +18,7 @@ fn loop_addition_with_assignment(criterion: &mut Criterion) {
 
     criterion.bench_function("addition-with-assignment", |bencher| {
         bencher.iter(|| {
-            dice.run_script(black_box("let mut x = 0; while x < 1000 { x = x + 1; }"))
+            dice.run_script(black_box("let mut x = 0; while x < 100000 { x = x + 1; }"))
                 .unwrap()
         })
     });
@@ -29,7 +30,7 @@ fn loop_function_call(criterion: &mut Criterion) {
     criterion.bench_function("function-call", |bencher| {
         bencher.iter(|| {
             dice.run_script(black_box(
-                "fn one() { 1 } let mut n = 0; while n < 1000 { n += one(); }",
+                "fn one() { 1 } let mut n = 0; while n < 100000 { n += one(); }",
             ))
             .unwrap()
         })
@@ -41,7 +42,7 @@ fn loop_closure_call(criterion: &mut Criterion) {
 
     criterion.bench_function("loop-closure-call", |bencher| {
         bencher.iter(|| {
-            dice.run_script(black_box("let mut x = 0; let f = || x += 1; while x < 1000 { f(); }"))
+            dice.run_script(black_box("let mut x = 0; let f = || x += 1; while x < 100000 { f(); }"))
                 .unwrap()
         })
     });
@@ -75,13 +76,13 @@ fn closure_called_outside_declaring_scope(criterion: &mut Criterion) {
 
 criterion_group!(
     name = loops;
-    config = Criterion::default().sample_size(1000);
+    config = Criterion::default().sample_size(100).measurement_time(Duration::from_secs(10)).nresamples(5000);
     targets = loop_in_place_addition, loop_addition_with_assignment, loop_function_call, loop_closure_call
 );
 
 criterion_group!(
     name = closures;
-    config = Criterion::default().sample_size(1000);
+    config = Criterion::default().sample_size(500).measurement_time(Duration::from_secs(10)).nresamples(5000);
     targets = closure_called_by_another_function_in_parent_scope, closure_called_outside_declaring_scope
 );
 
