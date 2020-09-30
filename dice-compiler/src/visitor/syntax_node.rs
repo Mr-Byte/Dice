@@ -1,4 +1,5 @@
 use super::{expr_block::BlockKind, NodeVisitor};
+use crate::scope_stack::CallContext;
 use crate::{compiler::Compiler, error::CompilerError};
 use dice_syntax::{SyntaxNode, SyntaxNodeId};
 
@@ -21,8 +22,6 @@ impl NodeVisitor<SyntaxNodeId> for Compiler {
             SyntaxNode::LitAnonymousFn(literal) => self.visit(literal)?,
             SyntaxNode::LitObject(literal) => self.visit(literal)?, //self.visit(literal)?,
             SyntaxNode::LitList(literal) => self.visit(literal)?,
-            SyntaxNode::SafeAccess(safe_access) => self.visit(safe_access)?,
-            SyntaxNode::FieldAccess(field_access) => self.visit(field_access)?,
             SyntaxNode::Index(_) => todo!(),
             SyntaxNode::Assignment(assignment) => self.visit(assignment)?,
             SyntaxNode::Unary(unary) => self.visit(unary)?,
@@ -36,8 +35,45 @@ impl NodeVisitor<SyntaxNodeId> for Compiler {
             SyntaxNode::Break(break_node) => self.visit(break_node)?,
             SyntaxNode::Continue(continue_node) => self.visit(continue_node)?,
             SyntaxNode::Block(block) => self.visit((block, BlockKind::<&str>::Block))?,
-            SyntaxNode::FunctionCall(fn_call) => self.visit(fn_call)?,
             SyntaxNode::Return(return_expr) => self.visit(return_expr)?,
+            SyntaxNode::SafeAccess(safe_access) => {
+                self.enter_call()?;
+                self.visit(safe_access)?;
+                self.exit_call()?;
+            }
+            SyntaxNode::FieldAccess(field_access) => {
+                self.enter_call()?;
+                self.visit(field_access)?;
+                self.exit_call()?;
+            }
+            SyntaxNode::FunctionCall(fn_call) => {
+                self.enter_call()?;
+                self.visit(fn_call)?;
+                self.exit_call()?;
+            }
+        }
+
+        Ok(())
+    }
+}
+
+impl Compiler {
+    fn enter_call(&mut self) -> Result<(), CompilerError> {
+        let context = &mut self.context()?.scope_stack().top_mut()?.call_context;
+        context.depth += 1;
+
+        Ok(())
+    }
+
+    fn exit_call(&mut self) -> Result<(), CompilerError> {
+        let context = &mut self.context()?.scope_stack().top_mut()?.call_context;
+        context.depth -= 1;
+
+        if context.depth == 0 {
+            let exit_points = context.exit_points.drain(..).collect::<Vec<_>>();
+            for exit_point in &exit_points {
+                self.context()?.assembler().patch_jump(*exit_point as u64);
+            }
         }
 
         Ok(())

@@ -30,6 +30,12 @@ pub enum ScopeKind {
     Loop,
 }
 
+#[derive(Clone, Default)]
+pub struct CallContext {
+    pub depth: usize,
+    pub exit_points: Vec<usize>,
+}
+
 #[derive(Clone)]
 pub struct ScopeContext {
     pub depth: usize,
@@ -37,6 +43,7 @@ pub struct ScopeContext {
     pub entry_point: Option<usize>,
     pub exit_points: Vec<usize>,
     pub variables: Vec<ScopeVariable>,
+    pub call_context: CallContext,
     slot_count: usize,
 }
 
@@ -48,6 +55,7 @@ impl Default for ScopeContext {
             entry_point: None,
             exit_points: Vec::new(),
             variables: Vec::new(),
+            call_context: Default::default(),
             slot_count: 0,
         }
     }
