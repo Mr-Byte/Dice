@@ -17,8 +17,13 @@ impl NodeVisitor<&SafeAccess> for Compiler {
         self.context()?.assembler().neq(*span);
 
         let safe_access_jump = self.context()?.assembler().jump_if_false(*span);
+        self.context()?
+            .scope_stack()
+            .top_mut()?
+            .expression_exit_points
+            .push(safe_access_jump as usize);
+
         self.context()?.assembler().load_field(field, *span)?;
-        self.context()?.assembler().patch_jump(safe_access_jump);
 
         Ok(())
     }
