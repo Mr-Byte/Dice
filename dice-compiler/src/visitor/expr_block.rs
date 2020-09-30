@@ -33,13 +33,11 @@ impl<'args, T: AsRef<str>> NodeVisitor<(&Block, BlockKind<'args, T>)> for Compil
         for expression in block.expressions.iter() {
             self.visit(*expression)?;
             self.context()?.assembler().pop(block.span);
-            self.patch_expression_exit_points()?;
         }
 
         match block.trailing_expression {
             Some(trailing_expression) => {
                 self.visit(trailing_expression)?;
-                self.patch_expression_exit_points()?;
             }
             None => self.context()?.assembler().push_unit(block.span),
         }
@@ -62,24 +60,6 @@ impl<'args, T: AsRef<str>> NodeVisitor<(&Block, BlockKind<'args, T>)> for Compil
         // If the previous instruction was a return, this will never execute.
         if let BlockKind::Function(_) = kind {
             self.context()?.assembler().ret(block.span)
-        }
-
-        Ok(())
-    }
-}
-
-impl Compiler {
-    fn patch_expression_exit_points(&mut self) -> Result<(), CompilerError> {
-        let exit_points: Vec<usize> = self
-            .context()?
-            .scope_stack()
-            .top_mut()?
-            .expression_exit_points
-            .drain(..)
-            .collect();
-
-        for exit_point in exit_points {
-            self.context()?.assembler().patch_jump(exit_point as u64);
         }
 
         Ok(())
