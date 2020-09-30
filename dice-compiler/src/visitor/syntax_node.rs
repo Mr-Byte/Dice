@@ -1,5 +1,4 @@
 use super::{expr_block::BlockKind, NodeVisitor};
-use crate::scope_stack::CallContext;
 use crate::{compiler::Compiler, error::CompilerError};
 use dice_syntax::{SyntaxNode, SyntaxNodeId};
 
@@ -70,9 +69,9 @@ impl Compiler {
         context.depth -= 1;
 
         if context.depth == 0 {
-            let exit_points = context.exit_points.drain(..).collect::<Vec<_>>();
-            for exit_point in &exit_points {
-                self.context()?.assembler().patch_jump(*exit_point as u64);
+            let exit_points = std::mem::take(&mut context.exit_points);
+            for exit_point in exit_points.into_iter() {
+                self.context()?.assembler().patch_jump(exit_point as u64);
             }
         }
 
