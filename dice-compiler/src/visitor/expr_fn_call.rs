@@ -7,7 +7,9 @@ impl NodeVisitor<&FunctionCall> for Compiler {
         self.visit(node.target)?;
 
         for arg in &node.args {
+            let original_call_context = std::mem::take(&mut self.context()?.scope_stack().top_mut()?.call_context);
             self.visit(*arg)?;
+            self.context()?.scope_stack().top_mut()?.call_context = original_call_context;
         }
 
         self.context()?.assembler().call(node.args.len() as u8, node.span);
