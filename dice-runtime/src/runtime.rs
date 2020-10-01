@@ -231,7 +231,7 @@ impl Runtime {
         if let Some(closure) = closure.as_mut() {
             let upvalue_slot = cursor.read_u8() as usize;
             let mut upvalue = closure.upvalues[upvalue_slot].clone();
-            let value = match &*upvalue.state() {
+            let value = match &*upvalue.state_mut() {
                 UpvalueState::Open(slot) => self.stack.slot(*slot).clone(),
                 UpvalueState::Closed(value) => value.clone(),
             };
@@ -247,7 +247,7 @@ impl Runtime {
             let upvalue_slot = cursor.read_u8() as usize;
             let mut upvalue = closure.upvalues[upvalue_slot].clone();
             let value = self.stack.pop();
-            let result = match &mut *upvalue.state() {
+            let result = match &mut *upvalue.state_mut() {
                 UpvalueState::Open(slot) => {
                     *self.stack.slot(*slot) = value.clone();
                     value
@@ -268,21 +268,27 @@ impl Runtime {
         let offset = cursor.read_u8() as usize;
         let value = std::mem::replace(&mut self.stack.slots(stack_frame.clone())[offset], Value::Null);
         let offset = stack_frame.start + offset;
-        let mut found_index = None;
+        let found_upvalue = self.find_open_upvalue(offset);
 
-        for (index, upvalue) in self.open_upvalues.iter_mut().enumerate() {
-            if let UpvalueState::Open(upvalue_offset) = &*upvalue.state() {
-                if *upvalue_offset == offset {
-                    found_index = Some(index);
-                }
-            }
-        }
-
-        if let Some(index) = found_index {
+        if let Some((index, _)) = found_upvalue {
             if let Some(mut upvalue) = self.open_upvalues.remove(index) {
                 upvalue.close(value);
             }
         }
+    }
+
+    fn find_open_upvalue(&self, offset: usize) -> Option<(usize, Upvalue)> {
+        let mut found_upvalue = None;
+
+        for (index, upvalue) in self.open_upvalues.iter().enumerate() {
+            if let UpvalueState::Open(upvalue_offset) = &*upvalue.state() {
+                if *upvalue_offset == offset {
+                    found_upvalue = Some((index, upvalue.clone()));
+                }
+            }
+        }
+
+        found_upvalue
     }
 
     fn store_global(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
@@ -431,9 +437,17 @@ impl Runtime {
                     let index = cursor.read_u8() as usize;
 
                     if is_parent_local {
-                        let upvalue = Upvalue::new_open(stack_frame.start + index);
-                        self.open_upvalues.push_back(upvalue.clone());
-                        upvalues.push(upvalue);
+                        let offset = stack_frame.start + index;
+                        match self.find_open_upvalue(offset) {
+                            None => {
+                                let upvalue = Upvalue::new_open(stack_frame.start + index);
+                                self.open_upvalues.push_back(upvalue.clone());
+                                upvalues.push(upvalue);
+                            }
+                            Some((_, upvalue)) => {
+                                upvalues.push(upvalue);
+                            }
+                        };
                     } else if let Some(closure) = closure.as_mut() {
                         let upvalue = closure.upvalues[index].clone();
                         upvalues.push(upvalue);

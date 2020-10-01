@@ -1,4 +1,5 @@
 use crate::value::Value;
+use std::cell::Ref;
 use std::{
     cell::{RefCell, RefMut},
     rc::Rc,
@@ -22,7 +23,11 @@ impl Upvalue {
         *self.0.borrow_mut() = UpvalueState::Closed(value);
     }
 
-    pub fn state(&mut self) -> RefMut<'_, UpvalueState> {
+    pub fn state_mut(&mut self) -> RefMut<'_, UpvalueState> {
         self.0.borrow_mut()
+    }
+
+    pub fn state(&self) -> Ref<'_, UpvalueState> {
+        self.0.borrow()
     }
 }
