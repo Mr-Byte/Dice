@@ -21,7 +21,6 @@ impl NodeVisitor<SyntaxNodeId> for Compiler {
             SyntaxNode::LitAnonymousFn(literal) => self.visit(literal)?,
             SyntaxNode::LitObject(literal) => self.visit(literal)?, //self.visit(literal)?,
             SyntaxNode::LitList(literal) => self.visit(literal)?,
-            SyntaxNode::Index(_) => todo!(),
             SyntaxNode::Assignment(assignment) => self.visit(assignment)?,
             SyntaxNode::Unary(unary) => self.visit(unary)?,
             SyntaxNode::Binary(binary) => self.visit(binary)?,
@@ -48,6 +47,11 @@ impl NodeVisitor<SyntaxNodeId> for Compiler {
             SyntaxNode::FunctionCall(fn_call) => {
                 self.enter_call()?;
                 self.visit(fn_call)?;
+                self.exit_call()?;
+            }
+            SyntaxNode::Index(index) => {
+                self.enter_call()?;
+                self.visit(index)?;
                 self.exit_call()?;
             }
         }

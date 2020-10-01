@@ -80,6 +80,9 @@ define_instructions! {
     pub const LOAD_FIELD;
     pub const STORE_FIELD;
 
+    pub const LOAD_INDEX;
+    pub const STORE_INDEX;
+
     pub const NEG;
     pub const NOT;
 

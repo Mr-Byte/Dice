@@ -296,6 +296,11 @@ impl Assembler {
         Ok(())
     }
 
+    pub fn load_index(&mut self, span: Span) {
+        self.source_map.insert(self.data.len() as u64, span);
+        self.data.put_u8(Instruction::LOAD_INDEX.value());
+    }
+
     pub fn call(&mut self, arg_count: u8, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
         self.data.put_u8(Instruction::CALL.value());

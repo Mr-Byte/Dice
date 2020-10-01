@@ -5,7 +5,7 @@ use super::{
     LitAnonymousFn, LitBool, LitFloat, LitIdent, LitInt, LitList, LitNull, LitObject, LitString, LitUnit, Return,
     SyntaxNode, SyntaxNodeId, SyntaxTree, Unary, UnaryOperator, VarDecl, WhileLoop,
 };
-use crate::{FieldAccess, OpDecl, SafeAccess, Span};
+use crate::{FieldAccess, Index, OpDecl, SafeAccess, Span};
 use id_arena::Arena;
 
 type SyntaxNodeResult = Result<SyntaxNodeId, SyntaxError>;
@@ -60,8 +60,10 @@ impl ParserRule {
             TokenKind::If => ParserRule::new(Some(Parser::if_expression), None, RulePrecedence::None),
 
             // Objects
-            TokenKind::Object => ParserRule::new(Some(Parser::object), None, RulePrecedence::Object),
-            TokenKind::LeftSquare => ParserRule::new(Some(Parser::list), None, RulePrecedence::Object),
+            TokenKind::Object => ParserRule::new(Some(Parser::object), None, RulePrecedence::Primary),
+            TokenKind::LeftSquare => {
+                ParserRule::new(Some(Parser::list), Some(Parser::index_access), RulePrecedence::Call)
+            }
             TokenKind::Dot => ParserRule::new(None, Some(Parser::field_access), RulePrecedence::Call),
             TokenKind::SafeDot => ParserRule::new(None, Some(Parser::safe_field_access), RulePrecedence::Call),
 
@@ -515,6 +517,22 @@ impl Parser {
         });
 
         Ok(self.arena.alloc(node))
+    }
+
+    fn index_access(&mut self, expression: SyntaxNodeId, can_assign: bool, span_start: Span) -> SyntaxNodeResult {
+        self.lexer.consume(TokenKind::LeftSquare)?;
+        let index_expression = self.expression()?;
+        self.lexer.consume(TokenKind::RightSquare)?;
+
+        let span_end = self.lexer.current().span();
+        let node = SyntaxNode::Index(Index {
+            expression,
+            index_expression,
+            span: span_start + span_end,
+        });
+        let lhs_expression = self.arena.alloc(node);
+
+        self.parse_assignment(lhs_expression, can_assign, span_start)
     }
 
     fn field_access(&mut self, lhs: SyntaxNodeId, can_assign: bool, span_start: Span) -> SyntaxNodeResult {

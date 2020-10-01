@@ -9,6 +9,7 @@ mod expr_continue;
 mod expr_field_access;
 mod expr_fn_call;
 mod expr_if;
+mod expr_index;
 mod expr_return;
 mod expr_safe_field_access;
 mod expr_unary_op;

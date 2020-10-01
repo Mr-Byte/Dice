@@ -1,6 +1,6 @@
 use super::NodeVisitor;
 use crate::{compiler::Compiler, error::CompilerError, scope_stack::ScopeVariable};
-use dice_syntax::{Assignment, AssignmentOperator, FieldAccess, Span, SyntaxNode, SyntaxNodeId};
+use dice_syntax::{Assignment, AssignmentOperator, FieldAccess, Index, Span, SyntaxNode, SyntaxNodeId};
 
 impl NodeVisitor<&Assignment> for Compiler {
     fn visit(&mut self, assignment: &Assignment) -> Result<(), CompilerError> {
@@ -18,12 +18,58 @@ impl NodeVisitor<&Assignment> for Compiler {
                 let field_access = field_access.clone();
                 self.assign_field(field_access, assignment)
             }
+            SyntaxNode::Index(index) => {
+                let index = index.clone();
+                self.assign_index(index, assignment)
+            }
             _ => Err(CompilerError::InvalidAssignmentTarget),
         }
     }
 }
 
 impl Compiler {
+    fn assign_index(&mut self, target: Index, assignment: &Assignment) -> Result<(), CompilerError> {
+        // todo!()
+        // self.visit(target.expression)?;
+        //
+        // match assignment.operator {
+        //     AssignmentOperator::Assignment => {
+        //         self.visit(assignment.rhs_expression)?;
+        //         self.context()?.assembler().store_field(&target.field, target.span)?;
+        //     }
+        //     AssignmentOperator::MulAssignment => {
+        //         self.context()?.assembler().dup(target.span);
+        //         self.context()?.assembler().load_field(&target.field, target.span)?;
+        //         self.visit(assignment.rhs_expression)?;
+        //         self.context()?.assembler().mul(assignment.span);
+        //         self.context()?.assembler().store_field(&target.field, target.span)?;
+        //     }
+        //     AssignmentOperator::DivAssignment => {
+        //         self.context()?.assembler().dup(target.span);
+        //         self.context()?.assembler().load_field(&target.field, target.span)?;
+        //         self.visit(assignment.rhs_expression)?;
+        //         self.context()?.assembler().div(assignment.span);
+        //         self.context()?.assembler().store_field(&target.field, target.span)?;
+        //     }
+        //     AssignmentOperator::AddAssignment => {
+        //         self.context()?.assembler().dup(target.span);
+        //         self.context()?.assembler().load_field(&target.field, target.span)?;
+        //         self.visit(assignment.rhs_expression)?;
+        //         self.context()?.assembler().add(assignment.span);
+        //         self.context()?.assembler().store_field(&target.field, target.span)?;
+        //     }
+        //     AssignmentOperator::SubAssignment => {
+        //         self.context()?.assembler().dup(target.span);
+        //         self.context()?.assembler().load_field(&target.field, target.span)?;
+        //         self.visit(assignment.rhs_expression)?;
+        //         self.context()?.assembler().sub(assignment.span);
+        //         self.context()?.assembler().store_field(&target.field, target.span)?;
+        //     }
+        // }
+
+        Ok(())
+    }
+
     fn assign_field(&mut self, target: FieldAccess, assignment: &Assignment) -> Result<(), CompilerError> {
         self.visit(target.expression)?;
 

@@ -7,6 +7,9 @@ impl NodeVisitor<&FunctionCall> for Compiler {
         self.visit(node.target)?;
 
         for arg in &node.args {
+            // NOTE: Take the current call context and temporarily store it on the stack, replacing it with a new one, so that
+            // any call chains associated with evaluating the argument short-circuit only in the argument. Once the argument is
+            // compiled, the original call context is restored, so further chained calls will shirt-circuit correctly.
             let original_call_context = std::mem::take(&mut self.context()?.scope_stack().top_mut()?.call_context);
             self.visit(*arg)?;
             self.context()?.scope_stack().top_mut()?.call_context = original_call_context;

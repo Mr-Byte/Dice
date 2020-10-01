@@ -100,6 +100,7 @@ impl Runtime {
                 Instruction::STORE_GLOBAL => self.store_global(bytecode, &mut cursor)?,
                 Instruction::LOAD_FIELD => self.load_field(bytecode, &mut cursor)?,
                 Instruction::STORE_FIELD => self.store_field(bytecode, &mut cursor)?,
+                Instruction::LOAD_INDEX => self.load_index()?,
 
                 Instruction::CLOSURE => self.closure(bytecode, &stack_frame, &mut closure, &mut cursor)?,
                 Instruction::CALL => {
@@ -357,6 +358,28 @@ impl Runtime {
         };
 
         self.stack.push(value);
+
+        Ok(())
+    }
+
+    #[inline]
+    fn load_index(&mut self) -> Result<(), RuntimeError> {
+        let index = self.stack.pop();
+        let target = self.stack.peek(0);
+
+        let result = match target {
+            Value::Object(object) => match index {
+                Value::String(field) => object.fields().get(&**field).cloned(),
+                _ => todo!("Return invalid key type"),
+            },
+            Value::List(list) => match index {
+                Value::Int(index) => list.get(index as usize).cloned(),
+                _ => todo!("Return invalid key type"),
+            },
+            _ => todo!("Return invalid index target error."),
+        };
+
+        *target = result.unwrap_or(Value::Null);
 
         Ok(())
     }
