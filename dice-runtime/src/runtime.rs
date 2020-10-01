@@ -351,7 +351,7 @@ impl Runtime {
             Value::String(key) => match self.stack.pop() {
                 Value::Object(object) => match object.fields().get(&**key) {
                     Some(field) => field.clone(),
-                    None => todo!("Throw an error if the field does not exist."),
+                    None => Value::Null,
                 },
                 _ => todo!("Throw an error if the target is not an object."),
             },
