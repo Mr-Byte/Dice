@@ -6,7 +6,6 @@ edition = "2018"
 
 [dependencies]
 bytes = "0.5"
-static_assertions = "1.1"
 uuid = "0.8.1"
 thiserror = "1.0"
 anyhow = "1.0"

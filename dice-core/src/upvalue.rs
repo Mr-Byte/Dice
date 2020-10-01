@@ -4,9 +4,6 @@ use std::{
     rc::Rc,
 };
 
-static_assertions::assert_eq_size!([u8; 24], UpvalueState);
-static_assertions::assert_eq_size!([u8; 8], Upvalue);
-
 #[derive(Debug)]
 pub enum UpvalueState {
     Open(usize),

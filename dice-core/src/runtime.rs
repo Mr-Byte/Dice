@@ -1,6 +1,5 @@
 use dice_syntax::{Span, SpannedError};
-use static_assertions::_core::fmt::Debug;
-use std::fmt::Display;
+use std::fmt::{Debug, Display};
 
 pub trait Runtime {}
 

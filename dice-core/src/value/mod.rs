@@ -26,8 +26,6 @@ pub enum Value {
     Object(Object),
 }
 
-static_assertions::assert_eq_size!([u8; 16], Value);
-
 impl Value {
     pub fn new_string(string: impl Into<String>) -> Self {
         Self::String(string.into().into())

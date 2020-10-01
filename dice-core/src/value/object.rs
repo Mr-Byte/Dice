@@ -1,5 +1,5 @@
 use crate::value::Value;
-use static_assertions::_core::fmt::Formatter;
+use std::fmt::Formatter;
 use std::{
     cell::{Ref, RefCell, RefMut},
     collections::HashMap,
