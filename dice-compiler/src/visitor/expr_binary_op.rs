@@ -38,7 +38,7 @@ impl Compiler {
         span: Span,
     ) -> Result<(), CompilerError> {
         self.visit(lhs_expression)?;
-        self.context()?.assembler().dup(span);
+        self.context()?.assembler().dup(0, span);
 
         let short_circuit_jump = self.context()?.assembler().jump_if_false(span);
         self.context()?.assembler().pop(span);
@@ -62,7 +62,7 @@ impl Compiler {
         span: Span,
     ) -> Result<(), CompilerError> {
         self.visit(lhs_expression)?;
-        self.context()?.assembler().dup(span);
+        self.context()?.assembler().dup(0, span);
         self.context()?.assembler().not(span);
 
         let short_circuit_jump = self.context()?.assembler().jump_if_false(span);
@@ -114,7 +114,7 @@ impl Compiler {
         span: Span,
     ) -> Result<(), CompilerError> {
         self.visit(lhs_expression)?;
-        self.context()?.assembler().dup(span);
+        self.context()?.assembler().dup(0, span);
         self.context()?.assembler().push_none(span);
         self.context()?.assembler().eq(span);
 

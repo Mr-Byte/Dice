@@ -12,7 +12,7 @@ impl NodeVisitor<&SafeAccess> for Compiler {
         }: &SafeAccess,
     ) -> Result<(), CompilerError> {
         self.visit(*expression)?;
-        self.context()?.assembler().dup(*span);
+        self.context()?.assembler().dup(0, *span);
         self.context()?.assembler().push_none(*span);
         self.context()?.assembler().neq(*span);
 

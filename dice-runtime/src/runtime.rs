@@ -58,7 +58,7 @@ impl Runtime {
                     self.stack.pop();
                 }
                 Instruction::DUP => {
-                    let value = self.stack.peek(0).clone();
+                    let value = self.stack.peek(cursor.read_u8() as usize).clone();
                     self.stack.push(value);
                 }
                 Instruction::SWAP => {
@@ -166,7 +166,7 @@ impl Runtime {
                     self.stack.push(rhs);
                     self.call(2)?;
                 }
-                None => todo!(),
+                None => todo!("Pass off to overloaded operator."),
             },
         }
 

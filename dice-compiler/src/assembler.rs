@@ -103,9 +103,10 @@ impl Assembler {
         self.data.put_u8(Instruction::POP.value());
     }
 
-    pub fn dup(&mut self, span: Span) {
+    pub fn dup(&mut self, offset: u8, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
         self.data.put_u8(Instruction::DUP.value());
+        self.data.put_u8(offset);
     }
 
     pub fn swap(&mut self, span: Span) {

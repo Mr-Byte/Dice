@@ -31,8 +31,21 @@ impl Compiler {
     fn assign_index(&mut self, target: Index, assignment: &Assignment) -> Result<(), CompilerError> {
         self.visit(target.expression)?;
         self.visit(target.index_expression)?;
-        self.visit(assignment.rhs_expression)?;
-        self.context()?.assembler().store_index(assignment.span);
+
+        match assignment.operator {
+            AssignmentOperator::Assignment => {
+                self.visit(assignment.rhs_expression)?;
+                self.context()?.assembler().store_index(assignment.span);
+            }
+            operator => {
+                self.context()?.assembler().dup(1, assignment.span);
+                self.context()?.assembler().dup(1, assignment.span);
+                self.context()?.assembler().load_index(assignment.span);
+                self.visit(assignment.rhs_expression)?;
+                self.visit_operator(operator, assignment.span)?;
+                self.context()?.assembler().store_index(assignment.span);
+            }
+        }
 
         Ok(())
     }
@@ -46,7 +59,7 @@ impl Compiler {
                 self.context()?.assembler().store_field(&target.field, target.span)?;
             }
             operator => {
-                self.context()?.assembler().dup(target.span);
+                self.context()?.assembler().dup(0, target.span);
                 self.context()?.assembler().load_field(&target.field, target.span)?;
                 self.visit(assignment.rhs_expression)?;
                 self.visit_operator(operator, target.span)?;
