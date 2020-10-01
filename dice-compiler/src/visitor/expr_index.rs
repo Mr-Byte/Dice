@@ -4,7 +4,7 @@ use dice_syntax::Index;
 
 impl NodeVisitor<&Index> for Compiler {
     fn visit(&mut self, node: &Index) -> Result<(), CompilerError> {
-        self.visit(node.expression);
+        self.visit(node.expression)?;
 
         // NOTE: Take the current call context and temporarily store it on the stack, replacing it with a new one, so that
         // any call chains associated with evaluating the index short-circuit only in the index. Once the index is

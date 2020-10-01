@@ -19,7 +19,7 @@ impl NodeVisitor<SyntaxNodeId> for Compiler {
             SyntaxNode::LitFloat(literal) => self.visit(literal)?,
             SyntaxNode::LitString(literal) => self.visit(literal)?,
             SyntaxNode::LitAnonymousFn(literal) => self.visit(literal)?,
-            SyntaxNode::LitObject(literal) => self.visit(literal)?, //self.visit(literal)?,
+            SyntaxNode::LitObject(literal) => self.visit(literal)?,
             SyntaxNode::LitList(literal) => self.visit(literal)?,
             SyntaxNode::Assignment(assignment) => self.visit(assignment)?,
             SyntaxNode::Unary(unary) => self.visit(unary)?,
