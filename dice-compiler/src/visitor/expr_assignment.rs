@@ -29,7 +29,11 @@ impl NodeVisitor<&Assignment> for Compiler {
 
 impl Compiler {
     fn assign_index(&mut self, target: Index, assignment: &Assignment) -> Result<(), CompilerError> {
-        // todo!()
+        self.visit(target.expression)?;
+        self.visit(target.index_expression)?;
+        self.visit(assignment.rhs_expression)?;
+        self.context()?.assembler().store_index(assignment.span);
+
         // self.visit(target.expression)?;
         //
         // match assignment.operator {

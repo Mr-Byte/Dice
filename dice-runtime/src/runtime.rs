@@ -101,6 +101,7 @@ impl Runtime {
                 Instruction::LOAD_FIELD => self.load_field(bytecode, &mut cursor)?,
                 Instruction::STORE_FIELD => self.store_field(bytecode, &mut cursor)?,
                 Instruction::LOAD_INDEX => self.load_index()?,
+                Instruction::STORE_INDEX => self.store_index()?,
 
                 Instruction::CLOSURE => self.closure(bytecode, &stack_frame, &mut closure, &mut cursor)?,
                 Instruction::CALL => {
@@ -363,6 +364,33 @@ impl Runtime {
     }
 
     #[inline]
+    fn store_index(&mut self) -> Result<(), RuntimeError> {
+        let value = self.stack.pop();
+        let index = self.stack.pop();
+        let target = self.stack.peek(0);
+
+        match target {
+            Value::Object(object) => match index {
+                Value::String(field) => {
+                    object.fields_mut().insert((*field).clone(), value.clone());
+                    *target = value;
+                }
+                _ => todo!("Return invalid key type"),
+            },
+            Value::List(list) => match index {
+                Value::Int(index) => {
+                    list.elements_mut()[index as usize] = value.clone();
+                    *target = value;
+                }
+                _ => todo!("Return invalid key type"),
+            },
+            _ => todo!("Return invalid index target error."),
+        };
+
+        Ok(())
+    }
+
+    #[inline]
     fn load_index(&mut self) -> Result<(), RuntimeError> {
         let index = self.stack.pop();
         let target = self.stack.peek(0);
@@ -373,7 +401,7 @@ impl Runtime {
                 _ => todo!("Return invalid key type"),
             },
             Value::List(list) => match index {
-                Value::Int(index) => list.get(index as usize).cloned(),
+                Value::Int(index) => list.elements().get(index as usize).cloned(),
                 _ => todo!("Return invalid key type"),
             },
             _ => todo!("Return invalid index target error."),
