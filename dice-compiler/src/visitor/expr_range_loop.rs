@@ -24,10 +24,11 @@ impl NodeVisitor<&RangeLoop> for Compiler {
         // This means that the loop condition will need to be > for exclusive, and >= for inclusive.
         self.visit(range_loop.end)?;
         self.visit(range_loop.start)?;
+
+        let loop_start = self.context()?.assembler().current_position();
         self.context()?.assembler().dup(1, range_loop.span);
         self.context()?.assembler().dup(1, range_loop.span);
 
-        let loop_start = self.context()?.assembler().current_position();
         match range_loop.kind {
             RangeLoopKind::Exclusive => self.context()?.assembler().gt(range_loop.span),
             RangeLoopKind::Inclusive => self.context()?.assembler().gte(range_loop.span),
@@ -58,10 +59,17 @@ impl NodeVisitor<&RangeLoop> for Compiler {
             .load_local(variable_slot as u8, range_loop.span);
         self.context()?.assembler().push_i1(range_loop.span);
         self.context()?.assembler().add(range_loop.span);
-        self.context()?.assembler().dup(1, range_loop.span);
-        self.context()?.assembler().dup(1, range_loop.span);
 
         let scope_context = self.context()?.scope_stack().pop_scope()?;
+
+        for variable in scope_context.variables {
+            if variable.is_captured {
+                self.context()?
+                    .assembler()
+                    .close_upvalue(variable.slot as u8, range_loop.span);
+            }
+        }
+
         self.context()?.assembler().jump_back(loop_start, range_loop.span);
 
         self.context()?.assembler().patch_jump(loop_jump);
