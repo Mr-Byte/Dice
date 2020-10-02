@@ -45,7 +45,7 @@ impl Runtime {
 
         while let Some(instruction) = cursor.read_instruction() {
             match instruction {
-                Instruction::PUSH_NONE => self.stack.push(Value::Null),
+                Instruction::PUSH_NULL => self.stack.push(Value::Null),
                 Instruction::PUSH_UNIT => self.stack.push(Value::Unit),
                 Instruction::PUSH_FALSE => self.stack.push(Value::Bool(false)),
                 Instruction::PUSH_TRUE => self.stack.push(Value::Bool(true)),

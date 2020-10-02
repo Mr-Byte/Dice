@@ -26,9 +26,9 @@ impl Assembler {
         )
     }
 
-    pub fn push_none(&mut self, span: Span) {
+    pub fn push_null(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::PUSH_NONE.value());
+        self.data.put_u8(Instruction::PUSH_NULL.value());
     }
 
     pub fn push_unit(&mut self, span: Span) {
@@ -349,6 +349,10 @@ macro_rules! emit_bytecode {
         emit_bytecode! { $assembler, $span => $($rest)* }
     };
 
+    ($assembler:expr, $span:expr => PUSH_NULL; $($rest:tt)* ) => {
+        $assembler.push_null($span);
+        emit_bytecode! { $assembler, $span => $($rest)* }
+    };
     ($assembler:expr, $span:expr => PUSH_UNIT; $($rest:tt)* ) => {
         $assembler.push_unit($span);
         emit_bytecode! { $assembler, $span => $($rest)* }
@@ -379,6 +383,14 @@ macro_rules! emit_bytecode {
         $assembler.add($span);
         emit_bytecode! { $assembler, $span => $($rest)* }
     };
+    ($assembler:expr, $span:expr => EQ; $($rest:tt)* ) => {{
+        $assembler.eq($span);
+        emit_bytecode! { $assembler, $span => $($rest)* }
+    }};
+    ($assembler:expr, $span:expr => NEQ; $($rest:tt)* ) => {{
+        $assembler.neq($span);
+        emit_bytecode! { $assembler, $span => $($rest)* }
+    }};
     ($assembler:expr, $span:expr => GT; $($rest:tt)* ) => {{
         $assembler.gt($span);
         emit_bytecode! { $assembler, $span => $($rest)* }
@@ -396,7 +408,7 @@ macro_rules! emit_bytecode {
         emit_bytecode! { $assembler, $span => $($rest)* }
     }};
 
-    ($assembler:expr, $span:expr => $loc:ident = JUMP_IF_FALSE; $($rest:tt)* ) => {
+    ($assembler:expr, $span:expr => JUMP_IF_FALSE -> $loc:ident; $($rest:tt)* ) => {
         $loc = $assembler.jump_if_false($span);
         emit_bytecode! { $assembler, $span => $($rest)* }
     };
@@ -415,6 +427,14 @@ macro_rules! emit_bytecode {
         emit_bytecode! { $assembler, $span => $($rest)* }
     };
 
+    ($assembler:expr, $span:expr => LOAD_FIELD $field:expr; $($rest:tt)* ) => {
+        $assembler.load_field($field, $span)?;
+        emit_bytecode! { $assembler, $span => $($rest)* }
+    };
+    ($assembler:expr, $span:expr => STORE_FIELD $field:expr; $($rest:tt)* ) => {
+        $assembler.store_field($field, $span)?;
+        emit_bytecode! { $assembler, $span => $($rest)* }
+    };
     ($assembler:expr, $span:expr => STORE_GLOBAL $global:expr; $($rest:tt)* ) => {
         $assembler.store_global($global, $span)?;
         emit_bytecode! { $assembler, $span => $($rest)* }

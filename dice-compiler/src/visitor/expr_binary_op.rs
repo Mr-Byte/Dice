@@ -115,7 +115,7 @@ impl Compiler {
     ) -> Result<(), CompilerError> {
         self.visit(lhs_expression)?;
         self.context()?.assembler().dup(0, span);
-        self.context()?.assembler().push_none(span);
+        self.context()?.assembler().push_null(span);
         self.context()?.assembler().eq(span);
 
         let coalesce_jump = self.context()?.assembler().jump_if_false(span);

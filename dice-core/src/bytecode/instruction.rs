@@ -47,7 +47,7 @@ macro_rules! define_instructions {
 }
 
 define_instructions! {
-    pub const PUSH_NONE;
+    pub const PUSH_NULL;
     pub const PUSH_UNIT;
 
     pub const PUSH_FALSE;

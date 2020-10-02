@@ -4,7 +4,7 @@ use crate::scope_stack::{ScopeKind, State};
 use crate::visitor::NodeVisitor;
 use dice_syntax::{BinaryOperator, ForLoop, Span, SyntaxNode, SyntaxNodeId};
 
-pub(super) enum RangeLoopKind {
+enum RangeLoopKind {
     Exclusive,
     Inclusive,
 }
@@ -41,14 +41,12 @@ impl NodeVisitor<&RangeLoop> for Compiler {
             context.assembler(), range_loop.span =>
                 STORE_LOCAL variable_slot;
                 DUP 1;
-
                 when matches!(range_loop.kind, RangeLoopKind::Exclusive) => {
                     LT;
                 } else {
                     LTE;
                 }
-
-                loop_exit = JUMP_IF_FALSE;
+                JUMP_IF_FALSE -> loop_exit;
         }
 
         self.visit(range_loop.body)?;
