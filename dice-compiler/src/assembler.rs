@@ -369,6 +369,14 @@ macro_rules! emit_bytecode {
         $assembler.gte($span);
         emit_bytecode! { $assembler, $span => $($rest)* };
     }};
+    ($assembler:expr, $span:expr => LT; $($rest:tt)* ) => {{
+        $assembler.lt($span);
+        emit_bytecode! { $assembler, $span => $($rest)* };
+    }};
+    ($assembler:expr, $span:expr => LTE; $($rest:tt)* ) => {{
+        $assembler.lte($span);
+        emit_bytecode! { $assembler, $span => $($rest)* };
+    }};
 
     ($assembler:expr, $span:expr => $loc:ident = JUMP_IF_FALSE; $($rest:tt)* ) => {
         $loc = $assembler.jump_if_false($span);

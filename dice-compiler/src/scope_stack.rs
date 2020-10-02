@@ -24,6 +24,15 @@ pub enum State {
     Function { is_initialized: bool },
 }
 
+impl State {
+    pub fn initialized_immutable() -> Self {
+        State::Local {
+            is_initialized: true,
+            is_mutable: false,
+        }
+    }
+}
+
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub enum ScopeKind {
     Block,

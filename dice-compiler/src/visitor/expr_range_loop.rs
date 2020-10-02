@@ -20,52 +20,45 @@ pub(super) struct RangeLoop {
 
 impl NodeVisitor<&RangeLoop> for Compiler {
     fn visit(&mut self, range_loop: &RangeLoop) -> Result<(), CompilerError> {
-        // NOTE: Evaluate the end of the range first and duplicate it, so that it doesn't have to be evaluated again.
-        // This means that the loop condition will need to be > for exclusive, and >= for inclusive.
+        // NOTE: Evaluate the end of the range first as a temporary so that it doesn't have to be evaluated again.
         self.visit(range_loop.end)?;
+        // NOTE: The start is then evaluated. It will get popped and re-pushed later when stored as a local.
         self.visit(range_loop.start)?;
 
         let context = self.context()?;
         let loop_start = context.assembler().current_position();
-        let loop_exit;
 
-        // NOTE: Duplicate the end and start conditions, to be consumed by the loop condition.
+        // NOTE: Start a new scope and define the loop variable.
+        context.scope_stack().push_scope(ScopeKind::Loop, None);
+
+        let variable_slot = context
+            .scope_stack()
+            .add_local(range_loop.variable.clone(), State::initialized_immutable())? as u8;
+
+        // NOTE: Store the start condition and duplicate the end condition, to be consumed by the loop condition.
+        // This effectively reverses the order of the end and start conditions on the stack.
         emit_bytecode! {
             context.assembler(), range_loop.span =>
-                DUP 1;
+                STORE_LOCAL variable_slot;
                 DUP 1;
         }
 
         match range_loop.kind {
-            RangeLoopKind::Exclusive => emit_bytecode! { context.assembler(), range_loop.span => GT; },
-            RangeLoopKind::Inclusive => emit_bytecode! { context.assembler(), range_loop.span => GTE; },
+            RangeLoopKind::Exclusive => emit_bytecode! { context.assembler(), range_loop.span => LT; },
+            RangeLoopKind::Inclusive => emit_bytecode! { context.assembler(), range_loop.span => LTE; },
         };
 
+        // NOTE: Exit the loop once the end of the range is met.
+        let loop_exit;
         emit_bytecode! {
             context.assembler(), range_loop.span =>
                 loop_exit = JUMP_IF_FALSE;
         }
 
-        context.scope_stack().push_scope(ScopeKind::Loop, None);
-
-        let variable_slot = context.scope_stack().add_local(
-            range_loop.variable.clone(),
-            State::Local {
-                is_mutable: false,
-                is_initialized: true,
-            },
-        )? as u8;
-
-        // NOTE: Store the current value at the top of the stack in the loop variable.
-        emit_bytecode! {
-            context.assembler(), range_loop.span =>
-                STORE_LOCAL variable_slot;
-                POP;
-        }
-
         self.visit(range_loop.body)?;
 
         let context = self.context()?;
+        // NOTE: Pop off the value from evaluating the loop body and increment the loop variable by 1.
         emit_bytecode! {
             context.assembler(), range_loop.span =>
                 POP;
@@ -74,24 +67,23 @@ impl NodeVisitor<&RangeLoop> for Compiler {
                 ADD;
         }
 
+        // NOTE: Close the scope and close out any upvalues at the end of the loop scope, before jumping back.
         let scope_context = context.scope_stack().pop_scope()?;
-
         emit_bytecode! {
             context.assembler(), range_loop.span =>
                 CLOSE_UPVALUES scope_context.variables;
                 JUMP_BACK loop_start;
         }
 
+        // NOTE: Patch all exit points from the loop to jump to after the end of the loop.
         context.assembler().patch_jump(loop_exit);
         for exit_point in scope_context.exit_points {
             context.assembler().patch_jump(exit_point as u64);
         }
 
-        // TODO: How to handle early exits where the stack doesn't have two temporaries on top?
         // NOTE: Clean up the temporaries stored on the stack and push a unit value.
         emit_bytecode! {
             context.assembler(), range_loop.span =>
-                POP;
                 POP;
                 PUSH_UNIT;
         }
