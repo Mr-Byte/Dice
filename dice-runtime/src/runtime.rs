@@ -152,8 +152,8 @@ impl Runtime {
     #[inline]
     fn add(&mut self) -> Result<(), RuntimeError> {
         match (self.stack.pop(), self.stack.peek(0)) {
-            (Value::Int(rhs), Value::Int(lhs)) => *lhs = *lhs + rhs,
-            (Value::Float(rhs), Value::Float(lhs)) => *lhs = *lhs + rhs,
+            (Value::Int(rhs), Value::Int(lhs)) => *lhs += rhs,
+            (Value::Float(rhs), Value::Float(lhs)) => *lhs += rhs,
             (rhs, _) => match self.globals.get(ADD) {
                 Some(value) => {
                     let lhs = self.stack.pop();
