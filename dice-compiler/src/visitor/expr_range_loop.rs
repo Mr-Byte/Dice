@@ -87,6 +87,7 @@ impl NodeVisitor<&RangeLoop> for Compiler {
             context.assembler().patch_jump(exit_point as u64);
         }
 
+        // TODO: How to handle early exits where the stack doesn't have two temporaries on top?
         // NOTE: Clean up the temporaries stored on the stack and push a unit value.
         emit_bytecode! {
             context.assembler(), range_loop.span =>
