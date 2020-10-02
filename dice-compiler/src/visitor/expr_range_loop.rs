@@ -27,13 +27,13 @@ impl NodeVisitor<&RangeLoop> for Compiler {
 
         let context = self.context()?;
         let loop_start = context.assembler().current_position();
+        let loop_exit;
 
         // NOTE: Start a new scope and define the loop variable.
         context.scope_stack().push_scope(ScopeKind::Loop, None);
-
         let variable_slot = context
             .scope_stack()
-            .add_local(range_loop.variable.clone(), State::initialized_immutable())? as u8;
+            .add_local(range_loop.variable.clone(), State::initialized(false))? as u8;
 
         // NOTE: Store the start condition and duplicate the end condition, to be consumed by the loop condition.
         // This effectively reverses the order of the end and start conditions on the stack.
@@ -41,17 +41,13 @@ impl NodeVisitor<&RangeLoop> for Compiler {
             context.assembler(), range_loop.span =>
                 STORE_LOCAL variable_slot;
                 DUP 1;
-        }
 
-        match range_loop.kind {
-            RangeLoopKind::Exclusive => emit_bytecode! { context.assembler(), range_loop.span => LT; },
-            RangeLoopKind::Inclusive => emit_bytecode! { context.assembler(), range_loop.span => LTE; },
-        };
+                when matches!(range_loop.kind, RangeLoopKind::Exclusive) => {
+                    LT;
+                } else {
+                    LTE;
+                }
 
-        // NOTE: Exit the loop once the end of the range is met.
-        let loop_exit;
-        emit_bytecode! {
-            context.assembler(), range_loop.span =>
                 loop_exit = JUMP_IF_FALSE;
         }
 
@@ -92,7 +88,7 @@ impl NodeVisitor<&RangeLoop> for Compiler {
 }
 
 impl Compiler {
-    pub(super) fn lower_range_loop(&self, for_loop: &ForLoop) -> Option<RangeLoop> {
+    pub(super) fn lower_to_range_loop(&self, for_loop: &ForLoop) -> Option<RangeLoop> {
         let source = self.syntax_tree.get(for_loop.source).expect("Node should exist.");
 
         match source {

@@ -25,15 +25,17 @@ impl NodeVisitor<&OpDecl> for Compiler {
         ));
         let context = self.context()?;
 
-        if !upvalues.is_empty() {
-            context.assembler().closure(value, &upvalues, node.span)?;
-        } else {
-            context.assembler().push_const(value, node.span)?;
-        }
+        emit_bytecode! {
+            context.assembler(), node.span =>
+                when upvalues.is_empty() => {
+                    PUSH_CONST value;
+                } else {
+                    CLOSURE value, &upvalues;
+                }
 
-        context.assembler().store_global(Value::new_string(name), node.span)?;
-        // NOTE: Operators exist as temporaries and should produce a unit on the stack.
-        context.assembler().push_unit(node.span);
+                STORE_GLOBAL Value::new_string(name);
+                PUSH_UNIT;
+        }
 
         Ok(())
     }

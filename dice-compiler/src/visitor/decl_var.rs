@@ -7,15 +7,15 @@ impl NodeVisitor<&VarDecl> for Compiler {
         self.visit(var_decl.expr)?;
 
         let name = var_decl.name.clone();
-        let slot = self.context()?.scope_stack().add_local(
-            name,
-            State::Local {
-                is_mutable: var_decl.is_mutable,
-                is_initialized: true, // TODO: Once initialization can be split from declaration mark this accordingly.
-            },
-        )? as u8;
+        let slot = self
+            .context()?
+            .scope_stack()
+            .add_local(name, State::initialized(var_decl.is_mutable))? as u8;
 
-        self.context()?.assembler().store_local(slot, var_decl.span);
+        emit_bytecode! {
+            self.context()?.assembler(), var_decl.span =>
+                STORE_LOCAL slot;
+        }
 
         Ok(())
     }

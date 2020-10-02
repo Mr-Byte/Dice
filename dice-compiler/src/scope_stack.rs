@@ -25,10 +25,10 @@ pub enum State {
 }
 
 impl State {
-    pub fn initialized_immutable() -> Self {
+    pub fn initialized(is_mutable: bool) -> Self {
         State::Local {
             is_initialized: true,
-            is_mutable: false,
+            is_mutable,
         }
     }
 }
