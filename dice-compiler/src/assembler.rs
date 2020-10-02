@@ -337,18 +337,66 @@ impl Assembler {
 
 #[macro_export]
 macro_rules! emit_bytecode {
-    ($assembler:expr =>) => {};
-    ($assembler:expr => POP $span:expr; $($rest:tt)* ) => {
-        $assembler.pop($span);
-        emit_bytecode! { $assembler => $($rest)* };
+    ($assembler:expr, $span:expr =>) => {};
+
+    ($assembler:expr, $span:expr => PUSH_UNIT; $($rest:tt)* ) => {
+        $assembler.push_unit($span);
+        emit_bytecode! { $assembler, $span => $($rest)* };
     };
-    ($assembler:expr => DUP $slot:expr, $span:expr; $($rest:tt)* ) => {
-        $assembler.dup($slot, $span);
-        emit_bytecode! { $assembler => $($rest)* };
-    };
-    ($assembler:expr => $loc:ident = JUMP_IF_FALSE $span:expr; $($rest:tt)* ) => {
-        $loc = $assembler.jump_if_false($span);
-        emit_bytecode! { $assembler => $($rest)* };
+    ($assembler:expr, $span:expr => PUSH_I1; $($rest:tt)* ) => {
+        $assembler.push_i1($span);
+        emit_bytecode! { $assembler, $span => $($rest)* };
     };
 
+    ($assembler:expr, $span:expr => POP; $($rest:tt)* ) => {
+        $assembler.pop($span);
+        emit_bytecode! { $assembler, $span => $($rest)* };
+    };
+    ($assembler:expr, $span:expr => DUP $slot:expr; $($rest:tt)* ) => {
+        $assembler.dup($slot, $span);
+        emit_bytecode! { $assembler, $span => $($rest)* };
+    };
+
+    ($assembler:expr, $span:expr => ADD; $($rest:tt)* ) => {
+        $assembler.add($span);
+        emit_bytecode! { $assembler, $span => $($rest)* };
+    };
+    ($assembler:expr, $span:expr => GT; $($rest:tt)* ) => {{
+        $assembler.gt($span);
+        emit_bytecode! { $assembler, $span => $($rest)* };
+    }};
+    ($assembler:expr, $span:expr => GTE; $($rest:tt)* ) => {{
+        $assembler.gte($span);
+        emit_bytecode! { $assembler, $span => $($rest)* };
+    }};
+
+    ($assembler:expr, $span:expr => $loc:ident = JUMP_IF_FALSE; $($rest:tt)* ) => {
+        $loc = $assembler.jump_if_false($span);
+        emit_bytecode! { $assembler, $span => $($rest)* };
+    };
+
+    ($assembler:expr, $span:expr => JUMP_BACK $offset:expr; $($rest:tt)* ) => {
+        $assembler.jump_back($offset, $span);
+        emit_bytecode! { $assembler, $span => $($rest)* };
+    };
+
+    ($assembler:expr, $span:expr => LOAD_LOCAL $slot:expr; $($rest:tt)* ) => {
+        $assembler.load_local($slot, $span);
+        emit_bytecode! { $assembler, $span => $($rest)* };
+    };
+
+    ($assembler:expr, $span:expr => STORE_LOCAL $slot:expr; $($rest:tt)* ) => {
+        $assembler.store_local($slot, $span);
+        emit_bytecode! { $assembler, $span => $($rest)* };
+    };
+
+    ($assembler:expr, $span:expr => CLOSE_UPVALUES $variables:expr; $($rest:tt)*) => {
+        for variable in $variables {
+            if variable.is_captured {
+                $assembler.close_upvalue(variable.slot as u8, $span);
+            }
+        }
+
+        emit_bytecode! { $assembler, $span => $($rest)* };
+    }
 }

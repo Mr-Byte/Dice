@@ -27,22 +27,23 @@ impl NodeVisitor<&RangeLoop> for Compiler {
 
         let context = self.context()?;
         let loop_start = context.assembler().current_position();
-        let loop_jump;
+        let loop_exit;
 
+        // NOTE: Duplicate the end and start conditions, to be consumed by the loop condition.
         emit_bytecode! {
-            context.assembler() =>
-                DUP 1, range_loop.span;
-                DUP 1, range_loop.span;
+            context.assembler(), range_loop.span =>
+                DUP 1;
+                DUP 1;
         }
 
         match range_loop.kind {
-            RangeLoopKind::Exclusive => context.assembler().gt(range_loop.span),
-            RangeLoopKind::Inclusive => context.assembler().gte(range_loop.span),
-        }
+            RangeLoopKind::Exclusive => emit_bytecode! { context.assembler(), range_loop.span => GT; },
+            RangeLoopKind::Inclusive => emit_bytecode! { context.assembler(), range_loop.span => GTE; },
+        };
 
         emit_bytecode! {
-            context.assembler() =>
-                loop_jump = JUMP_IF_FALSE range_loop.span;
+            context.assembler(), range_loop.span =>
+                loop_exit = JUMP_IF_FALSE;
         }
 
         context.scope_stack().push_scope(ScopeKind::Loop, None);
@@ -53,42 +54,46 @@ impl NodeVisitor<&RangeLoop> for Compiler {
                 is_mutable: false,
                 is_initialized: true,
             },
-        )?;
+        )? as u8;
 
         // NOTE: Store the current value at the top of the stack in the loop variable.
-        context.assembler().store_local(variable_slot as u8, range_loop.span);
-        context.assembler().pop(range_loop.span);
+        emit_bytecode! {
+            context.assembler(), range_loop.span =>
+                STORE_LOCAL variable_slot;
+                POP;
+        }
 
         self.visit(range_loop.body)?;
 
         let context = self.context()?;
-        context.assembler().pop(range_loop.span);
-        context.assembler().load_local(variable_slot as u8, range_loop.span);
-        context.assembler().push_i1(range_loop.span);
-        context.assembler().add(range_loop.span);
+        emit_bytecode! {
+            context.assembler(), range_loop.span =>
+                POP;
+                LOAD_LOCAL variable_slot;
+                PUSH_I1;
+                ADD;
+        }
 
         let scope_context = context.scope_stack().pop_scope()?;
 
-        for variable in scope_context.variables {
-            if variable.is_captured {
-                context.assembler().close_upvalue(variable.slot as u8, range_loop.span);
-            }
+        emit_bytecode! {
+            context.assembler(), range_loop.span =>
+                CLOSE_UPVALUES scope_context.variables;
+                JUMP_BACK loop_start;
         }
 
-        context.assembler().jump_back(loop_start, range_loop.span);
-
-        context.assembler().patch_jump(loop_jump);
+        context.assembler().patch_jump(loop_exit);
         for exit_point in scope_context.exit_points {
             context.assembler().patch_jump(exit_point as u64);
         }
 
-        // NOTE: Clean up the temporaries stored on the stack.
-        context.assembler().pop(range_loop.span);
-        context.assembler().pop(range_loop.span);
-
-        // NOTE: For loops always evaluate to Unit.
-        context.assembler().push_unit(range_loop.span);
-
+        // NOTE: Clean up the temporaries stored on the stack and push a unit value.
+        emit_bytecode! {
+            context.assembler(), range_loop.span =>
+                POP;
+                POP;
+                PUSH_UNIT;
+        }
         Ok(())
     }
 }
