@@ -1,3 +1,4 @@
+#[macro_use]
 mod assembler;
 pub mod compiler;
 mod compiler_stack;

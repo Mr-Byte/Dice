@@ -334,3 +334,21 @@ impl Assembler {
         Ok(position as u8)
     }
 }
+
+#[macro_export]
+macro_rules! emit_bytecode {
+    ($assembler:expr =>) => {};
+    ($assembler:expr => POP $span:expr; $($rest:tt)* ) => {
+        $assembler.pop($span);
+        emit_bytecode! { $assembler => $($rest)* };
+    };
+    ($assembler:expr => DUP $slot:expr, $span:expr; $($rest:tt)* ) => {
+        $assembler.dup($slot, $span);
+        emit_bytecode! { $assembler => $($rest)* };
+    };
+    ($assembler:expr => $loc:ident = JUMP_IF_FALSE $span:expr; $($rest:tt)* ) => {
+        $loc = $assembler.jump_if_false($span);
+        emit_bytecode! { $assembler => $($rest)* };
+    };
+
+}
