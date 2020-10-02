@@ -42,6 +42,7 @@ impl<'args, T: AsRef<str>> NodeVisitor<(&Block, BlockKind<'args, T>)> for Compil
             None => self.context()?.assembler().push_unit(block.span),
         }
 
+        // NOTE: If in context of a loop, pop the last value off the stack.
         if let BlockKind::Loop = kind {
             self.context()?.assembler().pop(block.span);
         }

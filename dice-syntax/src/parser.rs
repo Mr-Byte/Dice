@@ -5,7 +5,7 @@ use super::{
     LitAnonymousFn, LitBool, LitFloat, LitIdent, LitInt, LitList, LitNull, LitObject, LitString, LitUnit, Return,
     SyntaxNode, SyntaxNodeId, SyntaxTree, Unary, UnaryOperator, VarDecl, WhileLoop,
 };
-use crate::{FieldAccess, Index, OpDecl, SafeAccess, Span};
+use crate::{FieldAccess, ForLoop, Index, OpDecl, SafeAccess, Span};
 use id_arena::Arena;
 
 type SyntaxNodeResult = Result<SyntaxNodeId, SyntaxError>;
@@ -184,6 +184,7 @@ impl Parser {
             let expression = match next_token.kind {
                 TokenKind::If => self.if_expression(false)?,
                 TokenKind::While => self.while_statement()?,
+                TokenKind::For => self.for_statement()?,
                 TokenKind::Let => self.variable_decl()?,
                 TokenKind::Function => self.fn_decl()?,
                 TokenKind::Operator => self.op_decl()?,
@@ -279,6 +280,23 @@ impl Parser {
         let span_end = self.lexer.current().span();
         let node = SyntaxNode::WhileLoop(WhileLoop {
             condition,
+            body,
+            span: span_start + span_end,
+        });
+
+        Ok(self.arena.alloc(node))
+    }
+
+    fn for_statement(&mut self) -> SyntaxNodeResult {
+        let span_start = self.lexer.consume(TokenKind::For)?.span();
+        let (_, variable) = self.lexer.consume_ident()?;
+        self.lexer.consume(TokenKind::In)?;
+        let source = self.expression()?;
+        let body = self.block_expression(false)?;
+        let span_end = self.lexer.current().span();
+        let node = SyntaxNode::ForLoop(ForLoop {
+            variable,
+            source,
             body,
             span: span_start + span_end,
         });

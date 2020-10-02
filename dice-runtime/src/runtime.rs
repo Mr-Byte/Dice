@@ -61,11 +61,7 @@ impl Runtime {
                     let value = self.stack.peek(cursor.read_u8() as usize).clone();
                     self.stack.push(value);
                 }
-                Instruction::SWAP => {
-                    let slots = self.stack.len() - 2..self.stack.len();
-                    let (first, second) = self.stack.slots(slots).split_at_mut(1);
-                    std::mem::swap(&mut second[0], &mut first[0]);
-                }
+
                 Instruction::CREATE_LIST => self.create_list(&mut cursor),
                 Instruction::CREATE_OBJECT => self.create_object(&mut cursor),
 

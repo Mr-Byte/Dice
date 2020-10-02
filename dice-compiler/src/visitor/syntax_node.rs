@@ -29,7 +29,7 @@ impl NodeVisitor<SyntaxNodeId> for Compiler {
             SyntaxNode::OpDecl(func) => self.visit(func)?,
             SyntaxNode::IfExpression(conditional) => self.visit(conditional)?,
             SyntaxNode::WhileLoop(while_loop) => self.visit(while_loop)?,
-            SyntaxNode::ForLoop(_) => todo!(),
+            SyntaxNode::ForLoop(for_loop) => self.visit(for_loop)?,
             SyntaxNode::Break(break_node) => self.visit(break_node)?,
             SyntaxNode::Continue(continue_node) => self.visit(continue_node)?,
             SyntaxNode::Block(block) => self.visit((block, BlockKind::<&str>::Block))?,

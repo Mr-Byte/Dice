@@ -17,14 +17,12 @@ default-members = [
 codegen-units = 1
 debug = true
 
-[prfile.release.package."*"]
-lto = "fat"
+[profile.release.package."*"]
 codegen-units = 1
 
 [profile.bench]
 lto = "fat"
 codegen-units = 1
 
-[prfile.bench.package."*"]
-lto = "fat"
+[profile.bench.package."*"]
 codegen-units = 1
