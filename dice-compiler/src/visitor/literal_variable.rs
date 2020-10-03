@@ -1,6 +1,5 @@
 use super::NodeVisitor;
 use crate::{compiler::Compiler, error::CompilerError};
-use dice_core::value::Value;
 use dice_syntax::LitIdent;
 
 impl NodeVisitor<&LitIdent> for Compiler {
@@ -28,9 +27,7 @@ impl NodeVisitor<&LitIdent> for Compiler {
             return Ok(());
         }
 
-        self.context()?
-            .assembler()
-            .load_global(Value::String(name.clone().into()), *span)?;
+        self.context()?.assembler().load_global(name, *span)?;
 
         Ok(())
     }

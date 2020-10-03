@@ -15,10 +15,10 @@ impl NodeVisitor<&LitAnonymousFn> for Compiler {
         let value = Value::FnScript(FnScript::new(name, node.args.len(), bytecode, id));
         let context = self.context()?;
 
-        if !upvalues.is_empty() {
-            context.assembler().closure(value, &upvalues, node.span)?;
-        } else {
+        if upvalues.is_empty() {
             context.assembler().push_const(value, node.span)?;
+        } else {
+            context.assembler().closure(value, &upvalues, node.span)?;
         }
 
         Ok(())

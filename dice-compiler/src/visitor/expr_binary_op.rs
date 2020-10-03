@@ -1,7 +1,6 @@
 use super::NodeVisitor;
 use crate::{compiler::Compiler, error::CompilerError};
-use dice_core::operator::DICE_ROLL;
-use dice_core::value::Value;
+use dice_core::operator::{DICE_ROLL, RANGE_EXCLUSIVE, RANGE_INCLUSIVE};
 use dice_syntax::{Binary, BinaryOperator, Span, SyntaxNodeId};
 
 impl NodeVisitor<&Binary> for Compiler {
@@ -20,8 +19,8 @@ impl NodeVisitor<&Binary> for Compiler {
             BinaryOperator::LogicalOr => self.logical_or(*lhs_expression, *rhs_expression, *span)?,
             BinaryOperator::Pipeline => self.pipeline(*lhs_expression, *rhs_expression, *span)?,
             BinaryOperator::DiceRoll => self.dice_roll(*lhs_expression, *rhs_expression, *span)?,
-            BinaryOperator::RangeInclusive => todo!(),
-            BinaryOperator::RangeExclusive => todo!(),
+            BinaryOperator::RangeInclusive => self.range_inclusive(*lhs_expression, *rhs_expression, *span)?,
+            BinaryOperator::RangeExclusive => self.range_exclusive(*lhs_expression, *rhs_expression, *span)?,
             BinaryOperator::Coalesce => self.coalesce(*lhs_expression, *rhs_expression, *span)?,
             operator => self.binary(*operator, *lhs_expression, *rhs_expression, *span)?,
         }
@@ -97,9 +96,35 @@ impl Compiler {
         rhs_expression: SyntaxNodeId,
         span: Span,
     ) -> Result<(), CompilerError> {
-        self.context()?
-            .assembler()
-            .load_global(Value::new_string(DICE_ROLL), span)?;
+        self.context()?.assembler().load_global(DICE_ROLL, span)?;
+        self.visit(lhs_expression)?;
+        self.visit(rhs_expression)?;
+        self.context()?.assembler().call(2, span);
+
+        Ok(())
+    }
+
+    fn range_inclusive(
+        &mut self,
+        lhs_expression: SyntaxNodeId,
+        rhs_expression: SyntaxNodeId,
+        span: Span,
+    ) -> Result<(), CompilerError> {
+        self.context()?.assembler().load_global(RANGE_INCLUSIVE, span)?;
+        self.visit(lhs_expression)?;
+        self.visit(rhs_expression)?;
+        self.context()?.assembler().call(2, span);
+
+        Ok(())
+    }
+
+    fn range_exclusive(
+        &mut self,
+        lhs_expression: SyntaxNodeId,
+        rhs_expression: SyntaxNodeId,
+        span: Span,
+    ) -> Result<(), CompilerError> {
+        self.context()?.assembler().load_global(RANGE_EXCLUSIVE, span)?;
         self.visit(lhs_expression)?;
         self.visit(rhs_expression)?;
         self.context()?.assembler().call(2, span);
@@ -114,12 +139,17 @@ impl Compiler {
         span: Span,
     ) -> Result<(), CompilerError> {
         self.visit(lhs_expression)?;
-        self.context()?.assembler().dup(0, span);
-        self.context()?.assembler().push_null(span);
-        self.context()?.assembler().eq(span);
+        let coalesce_jump;
+        emit_bytecode! {
+            self.context()?.assembler(), span => [
+                DUP 0;
+                PUSH_NULL;
+                EQ;
+                JUMP_IF_FALSE -> coalesce_jump;
+                POP;
+            ]
+        }
 
-        let coalesce_jump = self.context()?.assembler().jump_if_false(span);
-        self.context()?.assembler().pop(span);
         self.visit(rhs_expression)?;
         self.context()?.assembler().patch_jump(coalesce_jump);
 

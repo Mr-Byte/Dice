@@ -26,15 +26,16 @@ impl NodeVisitor<&OpDecl> for Compiler {
         let context = self.context()?;
 
         emit_bytecode! {
-            context.assembler(), node.span =>
-                when upvalues.is_empty() => {
+            context.assembler(), node.span => [
+                when upvalues.is_empty() => [
                     PUSH_CONST value;
-                } else {
+                ] else [
                     CLOSURE value, &upvalues;
-                }
+                ]
 
-                STORE_GLOBAL Value::new_string(name);
+                STORE_GLOBAL &name;
                 PUSH_UNIT;
+            ]
         }
 
         Ok(())

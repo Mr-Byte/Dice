@@ -15,12 +15,13 @@ impl NodeVisitor<&SafeAccess> for Compiler {
         let safe_access_jump;
 
         emit_bytecode! {
-            self.context()?.assembler(), *span =>
+            self.context()?.assembler(), *span => [
                 DUP 0;
                 PUSH_NULL;
                 NEQ;
                 JUMP_IF_FALSE -> safe_access_jump;
                 LOAD_FIELD field;
+            ]
         }
 
         self.context()?

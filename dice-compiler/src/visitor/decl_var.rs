@@ -13,8 +13,9 @@ impl NodeVisitor<&VarDecl> for Compiler {
             .add_local(name, State::initialized(var_decl.is_mutable))? as u8;
 
         emit_bytecode! {
-            self.context()?.assembler(), var_decl.span =>
+            self.context()?.assembler(), var_decl.span => [
                 STORE_LOCAL slot;
+            ]
         }
 
         Ok(())

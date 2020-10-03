@@ -34,13 +34,18 @@ impl NodeVisitor<&FnDecl> for Compiler {
             local.slot as u8
         };
 
-        if !upvalues.is_empty() {
-            context.assembler().closure(value, &upvalues, node.span)?;
-        } else {
-            context.assembler().push_const(value, node.span)?;
-        }
+        emit_bytecode! {
+            context.assembler(), node.span => [
+                when upvalues.is_empty() => [
+                    PUSH_CONST value;
+                ] else [
+                    CLOSURE value, &upvalues;
+                ]
 
-        context.assembler().store_local(slot as u8, node.span);
+                STORE_LOCAL slot;
+                PUSH_UNIT;
+            ]
+        }
 
         Ok(())
     }
