@@ -298,6 +298,20 @@ impl Assembler {
         Ok(())
     }
 
+    pub fn load_module(&mut self, path: impl Into<String>, span: Span) -> Result<(), CompilerError> {
+        self.load_module_impl(path.into(), span)
+    }
+
+    fn load_module_impl(&mut self, path: String, span: Span) -> Result<(), CompilerError> {
+        let const_slot = self.make_constant(Value::new_string(path))?;
+
+        self.source_map.insert(self.data.len() as u64, span);
+        self.data.put_u8(Instruction::LOAD_MODULE.value());
+        self.data.put_u8(const_slot);
+
+        Ok(())
+    }
+
     pub fn load_index(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
         self.data.put_u8(Instruction::LOAD_INDEX.value());
@@ -345,11 +359,27 @@ impl Assembler {
 macro_rules! emit_bytecode {
     ($assembler:expr, $span:expr => [] ) => {};
 
-    ($assembler:expr, $span:expr => [when $c:expr => [ $($t:tt)* ] else [ $($f:tt)* ] $($rest:tt)*]) => {
+    ($assembler:expr, $span:expr => [if $c:expr => [ $($t:tt)* ] else [ $($f:tt)* ] $($rest:tt)*]) => {
         if $c {
             emit_bytecode! { $assembler, $span => [$($t)*] }
         } else {
             emit_bytecode! { $assembler, $span => [$($f)*] }
+        }
+
+        emit_bytecode! { $assembler, $span => [$($rest)*] }
+    };
+
+    ($assembler:expr, $span:expr => [if let $p:path = $c:expr => [ $($t:tt)* ] $($rest:tt)*]) => {
+        if let $p = $c {
+            emit_bytecode! { $assembler, $span => [$($t)*] }
+        }
+
+        emit_bytecode! { $assembler, $span => [$($rest)*] }
+    };
+
+    ($assembler:expr, $span:expr => [for $i:pat in $c:expr => [ $($b:tt)* ] $($rest:tt)*]) => {
+        for $i in $c {
+            emit_bytecode! { $assembler, $span => [ $($b)* ]}
         }
 
         emit_bytecode! { $assembler, $span => [$($rest)*] }
@@ -445,6 +475,12 @@ macro_rules! emit_bytecode {
         $assembler.store_global($global, $span)?;
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
+
+    ($assembler:expr, $span:expr => [LOAD_MODULE $module:expr; $($rest:tt)*] ) => {
+        $assembler.load_module($module, $span)?;
+        emit_bytecode! { $assembler, $span => [$($rest)*] }
+    };
+
     // ($assembler:expr, $span:expr => STORE_LOCAL $slot:expr; $($rest:tt)* ) => {
     //     $assembler.store_local($slot, $span);
     //     emit_bytecode! { $assembler, $span => [$($rest)*] };

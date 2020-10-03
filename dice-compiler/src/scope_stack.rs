@@ -105,7 +105,11 @@ impl ScopeStack {
         self.first_of_kind(kind).is_some()
     }
 
-    pub fn add_local(&mut self, name: String, state: State) -> Result<usize, CompilerError> {
+    pub fn add_local(&mut self, name: impl Into<String>, state: State) -> Result<usize, CompilerError> {
+        self.add_local_impl(name.into(), state)
+    }
+
+    fn add_local_impl(&mut self, name: String, state: State) -> Result<usize, CompilerError> {
         self.top_mut()?.slot_count += 1;
 
         let slot_count = self.stack.iter().rev().map(|scope| scope.slot_count).sum();

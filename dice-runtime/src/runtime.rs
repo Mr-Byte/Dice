@@ -114,6 +114,11 @@ impl Runtime {
                     }
                 }
 
+                Instruction::LOAD_MODULE => {
+                    let _path_slot = cursor.read_u8();
+                    self.stack.push(Value::Object(Object::new(0)));
+                }
+
                 unknown => return Err(RuntimeError::UnknownInstruction(unknown.value())),
             }
         }

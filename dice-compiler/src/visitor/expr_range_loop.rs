@@ -41,7 +41,7 @@ impl NodeVisitor<&RangeLoop> for Compiler {
             context.assembler(), range_loop.span => [
                 STORE_LOCAL variable_slot;
                 DUP 1;
-                when matches!(range_loop.kind, RangeLoopKind::Exclusive) => [
+                if matches!(range_loop.kind, RangeLoopKind::Exclusive) => [
                     LT;
                 ] else [
                     LTE;

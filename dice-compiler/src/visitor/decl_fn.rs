@@ -36,7 +36,7 @@ impl NodeVisitor<&FnDecl> for Compiler {
 
         emit_bytecode! {
             context.assembler(), node.span => [
-                when upvalues.is_empty() => [
+                if upvalues.is_empty() => [
                     PUSH_CONST value;
                 ] else [
                     CLOSURE value, &upvalues;

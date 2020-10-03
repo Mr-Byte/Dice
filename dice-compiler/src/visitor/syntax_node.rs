@@ -27,7 +27,7 @@ impl NodeVisitor<SyntaxNodeId> for Compiler {
             SyntaxNode::VarDecl(variable) => self.visit(variable)?,
             SyntaxNode::FnDecl(func) => self.visit(func)?,
             SyntaxNode::OpDecl(func) => self.visit(func)?,
-            SyntaxNode::ImportDecl(_) => todo!("Imports aren't supported, yet."),
+            SyntaxNode::ImportDecl(import) => self.visit(import)?,
             SyntaxNode::ExportDecl(_) => todo!("Exports aren't supported, yet."),
             SyntaxNode::IfExpression(conditional) => self.visit(conditional)?,
             SyntaxNode::WhileLoop(while_loop) => self.visit(while_loop)?,

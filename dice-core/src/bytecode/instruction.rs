@@ -62,6 +62,8 @@ define_instructions! {
     pub const POP;
     pub const DUP;
 
+    pub const LOAD_MODULE;
+
     pub const CREATE_LIST;
     pub const CREATE_OBJECT;
 

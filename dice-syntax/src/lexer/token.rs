@@ -32,7 +32,7 @@ impl Token {
 pub enum TokenKind {
     // End of input.
     EndOfInput,
-    // Delimeters
+    // Delimiters
     #[token("(")]
     LeftParen,
     #[token(")")]

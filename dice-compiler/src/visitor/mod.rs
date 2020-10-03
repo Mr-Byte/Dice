@@ -1,4 +1,5 @@
 mod decl_fn;
+mod decl_import;
 mod decl_op;
 mod decl_var;
 mod expr_assignment;

@@ -353,8 +353,9 @@ impl Parser {
 
     fn import_decl(&mut self) -> SyntaxNodeResult {
         let span_start = self.lexer.consume(TokenKind::Import)?.span();
-        let next_token = self.lexer.next();
+        let next_token = self.lexer.peek();
         let module_import = if next_token.kind == TokenKind::Star {
+            self.lexer.consume(TokenKind::Star)?;
             self.lexer.consume(TokenKind::As)?;
             let (_, module_import) = self.lexer.consume_ident()?;
 
@@ -366,6 +367,7 @@ impl Parser {
         } else {
             None
         };
+
         let item_imports = if self.lexer.peek().kind == TokenKind::LeftCurly {
             self.parse_args(TokenKind::LeftCurly, TokenKind::RightCurly)?
         } else {

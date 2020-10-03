@@ -78,6 +78,7 @@ impl Display for Bytecode {
                 Instruction::CREATE_OBJECT => write!(f, "{:#010X}", cursor.read_type_id())?,
                 Instruction::PUSH_CONST
                 | Instruction::DUP
+                | Instruction::LOAD_MODULE
                 | Instruction::LOAD_GLOBAL
                 | Instruction::LOAD_LOCAL
                 | Instruction::LOAD_FIELD
