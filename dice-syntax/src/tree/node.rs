@@ -165,6 +165,12 @@ pub struct FnDecl {
 }
 
 #[derive(Debug, Clone)]
+pub struct ExportDecl {
+    pub export: SyntaxNodeId,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone)]
 pub struct OpDecl {
     pub name: String,
     pub args: Vec<String>,

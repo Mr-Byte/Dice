@@ -64,6 +64,7 @@ pub enum SyntaxNode {
     VarDecl(VarDecl),
     FnDecl(FnDecl),
     OpDecl(OpDecl),
+    ExportDecl(ExportDecl),
 
     // Control flow
     IfExpression(IfExpression),
@@ -106,6 +107,7 @@ impl SyntaxNode {
             SyntaxNode::Return(Return { span, .. }) => *span,
             SyntaxNode::Continue(Continue { span, .. }) => *span,
             SyntaxNode::FunctionCall(FunctionCall { span, .. }) => *span,
+            SyntaxNode::ExportDecl(ExportDecl { span, .. }) => *span,
         }
     }
 }

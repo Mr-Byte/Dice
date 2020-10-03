@@ -1,9 +1,9 @@
 use super::{
     error::SyntaxError,
     lexer::{Lexer, Token, TokenKind},
-    Assignment, AssignmentOperator, Binary, BinaryOperator, Block, Break, Continue, FnDecl, FunctionCall, IfExpression,
-    LitAnonymousFn, LitBool, LitFloat, LitIdent, LitInt, LitList, LitNull, LitObject, LitString, LitUnit, Return,
-    SyntaxNode, SyntaxNodeId, SyntaxTree, Unary, UnaryOperator, VarDecl, WhileLoop,
+    Assignment, AssignmentOperator, Binary, BinaryOperator, Block, Break, Continue, ExportDecl, FnDecl, FunctionCall,
+    IfExpression, LitAnonymousFn, LitBool, LitFloat, LitIdent, LitInt, LitList, LitNull, LitObject, LitString, LitUnit,
+    Return, SyntaxNode, SyntaxNodeId, SyntaxTree, Unary, UnaryOperator, VarDecl, WhileLoop,
 };
 use crate::{FieldAccess, ForLoop, Index, OpDecl, SafeAccess, Span};
 use id_arena::Arena;
@@ -185,9 +185,10 @@ impl Parser {
                 TokenKind::If => self.if_expression(false)?,
                 TokenKind::While => self.while_statement()?,
                 TokenKind::For => self.for_statement()?,
-                TokenKind::Let => self.variable_decl()?,
+                TokenKind::Let => self.var_decl()?,
                 TokenKind::Function => self.fn_decl()?,
                 TokenKind::Operator => self.op_decl()?,
+                TokenKind::Export => self.export_decl()?,
                 TokenKind::Return | TokenKind::Break | TokenKind::Continue => self.control_flow()?,
                 _ => self.expression()?,
             };
@@ -350,7 +351,25 @@ impl Parser {
         self.parse_assignment(lhs_expression, can_assign, span_start)
     }
 
-    fn variable_decl(&mut self) -> SyntaxNodeResult {
+    fn export_decl(&mut self) -> SyntaxNodeResult {
+        let span_start = self.lexer.consume(TokenKind::Export)?.span();
+
+        let node = match self.lexer.peek().kind {
+            TokenKind::Let => self.var_decl()?,
+            TokenKind::Function => self.fn_decl()?,
+            _ => todo!("unsupported export type"),
+        };
+
+        let span_end = self.lexer.current().span();
+        let node = SyntaxNode::ExportDecl(ExportDecl {
+            export: node,
+            span: span_start + span_end,
+        });
+
+        Ok(self.arena.alloc(node))
+    }
+
+    fn var_decl(&mut self) -> SyntaxNodeResult {
         let span_start = self.lexer.consume(TokenKind::Let)?.span();
 
         let is_mutable = if self.lexer.peek().kind == TokenKind::Mut {
