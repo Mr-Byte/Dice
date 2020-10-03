@@ -54,7 +54,7 @@ impl Lexer {
     pub fn consume_string(&mut self) -> Result<(Token, String), SyntaxError> {
         let next = self.next();
         if let TokenKind::String(ref string) = next.kind {
-            let string = string.clone();
+            let string = string.trim_matches('"').to_owned();
             Ok((next, string))
         } else {
             Err(SyntaxError::UnexpectedToken(next))

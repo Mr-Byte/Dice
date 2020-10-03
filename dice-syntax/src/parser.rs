@@ -9,7 +9,6 @@ use crate::{FieldAccess, ForLoop, ImportDecl, Index, OpDecl, SafeAccess, Span};
 use id_arena::Arena;
 
 type SyntaxNodeResult = Result<SyntaxNodeId, SyntaxError>;
-
 type PrefixParser = fn(&mut Parser, can_assign: bool) -> Result<SyntaxNodeId, SyntaxError>;
 type InfixParser =
     fn(&mut Parser, lhs: SyntaxNodeId, can_assign: bool, span: Span) -> Result<SyntaxNodeId, SyntaxError>;
