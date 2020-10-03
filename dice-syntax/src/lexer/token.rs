@@ -183,6 +183,8 @@ pub enum TokenKind {
     Impl,
     #[token("import")]
     Import,
+    #[token("as")]
+    As,
     #[token("from")]
     From,
     #[token("export")]

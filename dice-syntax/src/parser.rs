@@ -5,7 +5,7 @@ use super::{
     IfExpression, LitAnonymousFn, LitBool, LitFloat, LitIdent, LitInt, LitList, LitNull, LitObject, LitString, LitUnit,
     Return, SyntaxNode, SyntaxNodeId, SyntaxTree, Unary, UnaryOperator, VarDecl, WhileLoop,
 };
-use crate::{FieldAccess, ForLoop, Index, OpDecl, SafeAccess, Span};
+use crate::{FieldAccess, ForLoop, ImportDecl, Index, OpDecl, SafeAccess, Span};
 use id_arena::Arena;
 
 type SyntaxNodeResult = Result<SyntaxNodeId, SyntaxError>;
@@ -188,6 +188,7 @@ impl Parser {
                 TokenKind::Let => self.var_decl()?,
                 TokenKind::Function => self.fn_decl()?,
                 TokenKind::Operator => self.op_decl()?,
+                TokenKind::Import => self.import_decl()?,
                 TokenKind::Export => self.export_decl()?,
                 TokenKind::Return | TokenKind::Break | TokenKind::Continue => self.control_flow()?,
                 _ => self.expression()?,
@@ -349,6 +350,45 @@ impl Parser {
         };
 
         self.parse_assignment(lhs_expression, can_assign, span_start)
+    }
+
+    fn import_decl(&mut self) -> SyntaxNodeResult {
+        let span_start = self.lexer.consume(TokenKind::Import)?.span();
+        let next_token = self.lexer.next();
+        let module_import = if next_token.kind == TokenKind::Star {
+            self.lexer.consume(TokenKind::As)?;
+            let (_, module_import) = self.lexer.consume_ident()?;
+
+            if self.lexer.peek().kind == TokenKind::Comma {
+                self.lexer.consume(TokenKind::Comma)?;
+            }
+
+            Some(module_import)
+        } else {
+            None
+        };
+        let item_imports = if self.lexer.peek().kind == TokenKind::LeftCurly {
+            self.parse_args(TokenKind::LeftCurly, TokenKind::RightCurly)?
+        } else {
+            Vec::new()
+        };
+
+        if module_import.is_none() && item_imports.is_empty() {
+            todo!("Imports are required error.");
+        }
+
+        self.lexer.consume(TokenKind::From)?;
+
+        let (token, relative_path) = self.lexer.consume_string()?;
+        let span_end = token.span();
+        let node = SyntaxNode::ImportDecl(ImportDecl {
+            module_import,
+            item_imports,
+            relative_path,
+            span: span_start + span_end,
+        });
+
+        Ok(self.arena.alloc(node))
     }
 
     fn export_decl(&mut self) -> SyntaxNodeResult {

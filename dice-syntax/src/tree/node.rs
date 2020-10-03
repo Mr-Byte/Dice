@@ -171,6 +171,14 @@ pub struct ExportDecl {
 }
 
 #[derive(Debug, Clone)]
+pub struct ImportDecl {
+    pub module_import: Option<String>,
+    pub item_imports: Vec<String>,
+    pub relative_path: String,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone)]
 pub struct OpDecl {
     pub name: String,
     pub args: Vec<String>,
