@@ -43,7 +43,6 @@ impl NodeVisitor<&FnDecl> for Compiler {
                 ]
 
                 STORE_LOCAL slot;
-                PUSH_UNIT;
             ]
         }
 

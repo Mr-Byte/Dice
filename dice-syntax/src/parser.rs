@@ -381,29 +381,14 @@ impl Parser {
     }
 
     fn anonymous_fn(&mut self, _: bool) -> SyntaxNodeResult {
-        let span_start = self.lexer.consume(TokenKind::Pipe)?.span();
-
-        // TODO: Parameterize the tokens of parse_args and use it here.
-        let mut args = Vec::new();
-
-        while self.lexer.peek().kind != TokenKind::Pipe {
-            let (_, arg_name) = self.lexer.consume_ident()?;
-            args.push(arg_name);
-
-            if self.lexer.peek().kind == TokenKind::Comma {
-                self.lexer.next();
-            } else if self.lexer.peek().kind != TokenKind::Pipe {
-                return Err(SyntaxError::UnexpectedToken(self.lexer.next()));
-            }
-        }
+        let span_start = self.lexer.peek().span();
+        let args = self.parse_args(TokenKind::Pipe, TokenKind::Pipe)?;
 
         if args.len() > (u8::MAX as usize) {
             return Err(SyntaxError::AnonymousFnTooManyArguments(
                 span_start + self.lexer.current().span(),
             ));
         }
-
-        self.lexer.consume(TokenKind::Pipe)?;
 
         let body = self.expression()?;
         let span_end = self.lexer.current().span();
@@ -423,7 +408,12 @@ impl Parser {
             TokenKind::Identifier(ref name) => name.clone(),
             _ => return Err(SyntaxError::UnexpectedToken(name_token)),
         };
-        let args = self.parse_args(name_token, name.clone())?;
+        let args = self.parse_args(TokenKind::LeftParen, TokenKind::RightParen)?;
+
+        if args.len() > (u8::MAX as usize) {
+            return Err(SyntaxError::FnTooManyArguments(name, name_token.span()));
+        }
+
         let body = self.block_expression(false)?;
         let span_end = self.lexer.current().span();
         let node = SyntaxNode::FnDecl(FnDecl {
@@ -444,7 +434,12 @@ impl Parser {
             TokenKind::Identifier(ref name) => name.clone(),
             _ => return Err(SyntaxError::UnexpectedToken(name_token)),
         };
-        let args = self.parse_args(name_token, name.clone())?;
+        let args = self.parse_args(TokenKind::LeftParen, TokenKind::RightParen)?;
+
+        if args.len() > (u8::MAX as usize) {
+            return Err(SyntaxError::FnTooManyArguments(name, name_token.span()));
+        }
+
         let body = self.block_expression(false)?;
         let span_end = self.lexer.current().span();
         let node = SyntaxNode::OpDecl(OpDecl {
@@ -457,27 +452,27 @@ impl Parser {
         Ok(self.arena.alloc(node))
     }
 
-    fn parse_args(&mut self, name_token: Token, name: String) -> Result<Vec<String>, SyntaxError> {
-        self.lexer.consume(TokenKind::LeftParen)?;
+    fn parse_args(
+        &mut self,
+        open_token_kind: TokenKind,
+        close_token_kind: TokenKind,
+    ) -> Result<Vec<String>, SyntaxError> {
+        self.lexer.consume(open_token_kind)?;
 
         let mut args = Vec::new();
 
-        while self.lexer.peek().kind != TokenKind::RightParen {
+        while self.lexer.peek().kind != close_token_kind {
             let (_, arg_name) = self.lexer.consume_ident()?;
             args.push(arg_name);
 
             if self.lexer.peek().kind == TokenKind::Comma {
                 self.lexer.next();
-            } else if self.lexer.peek().kind != TokenKind::RightParen {
+            } else if self.lexer.peek().kind != close_token_kind {
                 return Err(SyntaxError::UnexpectedToken(self.lexer.next()));
             }
         }
 
-        if args.len() > (u8::MAX as usize) {
-            return Err(SyntaxError::FnTooManyArguments(name, name_token.span()));
-        }
-
-        self.lexer.consume(TokenKind::RightParen)?;
+        self.lexer.consume(close_token_kind)?;
         Ok(args)
     }
 
@@ -556,10 +551,7 @@ impl Parser {
     fn field_access(&mut self, lhs: SyntaxNodeId, can_assign: bool, span_start: Span) -> SyntaxNodeResult {
         self.lexer.consume(TokenKind::Dot)?;
 
-        let field = match self.lexer.next().kind {
-            TokenKind::Identifier(value) => value,
-            _ => todo!("Parse more tokens as idents"),
-        };
+        let (_, field) = self.lexer.consume_ident()?;
         let span_end = self.lexer.current().span();
         let node = SyntaxNode::FieldAccess(FieldAccess {
             expression: lhs,
@@ -574,10 +566,7 @@ impl Parser {
     fn safe_field_access(&mut self, lhs: SyntaxNodeId, _: bool, span_start: Span) -> SyntaxNodeResult {
         self.lexer.consume(TokenKind::SafeDot)?;
 
-        let field = match self.lexer.next().kind {
-            TokenKind::Identifier(value) => value,
-            _ => todo!("Parse more tokens as idents"),
-        };
+        let (_, field) = self.lexer.consume_ident()?;
         let span_end = self.lexer.current().span();
         let node = SyntaxNode::SafeAccess(SafeAccess {
             expression: lhs,
@@ -600,7 +589,6 @@ impl Parser {
             });
             Ok(self.arena.alloc(node))
         } else {
-            // TODO: Inject the remainder of the span?
             let expression = self.expression()?;
             // TODO: Detect trailing commas and produce a tuple instead of a group?
             // How to support single-element tuples?
