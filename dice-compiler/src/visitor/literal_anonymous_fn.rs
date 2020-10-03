@@ -3,7 +3,6 @@ use crate::{compiler::Compiler, error::CompilerError};
 use dice_core::value::{FnScript, Value};
 use dice_syntax::LitAnonymousFn;
 
-// TODO: Extract shared code between anonymous and named fns into a common visitor.
 impl NodeVisitor<&LitAnonymousFn> for Compiler {
     fn visit(&mut self, node: &LitAnonymousFn) -> Result<(), CompilerError> {
         let id = uuid::Uuid::new_v4();

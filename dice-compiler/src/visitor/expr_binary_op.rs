@@ -13,7 +13,6 @@ impl NodeVisitor<&Binary> for Compiler {
             span,
         }: &Binary,
     ) -> Result<(), CompilerError> {
-        // TODO: Decompose this into multiple expressions.
         match operator {
             BinaryOperator::LogicalAnd => self.logical_and(*lhs_expression, *rhs_expression, *span)?,
             BinaryOperator::LogicalOr => self.logical_or(*lhs_expression, *rhs_expression, *span)?,

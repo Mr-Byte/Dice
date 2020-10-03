@@ -17,5 +17,3 @@ pub const OPERATORS: &[&str] = &[
     RANGE_EXCLUSIVE,
     RANGE_INCLUSIVE,
 ];
-
-// TODO: Add more operators.
