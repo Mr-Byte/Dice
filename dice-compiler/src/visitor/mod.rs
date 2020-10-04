@@ -1,3 +1,4 @@
+mod decl_export;
 mod decl_fn;
 mod decl_import;
 mod decl_op;

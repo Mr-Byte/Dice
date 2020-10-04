@@ -1,1 +1,3 @@
-import * as test from "test.dm";
+export fn test(x, y) {
+    x + y
+}

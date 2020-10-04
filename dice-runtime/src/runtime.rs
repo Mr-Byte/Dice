@@ -527,7 +527,7 @@ impl Runtime {
     fn load_module(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
         let path_slot = cursor.read_u8() as usize;
         let path = match &bytecode.constants()[path_slot] {
-            Value::String(path) => std::fs::canonicalize(dbg!(&**path))?,
+            Value::String(path) => std::fs::canonicalize(&**path)?,
             _ => todo!("Invalid path type error."),
         };
         let result = if self.loaded_modules.contains_key(&path) {
