@@ -12,6 +12,7 @@ macro_rules! define_instructions {
 
     ($vis:vis const $first:ident; $($sub_vis:vis const $name:ident;)*) => {
         #[derive(Debug, Copy, Clone, Eq, PartialEq)]
+        #[repr(transparent)]
         pub struct Instruction(u8);
 
         impl Instruction {
@@ -49,50 +50,36 @@ macro_rules! define_instructions {
 define_instructions! {
     pub const PUSH_NULL;
     pub const PUSH_UNIT;
-
     pub const PUSH_FALSE;
     pub const PUSH_TRUE;
-
     pub const PUSH_I0;
     pub const PUSH_I1;
     pub const PUSH_F0;
     pub const PUSH_F1;
     pub const PUSH_CONST;
-
     pub const POP;
     pub const DUP;
-
     pub const LOAD_MODULE;
-
     pub const CREATE_LIST;
     pub const CREATE_OBJECT;
-
     pub const LOAD_GLOBAL;
-    // NOTE: Globals are write-once, if they don't already exist.
-    pub const STORE_GLOBAL;
-
+    pub const STORE_GLOBAL; // NOTE: Globals are write-once, if they don't already exist.
     pub const LOAD_LOCAL;
     pub const STORE_LOCAL;
-
     pub const LOAD_UPVALUE;
     pub const STORE_UPVALUE;
     pub const CLOSE_UPVALUE;
-
     pub const LOAD_FIELD;
     pub const STORE_FIELD;
-
     pub const LOAD_INDEX;
     pub const STORE_INDEX;
-
     pub const NEG;
     pub const NOT;
-
     pub const MUL;
     pub const DIV;
     pub const REM;
     pub const ADD;
     pub const SUB;
-
     pub const GT;
     pub const GTE;
     pub const LT;
@@ -101,14 +88,11 @@ define_instructions! {
     pub const NEQ;
     pub const LOGICAL_AND;
     pub const LOGICAL_OR;
-
     pub const JUMP;
     pub const JUMP_IF_FALSE;
-
     pub const CALL;
     pub const CLOSURE;
     pub const RETURN;
-
-    // NOTE: Dice will support a full suite of type assertions, for now only bool is supported.
     pub const ASSERT_BOOL;
+    // NOTE: Dice will support a full suite of type assertions, for now only bool is supported.
 }
