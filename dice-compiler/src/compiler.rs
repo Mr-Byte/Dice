@@ -45,10 +45,10 @@ impl Compiler {
         let mut compiler = Self::new(syntax_tree, kind);
 
         if kind == CompilationKind::Module {
-            let local_slot = compiler
+            compiler
                 .context()?
                 .scope_stack()
-                .add_local(EXPORT, State::initialized(false))? as u8;
+                .add_local(EXPORT, State::initialized(false))?;
         }
 
         compiler.visit(compiler.syntax_tree.root())?;

@@ -1,5 +1,5 @@
-use crate::{error::RuntimeError, module_loader::ModuleId, runtime::Runtime};
-use dice_compiler::compiler::Compiler;
+use crate::{error::RuntimeError, runtime::Runtime};
+
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
     constants::{ADD, DIV, MUL, REM, SUB},
@@ -87,7 +87,7 @@ impl Runtime {
     }
 
     #[inline]
-    fn dup(&mut self, mut cursor: &mut BytecodeCursor) {
+    fn dup(&mut self, cursor: &mut BytecodeCursor) {
         let value = self.stack.peek(cursor.read_u8() as usize).clone();
         self.stack.push(value);
     }
@@ -502,7 +502,7 @@ impl Runtime {
             Value::FnNative(fn_native) => {
                 let fn_native = fn_native.clone();
                 let mut args = self.stack.pop_count(arg_count);
-                let result = fn_native.call(self, &mut args)?;
+                let result = fn_native.call(self, &args)?;
 
                 self.stack.release_slots(1);
                 self.stack.push(result);
@@ -535,7 +535,7 @@ impl Runtime {
             Entry::Vacant(entry) => {
                 let export = Value::Object(Object::new(0));
                 entry.insert(export.clone());
-                self.run_module(module.bytecode.clone(), export)?
+                self.run_module(module.bytecode, export)?
             }
         };
 

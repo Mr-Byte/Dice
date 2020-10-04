@@ -92,12 +92,6 @@ impl CompilerStack {
             .ok_or_else(|| CompilerError::InternalCompilerError(String::from("Compiler stack cannot be empty.")))
     }
 
-    pub fn top(&mut self) -> Result<&CompilerContext, CompilerError> {
-        self.stack
-            .last()
-            .ok_or_else(|| CompilerError::InternalCompilerError(String::from("Compiler stack cannot be empty.")))
-    }
-
     pub fn offset(&mut self, offset: usize) -> Option<&mut CompilerContext> {
         if offset >= self.stack.len() {
             return None;
