@@ -1,7 +1,4 @@
-use crate::compiler::Compiler;
-use crate::compiler_stack::CompilerKind;
-use crate::error::CompilerError;
-use crate::visitor::NodeVisitor;
+use crate::{compiler::Compiler, compiler_stack::CompilerKind, error::CompilerError, visitor::NodeVisitor};
 use dice_core::constants::EXPORT;
 use dice_syntax::{ExportDecl, SyntaxNode};
 

@@ -1,6 +1,9 @@
 use crate::value::Value;
-use std::cell::{Ref, RefCell, RefMut};
-use std::{fmt::Display, rc::Rc};
+use std::{
+    cell::{Ref, RefCell, RefMut},
+    fmt::Display,
+    rc::Rc,
+};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct List(Rc<RefCell<Vec<Value>>>);

@@ -1,14 +1,12 @@
-use crate::error::RuntimeError;
-use crate::module_loader::ModuleId;
-use crate::runtime::Runtime;
+use crate::{error::RuntimeError, module_loader::ModuleId, runtime::Runtime};
 use dice_compiler::compiler::Compiler;
-use dice_core::bytecode::instruction::Instruction;
-use dice_core::bytecode::{Bytecode, BytecodeCursor};
-use dice_core::constants::{ADD, DIV, MUL, REM, SUB};
-use dice_core::upvalue::{Upvalue, UpvalueState};
-use dice_core::value::{FnClosure, Object, Value};
-use std::collections::hash_map::Entry;
-use std::ops::Range;
+use dice_core::{
+    bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
+    constants::{ADD, DIV, MUL, REM, SUB},
+    upvalue::{Upvalue, UpvalueState},
+    value::{FnClosure, Object, Value},
+};
+use std::{collections::hash_map::Entry, ops::Range};
 
 impl Runtime {
     pub(super) fn execute_bytecode(

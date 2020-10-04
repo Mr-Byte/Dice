@@ -1,9 +1,10 @@
 use crate::error::RuntimeError;
 use dice_compiler::compiler::Compiler;
 use dice_core::bytecode::Bytecode;
-use std::collections::hash_map::Entry;
-use std::collections::HashMap;
-use std::path::PathBuf;
+use std::{
+    collections::{hash_map::Entry, HashMap},
+    path::PathBuf,
+};
 
 #[derive(Clone, Copy, Eq, PartialEq, Hash)]
 pub struct ModuleId(u64);

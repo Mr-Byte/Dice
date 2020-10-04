@@ -1,6 +1,5 @@
 use dice_compiler::error::CompilerError;
-use dice_core::runtime::NativeError;
-use dice_core::value::TypeError;
+use dice_core::{runtime::NativeError, value::TypeError};
 
 #[derive(thiserror::Error, Debug)]
 pub enum RuntimeError {

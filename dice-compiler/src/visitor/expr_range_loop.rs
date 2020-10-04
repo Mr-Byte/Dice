@@ -1,7 +1,9 @@
-use crate::compiler::Compiler;
-use crate::error::CompilerError;
-use crate::scope_stack::{ScopeKind, State};
-use crate::visitor::NodeVisitor;
+use crate::{
+    compiler::Compiler,
+    error::CompilerError,
+    scope_stack::{ScopeKind, State},
+    visitor::NodeVisitor,
+};
 use dice_syntax::{BinaryOperator, ForLoop, Span, SyntaxNode, SyntaxNodeId};
 
 enum RangeLoopKind {

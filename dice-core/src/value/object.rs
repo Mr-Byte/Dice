@@ -1,9 +1,8 @@
 use crate::value::Value;
-use std::fmt::Formatter;
 use std::{
     cell::{Ref, RefCell, RefMut},
     collections::HashMap,
-    fmt::Display,
+    fmt::{Display, Formatter},
     ops::Deref,
     rc::Rc,
 };

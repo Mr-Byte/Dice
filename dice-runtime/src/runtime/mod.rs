@@ -1,13 +1,14 @@
 mod interpreter;
 mod stack;
 
-use crate::error::RuntimeError;
-use crate::module_loader::{FileModuleLoader, ModuleId, ModuleLoader};
-use crate::runtime::stack::Stack;
-use dice_core::upvalue::UpvalueState;
+use crate::{
+    error::RuntimeError,
+    module_loader::{FileModuleLoader, ModuleId, ModuleLoader},
+    runtime::stack::Stack,
+};
 use dice_core::{
     bytecode::Bytecode,
-    upvalue::Upvalue,
+    upvalue::{Upvalue, UpvalueState},
     value::{FnNative, NativeFn, Value},
 };
 use std::collections::{HashMap, VecDeque};

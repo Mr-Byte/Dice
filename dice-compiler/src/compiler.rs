@@ -1,11 +1,10 @@
-use crate::scope_stack::State;
 use crate::{
     compiler_stack::{CompilerContext, CompilerKind, CompilerStack},
     error::CompilerError,
+    scope_stack::State,
     visitor::{BlockKind, NodeVisitor},
 };
-use dice_core::bytecode::Bytecode;
-use dice_core::constants::EXPORT;
+use dice_core::{bytecode::Bytecode, constants::EXPORT};
 use dice_syntax::{Block, Parser, Span, SyntaxNode, SyntaxTree};
 use std::path::Path;
 
