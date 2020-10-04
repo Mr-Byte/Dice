@@ -1,6 +1,6 @@
 use super::NodeVisitor;
 use crate::{compiler::Compiler, error::CompilerError};
-use dice_core::operator::OPERATORS;
+use dice_core::constants::OPERATORS;
 use dice_core::value::{FnScript, Value};
 use dice_syntax::OpDecl;
 

@@ -1,11 +1,13 @@
 use crate::{error::RuntimeError, stack::Stack};
-use dice_core::operator::ADD;
+use dice_compiler::compiler::Compiler;
+use dice_core::constants::ADD;
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
     upvalue::{Upvalue, UpvalueState},
     value::{FnClosure, FnNative, NativeFn, Object, Value},
 };
 use std::collections::hash_map::Entry;
+use std::path::PathBuf;
 use std::{
     collections::{HashMap, VecDeque},
     ops::Range,
@@ -16,6 +18,7 @@ pub struct Runtime {
     stack: Stack,
     open_upvalues: VecDeque<Upvalue>,
     globals: HashMap<String, Value>,
+    loaded_modules: HashMap<PathBuf, Value>,
 }
 
 // TODO: Split off the main interpreter loop and associated functions into their own module
@@ -24,6 +27,15 @@ pub struct Runtime {
 impl Runtime {
     pub fn run_bytecode(&mut self, bytecode: Bytecode) -> Result<Value, RuntimeError> {
         let stack_frame = self.stack.reserve_slots(bytecode.slot_count());
+        let result = self.execute_bytecode(&bytecode, stack_frame, None);
+        self.stack.release_slots(bytecode.slot_count());
+
+        Ok(result?)
+    }
+
+    fn run_module(&mut self, bytecode: Bytecode, export: Value) -> Result<Value, RuntimeError> {
+        let stack_frame = self.stack.reserve_slots(bytecode.slot_count());
+        *self.stack.slot(stack_frame.start) = export;
         let result = self.execute_bytecode(&bytecode, stack_frame, None);
         self.stack.release_slots(bytecode.slot_count());
 
@@ -114,10 +126,7 @@ impl Runtime {
                     }
                 }
 
-                Instruction::LOAD_MODULE => {
-                    let _path_slot = cursor.read_u8();
-                    self.stack.push(Value::Object(Object::new(0)));
-                }
+                Instruction::LOAD_MODULE => self.load_module(&bytecode, &mut cursor)?,
 
                 unknown => return Err(RuntimeError::UnknownInstruction(unknown.value())),
             }
@@ -167,7 +176,8 @@ impl Runtime {
                     self.stack.push(rhs);
                     self.call(2)?;
                 }
-                None => todo!("Pass off to overloaded operator."),
+                // TODO: change how this works to try to resolve operator on LHS before falling back on global.
+                None => todo!("No global add operator defined."),
             },
         }
 
@@ -509,6 +519,26 @@ impl Runtime {
 
         // NOTE: Release the number of reserved slots plus the number of arguments plus a slot for the function itself.
         self.stack.release_slots(reserved + arg_count + 1);
+        self.stack.push(result);
+
+        Ok(())
+    }
+
+    fn load_module(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
+        let path_slot = cursor.read_u8() as usize;
+        let path = match &bytecode.constants()[path_slot] {
+            Value::String(path) => std::fs::canonicalize(dbg!(&**path))?,
+            _ => todo!("Invalid path type error."),
+        };
+        let result = if self.loaded_modules.contains_key(&path) {
+            self.loaded_modules[&path].clone()
+        } else {
+            let export = Value::Object(Object::new(0));
+            self.loaded_modules.insert(path.clone(), export.clone());
+            let module = Compiler::compile_module(&path)?;
+            self.run_module(module, export)?
+        };
+
         self.stack.push(result);
 
         Ok(())

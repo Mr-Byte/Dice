@@ -8,7 +8,7 @@ impl NodeVisitor<&LitIdent> for Compiler {
 
         {
             let context = self.context()?;
-            if let Some(scope_variable) = context.scope_stack().local(name_symbol.clone()) {
+            if let Some(scope_variable) = context.scope_stack().local(&name_symbol) {
                 if !scope_variable.is_initialized() {
                     return Err(CompilerError::UninitializedVariable(scope_variable.name.clone()));
                 }

@@ -1,6 +1,6 @@
 use super::NodeVisitor;
 use crate::{compiler::Compiler, error::CompilerError};
-use dice_core::operator::DIE_ROLL;
+use dice_core::constants::DIE_ROLL;
 use dice_syntax::{Span, SyntaxNodeId, Unary, UnaryOperator};
 
 impl NodeVisitor<&Unary> for Compiler {

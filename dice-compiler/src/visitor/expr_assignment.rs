@@ -72,7 +72,7 @@ impl Compiler {
 
     fn assign_ident(&mut self, target: String, assignment: &Assignment) -> Result<(), CompilerError> {
         {
-            if let Some(local) = self.context()?.scope_stack().local(target.clone()) {
+            if let Some(local) = self.context()?.scope_stack().local(&target) {
                 let local = local.clone();
                 self.assign_local(
                     target,

@@ -102,7 +102,7 @@ impl CompilerStack {
     }
 
     pub fn resolve_upvalue(&mut self, name: String, depth: usize) -> Option<usize> {
-        let parent_local = self.offset(depth + 1)?.scope_stack().local(name.clone());
+        let parent_local = self.offset(depth + 1)?.scope_stack().local(&name);
         let descriptor = match parent_local {
             Some(parent_local) => {
                 parent_local.is_captured = true;

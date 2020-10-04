@@ -18,7 +18,7 @@ impl NodeVisitor<&FnDecl> for Compiler {
         let context = self.context()?;
         let slot = {
             let fn_name = node.name.clone();
-            let local = context.scope_stack().local(fn_name.clone()).ok_or_else(|| {
+            let local = context.scope_stack().local(&fn_name).ok_or_else(|| {
                 CompilerError::InternalCompilerError(String::from("Function not already declared in scope."))
             })?;
 

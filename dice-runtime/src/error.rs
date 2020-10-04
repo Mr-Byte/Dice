@@ -1,3 +1,4 @@
+use dice_compiler::error::CompilerError;
 use dice_core::runtime::NativeError;
 
 #[derive(thiserror::Error, Debug)]
@@ -18,4 +19,10 @@ pub enum RuntimeError {
 
     #[error(transparent)]
     NativeError(#[from] NativeError),
+
+    #[error(transparent)]
+    FileError(#[from] std::io::Error),
+
+    #[error(transparent)]
+    CompilerError(#[from] CompilerError),
 }

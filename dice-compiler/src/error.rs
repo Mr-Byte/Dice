@@ -4,6 +4,8 @@ use dice_syntax::{Span, SyntaxError};
 pub enum CompilerError {
     #[error(transparent)]
     SyntaxError(#[from] SyntaxError),
+    #[error(transparent)]
+    FileError(#[from] std::io::Error),
 
     #[error("The item {0} has already been declared in this scope.")]
     ItemAlreadyDeclared(String),

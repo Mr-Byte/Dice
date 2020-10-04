@@ -130,7 +130,7 @@ impl ScopeStack {
         Ok(slot)
     }
 
-    pub fn local(&mut self, name: String) -> Option<&mut ScopeVariable> {
+    pub fn local(&mut self, name: &str) -> Option<&mut ScopeVariable> {
         self.stack
             .iter_mut()
             .rev()

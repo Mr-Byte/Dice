@@ -17,3 +17,5 @@ pub const OPERATORS: &[&str] = &[
     RANGE_EXCLUSIVE,
     RANGE_INCLUSIVE,
 ];
+
+pub const EXPORT: &str = "#export";

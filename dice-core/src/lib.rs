@@ -1,5 +1,5 @@
 pub mod bytecode;
-pub mod operator;
+pub mod constants;
 pub mod runtime;
 pub mod upvalue;
 pub mod value;
