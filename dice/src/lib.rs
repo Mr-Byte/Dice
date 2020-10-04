@@ -9,7 +9,6 @@ pub use dice_core::{
 };
 pub use dice_runtime::error::RuntimeError;
 use dice_runtime::runtime;
-use dice_syntax::SyntaxError;
 
 pub struct Dice {
     runtime: runtime::Runtime,
@@ -35,7 +34,7 @@ impl Dice {
 
 impl Default for Dice {
     fn default() -> Self {
-        let runtime = runtime::Runtime::default();
+        let runtime = runtime::Runtime::with_file_module_loader();
 
         // TODO: Load the prelude into the runtime.
 
@@ -49,6 +48,4 @@ pub enum DiceError {
     RuntimeError(#[from] RuntimeError),
     #[error(transparent)]
     CompilerError(#[from] CompilerError),
-    #[error(transparent)]
-    SyntaxError(#[from] SyntaxError),
 }

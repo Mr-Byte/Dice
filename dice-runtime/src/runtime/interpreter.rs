@@ -1,52 +1,17 @@
-use crate::{error::RuntimeError, stack::Stack};
+use crate::error::RuntimeError;
+use crate::module_loader::ModuleId;
+use crate::runtime::Runtime;
 use dice_compiler::compiler::Compiler;
-use dice_core::constants::ADD;
-use dice_core::{
-    bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
-    upvalue::{Upvalue, UpvalueState},
-    value::{FnClosure, FnNative, NativeFn, Object, Value},
-};
+use dice_core::bytecode::instruction::Instruction;
+use dice_core::bytecode::{Bytecode, BytecodeCursor};
+use dice_core::constants::{ADD, DIV, MUL, REM, SUB};
+use dice_core::upvalue::{Upvalue, UpvalueState};
+use dice_core::value::{FnClosure, Object, Value};
 use std::collections::hash_map::Entry;
-use std::path::PathBuf;
-use std::{
-    collections::{HashMap, VecDeque},
-    ops::Range,
-};
+use std::ops::Range;
 
-#[derive(Default)]
-pub struct Runtime {
-    stack: Stack,
-    open_upvalues: VecDeque<Upvalue>,
-    globals: HashMap<String, Value>,
-    loaded_modules: HashMap<PathBuf, Value>,
-}
-
-// TODO: Split off the main interpreter loop and associated functions into their own module
-// TODO: Add a public function to allow native code to execute scripted functions
-//     fn run_fn(target: Value, args: &[Value]) -> Result<Value, Error>
 impl Runtime {
-    pub fn run_bytecode(&mut self, bytecode: Bytecode) -> Result<Value, RuntimeError> {
-        let stack_frame = self.stack.reserve_slots(bytecode.slot_count());
-        let result = self.execute_bytecode(&bytecode, stack_frame, None);
-        self.stack.release_slots(bytecode.slot_count());
-
-        Ok(result?)
-    }
-
-    fn run_module(&mut self, bytecode: Bytecode, export: Value) -> Result<Value, RuntimeError> {
-        let stack_frame = self.stack.reserve_slots(bytecode.slot_count());
-        *self.stack.slot(stack_frame.start) = export;
-        let result = self.execute_bytecode(&bytecode, stack_frame, None);
-        self.stack.release_slots(bytecode.slot_count());
-
-        Ok(result?)
-    }
-
-    pub fn register_native_fn(&mut self, name: String, native_fn: NativeFn) {
-        self.globals.insert(name, Value::FnNative(FnNative::new(native_fn)));
-    }
-
-    fn execute_bytecode(
+    pub(super) fn execute_bytecode(
         &mut self,
         bytecode: &Bytecode,
         stack_frame: Range<usize>,
@@ -66,39 +31,25 @@ impl Runtime {
                 Instruction::PUSH_F0 => self.stack.push(Value::Float(0.0)),
                 Instruction::PUSH_F1 => self.stack.push(Value::Float(1.0)),
                 Instruction::PUSH_CONST => self.push_const(bytecode, &mut cursor),
-                Instruction::POP => {
-                    self.stack.pop();
-                }
-                Instruction::DUP => {
-                    let value = self.stack.peek(cursor.read_u8() as usize).clone();
-                    self.stack.push(value);
-                }
-
+                Instruction::POP => std::mem::drop(self.stack.pop()),
+                Instruction::DUP => self.dup(&mut cursor),
                 Instruction::CREATE_LIST => self.create_list(&mut cursor),
                 Instruction::CREATE_OBJECT => self.create_object(&mut cursor),
-
                 Instruction::NEG => self.neg(),
                 Instruction::NOT => self.not()?,
-
-                Instruction::MUL => arithmetic_op!(self.stack, OP_MUL),
-                Instruction::DIV => arithmetic_op!(self.stack, OP_DIV),
-                Instruction::REM => arithmetic_op!(self.stack, OP_REM),
+                Instruction::MUL => self.mul()?,
+                Instruction::DIV => self.div()?,
+                Instruction::REM => self.rem()?,
                 Instruction::ADD => self.add()?,
-                Instruction::SUB => arithmetic_op!(self.stack, OP_SUB),
-
+                Instruction::SUB => self.sub()?,
                 Instruction::GT => comparison_op!(self.stack, OP_GT),
                 Instruction::GTE => comparison_op!(self.stack, OP_GTE),
                 Instruction::LT => comparison_op!(self.stack, OP_LT),
                 Instruction::LTE => comparison_op!(self.stack, OP_LTE),
                 Instruction::EQ => comparison_op!(self.stack, OP_EQ),
                 Instruction::NEQ => comparison_op!(self.stack, OP_NEQ),
-
-                Instruction::JUMP => {
-                    let offset = cursor.read_offset();
-                    cursor.offset_position(offset);
-                }
+                Instruction::JUMP => self.jump(&mut cursor),
                 Instruction::JUMP_IF_FALSE => self.jump_if_false(&mut cursor)?,
-
                 Instruction::LOAD_LOCAL => self.load_local(stack_frame.clone(), &mut cursor),
                 Instruction::STORE_LOCAL => self.store_local(stack_frame.clone(), &mut cursor),
                 Instruction::LOAD_UPVALUE => self.load_upvalue(&mut closure, &mut cursor),
@@ -110,24 +61,11 @@ impl Runtime {
                 Instruction::STORE_FIELD => self.store_field(bytecode, &mut cursor)?,
                 Instruction::LOAD_INDEX => self.load_index()?,
                 Instruction::STORE_INDEX => self.store_index()?,
-
                 Instruction::CLOSURE => self.closure(bytecode, &stack_frame, &mut closure, &mut cursor)?,
-                Instruction::CALL => {
-                    let arg_count = cursor.read_u8() as usize;
-                    self.call(arg_count)?;
-                }
-                Instruction::RETURN => break,
-
-                Instruction::ASSERT_BOOL => {
-                    if !self.stack.peek(0).is_bool() {
-                        return Err(RuntimeError::Aborted(String::from(
-                            "Right hand side must evaluate to a boolean.",
-                        )));
-                    }
-                }
-
+                Instruction::CALL => self.call(&mut cursor)?,
+                Instruction::ASSERT_BOOL => self.assert_bool()?,
                 Instruction::LOAD_MODULE => self.load_module(&bytecode, &mut cursor)?,
-
+                Instruction::RETURN => break,
                 unknown => return Err(RuntimeError::UnknownInstruction(unknown.value())),
             }
         }
@@ -142,6 +80,29 @@ impl Runtime {
         );
 
         Ok(self.stack.pop())
+    }
+
+    #[inline]
+    fn jump(&mut self, cursor: &mut BytecodeCursor) {
+        let offset = cursor.read_offset();
+        cursor.offset_position(offset);
+    }
+
+    #[inline]
+    fn dup(&mut self, mut cursor: &mut BytecodeCursor) {
+        let value = self.stack.peek(cursor.read_u8() as usize).clone();
+        self.stack.push(value);
+    }
+
+    #[inline]
+    fn assert_bool(&mut self) -> Result<(), RuntimeError> {
+        if !self.stack.peek(0).is_bool() {
+            return Err(RuntimeError::Aborted(String::from(
+                "Right hand side must evaluate to a boolean.",
+            )));
+        }
+
+        Ok(())
     }
 
     #[inline]
@@ -164,21 +125,72 @@ impl Runtime {
     }
 
     #[inline]
+    fn mul(&mut self) -> Result<(), RuntimeError> {
+        match (self.stack.pop(), self.stack.peek(0)) {
+            (Value::Int(rhs), Value::Int(lhs)) => *lhs *= rhs,
+            (Value::Float(rhs), Value::Float(lhs)) => *lhs *= rhs,
+            (rhs, _) => self.call_bin_op(MUL, rhs)?,
+        }
+
+        Ok(())
+    }
+
+    #[inline]
+    fn div(&mut self) -> Result<(), RuntimeError> {
+        match (self.stack.pop(), self.stack.peek(0)) {
+            (Value::Int(rhs), Value::Int(lhs)) => *lhs /= rhs,
+            (Value::Float(rhs), Value::Float(lhs)) => *lhs /= rhs,
+            (rhs, _) => self.call_bin_op(DIV, rhs)?,
+        }
+
+        Ok(())
+    }
+
+    #[inline]
+    fn rem(&mut self) -> Result<(), RuntimeError> {
+        match (self.stack.pop(), self.stack.peek(0)) {
+            (Value::Int(rhs), Value::Int(lhs)) => *lhs %= rhs,
+            (Value::Float(rhs), Value::Float(lhs)) => *lhs %= rhs,
+            (rhs, _) => self.call_bin_op(REM, rhs)?,
+        }
+
+        Ok(())
+    }
+
+    #[inline]
     fn add(&mut self) -> Result<(), RuntimeError> {
         match (self.stack.pop(), self.stack.peek(0)) {
             (Value::Int(rhs), Value::Int(lhs)) => *lhs += rhs,
             (Value::Float(rhs), Value::Float(lhs)) => *lhs += rhs,
-            (rhs, _) => match self.globals.get(ADD) {
-                Some(value) => {
-                    let lhs = self.stack.pop();
-                    self.stack.push(value.clone());
-                    self.stack.push(lhs);
-                    self.stack.push(rhs);
-                    self.call(2)?;
-                }
-                // TODO: change how this works to try to resolve operator on LHS before falling back on global.
-                None => todo!("No global add operator defined."),
-            },
+            (rhs, _) => self.call_bin_op(ADD, rhs)?,
+        }
+
+        Ok(())
+    }
+
+    #[inline]
+    fn sub(&mut self) -> Result<(), RuntimeError> {
+        match (self.stack.pop(), self.stack.peek(0)) {
+            (Value::Int(rhs), Value::Int(lhs)) => *lhs -= rhs,
+            (Value::Float(rhs), Value::Float(lhs)) => *lhs -= rhs,
+            (rhs, _) => self.call_bin_op(SUB, rhs)?,
+        }
+
+        Ok(())
+    }
+
+    #[inline]
+    fn call_bin_op(&mut self, operator: &str, rhs: Value) -> Result<(), RuntimeError> {
+        match self.globals.get(operator) {
+            Some(value) => {
+                let lhs = self.stack.pop();
+                self.stack.push(value.clone());
+                self.stack.push(lhs);
+                self.stack.push(rhs);
+                self.call_fn(2)?;
+            }
+            // TODO: change how this works to try to resolve operator on LHS before falling back on global.
+            None => todo!("No global add operator defined."),
         }
 
         Ok(())
@@ -286,20 +298,6 @@ impl Runtime {
                 upvalue.close(value);
             }
         }
-    }
-
-    fn find_open_upvalue(&self, offset: usize) -> Option<(usize, Upvalue)> {
-        let mut found_upvalue = None;
-
-        for (index, upvalue) in self.open_upvalues.iter().enumerate() {
-            if let UpvalueState::Open(upvalue_offset) = &*upvalue.state() {
-                if *upvalue_offset == offset {
-                    found_upvalue = Some((index, upvalue.clone()));
-                }
-            }
-        }
-
-        found_upvalue
     }
 
     fn store_global(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
@@ -477,8 +475,14 @@ impl Runtime {
         Ok(())
     }
 
+    #[inline]
+    fn call(&mut self, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
+        let arg_count = cursor.read_u8() as usize;
+        self.call_fn(arg_count)
+    }
+
     // TODO: Replace this mutually recursive call with an execution stack to prevent the thread's stack from overflowing.
-    fn call(&mut self, arg_count: usize) -> Result<(), RuntimeError> {
+    fn call_fn(&mut self, arg_count: usize) -> Result<(), RuntimeError> {
         let target = self.stack.peek(arg_count);
         let (bytecode, closure) = match target {
             Value::FnClosure(closure) => {
@@ -526,23 +530,19 @@ impl Runtime {
 
     fn load_module(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
         let path_slot = cursor.read_u8() as usize;
-        let path = match &bytecode.constants()[path_slot] {
-            Value::String(path) => std::fs::canonicalize(&**path)?,
-            _ => todo!("Invalid path type error."),
-        };
-        let result = if self.loaded_modules.contains_key(&path) {
-            self.loaded_modules[&path].clone()
-        } else {
-            let export = Value::Object(Object::new(0));
-            self.loaded_modules.insert(path.clone(), export.clone());
-            let module = Compiler::compile_module(&path)?;
-            self.run_module(module, export)?
+        let path = bytecode.constants()[path_slot].as_str()?;
+        let module = self.module_loader.load_module(path)?;
+        let module = match self.loaded_modules.entry(module.id) {
+            Entry::Occupied(entry) => entry.get().clone(),
+            Entry::Vacant(entry) => {
+                let export = Value::Object(Object::new(0));
+                entry.insert(export.clone());
+                self.run_module(module.bytecode.clone(), export)?
+            }
         };
 
-        self.stack.push(result);
+        self.stack.push(module);
 
         Ok(())
     }
 }
-
-impl dice_core::runtime::Runtime for Runtime {}

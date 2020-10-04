@@ -70,6 +70,13 @@ impl Value {
     pub fn is_list(&self) -> bool {
         matches!(self, Value::List(_))
     }
+
+    pub fn as_str(&self) -> Result<&str, TypeError> {
+        match self {
+            Value::String(string) => Ok(&**string),
+            _ => Err(TypeError::NotAString),
+        }
+    }
 }
 
 impl Default for Value {
@@ -112,4 +119,10 @@ impl Display for Value {
             Value::Object(object) => object.fmt(fmt),
         }
     }
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum TypeError {
+    #[error("The specified value is not a string.")]
+    NotAString,
 }

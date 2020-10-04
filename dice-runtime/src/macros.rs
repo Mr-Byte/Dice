@@ -1,19 +1,4 @@
 macro_rules! op {
-    (OP_MUL, $lhs:expr, $rhs:expr) => {
-        $lhs * $rhs
-    };
-    (OP_DIV, $lhs:expr, $rhs:expr) => {
-        $lhs / $rhs
-    };
-    (OP_REM, $lhs:expr, $rhs:expr) => {
-        $lhs % $rhs
-    };
-    (OP_ADD, $lhs:expr, $rhs:expr) => {
-        $lhs + $rhs
-    };
-    (OP_SUB, $lhs:expr, $rhs:expr) => {
-        $lhs - $rhs
-    };
     (OP_EQ, $lhs:expr, $rhs:expr) => {
         $lhs == $rhs
     };
@@ -31,17 +16,6 @@ macro_rules! op {
     };
     (OP_LTE, $lhs:expr, $rhs:expr) => {
         $lhs <= $rhs
-    };
-}
-
-#[macro_export]
-macro_rules! arithmetic_op {
-    ($stack:expr, $op:ident) => {
-        match ($stack.pop(), $stack.peek(0)) {
-            (dice_core::value::Value::Int(rhs), dice_core::value::Value::Int(lhs)) => *lhs = op!($op, *lhs, rhs),
-            (dice_core::value::Value::Float(rhs), dice_core::value::Value::Float(lhs)) => *lhs = op!($op, *lhs, rhs),
-            _ => todo!(),
-        }
     };
 }
 

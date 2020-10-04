@@ -2,15 +2,12 @@ use crate::{compiler::Compiler, error::CompilerError, scope_stack::State};
 use dice_syntax::{Block, FnDecl, SyntaxNode, SyntaxNodeId};
 
 impl Compiler {
-    // NOTE: through all the declared items in a block and add slots for any functions and classes ahead of time.
+    // NOTE: Scan through all the declared items in a block and add slots for any functions and classes ahead of time.
     // This allows functions and classes to refer to each other independent of declaration order.
     pub(super) fn scan_item_decls(&mut self, block: &Block) -> Result<(), CompilerError> {
-        for expression in &block.expressions {
+        let expressions = block.expressions.iter().chain(block.trailing_expression.iter());
+        for expression in expressions {
             self.scan_expr(*expression)?
-        }
-
-        if let Some(trailing_expression) = block.trailing_expression {
-            self.scan_expr(trailing_expression)?
         }
 
         Ok(())

@@ -1,5 +1,6 @@
 use dice_compiler::error::CompilerError;
 use dice_core::runtime::NativeError;
+use dice_core::value::TypeError;
 
 #[derive(thiserror::Error, Debug)]
 pub enum RuntimeError {
@@ -16,6 +17,9 @@ pub enum RuntimeError {
 
     #[error("Unknown instruction: {0:#04X}")]
     UnknownInstruction(u8),
+
+    #[error(transparent)]
+    TypeError(#[from] TypeError),
 
     #[error(transparent)]
     NativeError(#[from] NativeError),

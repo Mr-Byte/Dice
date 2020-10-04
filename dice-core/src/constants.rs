@@ -2,6 +2,7 @@ pub const DICE_ROLL: &str = "#dice_roll";
 pub const DIE_ROLL: &str = "#die_roll";
 pub const MUL: &str = "#mul";
 pub const DIV: &str = "#div";
+pub const REM: &str = "#rem";
 pub const ADD: &str = "#add";
 pub const SUB: &str = "#sub";
 pub const RANGE_INCLUSIVE: &str = "#range_inclusive";
@@ -12,6 +13,7 @@ pub const OPERATORS: &[&str] = &[
     DIE_ROLL,
     MUL,
     DIV,
+    REM,
     ADD,
     SUB,
     RANGE_EXCLUSIVE,
