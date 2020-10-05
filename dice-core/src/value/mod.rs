@@ -71,9 +71,44 @@ impl Value {
         matches!(self, Value::List(_))
     }
 
+    pub fn as_bool(&self) -> Result<bool, TypeError> {
+        match self {
+            Value::Bool(bool) => Ok(*bool),
+            _ => Err(TypeError::NotAString),
+        }
+    }
+
+    pub fn as_int(&self) -> Result<i64, TypeError> {
+        match self {
+            Value::Int(int) => Ok(*int),
+            _ => Err(TypeError::NotAString),
+        }
+    }
+
+    pub fn as_float(&self) -> Result<f64, TypeError> {
+        match self {
+            Value::Float(float) => Ok(*float),
+            _ => Err(TypeError::NotAString),
+        }
+    }
+
+    pub fn as_list(&self) -> Result<&List, TypeError> {
+        match self {
+            Value::List(list) => Ok(list),
+            _ => Err(TypeError::NotAString),
+        }
+    }
+
     pub fn as_str(&self) -> Result<&str, TypeError> {
         match self {
             Value::String(string) => Ok(&**string),
+            _ => Err(TypeError::NotAString),
+        }
+    }
+
+    pub fn as_object(&self) -> Result<&Object, TypeError> {
+        match self {
+            Value::Object(object) => Ok(object),
             _ => Err(TypeError::NotAString),
         }
     }

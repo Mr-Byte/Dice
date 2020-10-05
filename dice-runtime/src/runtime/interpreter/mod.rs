@@ -484,7 +484,7 @@ where
     }
 
     // TODO: Replace this mutually recursive call with an execution stack to prevent the thread's stack from overflowing.
-    fn call_fn(&mut self, arg_count: usize) -> Result<(), RuntimeError> {
+    pub(super) fn call_fn(&mut self, arg_count: usize) -> Result<(), RuntimeError> {
         let target = self.stack.peek(arg_count);
         let (bytecode, closure) = match target {
             Value::FnClosure(closure) => {

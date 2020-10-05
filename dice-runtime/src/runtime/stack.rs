@@ -1,8 +1,8 @@
 use dice_core::value::Value;
 use std::ops::Range;
 
-// NOTE: When sizeof(Value) = 16-bytes, this is 1MB of stack space.
-const MAX_STACK_SIZE: usize = 65_536;
+// NOTE: Allocate 1MB of stack space, this is 65,536 values when sizeof(Value) == 16
+const MAX_STACK_SIZE: usize = (1024 * 1024) / std::mem::size_of::<Value>();
 
 pub struct Stack {
     values: Box<[Value]>,
@@ -15,6 +15,13 @@ impl Stack {
     pub fn push(&mut self, value: Value) {
         self.values[self.stack_ptr] = value;
         self.stack_ptr += 1;
+    }
+
+    pub fn push_slice(&mut self, values: &[Value]) {
+        // TODO: Replace this with a more efficient multi-push.
+        for value in values {
+            self.push(value.clone());
+        }
     }
 
     #[inline]

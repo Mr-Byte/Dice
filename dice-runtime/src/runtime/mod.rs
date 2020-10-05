@@ -6,6 +6,7 @@ use crate::{
     module_loader::{FileModuleLoader, ModuleId, ModuleLoader},
     runtime::stack::Stack,
 };
+use dice_core::runtime::NativeError;
 use dice_core::{
     bytecode::Bytecode,
     upvalue::{Upvalue, UpvalueState},
@@ -25,9 +26,6 @@ where
     module_loader: L,
 }
 
-// TODO: Split off the main interpreter loop and associated functions into their own module
-// TODO: Add a public function to allow native code to execute scripted functions
-//     fn run_fn(target: Value, args: &[Value]) -> Result<Value, Error>
 impl<L> Runtime<L>
 where
     L: ModuleLoader + Default,
@@ -71,5 +69,13 @@ where
     fn register_native_fn(&mut self, name: &str, native_fn: NativeFn) {
         self.globals
             .insert(name.to_owned(), Value::FnNative(FnNative::new(native_fn)));
+    }
+
+    fn call_fn(&mut self, target: Value, args: &[Value]) -> Result<Value, NativeError> {
+        self.stack.push(target);
+        self.stack.push_slice(args);
+
+        Self::call_fn(self, args.len()).expect("Fix error handling.");
+        Ok(self.stack.pop())
     }
 }

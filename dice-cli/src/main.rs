@@ -4,6 +4,7 @@ use std::io::Write;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut runtime = Dice::default();
     runtime.register_native_fn("print", print_value);
+    runtime.register_native_fn("filter", filter);
 
     loop {
         print!("Input: ");
@@ -40,4 +41,26 @@ fn print_value(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, Nati
     }
 
     Ok(Value::Unit)
+}
+
+fn filter(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, NativeError> {
+    if let [list, filter_fn, ..] = args {
+        let list = list.as_list().expect("todo: error handling revamp");
+        let mut result = Vec::new();
+
+        for item in &*list.elements() {
+            let included = runtime
+                .call_fn(filter_fn.clone(), &[item.clone()])?
+                .as_bool()
+                .expect("todo: error handling revamp");
+
+            if included {
+                result.push(item.clone());
+            }
+        }
+
+        return Ok(Value::List(result.into()));
+    }
+
+    todo!("Error out here.")
 }

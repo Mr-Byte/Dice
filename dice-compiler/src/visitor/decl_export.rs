@@ -7,6 +7,7 @@ impl NodeVisitor<&ExportDecl> for Compiler {
         if self.context()?.kind() != CompilerKind::Module {
             todo!("Error about how exports can only be used in modules.");
         }
+
         let export_slot = self
             .context()?
             .scope_stack()
