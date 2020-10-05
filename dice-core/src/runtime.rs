@@ -1,7 +1,10 @@
+use crate::value::NativeFn;
 use dice_syntax::{Span, SpannedError};
 use std::fmt::{Debug, Display};
 
-pub trait Runtime {}
+pub trait Runtime {
+    fn register_native_fn(&mut self, name: &str, native_fn: NativeFn);
+}
 
 #[derive(thiserror::Error, Debug)]
 #[error(transparent)]

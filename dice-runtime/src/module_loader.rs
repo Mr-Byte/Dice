@@ -27,7 +27,7 @@ impl From<u64> for ModuleId {
     }
 }
 
-pub trait ModuleLoader {
+pub trait ModuleLoader: Default {
     fn load_module(&mut self, path: &str) -> Result<Module, RuntimeError>;
 }
 

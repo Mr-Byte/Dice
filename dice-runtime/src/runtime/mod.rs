@@ -13,28 +13,25 @@ use dice_core::{
 };
 use std::collections::{HashMap, VecDeque};
 
-pub struct Runtime {
+#[derive(Default)]
+pub struct Runtime<L = FileModuleLoader>
+where
+    L: ModuleLoader,
+{
     stack: Stack,
     open_upvalues: VecDeque<Upvalue>,
     globals: HashMap<String, Value>,
     loaded_modules: HashMap<ModuleId, Value>,
-    module_loader: Box<dyn ModuleLoader>,
+    module_loader: L,
 }
 
 // TODO: Split off the main interpreter loop and associated functions into their own module
 // TODO: Add a public function to allow native code to execute scripted functions
 //     fn run_fn(target: Value, args: &[Value]) -> Result<Value, Error>
-impl Runtime {
-    pub fn with_file_module_loader() -> Self {
-        Self {
-            stack: Default::default(),
-            open_upvalues: Default::default(),
-            globals: Default::default(),
-            loaded_modules: Default::default(),
-            module_loader: Box::new(FileModuleLoader::default()),
-        }
-    }
-
+impl<L> Runtime<L>
+where
+    L: ModuleLoader + Default,
+{
     pub fn run_bytecode(&mut self, bytecode: Bytecode) -> Result<Value, RuntimeError> {
         let stack_frame = self.stack.reserve_slots(bytecode.slot_count());
         let result = self.execute_bytecode(&bytecode, stack_frame, None);
@@ -52,10 +49,6 @@ impl Runtime {
         Ok(result?)
     }
 
-    pub fn register_native_fn(&mut self, name: String, native_fn: NativeFn) {
-        self.globals.insert(name, Value::FnNative(FnNative::new(native_fn)));
-    }
-
     pub(super) fn find_open_upvalue(&self, offset: usize) -> Option<(usize, Upvalue)> {
         let mut found_upvalue = None;
 
@@ -71,4 +64,12 @@ impl Runtime {
     }
 }
 
-impl dice_core::runtime::Runtime for Runtime {}
+impl<L> dice_core::runtime::Runtime for Runtime<L>
+where
+    L: ModuleLoader,
+{
+    fn register_native_fn(&mut self, name: &str, native_fn: NativeFn) {
+        self.globals
+            .insert(name.to_owned(), Value::FnNative(FnNative::new(native_fn)));
+    }
+}

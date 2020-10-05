@@ -27,14 +27,14 @@ impl Dice {
         Ok(bytecode.to_string())
     }
 
-    pub fn register_native_fn(&mut self, name: impl Into<String>, native_fn: NativeFn) {
-        self.runtime.register_native_fn(name.into(), native_fn);
+    pub fn register_native_fn(&mut self, name: &str, native_fn: NativeFn) {
+        self.runtime.register_native_fn(name, native_fn);
     }
 }
 
 impl Default for Dice {
     fn default() -> Self {
-        let runtime = runtime::Runtime::with_file_module_loader();
+        let runtime = runtime::Runtime::default();
 
         // TODO: Load the prelude into the runtime.
 

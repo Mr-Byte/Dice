@@ -1,5 +1,6 @@
 use crate::{error::RuntimeError, runtime::Runtime};
 
+use crate::module_loader::ModuleLoader;
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
     constants::{ADD, DIV, MUL, REM, SUB},
@@ -8,7 +9,10 @@ use dice_core::{
 };
 use std::{collections::hash_map::Entry, ops::Range};
 
-impl Runtime {
+impl<L> Runtime<L>
+where
+    L: ModuleLoader,
+{
     pub(super) fn execute_bytecode(
         &mut self,
         bytecode: &Bytecode,
@@ -501,7 +505,7 @@ impl Runtime {
             }
             Value::FnNative(fn_native) => {
                 let fn_native = fn_native.clone();
-                let mut args = self.stack.pop_count(arg_count);
+                let args = self.stack.pop_count(arg_count);
                 let result = fn_native.call(self, &args)?;
 
                 self.stack.release_slots(1);
