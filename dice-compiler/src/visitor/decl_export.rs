@@ -1,6 +1,6 @@
 use crate::{compiler::Compiler, compiler_stack::CompilerKind, error::CompilerError, visitor::NodeVisitor};
 use dice_core::constants::EXPORT;
-use dice_syntax::{ExportDecl, SyntaxNode};
+use dice_syntax::{ExportDecl, SyntaxNode, VarDecl, VarDeclKind};
 
 impl NodeVisitor<&ExportDecl> for Compiler {
     fn visit(&mut self, node: &ExportDecl) -> Result<(), CompilerError> {
@@ -17,7 +17,10 @@ impl NodeVisitor<&ExportDecl> for Compiler {
         self.visit(node.export)?;
 
         let field_name = match self.syntax_tree.get(node.export).expect("Node should exist.") {
-            SyntaxNode::VarDecl(var_decl) => var_decl.name.clone(),
+            SyntaxNode::VarDecl(VarDecl {
+                kind: VarDeclKind::Singular(name),
+                ..
+            }) => name.clone(),
             SyntaxNode::FnDecl(fn_decl) => fn_decl.name.clone(),
             _ => todo!("Error about invalid export type."),
         };

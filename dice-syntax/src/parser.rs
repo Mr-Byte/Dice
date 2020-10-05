@@ -5,7 +5,7 @@ use super::{
     IfExpression, LitAnonymousFn, LitBool, LitFloat, LitIdent, LitInt, LitList, LitNull, LitObject, LitString, LitUnit,
     Return, SyntaxNode, SyntaxNodeId, SyntaxTree, Unary, UnaryOperator, VarDecl, WhileLoop,
 };
-use crate::{FieldAccess, ForLoop, ImportDecl, Index, OpDecl, SafeAccess, Span};
+use crate::{FieldAccess, ForLoop, ImportDecl, Index, OpDecl, SafeAccess, Span, VarDeclKind};
 use id_arena::Arena;
 
 type SyntaxNodeResult = Result<SyntaxNodeId, SyntaxError>;
@@ -420,18 +420,23 @@ impl Parser {
             false
         };
 
-        let token = self.lexer.next();
-        let name = if let TokenKind::Identifier(name) = token.kind {
-            name
-        } else {
-            return Err(SyntaxError::UnexpectedToken(token));
+        let next_token = self.lexer.peek();
+        let kind = match next_token.kind {
+            TokenKind::Identifier(name) => {
+                self.lexer.next();
+                VarDeclKind::Singular(name)
+            }
+            TokenKind::LeftCurly => {
+                VarDeclKind::Destructured(self.parse_args(TokenKind::LeftCurly, TokenKind::RightCurly)?)
+            }
+            _ => return Err(SyntaxError::UnexpectedToken(next_token)),
         };
 
         self.lexer.consume(TokenKind::Assign)?;
         let expr = self.expression()?;
         let span_end = self.lexer.current().span();
         let node = SyntaxNode::VarDecl(VarDecl {
-            name,
+            kind,
             is_mutable,
             expr,
             span: span_start + span_end,

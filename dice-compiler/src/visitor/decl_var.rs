@@ -1,12 +1,21 @@
 use super::NodeVisitor;
 use crate::{compiler::Compiler, error::CompilerError, scope_stack::State};
-use dice_syntax::VarDecl;
+use dice_syntax::{VarDecl, VarDeclKind};
 
 impl NodeVisitor<&VarDecl> for Compiler {
     fn visit(&mut self, var_decl: &VarDecl) -> Result<(), CompilerError> {
         self.visit(var_decl.expr)?;
 
-        let name = var_decl.name.clone();
+        match &var_decl.kind {
+            VarDeclKind::Singular(name) => self.singular_var(var_decl, name),
+            VarDeclKind::Destructured(variables) => self.destructured_var(var_decl, variables),
+        }
+    }
+}
+
+impl Compiler {
+    fn singular_var(&mut self, var_decl: &VarDecl, name: &str) -> Result<(), CompilerError> {
+        let name = name.clone();
         let slot = self
             .context()?
             .scope_stack()
@@ -15,6 +24,35 @@ impl NodeVisitor<&VarDecl> for Compiler {
         emit_bytecode! {
             self.context()?.assembler(), var_decl.span => [
                 STORE_LOCAL slot;
+            ]
+        }
+
+        Ok(())
+    }
+}
+
+impl Compiler {
+    fn destructured_var(&mut self, var_decl: &VarDecl, variables: &[String]) -> Result<(), CompilerError> {
+        let imports: Vec<(&str, u8)> = variables
+            .iter()
+            .map(|item| {
+                let slot = self
+                    .context()?
+                    .scope_stack()
+                    .add_local(item, State::initialized(false))?;
+
+                Ok((item.as_str(), slot as u8))
+            })
+            .collect::<Result<Vec<_>, CompilerError>>()?;
+
+        emit_bytecode! {
+            self.context()?.assembler(), var_decl.span => [
+                for (field, slot) in imports => [
+                    DUP 0;
+                    LOAD_FIELD field;
+                    STORE_LOCAL slot;
+                    POP;
+                ]
             ]
         }
 

@@ -150,10 +150,16 @@ pub enum AssignmentOperator {
 
 #[derive(Debug, Clone)]
 pub struct VarDecl {
-    pub name: String,
+    pub kind: VarDeclKind,
     pub is_mutable: bool,
     pub expr: SyntaxNodeId,
     pub span: Span,
+}
+
+#[derive(Debug, Clone)]
+pub enum VarDeclKind {
+    Singular(String),
+    Destructured(Vec<String>),
 }
 
 #[derive(Debug, Clone)]
