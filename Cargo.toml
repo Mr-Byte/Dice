@@ -4,6 +4,7 @@ members = [
     "dice-cli",
     "dice-compiler",
     "dice-core",
+    "dice-error",
     "dice-runtime",
     "dice-syntax"
 ]
