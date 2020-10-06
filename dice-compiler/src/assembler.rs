@@ -4,8 +4,7 @@ use dice_core::{
     bytecode::{instruction::Instruction, Bytecode},
     value::Value,
 };
-use dice_error::compiler_error::CompilerError;
-use dice_error::span::Span;
+use dice_error::{compiler_error::CompilerError, span::Span};
 use std::collections::HashMap;
 
 #[derive(Default)]

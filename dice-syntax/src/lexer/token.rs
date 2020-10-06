@@ -1,8 +1,9 @@
-use dice_error::span::Span;
-use dice_error::syntax_error::SyntaxError;
+use dice_error::{span::Span, syntax_error::SyntaxError};
 use logos::Logos;
-use std::fmt::{Display, Formatter};
-use std::iter::Iterator;
+use std::{
+    fmt::{Display, Formatter},
+    iter::Iterator,
+};
 
 #[derive(Clone, Debug)]
 pub struct Token {

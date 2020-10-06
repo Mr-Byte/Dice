@@ -1,9 +1,10 @@
 use crate::module::{Module, ModuleLoader};
 use dice_compiler::compiler::{CompilationKind, Compiler};
 use dice_error::runtime_error::RuntimeError;
-use std::collections::hash_map::Entry;
-use std::collections::HashMap;
-use std::path::PathBuf;
+use std::{
+    collections::{hash_map::Entry, HashMap},
+    path::PathBuf,
+};
 
 #[derive(Default)]
 pub struct FileModuleLoader {

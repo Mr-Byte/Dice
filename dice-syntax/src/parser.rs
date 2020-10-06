@@ -5,8 +5,7 @@ use super::{
     Return, SyntaxNode, SyntaxNodeId, SyntaxTree, Unary, UnaryOperator, VarDecl, WhileLoop,
 };
 use crate::{FieldAccess, ForLoop, ImportDecl, Index, OpDecl, SafeAccess, VarDeclKind};
-use dice_error::span::Span;
-use dice_error::syntax_error::SyntaxError;
+use dice_error::{span::Span, syntax_error::SyntaxError};
 use id_arena::Arena;
 
 type SyntaxNodeResult = Result<SyntaxNodeId, SyntaxError>;

@@ -1,5 +1,4 @@
-use crate::span::Span;
-use crate::syntax_error::SyntaxError;
+use crate::{span::Span, syntax_error::SyntaxError};
 
 #[derive(thiserror::Error, Debug)]
 pub enum CompilerError {

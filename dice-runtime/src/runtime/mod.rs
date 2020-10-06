@@ -1,9 +1,8 @@
 mod interpreter;
 mod stack;
 
-use crate::module::file_loader::FileModuleLoader;
 use crate::{
-    module::{ModuleId, ModuleLoader},
+    module::{file_loader::FileModuleLoader, ModuleId, ModuleLoader},
     runtime::stack::Stack,
 };
 use dice_core::{

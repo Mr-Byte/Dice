@@ -4,8 +4,7 @@ use crate::{
     visitor::{BlockKind, NodeVisitor},
 };
 use dice_core::{bytecode::Bytecode, constants::EXPORT};
-use dice_error::compiler_error::CompilerError;
-use dice_error::span::Span;
+use dice_error::{compiler_error::CompilerError, span::Span};
 use dice_syntax::{Block, Parser, SyntaxNode, SyntaxTree};
 
 #[allow(dead_code)]

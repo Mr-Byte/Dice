@@ -1,5 +1,4 @@
-use crate::compiler_error::CompilerError;
-use crate::type_error::TypeError;
+use crate::{compiler_error::CompilerError, type_error::TypeError};
 
 #[derive(thiserror::Error, Debug)]
 pub enum RuntimeError {
