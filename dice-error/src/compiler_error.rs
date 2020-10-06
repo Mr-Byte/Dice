@@ -1,12 +1,8 @@
-use dice_syntax::{Span, SyntaxError};
+use crate::span::Span;
+use crate::syntax_error::SyntaxError;
 
 #[derive(thiserror::Error, Debug)]
 pub enum CompilerError {
-    #[error(transparent)]
-    SyntaxError(#[from] SyntaxError),
-    #[error(transparent)]
-    FileError(#[from] std::io::Error),
-
     #[error("The item {0} has already been declared in this scope.")]
     ItemAlreadyDeclared(String),
     #[error("Encountered undeclared variable {0}.")]
@@ -19,7 +15,6 @@ pub enum CompilerError {
     InvalidAssignmentTarget,
     #[error("Invalid operator name {0}.")]
     InvalidOperatorName(String, Span),
-
     #[error("The break keyword can only be used inside loops.")]
     InvalidBreak,
     #[error("The continue keyword can only be used inside loops.")]
@@ -28,12 +23,12 @@ pub enum CompilerError {
     InvalidLoopEnding,
     #[error("The return keyword can only be used inside functions.")]
     InvalidReturn,
-
     #[error("Compilation unit has too many constants.")]
     TooManyConstants,
     #[error("Compilation unit has too many upvalues.")]
     TooManyUpvalues,
-
     #[error("Internal Compiler Error: {0}")]
     InternalCompilerError(String),
+    #[error(transparent)]
+    SyntaxError(#[from] SyntaxError),
 }

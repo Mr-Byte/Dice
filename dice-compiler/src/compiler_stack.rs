@@ -3,8 +3,8 @@ use super::{
     scope_stack::{ScopeKind, ScopeStack},
     upvalue::UpvalueDescriptor,
 };
-use crate::error::CompilerError;
 use dice_core::bytecode::Bytecode;
+use dice_error::compiler_error::CompilerError;
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub enum CompilerKind {

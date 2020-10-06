@@ -1,9 +1,9 @@
 use super::NodeVisitor;
 use crate::{
     compiler::Compiler,
-    error::CompilerError,
     scope_stack::{ScopeKind, State},
 };
+use dice_error::compiler_error::CompilerError;
 use dice_syntax::Block;
 
 pub enum BlockKind<'args, T: AsRef<str>> {

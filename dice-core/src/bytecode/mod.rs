@@ -1,6 +1,6 @@
 use crate::value::Value;
 pub use cursor::BytecodeCursor;
-use dice_syntax::Span;
+use dice_error::span::Span;
 use instruction::Instruction;
 use std::{collections::HashMap, fmt::Display, rc::Rc};
 

@@ -1,12 +1,13 @@
-use crate::{error::RuntimeError, runtime::Runtime};
+use crate::runtime::Runtime;
 
-use crate::module_loader::ModuleLoader;
+use crate::module::ModuleLoader;
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
     constants::{ADD, DIV, MUL, REM, SUB},
     upvalue::{Upvalue, UpvalueState},
     value::{FnClosure, Object, Value},
 };
+use dice_error::runtime_error::RuntimeError;
 use std::{collections::hash_map::Entry, ops::Range};
 
 impl<L> Runtime<L>

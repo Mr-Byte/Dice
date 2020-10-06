@@ -1,4 +1,4 @@
-use crate::error::CompilerError;
+use dice_error::compiler_error::CompilerError;
 
 #[derive(Clone)]
 pub struct ScopeVariable {

@@ -1,4 +1,5 @@
-use crate::{Span, SyntaxNodeId};
+use crate::SyntaxNodeId;
+use dice_error::span::Span;
 
 #[derive(Debug, Clone)]
 pub struct LitAnonymousFn {

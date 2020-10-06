@@ -1,7 +1,9 @@
 use super::NodeVisitor;
-use crate::{compiler::Compiler, error::CompilerError};
+use crate::compiler::Compiler;
 use dice_core::constants::DIE_ROLL;
-use dice_syntax::{Span, SyntaxNodeId, Unary, UnaryOperator};
+use dice_error::compiler_error::CompilerError;
+use dice_error::span::Span;
+use dice_syntax::{SyntaxNodeId, Unary, UnaryOperator};
 
 impl NodeVisitor<&Unary> for Compiler {
     fn visit(

@@ -1,6 +1,8 @@
 use super::NodeVisitor;
-use crate::{compiler::Compiler, error::CompilerError, scope_stack::ScopeVariable};
-use dice_syntax::{Assignment, AssignmentOperator, FieldAccess, Index, Span, SyntaxNode, SyntaxNodeId};
+use crate::{compiler::Compiler, scope_stack::ScopeVariable};
+use dice_error::compiler_error::CompilerError;
+use dice_error::span::Span;
+use dice_syntax::{Assignment, AssignmentOperator, FieldAccess, Index, SyntaxNode, SyntaxNodeId};
 
 impl NodeVisitor<&Assignment> for Compiler {
     fn visit(&mut self, assignment: &Assignment) -> Result<(), CompilerError> {

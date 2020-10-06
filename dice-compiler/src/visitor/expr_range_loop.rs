@@ -1,10 +1,11 @@
 use crate::{
     compiler::Compiler,
-    error::CompilerError,
     scope_stack::{ScopeKind, State},
     visitor::NodeVisitor,
 };
-use dice_syntax::{BinaryOperator, ForLoop, Span, SyntaxNode, SyntaxNodeId};
+use dice_error::compiler_error::CompilerError;
+use dice_error::span::Span;
+use dice_syntax::{BinaryOperator, ForLoop, SyntaxNode, SyntaxNodeId};
 
 enum RangeLoopKind {
     Exclusive,

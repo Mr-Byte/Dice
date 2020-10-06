@@ -1,5 +1,4 @@
 #[macro_use]
 mod macros;
-pub mod error;
-pub mod module_loader;
+pub mod module;
 pub mod runtime;

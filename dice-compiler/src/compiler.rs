@@ -1,12 +1,12 @@
 use crate::{
     compiler_stack::{CompilerContext, CompilerKind, CompilerStack},
-    error::CompilerError,
     scope_stack::State,
     visitor::{BlockKind, NodeVisitor},
 };
 use dice_core::{bytecode::Bytecode, constants::EXPORT};
-use dice_syntax::{Block, Parser, Span, SyntaxNode, SyntaxTree};
-use std::path::Path;
+use dice_error::compiler_error::CompilerError;
+use dice_error::span::Span;
+use dice_syntax::{Block, Parser, SyntaxNode, SyntaxTree};
 
 #[allow(dead_code)]
 #[derive(Ord, PartialOrd, Eq, PartialEq, Copy, Clone)]
@@ -32,12 +32,6 @@ impl Compiler {
             syntax_tree,
             compiler_stack,
         }
-    }
-
-    pub fn compile_module(path: &Path) -> Result<Bytecode, CompilerError> {
-        let source = std::fs::read_to_string(path)?;
-
-        Self::compile_str(&source, CompilationKind::Module)
     }
 
     pub fn compile_str(input: &str, kind: CompilationKind) -> Result<Bytecode, CompilerError> {

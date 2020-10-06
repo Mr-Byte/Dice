@@ -1,9 +1,10 @@
 use super::NodeVisitor;
-use crate::{compiler::Compiler, error::CompilerError};
+use crate::compiler::Compiler;
 use dice_core::{
     constants::OPERATORS,
     value::{FnScript, Value},
 };
+use dice_error::compiler_error::CompilerError;
 use dice_syntax::OpDecl;
 
 impl NodeVisitor<&OpDecl> for Compiler {

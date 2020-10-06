@@ -1,4 +1,4 @@
-use crate::Span;
+use dice_error::span::Span;
 use id_arena::{Arena, Id};
 pub use node::*;
 use std::rc::Rc;

@@ -1,11 +1,11 @@
 use super::upvalue::UpvalueDescriptor;
-use crate::error::CompilerError;
 use bytes::BufMut as _;
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode},
     value::Value,
 };
-use dice_syntax::Span;
+use dice_error::compiler_error::CompilerError;
+use dice_error::span::Span;
 use std::collections::HashMap;
 
 #[derive(Default)]

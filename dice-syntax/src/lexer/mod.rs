@@ -1,7 +1,6 @@
-use super::error::SyntaxError;
-
 mod token;
 
+use dice_error::syntax_error::SyntaxError;
 pub use token::{Token, TokenKind};
 
 pub struct Lexer {
@@ -37,7 +36,7 @@ impl Lexer {
         if next.kind == kind {
             Ok(next)
         } else {
-            Err(SyntaxError::UnexpectedToken(next))
+            Err(SyntaxError::UnexpectedToken(next.to_string(), next.span()))
         }
     }
 
@@ -47,7 +46,7 @@ impl Lexer {
             let ident = ident.clone();
             Ok((next, ident))
         } else {
-            Err(SyntaxError::UnexpectedToken(next))
+            Err(SyntaxError::UnexpectedToken(next.to_string(), next.span()))
         }
     }
 
@@ -57,7 +56,7 @@ impl Lexer {
             let string = string.trim_matches('"').to_owned();
             Ok((next, string))
         } else {
-            Err(SyntaxError::UnexpectedToken(next))
+            Err(SyntaxError::UnexpectedToken(next.to_string(), next.span()))
         }
     }
 
@@ -66,7 +65,7 @@ impl Lexer {
         if kinds.contains(&next.kind) {
             Ok(next)
         } else {
-            Err(SyntaxError::UnexpectedToken(next))
+            Err(SyntaxError::UnexpectedToken(next.to_string(), next.span()))
         }
     }
 }
@@ -82,9 +81,9 @@ pub mod test {
     }
 
     #[test]
-    fn tokenize_delimeters() {
-        let delimeters = "( ) { } [ ] ; : ,";
-        let mut tokens = Token::tokenize(delimeters);
+    fn tokenize_delimiters() {
+        let delimiters = "( ) { } [ ] ; : ,";
+        let mut tokens = Token::tokenize(delimiters);
 
         assert_next_token!(tokens, TokenKind::LeftParen);
         assert_next_token!(tokens, TokenKind::RightParen);
@@ -99,8 +98,8 @@ pub mod test {
 
     #[test]
     fn tokenize_operators() {
-        let delimeters = ".. ..= -> => . ?. ?? % - + * / ! != == > >= < <= = d && ||";
-        let mut tokens = Token::tokenize(delimeters);
+        let delimiters = ".. ..= -> => . ?. ?? % - + * / ! != == > >= < <= = d && ||";
+        let mut tokens = Token::tokenize(delimiters);
 
         assert_next_token!(tokens, TokenKind::InclusiveRange);
         assert_next_token!(tokens, TokenKind::ExclusiveRange);
@@ -129,8 +128,8 @@ pub mod test {
 
     #[test]
     fn tokenize_literals() {
-        let delimeters = r#"1 -1 +1 1.0 -1.0 +1.0 abc _abc _123 "abc" "abc\"abc""#;
-        let mut tokens = Token::tokenize(delimeters);
+        let delimiters = r#"1 -1 +1 1.0 -1.0 +1.0 abc _abc _123 "abc" "abc\"abc""#;
+        let mut tokens = Token::tokenize(delimiters);
 
         assert_next_token!(tokens, TokenKind::Integer(_));
         assert_next_token!(tokens, TokenKind::Integer(_));
@@ -147,7 +146,7 @@ pub mod test {
 
     #[test]
     fn tokenize_keywords() {
-        let delimeters = "
+        let delimiters = "
             false
             true
             none
@@ -184,7 +183,7 @@ pub mod test {
             import
             from
         ";
-        let mut tokens = Token::tokenize(delimeters);
+        let mut tokens = Token::tokenize(delimiters);
 
         assert_next_token!(tokens, TokenKind::False);
         assert_next_token!(tokens, TokenKind::True);
@@ -224,8 +223,8 @@ pub mod test {
 
     #[test]
     fn tokenize_errors() {
-        let delimeters = r#"❤ @ \ ^"#;
-        let mut tokens = Token::tokenize(delimeters);
+        let delimiters = r#"❤ @ \ ^"#;
+        let mut tokens = Token::tokenize(delimiters);
 
         assert_next_token!(tokens, TokenKind::Error);
         assert_next_token!(tokens, TokenKind::Error);
@@ -235,16 +234,16 @@ pub mod test {
 
     #[test]
     fn tokenize_comment_yields_no_tokens() {
-        let delimeters = r#"// test"#;
-        let mut tokens = Token::tokenize(delimeters);
+        let delimiters = r#"// test"#;
+        let mut tokens = Token::tokenize(delimiters);
 
         assert!(tokens.next().is_none());
     }
 
     #[test]
     fn tokenize_token_followed_by_comment_yields_one_token() {
-        let delimeters = r#"12 // test"#;
-        let mut tokens = Token::tokenize(delimeters);
+        let delimiters = r#"12 // test"#;
+        let mut tokens = Token::tokenize(delimiters);
 
         assert_next_token!(tokens, TokenKind::Integer(_));
         assert!(tokens.next().is_none());
@@ -252,8 +251,8 @@ pub mod test {
 
     #[test]
     fn tokenize_token_followed_by_comment_followed_by_token_on_newline_yields_two_tokens() {
-        let delimeters = r#"12 // test\n14"#;
-        let mut tokens = Token::tokenize(delimeters);
+        let delimiters = r#"12 // test\n14"#;
+        let mut tokens = Token::tokenize(delimiters);
 
         assert_next_token!(tokens, TokenKind::Integer(_));
         assert_next_token!(tokens, TokenKind::Integer(_));

@@ -1,4 +1,5 @@
-use crate::{compiler::Compiler, error::CompilerError, scope_stack::State, visitor::NodeVisitor};
+use crate::{compiler::Compiler, scope_stack::State, visitor::NodeVisitor};
+use dice_error::compiler_error::CompilerError;
 use dice_syntax::ImportDecl;
 
 impl NodeVisitor<&ImportDecl> for Compiler {

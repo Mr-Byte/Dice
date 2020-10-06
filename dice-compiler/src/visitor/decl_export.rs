@@ -1,5 +1,6 @@
-use crate::{compiler::Compiler, compiler_stack::CompilerKind, error::CompilerError, visitor::NodeVisitor};
+use crate::{compiler::Compiler, compiler_stack::CompilerKind, visitor::NodeVisitor};
 use dice_core::constants::EXPORT;
+use dice_error::compiler_error::CompilerError;
 use dice_syntax::{ExportDecl, SyntaxNode, VarDecl, VarDeclKind};
 
 impl NodeVisitor<&ExportDecl> for Compiler {

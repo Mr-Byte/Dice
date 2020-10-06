@@ -1,17 +1,17 @@
 mod interpreter;
 mod stack;
 
+use crate::module::file_loader::FileModuleLoader;
 use crate::{
-    error::RuntimeError,
-    module_loader::{FileModuleLoader, ModuleId, ModuleLoader},
+    module::{ModuleId, ModuleLoader},
     runtime::stack::Stack,
 };
-use dice_core::runtime::NativeError;
 use dice_core::{
     bytecode::Bytecode,
     upvalue::{Upvalue, UpvalueState},
     value::{FnNative, NativeFn, Value},
 };
+use dice_error::runtime_error::RuntimeError;
 use std::collections::{HashMap, VecDeque};
 
 #[derive(Default)]
@@ -66,16 +66,16 @@ impl<L> dice_core::runtime::Runtime for Runtime<L>
 where
     L: ModuleLoader,
 {
-    fn register_native_fn(&mut self, name: &str, native_fn: NativeFn) {
+    fn add_native_fn(&mut self, name: &str, native_fn: NativeFn) {
         self.globals
             .insert(name.to_owned(), Value::FnNative(FnNative::new(native_fn)));
     }
 
-    fn call_fn(&mut self, target: Value, args: &[Value]) -> Result<Value, NativeError> {
+    fn call_fn(&mut self, target: Value, args: &[Value]) -> Result<Value, RuntimeError> {
         self.stack.push(target);
         self.stack.push_slice(args);
 
-        Self::call_fn(self, args.len()).expect("Fix error handling.");
+        Self::call_fn(self, args.len())?;
         Ok(self.stack.pop())
     }
 }

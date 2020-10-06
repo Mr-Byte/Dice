@@ -8,3 +8,4 @@ edition = "2018"
 thiserror = "1.0"
 dice-core = {path = "../dice-core"}
 dice-compiler = {path = "../dice-compiler"}
+dice-error = {path = "../dice-error"}

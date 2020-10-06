@@ -1,3 +1,4 @@
+use dice_error::type_error::TypeError;
 pub use fn_closure::*;
 pub use fn_native::*;
 pub use fn_script::*;
@@ -154,10 +155,4 @@ impl Display for Value {
             Value::Object(object) => object.fmt(fmt),
         }
     }
-}
-
-#[derive(thiserror::Error, Debug)]
-pub enum TypeError {
-    #[error("The specified value is not a string.")]
-    NotAString,
 }

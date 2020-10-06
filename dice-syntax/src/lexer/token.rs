@@ -1,5 +1,7 @@
-use crate::Span;
+use dice_error::span::Span;
+use dice_error::syntax_error::SyntaxError;
 use logos::Logos;
+use std::fmt::{Display, Formatter};
 use std::iter::Iterator;
 
 #[derive(Clone, Debug)]
@@ -25,6 +27,18 @@ impl Token {
             kind: TokenKind::EndOfInput,
             span: Span::new(0..0),
         }
+    }
+}
+
+impl Display for Token {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.kind)
+    }
+}
+
+impl Into<SyntaxError> for Token {
+    fn into(self) -> SyntaxError {
+        SyntaxError::UnexpectedToken(self.to_string(), self.span)
     }
 }
 

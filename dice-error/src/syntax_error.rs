@@ -1,10 +1,9 @@
-use super::lexer::Token;
-use crate::{Span, SpannedError};
+use crate::span::{Span, SpannedError};
 
 #[derive(thiserror::Error, Debug)]
 pub enum SyntaxError {
-    #[error("Unexpected token: {0:?}")]
-    UnexpectedToken(Token),
+    #[error("Unexpected token: {0}")]
+    UnexpectedToken(String, Span),
 
     #[error("Function {0} has too many arguments (max 255).")]
     FnTooManyArguments(String, Span),
@@ -16,7 +15,7 @@ pub enum SyntaxError {
 impl SpannedError for SyntaxError {
     fn span(&self) -> Span {
         match self {
-            SyntaxError::UnexpectedToken(token) => token.span(),
+            SyntaxError::UnexpectedToken(_, span) => *span,
             SyntaxError::FnTooManyArguments(_, span) => *span,
             SyntaxError::AnonymousFnTooManyArguments(span) => *span,
         }

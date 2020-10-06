@@ -1,14 +1,10 @@
-use dice_compiler::{
-    compiler::{CompilationKind, Compiler},
-    error::CompilerError,
-};
+use dice_compiler::compiler::{CompilationKind, Compiler};
 use dice_core::value::NativeFn;
-pub use dice_core::{
-    runtime::{NativeError, Runtime},
-    value::Value,
-};
-pub use dice_runtime::error::RuntimeError;
+pub use dice_core::{runtime::Runtime, value::Value};
+use dice_error::compiler_error::CompilerError;
 use dice_runtime::runtime;
+
+pub use dice_error::runtime_error::RuntimeError;
 
 pub struct Dice {
     runtime: runtime::Runtime,
@@ -28,7 +24,7 @@ impl Dice {
     }
 
     pub fn register_native_fn(&mut self, name: &str, native_fn: NativeFn) {
-        self.runtime.register_native_fn(name, native_fn);
+        self.runtime.add_native_fn(name, native_fn);
     }
 }
 

@@ -1,5 +1,6 @@
 use super::{BlockKind, NodeVisitor};
-use crate::{compiler::Compiler, error::CompilerError, scope_stack::ScopeKind};
+use crate::{compiler::Compiler, scope_stack::ScopeKind};
+use dice_error::compiler_error::CompilerError;
 use dice_syntax::{SyntaxNode, WhileLoop};
 
 impl NodeVisitor<&WhileLoop> for Compiler {

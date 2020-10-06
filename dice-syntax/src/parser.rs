@@ -1,11 +1,12 @@
 use super::{
-    error::SyntaxError,
     lexer::{Lexer, Token, TokenKind},
     Assignment, AssignmentOperator, Binary, BinaryOperator, Block, Break, Continue, ExportDecl, FnDecl, FunctionCall,
     IfExpression, LitAnonymousFn, LitBool, LitFloat, LitIdent, LitInt, LitList, LitNull, LitObject, LitString, LitUnit,
     Return, SyntaxNode, SyntaxNodeId, SyntaxTree, Unary, UnaryOperator, VarDecl, WhileLoop,
 };
-use crate::{FieldAccess, ForLoop, ImportDecl, Index, OpDecl, SafeAccess, Span, VarDeclKind};
+use crate::{FieldAccess, ForLoop, ImportDecl, Index, OpDecl, SafeAccess, VarDeclKind};
+use dice_error::span::Span;
+use dice_error::syntax_error::SyntaxError;
 use id_arena::Arena;
 
 type SyntaxNodeResult = Result<SyntaxNodeId, SyntaxError>;
@@ -99,7 +100,7 @@ impl ParserRule {
 
             // End of input
             TokenKind::EndOfInput => ParserRule::new(None, None, RulePrecedence::None),
-            _ => return Err(SyntaxError::UnexpectedToken(token.clone())),
+            _ => return Err(token.clone().into()),
         };
 
         Ok(rule)
@@ -228,7 +229,7 @@ impl Parser {
         let mut node = rule
             .prefix
             .map(|prefix| prefix(self, precedence <= RulePrecedence::Assignment))
-            .unwrap_or_else(|| Err(SyntaxError::UnexpectedToken(next_token.clone())))?;
+            .unwrap_or_else(|| Err(next_token.clone().into()))?;
 
         loop {
             let span_start = next_token.span();
@@ -242,7 +243,7 @@ impl Parser {
             node = rule
                 .infix
                 .map(|infix| infix(self, node, precedence <= RulePrecedence::Assignment, span_start))
-                .unwrap_or_else(|| Err(SyntaxError::UnexpectedToken(next_token)))?;
+                .unwrap_or_else(|| Err(next_token.into()))?;
         }
 
         Ok(node)
@@ -324,7 +325,7 @@ impl Parser {
                     span: token.span() + span_end,
                 })
             }
-            _ => return Err(SyntaxError::UnexpectedToken(token)),
+            _ => return Err(token.into()),
         };
 
         Ok(self.arena.alloc(node))
@@ -345,7 +346,7 @@ impl Parser {
             self.arena
                 .alloc(SyntaxNode::LitIdent(LitIdent { name, span: span_start }))
         } else {
-            return Err(SyntaxError::UnexpectedToken(next_token));
+            return Err(next_token.into());
         };
 
         self.parse_assignment(lhs_expression, can_assign, span_start)
@@ -429,7 +430,7 @@ impl Parser {
             TokenKind::LeftCurly => {
                 VarDeclKind::Destructured(self.parse_args(TokenKind::LeftCurly, TokenKind::RightCurly)?)
             }
-            _ => return Err(SyntaxError::UnexpectedToken(next_token)),
+            _ => return Err(next_token.into()),
         };
 
         self.lexer.consume(TokenKind::Assign)?;
@@ -471,7 +472,7 @@ impl Parser {
         let name_token = self.lexer.next();
         let name = match name_token.kind {
             TokenKind::Identifier(ref name) => name.clone(),
-            _ => return Err(SyntaxError::UnexpectedToken(name_token)),
+            _ => return Err(name_token.into()),
         };
         let args = self.parse_args(TokenKind::LeftParen, TokenKind::RightParen)?;
 
@@ -497,7 +498,7 @@ impl Parser {
         let name_token = self.lexer.next();
         let name = match name_token.kind {
             TokenKind::Identifier(ref name) => name.clone(),
-            _ => return Err(SyntaxError::UnexpectedToken(name_token)),
+            _ => return Err(name_token.into()),
         };
         let args = self.parse_args(TokenKind::LeftParen, TokenKind::RightParen)?;
 
@@ -533,7 +534,7 @@ impl Parser {
             if self.lexer.peek().kind == TokenKind::Comma {
                 self.lexer.next();
             } else if self.lexer.peek().kind != close_token_kind {
-                return Err(SyntaxError::UnexpectedToken(self.lexer.next()));
+                return Err(self.lexer.next().into());
             }
         }
 
@@ -676,7 +677,7 @@ impl Parser {
             if self.lexer.peek().kind == TokenKind::Comma {
                 self.lexer.next();
             } else if self.lexer.peek().kind != TokenKind::RightParen {
-                return Err(SyntaxError::UnexpectedToken(self.lexer.next()));
+                return Err(self.lexer.next().into());
             }
         }
 
@@ -701,7 +702,7 @@ impl Parser {
                 TokenKind::String(value) => value.trim_matches('"').to_owned(),
                 TokenKind::Integer(value) => value.to_string(),
                 TokenKind::Identifier(value) => value,
-                _ => return Err(SyntaxError::UnexpectedToken(self.lexer.current().clone())),
+                _ => return Err(self.lexer.current().clone().into()),
             };
 
             self.lexer.consume(TokenKind::Colon)?;
@@ -710,7 +711,7 @@ impl Parser {
             if self.lexer.peek().kind == TokenKind::Comma {
                 self.lexer.next();
             } else if self.lexer.peek().kind != TokenKind::RightCurly {
-                return Err(SyntaxError::UnexpectedToken(self.lexer.next()));
+                return Err(self.lexer.next().into());
             }
 
             properties.push((key, value));
@@ -737,7 +738,7 @@ impl Parser {
             if self.lexer.peek().kind == TokenKind::Comma {
                 self.lexer.next();
             } else if self.lexer.peek().kind != TokenKind::RightSquare {
-                return Err(SyntaxError::UnexpectedToken(self.lexer.next()));
+                return Err(self.lexer.next().into());
             }
 
             values.push(value);
@@ -766,7 +767,7 @@ impl Parser {
             TokenKind::False => SyntaxNode::LitBool(LitBool { value: false, span }),
             TokenKind::True => SyntaxNode::LitBool(LitBool { value: true, span }),
             TokenKind::Null => SyntaxNode::LitNull(LitNull { span }),
-            _ => return Err(SyntaxError::UnexpectedToken(token.clone())),
+            _ => return Err(token.into()),
         };
 
         Ok(self.arena.alloc(literal))
@@ -826,7 +827,8 @@ impl Parser {
 #[cfg(test)]
 mod test {
     use super::Parser;
-    use crate::{error::SyntaxError, Binary, BinaryOperator, Block, LitInt, SyntaxNode, Unary, UnaryOperator};
+    use crate::{Binary, BinaryOperator, Block, LitInt, SyntaxNode, Unary, UnaryOperator};
+    use dice_error::syntax_error::SyntaxError;
 
     #[test]
     fn test_parse_integer() -> Result<(), SyntaxError> {

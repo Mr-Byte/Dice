@@ -1,4 +1,4 @@
-use dice::{Dice, NativeError, Runtime, Value};
+use dice::{Dice, Runtime, RuntimeError, Value};
 use std::io::Write;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -35,7 +35,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 }
 
-fn print_value(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, NativeError> {
+fn print_value(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
     if let [arg, ..] = args {
         println!("{}", arg);
     }
@@ -43,16 +43,13 @@ fn print_value(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, Nati
     Ok(Value::Unit)
 }
 
-fn filter(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, NativeError> {
+fn filter(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
     if let [list, filter_fn, ..] = args {
-        let list = list.as_list().expect("todo: error handling revamp");
+        let list = list.as_list()?;
         let mut result = Vec::new();
 
         for item in &*list.elements() {
-            let included = runtime
-                .call_fn(filter_fn.clone(), &[item.clone()])?
-                .as_bool()
-                .expect("todo: error handling revamp");
+            let included = runtime.call_fn(filter_fn.clone(), &[item.clone()])?.as_bool()?;
 
             if included {
                 result.push(item.clone());

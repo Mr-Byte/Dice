@@ -1,7 +1,5 @@
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}
+pub mod compiler_error;
+pub mod runtime_error;
+pub mod span;
+pub mod syntax_error;
+pub mod type_error;
