@@ -5,6 +5,7 @@ use crate::{
     module::{file_loader::FileModuleLoader, ModuleId, ModuleLoader},
     runtime::stack::Stack,
 };
+use dice_core::runtime::Module;
 use dice_core::{
     bytecode::Bytecode,
     upvalue::{Upvalue, UpvalueState},
@@ -65,16 +66,20 @@ impl<L> dice_core::runtime::Runtime for Runtime<L>
 where
     L: ModuleLoader,
 {
-    fn add_native_fn(&mut self, name: &str, native_fn: NativeFn) {
+    fn function(&mut self, name: &str, native_fn: NativeFn) {
         self.globals
             .insert(name.to_owned(), Value::FnNative(FnNative::new(native_fn)));
     }
 
-    fn call_fn(&mut self, target: Value, args: &[Value]) -> Result<Value, RuntimeError> {
+    fn call_function(&mut self, target: Value, args: &[Value]) -> Result<Value, RuntimeError> {
         self.stack.push(target);
         self.stack.push_slice(args);
 
         Self::call_fn(self, args.len())?;
         Ok(self.stack.pop())
+    }
+
+    fn module(&mut self, _name: &str) -> Result<Module, RuntimeError> {
+        unimplemented!()
     }
 }

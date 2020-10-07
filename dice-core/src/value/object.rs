@@ -1,3 +1,4 @@
+use crate::id::type_id::TypeId;
 use crate::value::Value;
 use std::{
     cell::{Ref, RefCell, RefMut},
@@ -13,7 +14,7 @@ pub struct Object {
 }
 
 impl Object {
-    pub fn new(type_id: u64) -> Self {
+    pub fn new(type_id: TypeId) -> Self {
         Self {
             inner: Rc::new(ObjectInner {
                 fields: Default::default(),
@@ -51,7 +52,7 @@ impl Display for Object {
 #[derive(Debug)]
 pub struct ObjectInner {
     fields: RefCell<HashMap<String, Value>>,
-    type_id: u64,
+    type_id: TypeId,
 }
 
 impl ObjectInner {
@@ -63,7 +64,7 @@ impl ObjectInner {
         self.fields.borrow_mut()
     }
 
-    pub fn type_id(&self) -> u64 {
+    pub fn type_id(&self) -> TypeId {
         self.type_id
     }
 }

@@ -24,7 +24,7 @@ impl Dice {
     }
 
     pub fn register_native_fn(&mut self, name: &str, native_fn: NativeFn) {
-        self.runtime.add_native_fn(name, native_fn);
+        self.runtime.function(name, native_fn);
     }
 }
 

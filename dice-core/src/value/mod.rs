@@ -1,3 +1,4 @@
+use crate::id::type_id::TypeId;
 use dice_error::type_error::TypeError;
 pub use fn_closure::*;
 pub use fn_native::*;
@@ -111,6 +112,14 @@ impl Value {
         match self {
             Value::Object(object) => Ok(object),
             _ => Err(TypeError::NotAString),
+        }
+    }
+
+    pub fn type_id(&self) -> TypeId {
+        if let Value::Object(object) = self {
+            object.type_id()
+        } else {
+            TypeId::new(std::mem::discriminant(self), None)
         }
     }
 }

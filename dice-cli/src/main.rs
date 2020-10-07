@@ -28,7 +28,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         match runtime.run_script(&input) {
             Ok(result) => {
                 let elapsed = start.elapsed();
-                println!("Result ({} ms): {}", (elapsed.as_micros() as f64 / 1000.0), result);
+                let type_id = result.type_id();
+                println!(
+                    "Result ({} ms): {} {:#10X}",
+                    (elapsed.as_micros() as f64 / 1000.0),
+                    result,
+                    type_id
+                );
             }
             Err(err) => eprintln!("{}", err),
         };
@@ -49,7 +55,7 @@ fn filter(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeErr
         let mut result = Vec::new();
 
         for item in &*list.elements() {
-            let included = runtime.call_fn(filter_fn.clone(), &[item.clone()])?.as_bool()?;
+            let included = runtime.call_function(filter_fn.clone(), &[item.clone()])?.as_bool()?;
 
             if included {
                 result.push(item.clone());

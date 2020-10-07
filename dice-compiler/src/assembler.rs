@@ -1,5 +1,6 @@
 use super::upvalue::UpvalueDescriptor;
 use bytes::BufMut as _;
+use dice_core::id::type_id::TypeId;
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode},
     value::Value,
@@ -114,10 +115,10 @@ impl Assembler {
         self.data.put_u8(length);
     }
 
-    pub fn create_object(&mut self, type_id: u64, span: Span) {
+    pub fn create_object(&mut self, type_id: TypeId, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
         self.data.put_u8(Instruction::CREATE_OBJECT.value());
-        self.data.put_u64(type_id);
+        self.data.put_u64(type_id.into());
     }
 
     pub fn mul(&mut self, span: Span) {

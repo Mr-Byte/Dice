@@ -1,6 +1,7 @@
 use crate::runtime::Runtime;
 
 use crate::module::ModuleLoader;
+use dice_core::id::type_id::TypeId;
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
     constants::{ADD, DIV, MUL, REM, SUB},
@@ -538,7 +539,7 @@ where
         let module = match self.loaded_modules.entry(module.id) {
             Entry::Occupied(entry) => entry.get().clone(),
             Entry::Vacant(entry) => {
-                let export = Value::Object(Object::new(0));
+                let export = Value::Object(Object::new(TypeId::new(None, None)));
                 entry.insert(export.clone());
                 self.run_module(module.bytecode, export)?
             }
