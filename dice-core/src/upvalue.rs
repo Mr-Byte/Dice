@@ -18,11 +18,11 @@ impl Upvalue {
         Self(Rc::new(RefCell::new(UpvalueState::Open(slot))))
     }
 
-    pub fn close(&mut self, value: Value) {
+    pub fn close(&self, value: Value) {
         *self.0.borrow_mut() = UpvalueState::Closed(value);
     }
 
-    pub fn state_mut(&mut self) -> RefMut<'_, UpvalueState> {
+    pub fn state_mut(&self) -> RefMut<'_, UpvalueState> {
         self.0.borrow_mut()
     }
 

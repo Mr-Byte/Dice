@@ -19,7 +19,7 @@ where
         &mut self,
         bytecode: &Bytecode,
         stack_frame: Range<usize>,
-        mut closure: Option<FnClosure>,
+        closure: Option<FnClosure>,
     ) -> Result<Value, RuntimeError> {
         let initial_stack_depth = self.stack.len();
         let mut cursor = bytecode.cursor();
@@ -56,8 +56,8 @@ where
                 Instruction::JUMP_IF_FALSE => self.jump_if_false(&mut cursor)?,
                 Instruction::LOAD_LOCAL => self.load_local(stack_frame.clone(), &mut cursor),
                 Instruction::STORE_LOCAL => self.store_local(stack_frame.clone(), &mut cursor),
-                Instruction::LOAD_UPVALUE => self.load_upvalue(&mut closure, &mut cursor),
-                Instruction::STORE_UPVALUE => self.store_upvalue(&mut closure, &mut cursor),
+                Instruction::LOAD_UPVALUE => self.load_upvalue(&closure, &mut cursor),
+                Instruction::STORE_UPVALUE => self.store_upvalue(&closure, &mut cursor),
                 Instruction::CLOSE_UPVALUE => self.close_upvalue(&stack_frame, &mut cursor),
                 Instruction::LOAD_GLOBAL => self.load_global(bytecode, &mut cursor)?,
                 Instruction::STORE_GLOBAL => self.store_global(bytecode, &mut cursor)?,
@@ -65,7 +65,7 @@ where
                 Instruction::STORE_FIELD => self.store_field(bytecode, &mut cursor)?,
                 Instruction::LOAD_INDEX => self.load_index()?,
                 Instruction::STORE_INDEX => self.store_index()?,
-                Instruction::CLOSURE => self.closure(bytecode, &stack_frame, &mut closure, &mut cursor)?,
+                Instruction::CLOSURE => self.closure(bytecode, &stack_frame, &closure, &mut cursor)?,
                 Instruction::CALL => self.call(&mut cursor)?,
                 Instruction::ASSERT_BOOL => self.assert_bool()?,
                 Instruction::LOAD_MODULE => self.load_module(&bytecode, &mut cursor)?,
@@ -270,10 +270,10 @@ where
         self.stack.push(value);
     }
 
-    fn load_upvalue(&mut self, closure: &mut Option<FnClosure>, cursor: &mut BytecodeCursor) {
-        if let Some(closure) = closure.as_mut() {
+    fn load_upvalue(&mut self, closure: &Option<FnClosure>, cursor: &mut BytecodeCursor) {
+        if let Some(closure) = closure {
             let upvalue_slot = cursor.read_u8() as usize;
-            let mut upvalue = closure.upvalues[upvalue_slot].clone();
+            let upvalue = closure.upvalues[upvalue_slot].clone();
             let value = match &*upvalue.state_mut() {
                 UpvalueState::Open(slot) => self.stack.slot(*slot).clone(),
                 UpvalueState::Closed(value) => value.clone(),
@@ -285,10 +285,10 @@ where
         }
     }
 
-    fn store_upvalue(&mut self, closure: &mut Option<FnClosure>, cursor: &mut BytecodeCursor) {
-        if let Some(closure) = closure.as_mut() {
+    fn store_upvalue(&mut self, closure: &Option<FnClosure>, cursor: &mut BytecodeCursor) {
+        if let Some(closure) = closure {
             let upvalue_slot = cursor.read_u8() as usize;
-            let mut upvalue = closure.upvalues[upvalue_slot].clone();
+            let upvalue = closure.upvalues[upvalue_slot].clone();
             let value = self.stack.pop();
             let result = match &mut *upvalue.state_mut() {
                 UpvalueState::Open(slot) => {
@@ -314,7 +314,7 @@ where
         let found_upvalue = self.find_open_upvalue(offset);
 
         if let Some((index, _)) = found_upvalue {
-            if let Some(mut upvalue) = self.open_upvalues.remove(index) {
+            if let Some(upvalue) = self.open_upvalues.remove(index) {
                 upvalue.close(value);
             }
         }
@@ -451,7 +451,7 @@ where
         &mut self,
         bytecode: &Bytecode,
         stack_frame: &Range<usize>,
-        closure: &mut Option<FnClosure>,
+        closure: &Option<FnClosure>,
         cursor: &mut BytecodeCursor,
     ) -> Result<(), RuntimeError> {
         let const_pos = cursor.read_u8() as usize;
@@ -477,7 +477,7 @@ where
                                 upvalues.push(upvalue);
                             }
                         };
-                    } else if let Some(closure) = closure.as_mut() {
+                    } else if let Some(closure) = closure {
                         let upvalue = closure.upvalues[index].clone();
                         upvalues.push(upvalue);
                     } else {
