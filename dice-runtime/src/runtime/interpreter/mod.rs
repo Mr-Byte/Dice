@@ -50,8 +50,8 @@ where
                 Instruction::GTE => comparison_op!(self.stack, OP_GTE),
                 Instruction::LT => comparison_op!(self.stack, OP_LT),
                 Instruction::LTE => comparison_op!(self.stack, OP_LTE),
-                Instruction::EQ => comparison_op!(self.stack, OP_EQ),
-                Instruction::NEQ => comparison_op!(self.stack, OP_NEQ),
+                Instruction::EQ => self.eq(),
+                Instruction::NEQ => self.neq(),
                 Instruction::JUMP => self.jump(&mut cursor),
                 Instruction::JUMP_IF_FALSE => self.jump_if_false(&mut cursor)?,
                 Instruction::LOAD_LOCAL => self.load_local(stack_frame.clone(), &mut cursor),
@@ -181,6 +181,22 @@ where
         }
 
         Ok(())
+    }
+
+    #[inline]
+    fn eq(&mut self) {
+        let rhs = self.stack.pop();
+        let lhs = self.stack.peek(0);
+
+        *lhs = Value::Bool(rhs == *lhs);
+    }
+
+    #[inline]
+    fn neq(&mut self) {
+        let rhs = self.stack.pop();
+        let lhs = self.stack.peek(0);
+
+        *lhs = Value::Bool(rhs != *lhs);
     }
 
     #[inline]

@@ -18,6 +18,7 @@ impl Object {
         Self {
             inner: Rc::new(ObjectInner {
                 fields: Default::default(),
+                mixin_type_ids: Vec::new(),
                 type_id,
             }),
         }
@@ -53,6 +54,7 @@ impl Display for Object {
 pub struct ObjectInner {
     fields: RefCell<HashMap<String, Value>>,
     type_id: TypeId,
+    mixin_type_ids: Vec<TypeId>,
 }
 
 impl ObjectInner {

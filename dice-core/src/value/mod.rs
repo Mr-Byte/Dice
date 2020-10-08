@@ -26,6 +26,7 @@ pub enum Value {
     List(List),
     String(Rc<String>),
     Object(Object),
+    Class(),
 }
 
 impl Value {
@@ -162,6 +163,7 @@ impl Display for Value {
             Value::List(list) => list.fmt(fmt),
             Value::String(string) => string.fmt(fmt),
             Value::Object(object) => object.fmt(fmt),
+            Value::Class() => write!(fmt, "Class"),
         }
     }
 }
