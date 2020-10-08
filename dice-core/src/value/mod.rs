@@ -132,13 +132,14 @@ impl Default for Value {
 }
 
 impl PartialEq for Value {
+    #[inline(always)]
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (Value::Null, Value::Null) => true,
             (Value::Unit, Value::Unit) => true,
-            (Value::Bool(lhs), Value::Bool(rhs)) => lhs == rhs,
-            (Value::Int(lhs), Value::Int(rhs)) => lhs == rhs,
-            (Value::Float(lhs), Value::Float(rhs)) => lhs == rhs,
+            (Value::Bool(lhs), Value::Bool(rhs)) => *lhs == *rhs,
+            (Value::Int(lhs), Value::Int(rhs)) => *lhs == *rhs,
+            (Value::Float(lhs), Value::Float(rhs)) => *lhs == *rhs,
             (Value::FnClosure(lhs), Value::FnClosure(rhs)) => lhs == rhs,
             (Value::FnScript(lhs), Value::FnScript(rhs)) => lhs == rhs,
             (Value::List(lhs), Value::List(rhs)) => lhs == rhs,
