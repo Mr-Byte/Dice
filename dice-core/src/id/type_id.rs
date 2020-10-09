@@ -8,8 +8,12 @@ use std::mem::Discriminant;
 pub struct TypeId(Hash);
 
 impl TypeId {
-    pub fn new<'a>(base_id: impl Into<Option<Discriminant<Value>>>, name: impl Into<Option<&'a str>>) -> Self {
-        let hash = Hash::of((base_id.into(), name.into()));
+    pub fn new<'a>(
+        base_id: impl Into<Option<Discriminant<Value>>>,
+        path: impl Into<Option<&'a str>>,
+        name: impl Into<Option<&'a str>>,
+    ) -> Self {
+        let hash = Hash::of((base_id.into(), path.into(), name.into()));
 
         TypeId(hash)
     }

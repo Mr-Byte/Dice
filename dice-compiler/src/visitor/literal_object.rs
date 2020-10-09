@@ -9,7 +9,7 @@ impl NodeVisitor<&LitObject> for Compiler {
         // TODO: Generate actual type ids.
         self.context()?
             .assembler()
-            .create_object(TypeId::new(None, None), *span);
+            .create_object(TypeId::new(None, None, "Object"), *span);
 
         for (field, value) in items {
             self.context()?.assembler().dup(0, *span);

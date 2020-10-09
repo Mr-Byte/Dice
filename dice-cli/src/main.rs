@@ -30,10 +30,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let elapsed = start.elapsed();
                 let type_id = result.type_id();
                 println!(
-                    "Result ({} ms): {} {:#10X}",
+                    "Result (time={} ms, typeid={:#10X}): {}",
                     (elapsed.as_micros() as f64 / 1000.0),
+                    type_id,
                     result,
-                    type_id
                 );
             }
             Err(err) => eprintln!("{}", err),

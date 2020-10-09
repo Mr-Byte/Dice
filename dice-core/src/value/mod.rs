@@ -1,4 +1,5 @@
 use crate::id::type_id::TypeId;
+pub use class::*;
 use dice_error::type_error::TypeError;
 pub use fn_closure::*;
 pub use fn_native::*;
@@ -7,6 +8,7 @@ pub use list::*;
 pub use object::*;
 use std::{fmt::Display, rc::Rc};
 
+mod class;
 mod fn_closure;
 mod fn_native;
 mod fn_script;
@@ -26,7 +28,8 @@ pub enum Value {
     List(List),
     String(Rc<String>),
     Object(Object),
-    Class(),
+    Class(Class),
+    Trait(),
 }
 
 impl Value {
@@ -74,6 +77,11 @@ impl Value {
         matches!(self, Value::List(_))
     }
 
+    #[inline]
+    pub fn is_class(&self) -> bool {
+        matches!(self, Value::Class(_))
+    }
+
     pub fn as_bool(&self) -> Result<bool, TypeError> {
         match self {
             Value::Bool(bool) => Ok(*bool),
@@ -117,10 +125,13 @@ impl Value {
     }
 
     pub fn type_id(&self) -> TypeId {
-        if let Value::Object(object) = self {
-            object.type_id()
-        } else {
-            TypeId::new(std::mem::discriminant(self), None)
+        let discriminant = std::mem::discriminant(self);
+
+        match self {
+            Value::Object(_) => TypeId::new(discriminant, None, "Object"),
+            Value::Class(class) => TypeId::new(discriminant, class.path.as_deref(), class.name.as_str()),
+            Value::Trait() => todo!(),
+            _ => TypeId::new(discriminant, None, None),
         }
     }
 }
@@ -164,7 +175,8 @@ impl Display for Value {
             Value::List(list) => list.fmt(fmt),
             Value::String(string) => string.fmt(fmt),
             Value::Object(object) => object.fmt(fmt),
-            Value::Class() => write!(fmt, "Class"),
+            Value::Class(_) => write!(fmt, "Class"),
+            Value::Trait() => write!(fmt, "Trait"),
         }
     }
 }

@@ -555,7 +555,7 @@ where
         let module = match self.loaded_modules.entry(module.id) {
             Entry::Occupied(entry) => entry.get().clone(),
             Entry::Vacant(entry) => {
-                let export = Value::Object(Object::new(TypeId::new(None, None)));
+                let export = Value::Object(Object::new(TypeId::new(None, path, "#export")));
                 entry.insert(export.clone());
                 self.run_module(module.bytecode, export)?
             }
