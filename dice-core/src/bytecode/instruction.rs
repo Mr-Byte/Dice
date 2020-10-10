@@ -48,6 +48,7 @@ macro_rules! define_instructions {
 }
 
 define_instructions! {
+    // Instructions to push data onto the stack.
     pub const PUSH_NULL;
     pub const PUSH_UNIT;
     pub const PUSH_FALSE;
@@ -57,13 +58,20 @@ define_instructions! {
     pub const PUSH_F0;
     pub const PUSH_F1;
     pub const PUSH_CONST;
+    // Basic stack manipulation instructions.
     pub const POP;
     pub const DUP;
-    pub const LOAD_MODULE;
+    // Compound stack manipulation instructions.
     pub const CREATE_LIST;
     pub const CREATE_OBJECT;
+    pub const CREATE_CLOSURE;
+    // NOTE: Create class takes a constant reference to its name and a 64-bit operand representing its instance type id.
+    pub const CREATE_CLASS;
+    // NOTE: There's no concept of "storing" a module.
+    pub const LOAD_MODULE;
     pub const LOAD_GLOBAL;
-    pub const STORE_GLOBAL; // NOTE: Globals are write-once, if they don't already exist.
+    // NOTE: Globals are write-once, if they don't already exist.
+    pub const STORE_GLOBAL;
     pub const LOAD_LOCAL;
     pub const STORE_LOCAL;
     pub const LOAD_UPVALUE;
@@ -73,6 +81,10 @@ define_instructions! {
     pub const STORE_FIELD;
     pub const LOAD_INDEX;
     pub const STORE_INDEX;
+    // NOTE: Stores the method in a class object's method map.
+    // Static functions and the like are stored as fields on the class object itself.
+    pub const STORE_METHOD;
+    // Operator instructions
     pub const NEG;
     pub const NOT;
     pub const MUL;
@@ -88,11 +100,12 @@ define_instructions! {
     pub const NEQ;
     pub const LOGICAL_AND;
     pub const LOGICAL_OR;
+    // Control flow instructions
     pub const JUMP;
     pub const JUMP_IF_FALSE;
     pub const CALL;
-    pub const CLOSURE;
     pub const RETURN;
+    // Type assertion instructions
     pub const ASSERT_BOOL;
     // NOTE: Dice will support a full suite of type assertions, for now only bool is supported.
 }

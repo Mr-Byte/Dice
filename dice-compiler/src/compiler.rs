@@ -3,13 +3,14 @@ use crate::{
     scope_stack::State,
     visitor::{BlockKind, NodeVisitor},
 };
+use dice_core::source::{Source, SourceKind};
 use dice_core::{bytecode::Bytecode, constants::EXPORT};
 use dice_error::{compiler_error::CompilerError, span::Span};
 use dice_syntax::{Block, Parser, SyntaxNode, SyntaxTree};
 
 #[allow(dead_code)]
 #[derive(Ord, PartialOrd, Eq, PartialEq, Copy, Clone)]
-pub enum CompilationKind {
+enum CompilationKind {
     Script,
     Module,
 }
@@ -33,8 +34,12 @@ impl Compiler {
         }
     }
 
-    pub fn compile_str(input: &str, kind: CompilationKind) -> Result<Bytecode, CompilerError> {
-        let syntax_tree = Parser::new(input).parse()?;
+    pub fn compile(source: &Source) -> Result<Bytecode, CompilerError> {
+        let syntax_tree = Parser::new(source.source()).parse()?;
+        let kind = match source.kind() {
+            SourceKind::Module => CompilationKind::Module,
+            SourceKind::Script => CompilationKind::Script,
+        };
         let mut compiler = Self::new(syntax_tree, kind);
 
         if kind == CompilationKind::Module {

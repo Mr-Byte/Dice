@@ -25,7 +25,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let input = String::from_utf8(input)?;
         let start = std::time::Instant::now();
 
-        match runtime.run_script(&input) {
+        match runtime.run_script(input) {
             Ok(result) => {
                 let elapsed = start.elapsed();
                 let type_id = result.type_id();

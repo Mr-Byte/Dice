@@ -89,26 +89,28 @@ impl Display for Bytecode {
                 | Instruction::CALL
                 | Instruction::LOAD_UPVALUE
                 | Instruction::STORE_UPVALUE
-                | Instruction::CLOSE_UPVALUE => write!(f, "{}", cursor.read_u8())?,
-                Instruction::CLOSURE => {
+                | Instruction::CLOSE_UPVALUE
+                | Instruction::STORE_METHOD => write!(f, "{}", cursor.read_u8())?,
+                Instruction::CREATE_CLASS => write!(f, "{} {:#10X}", cursor.read_u8(), cursor.read_type_id())?,
+                Instruction::CREATE_CLOSURE => {
                     let const_index = cursor.read_u8() as usize;
                     let function = &self.constants()[const_index];
 
-                    if let Value::FnScript(fn_script) = function {
-                        write!(f, "{:<8} |", const_index)?;
+                    match function {
+                        Value::FnScript(fn_script) => {
+                            write!(f, "{:<8} |", const_index)?;
 
-                        for _ in 0..fn_script.bytecode.upvalue_count() {
-                            let kind = if cursor.read_u8() == 1 {
-                                "parent_local"
-                            } else {
-                                "upvalue"
-                            };
-                            let index = cursor.read_u8() as usize;
+                            for _ in 0..fn_script.bytecode.upvalue_count() {
+                                let kind = match cursor.read_u8() {
+                                    1 => "parent_local",
+                                    _ => "upvalue",
+                                };
+                                let index = cursor.read_u8() as usize;
 
-                            write!(f, " ({} {})", kind, index)?;
+                                write!(f, " ({} {})", kind, index)?;
+                            }
                         }
-                    } else {
-                        write!(f, "NOT A FUNCTION!")?
+                        _ => write!(f, "NOT A FUNCTION!")?,
                     }
                 }
                 _ => (),

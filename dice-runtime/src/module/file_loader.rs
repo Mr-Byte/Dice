@@ -1,5 +1,6 @@
 use crate::module::{Module, ModuleLoader};
-use dice_compiler::compiler::{CompilationKind, Compiler};
+use dice_compiler::compiler::Compiler;
+use dice_core::source::{Source, SourceKind};
 use dice_error::runtime_error::RuntimeError;
 use std::{
     collections::{hash_map::Entry, HashMap},
@@ -20,7 +21,8 @@ impl ModuleLoader for FileModuleLoader {
             Entry::Occupied(entry) => Ok(entry.get().clone()),
             Entry::Vacant(entry) => {
                 let source = std::fs::read_to_string(&path)?;
-                let module = Compiler::compile_str(&source, CompilationKind::Module)?;
+                let source = Source::with_path(source, SourceKind::Module, path.to_string_lossy().into());
+                let module = Compiler::compile(&source)?;
                 let module_id = self.module_counter.into();
                 self.module_counter += 1;
 

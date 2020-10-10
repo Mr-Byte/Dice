@@ -1,9 +1,10 @@
-use dice_compiler::compiler::{CompilationKind, Compiler};
+use dice_compiler::compiler::Compiler;
 use dice_core::value::NativeFn;
 pub use dice_core::{runtime::Runtime, value::Value};
 use dice_error::compiler_error::CompilerError;
 use dice_runtime::runtime;
 
+use dice_core::source::{Source, SourceKind};
 pub use dice_error::runtime_error::RuntimeError;
 
 pub struct Dice {
@@ -11,15 +12,17 @@ pub struct Dice {
 }
 
 impl Dice {
-    pub fn run_script(&mut self, input: &str) -> Result<Value, DiceError> {
-        let bytecode = Compiler::compile_str(input, CompilationKind::Script)?;
+    pub fn run_script(&mut self, input: impl Into<String>) -> Result<Value, DiceError> {
+        let source = Source::new(input.into(), SourceKind::Script);
+        let bytecode = Compiler::compile(&source)?;
         let value = self.runtime.run_bytecode(bytecode)?;
 
         Ok(value)
     }
 
-    pub fn disassemble_script(&self, input: &str) -> Result<String, DiceError> {
-        let bytecode = Compiler::compile_str(input, CompilationKind::Script)?;
+    pub fn disassemble_script(&self, input: impl Into<String>) -> Result<String, DiceError> {
+        let source = Source::new(input.into(), SourceKind::Script);
+        let bytecode = Compiler::compile(&source)?;
         Ok(bytecode.to_string())
     }
 

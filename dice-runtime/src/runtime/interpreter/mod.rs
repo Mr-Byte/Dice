@@ -65,7 +65,7 @@ where
                 Instruction::STORE_FIELD => self.store_field(bytecode, &mut cursor)?,
                 Instruction::LOAD_INDEX => self.load_index()?,
                 Instruction::STORE_INDEX => self.store_index()?,
-                Instruction::CLOSURE => self.closure(bytecode, &stack_frame, &closure, &mut cursor)?,
+                Instruction::CREATE_CLOSURE => self.closure(bytecode, &stack_frame, &closure, &mut cursor)?,
                 Instruction::CALL => self.call(&mut cursor)?,
                 Instruction::ASSERT_BOOL => self.assert_bool()?,
                 Instruction::LOAD_MODULE => self.load_module(&bytecode, &mut cursor)?,

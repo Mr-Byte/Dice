@@ -80,7 +80,7 @@ impl Assembler {
 
     pub fn closure(&mut self, value: Value, upvalues: &[UpvalueDescriptor], span: Span) -> Result<(), CompilerError> {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::CLOSURE.value());
+        self.data.put_u8(Instruction::CREATE_CLOSURE.value());
         let fn_pos = self.make_constant(value)?;
         self.data.put_u8(fn_pos);
 
