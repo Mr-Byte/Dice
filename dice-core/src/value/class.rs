@@ -13,6 +13,7 @@ pub struct ClassInner {
     pub path: Option<String>,
     pub name: String,
     pub methods: HashMap<String, Bytecode>,
+    pub constructor: Option<Bytecode>,
 }
 
 impl Deref for Class {

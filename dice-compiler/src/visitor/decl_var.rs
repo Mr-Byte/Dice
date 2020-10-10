@@ -16,7 +16,6 @@ impl NodeVisitor<&VarDecl> for Compiler {
 
 impl Compiler {
     fn singular_var(&mut self, var_decl: &VarDecl, name: &str) -> Result<(), CompilerError> {
-        let name = name.clone();
         let slot = self
             .context()?
             .scope_stack()
