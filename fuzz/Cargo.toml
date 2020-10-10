@@ -1,0 +1,22 @@
+[package]
+name = "fuzz"
+version = "0.1.0"
+authors = ["byte"]
+edition = "2018"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.3"
+
+[dependencies.dice]
+path = "../dice"
+
+# Prevent this from interfering with workspaces
+[workspace]
+members = ["."]
+
+[[bin]]
+name = "dice"
+path = "fuzz_targets/dice.rs"

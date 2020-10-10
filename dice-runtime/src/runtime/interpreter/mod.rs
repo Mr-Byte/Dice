@@ -4,7 +4,7 @@ use crate::module::ModuleLoader;
 use dice_core::id::type_id::TypeId;
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
-    constants::{ADD, DIV, MUL, REM, SUB},
+    constants::{ADD, DIV, GT, GTE, LT, LTE, MUL, REM, SUB},
     upvalue::{Upvalue, UpvalueState},
     value::{FnClosure, Object, Value},
 };
@@ -39,17 +39,17 @@ where
                 Instruction::DUP => self.dup(&mut cursor),
                 Instruction::CREATE_LIST => self.create_list(&mut cursor),
                 Instruction::CREATE_OBJECT => self.create_object(&mut cursor),
-                Instruction::NEG => self.neg(),
+                Instruction::NEG => self.neg()?,
                 Instruction::NOT => self.not()?,
                 Instruction::MUL => self.mul()?,
                 Instruction::DIV => self.div()?,
                 Instruction::REM => self.rem()?,
                 Instruction::ADD => self.add()?,
                 Instruction::SUB => self.sub()?,
-                Instruction::GT => comparison_op!(self.stack, OP_GT),
-                Instruction::GTE => comparison_op!(self.stack, OP_GTE),
-                Instruction::LT => comparison_op!(self.stack, OP_LT),
-                Instruction::LTE => comparison_op!(self.stack, OP_LTE),
+                Instruction::GT => self.gt()?,
+                Instruction::GTE => self.gte()?,
+                Instruction::LT => self.lt()?,
+                Instruction::LTE => self.lte()?,
                 Instruction::EQ => self.eq(),
                 Instruction::NEQ => self.neq(),
                 Instruction::JUMP => self.jump(&mut cursor),
@@ -113,19 +113,25 @@ where
     fn not(&mut self) -> Result<(), RuntimeError> {
         match self.stack.peek(0) {
             Value::Bool(value) => *value = !*value,
-            _ => return Err(RuntimeError::Aborted(String::from("LHS must be a boolean value."))),
+            _ => return Err(RuntimeError::Aborted(String::from("Value must be a boolean."))),
         }
 
         Ok(())
     }
 
     #[inline]
-    fn neg(&mut self) {
+    fn neg(&mut self) -> Result<(), RuntimeError> {
         match self.stack.peek(0) {
             Value::Int(value) => *value = -*value,
             Value::Float(value) => *value = -*value,
-            _ => todo!(),
+            _ => {
+                return Err(RuntimeError::Aborted(String::from(
+                    "Can only negate an integer or float.",
+                )))
+            }
         }
+
+        Ok(())
     }
 
     #[inline]
@@ -142,7 +148,13 @@ where
     #[inline]
     fn div(&mut self) -> Result<(), RuntimeError> {
         match (self.stack.pop(), self.stack.peek(0)) {
-            (Value::Int(rhs), Value::Int(lhs)) => *lhs /= rhs,
+            (Value::Int(rhs), Value::Int(lhs)) => {
+                if rhs == 0 {
+                    return Err(RuntimeError::DivideByZero);
+                }
+
+                *lhs /= rhs;
+            }
             (Value::Float(rhs), Value::Float(lhs)) => *lhs /= rhs,
             (rhs, _) => self.call_bin_op(DIV, rhs)?,
         }
@@ -153,7 +165,13 @@ where
     #[inline]
     fn rem(&mut self) -> Result<(), RuntimeError> {
         match (self.stack.pop(), self.stack.peek(0)) {
-            (Value::Int(rhs), Value::Int(lhs)) => *lhs %= rhs,
+            (Value::Int(rhs), Value::Int(lhs)) => {
+                if rhs == 0 {
+                    return Err(RuntimeError::DivideByZero);
+                }
+
+                *lhs %= rhs;
+            }
             (Value::Float(rhs), Value::Float(lhs)) => *lhs %= rhs,
             (rhs, _) => self.call_bin_op(REM, rhs)?,
         }
@@ -167,6 +185,54 @@ where
             (Value::Int(rhs), Value::Int(lhs)) => *lhs += rhs,
             (Value::Float(rhs), Value::Float(lhs)) => *lhs += rhs,
             (rhs, _) => self.call_bin_op(ADD, rhs)?,
+        }
+
+        Ok(())
+    }
+
+    #[inline]
+    fn gt(&mut self) -> Result<(), RuntimeError> {
+        match (self.stack.pop(), self.stack.peek(0)) {
+            (Value::Bool(rhs), Value::Bool(lhs)) => *lhs = *lhs > rhs,
+            (Value::Int(rhs), Value::Int(lhs)) => *self.stack.peek(0) = Value::Bool(*lhs > rhs),
+            (Value::Float(rhs), Value::Float(lhs)) => *self.stack.peek(0) = Value::Bool(*lhs > rhs),
+            (rhs, _) => self.call_bin_op(GT, rhs)?,
+        }
+
+        Ok(())
+    }
+
+    #[inline]
+    fn gte(&mut self) -> Result<(), RuntimeError> {
+        match (self.stack.pop(), self.stack.peek(0)) {
+            (Value::Bool(rhs), Value::Bool(lhs)) => *lhs = *lhs >= rhs,
+            (Value::Int(rhs), Value::Int(lhs)) => *self.stack.peek(0) = Value::Bool(*lhs >= rhs),
+            (Value::Float(rhs), Value::Float(lhs)) => *self.stack.peek(0) = Value::Bool(*lhs >= rhs),
+            (rhs, _) => self.call_bin_op(GTE, rhs)?,
+        }
+
+        Ok(())
+    }
+
+    #[inline]
+    fn lt(&mut self) -> Result<(), RuntimeError> {
+        match (self.stack.pop(), self.stack.peek(0)) {
+            (Value::Bool(rhs), Value::Bool(lhs)) => *lhs = *lhs < rhs,
+            (Value::Int(rhs), Value::Int(lhs)) => *self.stack.peek(0) = Value::Bool(*lhs < rhs),
+            (Value::Float(rhs), Value::Float(lhs)) => *self.stack.peek(0) = Value::Bool(*lhs < rhs),
+            (rhs, _) => self.call_bin_op(LT, rhs)?,
+        }
+
+        Ok(())
+    }
+
+    #[inline]
+    fn lte(&mut self) -> Result<(), RuntimeError> {
+        match (self.stack.pop(), self.stack.peek(0)) {
+            (Value::Bool(rhs), Value::Bool(lhs)) => *lhs = *lhs <= rhs,
+            (Value::Int(rhs), Value::Int(lhs)) => *self.stack.peek(0) = Value::Bool(*lhs <= rhs),
+            (Value::Float(rhs), Value::Float(lhs)) => *self.stack.peek(0) = Value::Bool(*lhs <= rhs),
+            (rhs, _) => self.call_bin_op(LTE, rhs)?,
         }
 
         Ok(())
@@ -210,7 +276,7 @@ where
                 self.call_fn(2)?;
             }
             // TODO: change how this works to try to resolve operator on LHS before falling back on global.
-            None => todo!("No global add operator defined."),
+            None => return Err(RuntimeError::Aborted("No global operator defined.".to_owned())),
         }
 
         Ok(())
@@ -371,7 +437,7 @@ where
                         object.fields_mut().insert((**key).clone(), value.clone());
                         self.stack.push(value);
                     }
-                    _ => todo!("Throw an error if the target is not an object."),
+                    _ => return Err(RuntimeError::InvalidTargetType),
                 }
             }
             _ => todo!("Throw an error if the key value is not a string."),
@@ -388,7 +454,7 @@ where
                     Some(field) => field.clone(),
                     None => Value::Null,
                 },
-                _ => todo!("Throw an error if the target is not an object."),
+                _ => return Err(RuntimeError::InvalidTargetType),
             },
             _ => todo!("Throw an error if the key value is not a string."),
         };

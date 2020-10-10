@@ -4,7 +4,9 @@ use crate::{compiler_error::CompilerError, type_error::TypeError};
 pub enum RuntimeError {
     #[error("Runtime Error: Execution unexpectedly aborted. Reason: {0}")]
     Aborted(String),
-    #[error("Invalid global name type.")]
+    #[error("Runtime Error: The target is not an object.")]
+    InvalidTargetType,
+    #[error("Runtime Error: Invalid global name type.")]
     InvalidGlobalNameType, // TODO: Move to TypeError.
     #[error("Runtime Error: Invalid number of parameters passed to function. Expected: {0}, Found: {1}.")]
     InvalidFunctionArgs(usize, usize),
@@ -14,6 +16,9 @@ pub enum RuntimeError {
     VariableNotFound(String),
     #[error("Unknown instruction: {0:#04X}")]
     UnknownInstruction(u8),
+
+    #[error("Runtime Error: Attempted to divide by zero.")]
+    DivideByZero,
 
     #[error(transparent)]
     TypeError(#[from] TypeError),
