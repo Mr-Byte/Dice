@@ -129,7 +129,7 @@ impl Value {
 
         match self {
             Value::Object(_) => TypeId::new(discriminant, None, "Object"),
-            Value::Class(class) => TypeId::new(discriminant, class.path.as_deref(), class.name.as_str()),
+            Value::Class(class) => TypeId::new(discriminant, class.path.as_str(), class.name.as_str()),
             Value::Trait() => todo!(),
             _ => TypeId::new(discriminant, None, None),
         }

@@ -28,6 +28,7 @@ impl NodeVisitor<SyntaxNodeId> for Compiler {
             SyntaxNode::VarDecl(variable) => self.visit(variable)?,
             SyntaxNode::FnDecl(func) => self.visit(func)?,
             SyntaxNode::OpDecl(func) => self.visit(func)?,
+            SyntaxNode::ClassDecl(class) => self.visit(class)?,
             SyntaxNode::ImportDecl(import) => self.visit(import)?,
             SyntaxNode::ExportDecl(export) => self.visit(export)?,
             SyntaxNode::IfExpression(conditional) => self.visit(conditional)?,

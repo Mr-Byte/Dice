@@ -21,8 +21,8 @@ impl ModuleLoader for FileModuleLoader {
             Entry::Occupied(entry) => Ok(entry.get().clone()),
             Entry::Vacant(entry) => {
                 let source = std::fs::read_to_string(&path)?;
-                let source = Source::with_path(source, SourceKind::Module, path.to_string_lossy().into());
-                let module = Compiler::compile(&source)?;
+                let source = Source::with_path(source, path.to_string_lossy().into(), SourceKind::Module);
+                let module = Compiler::compile(source)?;
                 let module_id = self.module_counter.into();
                 self.module_counter += 1;
 

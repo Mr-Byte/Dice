@@ -4,7 +4,7 @@ use super::{
     IfExpression, LitAnonymousFn, LitBool, LitFloat, LitIdent, LitInt, LitList, LitNull, LitObject, LitString, LitUnit,
     Return, SyntaxNode, SyntaxNodeId, SyntaxTree, Unary, UnaryOperator, VarDecl, WhileLoop,
 };
-use crate::{FieldAccess, ForLoop, ImportDecl, Index, OpDecl, SafeAccess, VarDeclKind};
+use crate::{ClassDecl, FieldAccess, ForLoop, ImportDecl, Index, OpDecl, SafeAccess, VarDeclKind};
 use dice_error::{span::Span, syntax_error::SyntaxError};
 use id_arena::Arena;
 
@@ -543,7 +543,19 @@ impl Parser {
     }
 
     fn class_decl(&mut self) -> SyntaxNodeResult {
-        todo!()
+        let span_start = self.lexer.consume(TokenKind::Class)?.span();
+        let (_, name) = self.lexer.consume_ident()?;
+        self.lexer.consume(TokenKind::LeftCurly)?;
+        let span_end = self.lexer.consume(TokenKind::RightCurly)?.span();
+
+        let class_decl = ClassDecl {
+            name,
+            span: span_start + span_end,
+        };
+
+        let node = self.arena.alloc(SyntaxNode::ClassDecl(class_decl));
+
+        Ok(node)
     }
 
     fn binary(&mut self, lhs: SyntaxNodeId, _: bool, span_start: Span) -> SyntaxNodeResult {

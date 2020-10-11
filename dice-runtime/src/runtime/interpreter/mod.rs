@@ -1,6 +1,7 @@
 use crate::module::ModuleLoader;
 use crate::runtime::Runtime;
 use dice_core::id::type_id::TypeId;
+use dice_core::value::Class;
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
     constants::{ADD, DIV, GT, GTE, LT, LTE, MUL, REM, SUB},
@@ -38,6 +39,7 @@ where
                 Instruction::DUP => self.dup(&mut cursor),
                 Instruction::CREATE_LIST => self.create_list(&mut cursor),
                 Instruction::CREATE_OBJECT => self.create_object(&mut cursor),
+                Instruction::CREATE_CLASS => self.create_class(&bytecode, &mut cursor),
                 Instruction::NEG => self.neg()?,
                 Instruction::NOT => self.not()?,
                 Instruction::MUL => self.mul()?,
@@ -290,9 +292,23 @@ where
 
     fn create_object(&mut self, cursor: &mut BytecodeCursor) {
         let type_id = cursor.read_type_id();
-        let object = Object::new(type_id);
+        let object = Object::new::<_, &str>(type_id, None);
 
         self.stack.push(Value::Object(object));
+    }
+
+    fn create_class(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) {
+        let name_slot = cursor.read_u8() as usize;
+        let path_slot = cursor.read_u8() as usize;
+
+        let class = match (&bytecode.constants()[name_slot], &bytecode.constants()[path_slot]) {
+            (Value::String(name), Value::String(path)) => {
+                Class::new(name.as_str().to_owned(), path.as_str().to_owned())
+            }
+            _ => unreachable!("Invalid constant types for class creation."),
+        };
+
+        self.stack.push(Value::Class(class));
     }
 
     fn push_const(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) {
@@ -606,6 +622,26 @@ where
 
                 return Ok(());
             }
+            Value::Class(class) => {
+                let class = class.clone();
+
+                // TODO: Create object, copy instance methods over, call constructor (if one exists).
+
+                if let Some(_constructor) = &class.constructor {
+                    todo!("Actually handle the constructor case.")
+                } else {
+                    if arg_count > 0 {
+                        return Err(RuntimeError::InvalidFunctionArgs(0, arg_count));
+                    }
+
+                    let object = Value::Object(Object::new(class.instance_type_id, &class.name));
+
+                    self.stack.release_slots(1);
+                    self.stack.push(object);
+
+                    return Ok(());
+                }
+            }
             _ => return Err(RuntimeError::NotAFunction),
         };
 
@@ -630,7 +666,7 @@ where
         let module = match self.loaded_modules.entry(module.id) {
             Entry::Occupied(entry) => entry.get().clone(),
             Entry::Vacant(entry) => {
-                let export = Value::Object(Object::new(TypeId::new(None, path, "#export")));
+                let export = Value::Object(Object::new(TypeId::new(None, path, "#export"), "Export"));
                 entry.insert(export.clone());
                 self.run_module(module.bytecode, export)?
             }

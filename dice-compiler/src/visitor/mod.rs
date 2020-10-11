@@ -1,3 +1,4 @@
+mod decl_class;
 mod decl_export;
 mod decl_fn;
 mod decl_import;

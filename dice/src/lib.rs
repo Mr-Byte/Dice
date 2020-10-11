@@ -14,7 +14,7 @@ pub struct Dice {
 impl Dice {
     pub fn run_script(&mut self, input: impl Into<String>) -> Result<Value, DiceError> {
         let source = Source::new(input.into(), SourceKind::Script);
-        let bytecode = Compiler::compile(&source)?;
+        let bytecode = Compiler::compile(source)?;
         let value = self.runtime.run_bytecode(bytecode)?;
 
         Ok(value)
@@ -22,7 +22,7 @@ impl Dice {
 
     pub fn disassemble_script(&self, input: impl Into<String>) -> Result<String, DiceError> {
         let source = Source::new(input.into(), SourceKind::Script);
-        let bytecode = Compiler::compile(&source)?;
+        let bytecode = Compiler::compile(source)?;
         Ok(bytecode.to_string())
     }
 

@@ -1,12 +1,15 @@
+use std::rc::Rc;
+
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub enum SourceKind {
     Module,
     Script,
 }
 
+#[derive(Clone)]
 pub struct Source {
-    path: Option<String>,
-    source: String,
+    path: Option<Rc<str>>,
+    source: Rc<str>,
     kind: SourceKind,
 }
 
@@ -14,15 +17,15 @@ impl Source {
     pub fn new(source: String, kind: SourceKind) -> Self {
         Self {
             path: None,
-            source,
+            source: source.into(),
             kind,
         }
     }
 
-    pub fn with_path(source: String, kind: SourceKind, path: String) -> Self {
+    pub fn with_path(source: String, path: String, kind: SourceKind) -> Self {
         Self {
-            path: Some(path),
-            source,
+            path: Some(path.into()),
+            source: source.into(),
             kind,
         }
     }
@@ -32,7 +35,7 @@ impl Source {
     }
 
     pub fn source(&self) -> &str {
-        self.source.as_str()
+        &*self.source
     }
 
     pub fn kind(&self) -> SourceKind {

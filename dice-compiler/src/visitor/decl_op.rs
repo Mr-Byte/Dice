@@ -33,7 +33,7 @@ impl NodeVisitor<&OpDecl> for Compiler {
                 if upvalues.is_empty() => [
                     PUSH_CONST value;
                 ] else [
-                    CLOSURE value, &upvalues;
+                    CREATE_CLOSURE value, &upvalues;
                 ]
 
                 STORE_GLOBAL &name;

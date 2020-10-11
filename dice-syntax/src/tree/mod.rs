@@ -64,6 +64,7 @@ pub enum SyntaxNode {
     VarDecl(VarDecl),
     FnDecl(FnDecl),
     OpDecl(OpDecl),
+    ClassDecl(ClassDecl),
     ImportDecl(ImportDecl),
     ExportDecl(ExportDecl),
 
@@ -100,6 +101,7 @@ impl SyntaxNode {
             SyntaxNode::VarDecl(VarDecl { span, .. }) => *span,
             SyntaxNode::FnDecl(FnDecl { span, .. }) => *span,
             SyntaxNode::OpDecl(OpDecl { span, .. }) => *span,
+            SyntaxNode::ClassDecl(ClassDecl { span, .. }) => *span,
             SyntaxNode::ImportDecl(ImportDecl { span, .. }) => *span,
             SyntaxNode::ExportDecl(ExportDecl { span, .. }) => *span,
             SyntaxNode::IfExpression(IfExpression { span, .. }) => *span,

@@ -11,12 +11,12 @@ pub struct Class {
 }
 
 impl Class {
-    pub fn new(name: String, path: Option<String>) -> Self {
+    pub fn new(name: String, path: String) -> Self {
         let inner = ClassInner {
-            instance_type_id: TypeId::new(None, name.as_str(), path.as_deref()),
+            instance_type_id: TypeId::new(None, path.as_str(), name.as_str()),
             methods: Default::default(),
             constructor: None,
-            object: Object::new(TypeId::new(None, None, "ClassObject")),
+            object: Object::new(TypeId::new(None, None, "ClassObject"), &name),
             name,
             path,
         };
@@ -27,7 +27,7 @@ impl Class {
 
 #[derive(Debug)]
 pub struct ClassInner {
-    pub path: Option<String>,
+    pub path: String,
     pub name: String,
     pub methods: HashMap<String, Bytecode>,
     pub constructor: Option<Bytecode>,

@@ -1,6 +1,6 @@
 use crate::{compiler::Compiler, scope_stack::State};
 use dice_error::compiler_error::CompilerError;
-use dice_syntax::{Block, FnDecl, SyntaxNode, SyntaxNodeId};
+use dice_syntax::{Block, ClassDecl, FnDecl, SyntaxNode, SyntaxNodeId};
 
 impl Compiler {
     // NOTE: Scan through all the declared items in a block and add slots for any functions and classes ahead of time.
@@ -17,12 +17,20 @@ impl Compiler {
     fn scan_expr(&mut self, expression: SyntaxNodeId) -> Result<(), CompilerError> {
         let node = self.syntax_tree.get(expression).expect("Node should exist.");
 
-        if let SyntaxNode::FnDecl(fn_decl) = node {
-            let fn_decl = fn_decl.clone();
-            self.scan_fn_decl(fn_decl)?;
-        } else if let SyntaxNode::ExportDecl(export) = node {
-            let export = export.clone();
-            self.scan_expr(export.export)?
+        match node {
+            SyntaxNode::FnDecl(fn_decl) => {
+                let fn_decl = fn_decl.clone();
+                self.scan_fn_decl(fn_decl)?;
+            }
+            SyntaxNode::ClassDecl(class_decl) => {
+                let class_decl = class_decl.clone();
+                self.scan_class_decl(class_decl)?;
+            }
+            SyntaxNode::ExportDecl(export) => {
+                let export = export.clone();
+                self.scan_expr(export.export)?
+            }
+            _ => {}
         }
 
         Ok(())
@@ -33,6 +41,15 @@ impl Compiler {
         self.context()?
             .scope_stack()
             .add_local(name, State::Function { is_initialized: false })?;
+
+        Ok(())
+    }
+
+    fn scan_class_decl(&mut self, class_decl: ClassDecl) -> Result<(), CompilerError> {
+        let name = class_decl.name;
+        self.context()?
+            .scope_stack()
+            .add_local(name, State::Class { is_initialized: false })?;
 
         Ok(())
     }

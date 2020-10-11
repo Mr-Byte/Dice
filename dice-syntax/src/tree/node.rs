@@ -194,6 +194,12 @@ pub struct OpDecl {
 }
 
 #[derive(Debug, Clone)]
+pub struct ClassDecl {
+    pub name: String,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone)]
 pub struct IfExpression {
     pub condition: SyntaxNodeId,
     pub primary: SyntaxNodeId,

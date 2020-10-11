@@ -14,9 +14,14 @@ pub struct Object {
 }
 
 impl Object {
-    pub fn new(type_id: TypeId) -> Self {
+    pub fn new<N, S>(type_id: TypeId, name: N) -> Self
+    where
+        N: Into<Option<S>>,
+        S: Into<String>,
+    {
         Self {
             inner: Rc::new(ObjectInner {
+                name: name.into().map(Into::into),
                 fields: Default::default(),
                 mixin_type_ids: Vec::new(),
                 type_id,
@@ -46,12 +51,19 @@ impl PartialEq for Object {
 impl Display for Object {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         // TODO: Should this print more useful info?
-        write!(f, "Object")
+        write!(f, "Object")?;
+
+        if let Some(name) = &self.name {
+            write!(f, "{{{}}}", name)?;
+        }
+
+        Ok(())
     }
 }
 
 #[derive(Debug)]
 pub struct ObjectInner {
+    name: Option<String>,
     fields: RefCell<HashMap<String, Value>>,
     type_id: TypeId,
     mixin_type_ids: Vec<TypeId>,
@@ -68,5 +80,9 @@ impl ObjectInner {
 
     pub fn type_id(&self) -> TypeId {
         self.type_id
+    }
+
+    pub fn name(&self) -> Option<&str> {
+        self.name.as_deref()
     }
 }

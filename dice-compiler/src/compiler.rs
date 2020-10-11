@@ -1,3 +1,4 @@
+use crate::assembler::Assembler;
 use crate::{
     compiler_stack::{CompilerContext, CompilerKind, CompilerStack},
     scope_stack::State,
@@ -16,12 +17,13 @@ enum CompilationKind {
 }
 
 pub struct Compiler {
+    pub(crate) source: Source,
     pub(crate) syntax_tree: SyntaxTree,
     pub(crate) compiler_stack: CompilerStack,
 }
 
 impl Compiler {
-    fn new(syntax_tree: SyntaxTree, kind: CompilationKind) -> Self {
+    fn new(source: Source, syntax_tree: SyntaxTree, kind: CompilationKind) -> Self {
         let compiler_kind = match kind {
             CompilationKind::Script => CompilerKind::Script,
             CompilationKind::Module => CompilerKind::Module,
@@ -29,18 +31,20 @@ impl Compiler {
         let compiler_stack = CompilerStack::new(compiler_kind);
 
         Self {
+            source,
             syntax_tree,
             compiler_stack,
         }
     }
 
-    pub fn compile(source: &Source) -> Result<Bytecode, CompilerError> {
+    // TODO: Should this be made an instance function and more logic pushed into the new function?
+    pub fn compile(source: Source) -> Result<Bytecode, CompilerError> {
         let syntax_tree = Parser::new(source.source()).parse()?;
         let kind = match source.kind() {
             SourceKind::Module => CompilationKind::Module,
             SourceKind::Script => CompilationKind::Script,
         };
-        let mut compiler = Self::new(syntax_tree, kind);
+        let mut compiler = Self::new(source, syntax_tree, kind);
 
         if kind == CompilationKind::Module {
             compiler
@@ -98,7 +102,11 @@ impl Compiler {
         Ok(compiler_context)
     }
 
-    pub(crate) fn context(&mut self) -> Result<&mut CompilerContext, CompilerError> {
+    pub(super) fn context(&mut self) -> Result<&mut CompilerContext, CompilerError> {
         self.compiler_stack.top_mut()
+    }
+
+    pub(super) fn assembler(&mut self) -> Result<&mut Assembler, CompilerError> {
+        Ok(self.compiler_stack.top_mut()?.assembler())
     }
 }

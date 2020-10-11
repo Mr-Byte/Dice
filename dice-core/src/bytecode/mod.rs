@@ -75,7 +75,7 @@ impl Display for Bytecode {
 
             match instruction {
                 Instruction::JUMP | Instruction::JUMP_IF_FALSE => write!(f, "{}", cursor.read_offset())?,
-                Instruction::CREATE_OBJECT => write!(f, "{:#010X}", cursor.read_type_id())?,
+                Instruction::CREATE_OBJECT => write!(f, "typeid={:#010X}", cursor.read_type_id())?,
                 Instruction::PUSH_CONST
                 | Instruction::DUP
                 | Instruction::LOAD_MODULE
@@ -90,8 +90,10 @@ impl Display for Bytecode {
                 | Instruction::LOAD_UPVALUE
                 | Instruction::STORE_UPVALUE
                 | Instruction::CLOSE_UPVALUE
-                | Instruction::STORE_METHOD => write!(f, "{}", cursor.read_u8())?,
-                Instruction::CREATE_CLASS => write!(f, "{} {:#10X}", cursor.read_u8(), cursor.read_type_id())?,
+                | Instruction::STORE_METHOD => write!(f, "const={}", cursor.read_u8())?,
+                Instruction::CREATE_CLASS => {
+                    write!(f, "name_const={}, path_const={}", cursor.read_u8(), cursor.read_u8())?
+                }
                 Instruction::CREATE_CLOSURE => {
                     let const_index = cursor.read_u8() as usize;
                     let function = &self.constants()[const_index];
@@ -107,7 +109,7 @@ impl Display for Bytecode {
                                 };
                                 let index = cursor.read_u8() as usize;
 
-                                write!(f, " ({} {})", kind, index)?;
+                                write!(f, " ({}={})", kind, index)?;
                             }
                         }
                         _ => write!(f, "NOT A FUNCTION!")?,
