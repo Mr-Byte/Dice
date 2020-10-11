@@ -204,18 +204,11 @@ pub mod test {
         assert_next_token!(tokens, TokenKind::Trait);
         assert_next_token!(tokens, TokenKind::In);
         assert_next_token!(tokens, TokenKind::Operator);
-        assert_next_token!(tokens, TokenKind::Static);
         assert_next_token!(tokens, TokenKind::Class);
-        assert_next_token!(tokens, TokenKind::Struct);
         assert_next_token!(tokens, TokenKind::Type);
         assert_next_token!(tokens, TokenKind::TypeOf);
         assert_next_token!(tokens, TokenKind::InstanceOf);
         assert_next_token!(tokens, TokenKind::Enum);
-        assert_next_token!(tokens, TokenKind::Virtual);
-        assert_next_token!(tokens, TokenKind::Override);
-        assert_next_token!(tokens, TokenKind::Abstract);
-        assert_next_token!(tokens, TokenKind::Final);
-        assert_next_token!(tokens, TokenKind::Where);
         assert_next_token!(tokens, TokenKind::Impl);
         assert_next_token!(tokens, TokenKind::Import);
         assert_next_token!(tokens, TokenKind::From);

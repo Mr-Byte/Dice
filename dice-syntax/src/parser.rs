@@ -187,6 +187,7 @@ impl Parser {
                 TokenKind::Let => self.var_decl()?,
                 TokenKind::Function => self.fn_decl()?,
                 TokenKind::Operator => self.op_decl()?,
+                TokenKind::Class => self.class_decl()?,
                 TokenKind::Import => self.import_decl()?,
                 TokenKind::Export => self.export_decl()?,
                 TokenKind::Return | TokenKind::Break | TokenKind::Continue => self.control_flow()?,
@@ -341,11 +342,11 @@ impl Parser {
     fn variable(&mut self, can_assign: bool) -> SyntaxNodeResult {
         let next_token = self.lexer.next();
         let span_start = next_token.span();
-        let lhs_expression = if let TokenKind::Identifier(name) = next_token.kind {
-            self.arena
-                .alloc(SyntaxNode::LitIdent(LitIdent { name, span: span_start }))
-        } else {
-            return Err(next_token.into());
+        let lhs_expression = match next_token.kind {
+            TokenKind::Identifier(name) => self
+                .arena
+                .alloc(SyntaxNode::LitIdent(LitIdent { name, span: span_start })),
+            _ => return Err(next_token.into()),
         };
 
         self.parse_assignment(lhs_expression, can_assign, span_start)
@@ -539,6 +540,10 @@ impl Parser {
 
         self.lexer.consume(close_token_kind)?;
         Ok(args)
+    }
+
+    fn class_decl(&mut self) -> SyntaxNodeResult {
+        todo!()
     }
 
     fn binary(&mut self, lhs: SyntaxNodeId, _: bool, span_start: Span) -> SyntaxNodeResult {

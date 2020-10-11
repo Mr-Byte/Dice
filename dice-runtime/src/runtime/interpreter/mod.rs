@@ -1,6 +1,5 @@
-use crate::runtime::Runtime;
-
 use crate::module::ModuleLoader;
+use crate::runtime::Runtime;
 use dice_core::id::type_id::TypeId;
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
@@ -432,13 +431,15 @@ where
         match &bytecode.constants()[key_index] {
             Value::String(key) => {
                 let value = self.stack.pop();
-                match self.stack.pop() {
-                    Value::Object(object) => {
-                        object.fields_mut().insert((**key).clone(), value.clone());
-                        self.stack.push(value);
-                    }
+                let object = match self.stack.pop() {
+                    Value::Object(object) => object,
+                    Value::Class(class) => class.object.clone(),
+                    // TODO: Get the "object" of other types.
                     _ => return Err(RuntimeError::InvalidTargetType),
-                }
+                };
+
+                object.fields_mut().insert((**key).clone(), value.clone());
+                self.stack.push(value);
             }
             _ => todo!("Throw an error if the key value is not a string."),
         }
@@ -449,13 +450,20 @@ where
     fn load_field(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
         let key_index = cursor.read_u8() as usize;
         let value = match &bytecode.constants()[key_index] {
-            Value::String(key) => match self.stack.pop() {
-                Value::Object(object) => match object.fields().get(&**key) {
+            Value::String(key) => {
+                let object = match self.stack.pop() {
+                    Value::Object(object) => object,
+                    Value::Class(class) => class.object.clone(),
+                    // TODO: Get the "object" of other types.
+                    _ => return Err(RuntimeError::InvalidTargetType),
+                };
+                let fields = object.fields();
+
+                match fields.get(&**key) {
                     Some(field) => field.clone(),
                     None => Value::Null,
-                },
-                _ => return Err(RuntimeError::InvalidTargetType),
-            },
+                }
+            }
             _ => todo!("Throw an error if the key value is not a string."),
         };
 
@@ -464,6 +472,7 @@ where
         Ok(())
     }
 
+    // TODO: Work on this to make classes index-able.
     #[inline]
     fn store_index(&mut self) -> Result<(), RuntimeError> {
         let value = self.stack.pop();

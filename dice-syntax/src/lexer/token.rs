@@ -170,12 +170,8 @@ pub enum TokenKind {
     In,
     #[token("op")]
     Operator,
-    #[token("static")]
-    Static,
     #[token("class")]
     Class,
-    #[token("struct")]
-    Struct,
     #[token("type")]
     Type,
     #[token("typeof")]
@@ -184,16 +180,6 @@ pub enum TokenKind {
     InstanceOf,
     #[token("enum")]
     Enum,
-    #[token("virtual")]
-    Virtual,
-    #[token("override")]
-    Override,
-    #[token("abstract")]
-    Abstract,
-    #[token("final")]
-    Final,
-    #[token("where")]
-    Where,
     #[token("impl")]
     Impl,
     #[token("import")]
