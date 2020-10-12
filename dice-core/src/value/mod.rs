@@ -1,14 +1,17 @@
 use crate::id::type_id::TypeId;
-pub use class::*;
 use dice_error::type_error::TypeError;
+use std::{fmt::Display, rc::Rc};
+
+pub use class::*;
+pub use fn_bound::*;
 pub use fn_closure::*;
 pub use fn_native::*;
 pub use fn_script::*;
 pub use list::*;
 pub use object::*;
-use std::{fmt::Display, rc::Rc};
 
 mod class;
+mod fn_bound;
 mod fn_closure;
 mod fn_native;
 mod fn_script;
@@ -25,6 +28,7 @@ pub enum Value {
     FnClosure(FnClosure),
     FnScript(FnScript),
     FnNative(FnNative),
+    FnBound(FnBound),
     List(List),
     String(Rc<String>),
     Object(Object),
@@ -64,7 +68,7 @@ impl Value {
 
     #[inline]
     pub fn is_fn(&self) -> bool {
-        matches!(self, Value::FnClosure(_) | Value::FnScript(_) | Value::FnNative(_))
+        matches!(self, Value::FnClosure(_) | Value::FnScript(_) | Value::FnNative(_) | Value::FnBound(_))
     }
 
     #[inline]
@@ -124,6 +128,13 @@ impl Value {
         }
     }
 
+    pub fn as_class(&self) -> Result<&Class, TypeError> {
+        match self {
+            Value::Class(class) => Ok(class),
+            _ => todo!("Real error OMEGALUL"),
+        }
+    }
+
     pub fn type_id(&self) -> TypeId {
         let discriminant = std::mem::discriminant(self);
 
@@ -172,6 +183,7 @@ impl Display for Value {
             Value::FnClosure(func) => func.fmt(fmt),
             Value::FnScript(func) => func.fmt(fmt),
             Value::FnNative(func) => func.fmt(fmt),
+            Value::FnBound(func) => func.fmt(fmt),
             Value::List(list) => list.fmt(fmt),
             Value::String(string) => string.fmt(fmt),
             Value::Object(object) => object.fmt(fmt),
