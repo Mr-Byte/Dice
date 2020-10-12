@@ -1,16 +1,15 @@
 use crate::id::type_id::TypeId;
 use crate::value::Value;
+use gc::{Finalize, Gc, GcCell, GcCellRef, GcCellRefMut, Trace};
 use std::{
-    cell::{Ref, RefCell, RefMut},
     collections::HashMap,
     fmt::{Display, Formatter},
     ops::Deref,
-    rc::Rc,
 };
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Trace, Finalize)]
 pub struct Object {
-    inner: Rc<ObjectInner>,
+    inner: Gc<ObjectInner>,
 }
 
 impl Object {
@@ -20,7 +19,7 @@ impl Object {
         S: Into<String>,
     {
         Self {
-            inner: Rc::new(ObjectInner {
+            inner: Gc::new(ObjectInner {
                 name: name.into().map(Into::into),
                 fields: Default::default(),
                 mixin_type_ids: Vec::new(),
@@ -61,20 +60,22 @@ impl Display for Object {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Trace, Finalize)]
 pub struct ObjectInner {
     name: Option<String>,
-    fields: RefCell<HashMap<String, Value>>,
+    fields: GcCell<HashMap<String, Value>>,
+    #[unsafe_ignore_trace]
     type_id: TypeId,
+    #[unsafe_ignore_trace]
     mixin_type_ids: Vec<TypeId>,
 }
 
 impl ObjectInner {
-    pub fn fields(&self) -> Ref<'_, HashMap<String, Value>> {
+    pub fn fields(&self) -> GcCellRef<'_, HashMap<String, Value>> {
         self.fields.borrow()
     }
 
-    pub fn fields_mut(&self) -> RefMut<'_, HashMap<String, Value>> {
+    pub fn fields_mut(&self) -> GcCellRefMut<'_, HashMap<String, Value>> {
         self.fields.borrow_mut()
     }
 

@@ -1,14 +1,13 @@
 use crate::id::type_id::TypeId;
 use crate::value::{Object, Value};
-use std::cell::{RefCell, RefMut};
+use gc::{Finalize, Gc, GcCell, GcCellRefMut, Trace};
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::ops::Deref;
-use std::rc::Rc;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Trace, Finalize)]
 pub struct Class {
-    inner: Rc<ClassInner>,
+    inner: Gc<ClassInner>,
 }
 
 impl Class {
@@ -32,13 +31,14 @@ impl Display for Class {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Trace, Finalize)]
 pub struct ClassInner {
     path: String,
     name: String,
-    methods: RefCell<HashMap<String, Value>>,
+    methods: GcCell<HashMap<String, Value>>,
     constructor: Option<Value>,
     object: Object,
+    #[unsafe_ignore_trace]
     instance_type_id: TypeId,
 }
 
@@ -51,7 +51,7 @@ impl ClassInner {
         &*self.name
     }
 
-    pub fn methods_mut(&self) -> RefMut<'_, HashMap<String, Value>> {
+    pub fn methods_mut(&self) -> GcCellRefMut<'_, HashMap<String, Value>> {
         self.methods.borrow_mut()
     }
 

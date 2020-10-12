@@ -4,8 +4,8 @@ use std::fmt::{Debug, Display};
 
 pub type NativeFn = fn(&mut dyn Runtime, &[Value]) -> Result<Value, RuntimeError>;
 
-#[derive(Clone)]
-pub struct FnNative(NativeFn);
+#[derive(Clone, gc::Trace, gc::Finalize)]
+pub struct FnNative(#[unsafe_ignore_trace] NativeFn);
 
 impl FnNative {
     pub fn new(native_fn: NativeFn) -> Self {

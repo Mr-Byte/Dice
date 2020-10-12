@@ -1,20 +1,17 @@
 use crate::value::Value;
-use std::{
-    cell::{Ref, RefCell, RefMut},
-    fmt::Display,
-    rc::Rc,
-};
+use gc::{Finalize, Gc, GcCell, GcCellRef, GcCellRefMut, Trace};
+use std::fmt::Display;
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct List(Rc<RefCell<Vec<Value>>>);
+#[derive(Debug, Clone, PartialEq, Trace, Finalize)]
+pub struct List(Gc<GcCell<Vec<Value>>>);
 
 impl List {
-    pub fn elements(&self) -> Ref<'_, [Value]> {
-        Ref::map(self.0.borrow(), |elements| elements.as_slice())
+    pub fn elements(&self) -> GcCellRef<'_, Vec<Value>> {
+        self.0.borrow()
     }
 
-    pub fn elements_mut(&self) -> RefMut<'_, [Value]> {
-        RefMut::map(self.0.borrow_mut(), |elements| elements.as_mut_slice())
+    pub fn elements_mut(&self) -> GcCellRefMut<'_, Vec<Value>> {
+        self.0.borrow_mut()
     }
 }
 
@@ -34,6 +31,6 @@ impl Display for List {
 
 impl From<Vec<Value>> for List {
     fn from(value: Vec<Value>) -> Self {
-        Self(Rc::new(RefCell::new(value)))
+        Self(Gc::new(GcCell::new(value)))
     }
 }

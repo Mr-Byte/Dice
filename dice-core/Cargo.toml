@@ -10,6 +10,7 @@ uuid = "0.8.1"
 thiserror = "1.0"
 anyhow = "1.0"
 twox-hash = "1.5.0"
+gc = { version = "0.3", features = ["derive"] }
 
 dice-error = {path = "../dice-error"}
 dice-syntax = {path = "../dice-syntax"}

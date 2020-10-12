@@ -1,6 +1,7 @@
 use crate::id::type_id::TypeId;
 use dice_error::type_error::TypeError;
-use std::{fmt::Display, rc::Rc};
+use gc::{Finalize, Gc, Trace};
+use std::fmt::Display;
 
 pub use class::*;
 pub use fn_bound::*;
@@ -18,7 +19,7 @@ mod fn_script;
 mod list;
 mod object;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Trace, Finalize)]
 pub enum Value {
     Null,
     Unit,
@@ -30,7 +31,7 @@ pub enum Value {
     FnNative(FnNative),
     FnBound(FnBound),
     List(List),
-    String(Rc<String>),
+    String(Gc<String>),
     Object(Object),
     Class(Class),
     Trait(),

@@ -447,9 +447,9 @@ where
         match &bytecode.constants()[key_index] {
             Value::String(key) => {
                 let value = self.stack.pop();
-                let object = match self.stack.pop() {
-                    Value::Object(object) => object,
-                    Value::Class(class) => (*class).clone(),
+                let object = match &self.stack.pop() {
+                    Value::Object(object) => object.clone(),
+                    Value::Class(class) => (**class).clone(),
                     // TODO: Get the "object" of other types.
                     _ => return Err(RuntimeError::InvalidTargetType),
                 };
@@ -467,9 +467,9 @@ where
         let key_index = cursor.read_u8() as usize;
         let value = match &bytecode.constants()[key_index] {
             Value::String(key) => {
-                let object = match self.stack.pop() {
-                    Value::Object(object) => object,
-                    Value::Class(class) => (*class).clone(),
+                let object = match &self.stack.pop() {
+                    Value::Object(object) => object.clone(),
+                    Value::Class(class) => (**class).clone(),
                     // TODO: Get the "object" of other types.
                     _ => return Err(RuntimeError::InvalidTargetType),
                 };
@@ -496,9 +496,9 @@ where
         let target = self.stack.peek(0);
 
         match target {
-            Value::Object(object) => match index {
+            Value::Object(object) => match &index {
                 Value::String(field) => {
-                    object.fields_mut().insert((*field).clone(), value.clone());
+                    object.fields_mut().insert((**field).clone(), value.clone());
                     *target = value;
                 }
                 _ => todo!("Return invalid key type"),
@@ -522,7 +522,7 @@ where
         let target = self.stack.peek(0);
 
         let result = match target {
-            Value::Object(object) => match index {
+            Value::Object(object) => match &index {
                 Value::String(field) => object.fields().get(&**field).cloned(),
                 _ => todo!("Return invalid key type"),
             },
@@ -543,7 +543,8 @@ where
         match &bytecode.constants()[key_index] {
             Value::String(key) => {
                 let value = self.stack.pop();
-                let object = match self.stack.pop() {
+                let object = self.stack.pop();
+                let object = match &object {
                     Value::Class(class) => class,
                     _ => return Err(RuntimeError::InvalidTargetType),
                 };
