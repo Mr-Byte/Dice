@@ -1,7 +1,8 @@
-use crate::bytecode::Bytecode;
 use crate::id::type_id::TypeId;
-use crate::value::Object;
+use crate::value::{Object, Value};
+use std::cell::{RefCell, RefMut};
 use std::collections::HashMap;
+use std::fmt::{Display, Formatter};
 use std::ops::Deref;
 use std::rc::Rc;
 
@@ -25,14 +26,42 @@ impl Class {
     }
 }
 
+impl Display for Class {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Class{{{}}}", self.name)
+    }
+}
+
 #[derive(Debug)]
 pub struct ClassInner {
-    pub path: String,
-    pub name: String,
-    pub methods: HashMap<String, Bytecode>,
-    pub constructor: Option<Bytecode>,
-    pub object: Object,
-    pub instance_type_id: TypeId,
+    path: String,
+    name: String,
+    methods: RefCell<HashMap<String, Value>>,
+    constructor: Option<Value>,
+    object: Object,
+    instance_type_id: TypeId,
+}
+
+impl ClassInner {
+    pub fn path(&self) -> &str {
+        &*self.path
+    }
+
+    pub fn name(&self) -> &str {
+        &*self.name
+    }
+
+    pub fn methods_mut(&self) -> RefMut<'_, HashMap<String, Value>> {
+        self.methods.borrow_mut()
+    }
+
+    pub fn constructor(&self) -> Option<Value> {
+        self.constructor.clone()
+    }
+
+    pub fn instance_type_id(&self) -> TypeId {
+        self.instance_type_id
+    }
 }
 
 impl Deref for Class {

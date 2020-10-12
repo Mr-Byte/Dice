@@ -40,6 +40,7 @@ where
                 Instruction::CREATE_LIST => self.create_list(&mut cursor),
                 Instruction::CREATE_OBJECT => self.create_object(),
                 Instruction::CREATE_CLASS => self.create_class(&bytecode, &mut cursor),
+                Instruction::CREATE_CLOSURE => self.create_closure(bytecode, &stack_frame, &closure, &mut cursor)?,
                 Instruction::NEG => self.neg()?,
                 Instruction::NOT => self.not()?,
                 Instruction::MUL => self.mul()?,
@@ -66,7 +67,7 @@ where
                 Instruction::STORE_FIELD => self.store_field(bytecode, &mut cursor)?,
                 Instruction::LOAD_INDEX => self.load_index()?,
                 Instruction::STORE_INDEX => self.store_index()?,
-                Instruction::CREATE_CLOSURE => self.closure(bytecode, &stack_frame, &closure, &mut cursor)?,
+                Instruction::STORE_METHOD => self.store_method(bytecode, &mut cursor)?,
                 Instruction::CALL => self.call(&mut cursor)?,
                 Instruction::ASSERT_BOOL => self.assert_bool()?,
                 Instruction::LOAD_MODULE => self.load_module(&bytecode, &mut cursor)?,
@@ -448,7 +449,7 @@ where
                 let value = self.stack.pop();
                 let object = match self.stack.pop() {
                     Value::Object(object) => object,
-                    Value::Class(class) => class.object.clone(),
+                    Value::Class(class) => (*class).clone(),
                     // TODO: Get the "object" of other types.
                     _ => return Err(RuntimeError::InvalidTargetType),
                 };
@@ -468,7 +469,7 @@ where
             Value::String(key) => {
                 let object = match self.stack.pop() {
                     Value::Object(object) => object,
-                    Value::Class(class) => class.object.clone(),
+                    Value::Class(class) => (*class).clone(),
                     // TODO: Get the "object" of other types.
                     _ => return Err(RuntimeError::InvalidTargetType),
                 };
@@ -537,7 +538,25 @@ where
         Ok(())
     }
 
-    fn closure(
+    fn store_method(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
+        let key_index = cursor.read_u8() as usize;
+        match &bytecode.constants()[key_index] {
+            Value::String(key) => {
+                let value = self.stack.pop();
+                let object = match self.stack.pop() {
+                    Value::Class(class) => class,
+                    _ => return Err(RuntimeError::InvalidTargetType),
+                };
+
+                object.methods_mut().insert((**key).clone(), value.clone());
+            }
+            _ => todo!("Throw an error if the key value is not a string."),
+        }
+
+        Ok(())
+    }
+
+    fn create_closure(
         &mut self,
         bytecode: &Bytecode,
         stack_frame: &Range<usize>,
@@ -626,14 +645,14 @@ where
 
                 // TODO: Create object, copy instance methods over, call constructor (if one exists).
 
-                if let Some(_constructor) = &class.constructor {
+                if let Some(_constructor) = &class.constructor() {
                     todo!("Actually handle the constructor case.")
                 } else {
                     if arg_count > 0 {
                         return Err(RuntimeError::InvalidFunctionArgs(0, arg_count));
                     }
 
-                    let object = Value::Object(Object::new(class.instance_type_id, &class.name));
+                    let object = Value::Object(Object::new(class.instance_type_id(), class.name()));
 
                     self.stack.release_slots(1);
                     self.stack.push(object);

@@ -197,6 +197,7 @@ pub struct OpDecl {
 pub struct ClassDecl {
     pub name: String,
     pub span: Span,
+    pub associated_items: Vec<SyntaxNodeId>,
 }
 
 #[derive(Debug, Clone)]

@@ -546,10 +546,29 @@ impl Parser {
         let span_start = self.lexer.consume(TokenKind::Class)?.span();
         let (_, name) = self.lexer.consume_ident()?;
         self.lexer.consume(TokenKind::LeftCurly)?;
-        let span_end = self.lexer.consume(TokenKind::RightCurly)?.span();
 
+        let mut associated_items = Vec::new();
+        let mut next_token = self.lexer.peek();
+
+        while !matches!(next_token.kind, TokenKind::RightCurly) {
+            let expression = match next_token.kind {
+                TokenKind::Function => self.fn_decl()?,
+                _ => return Err(SyntaxError::UnexpectedToken(next_token.to_string(), next_token.span())),
+            };
+
+            associated_items.push(expression);
+
+            next_token = self.lexer.peek();
+
+            if matches!(next_token.kind, TokenKind::RightCurly) {
+                break;
+            }
+        }
+
+        let span_end = self.lexer.consume(TokenKind::RightCurly)?.span();
         let class_decl = ClassDecl {
             name,
+            associated_items,
             span: span_start + span_end,
         };
 

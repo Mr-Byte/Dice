@@ -270,6 +270,15 @@ impl Assembler {
         Ok(())
     }
 
+    pub fn store_method(&mut self, method: &str, span: Span) -> Result<(), CompilerError> {
+        self.source_map.insert(self.data.len() as u64, span);
+        let const_slot = self.make_constant(Value::String(method.to_owned().into()))?;
+        self.data.put_u8(Instruction::STORE_METHOD.value());
+        self.data.put_u8(const_slot);
+
+        Ok(())
+    }
+
     pub fn load_field(&mut self, field: &str, span: Span) -> Result<(), CompilerError> {
         self.source_map.insert(self.data.len() as u64, span);
         let const_slot = self.make_constant(Value::String(field.to_owned().into()))?;
@@ -373,6 +382,14 @@ macro_rules! emit_bytecode {
             emit_bytecode! { $assembler, $span => [$($t)*] }
         } else {
             emit_bytecode! { $assembler, $span => [$($f)*] }
+        }
+
+        emit_bytecode! { $assembler, $span => [$($rest)*] }
+    };
+
+($assembler:expr, $span:expr => [if $c:expr => [ $($t:tt)* ] $($rest:tt)*]) => {
+        if $c {
+            emit_bytecode! { $assembler, $span => [$($t)*] }
         }
 
         emit_bytecode! { $assembler, $span => [$($rest)*] }
@@ -482,6 +499,10 @@ macro_rules! emit_bytecode {
     };
     ($assembler:expr, $span:expr => [STORE_FIELD $field:expr; $($rest:tt)*] ) => {
         $assembler.store_field($field, $span)?;
+        emit_bytecode! { $assembler, $span => [$($rest)*] }
+    };
+    ($assembler:expr, $span:expr => [STORE_METHOD $method:expr; $($rest:tt)*] ) => {
+        $assembler.store_method($method, $span)?;
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
     ($assembler:expr, $span:expr => [STORE_GLOBAL $global:expr; $($rest:tt)*] ) => {

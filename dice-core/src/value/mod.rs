@@ -129,7 +129,7 @@ impl Value {
 
         match self {
             Value::Object(_) => TypeId::new(discriminant, None, "Object"),
-            Value::Class(class) => TypeId::new(discriminant, class.path.as_str(), class.name.as_str()),
+            Value::Class(class) => TypeId::new(discriminant, class.path(), class.name()),
             Value::Trait() => todo!(),
             _ => TypeId::new(discriminant, None, None),
         }
@@ -175,7 +175,7 @@ impl Display for Value {
             Value::List(list) => list.fmt(fmt),
             Value::String(string) => string.fmt(fmt),
             Value::Object(object) => object.fmt(fmt),
-            Value::Class(_) => write!(fmt, "Class"),
+            Value::Class(class) => class.fmt(fmt),
             Value::Trait() => write!(fmt, "Trait"),
         }
     }
