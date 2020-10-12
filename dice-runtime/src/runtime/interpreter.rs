@@ -424,63 +424,39 @@ where
 
     fn load_global(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
         let const_pos = cursor.read_u8() as usize;
-        let value = &bytecode.constants()[const_pos];
+        let global = bytecode.constants()[const_pos].as_str()?;
+        let value = self
+            .globals
+            .get(global)
+            .cloned()
+            .ok_or_else(|| RuntimeError::VariableNotFound(global.to_owned()))?;
 
-        if let Value::String(global) = value {
-            let global = (**global).clone();
-            let value = self
-                .globals
-                .get(&global)
-                .cloned()
-                .ok_or_else(|| RuntimeError::VariableNotFound(global))?;
-
-            self.stack.push(value);
-        } else {
-            return Err(RuntimeError::InvalidGlobalNameType);
-        }
+        self.stack.push(value);
 
         Ok(())
     }
 
     fn store_field(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
         let key_index = cursor.read_u8() as usize;
-        match &bytecode.constants()[key_index] {
-            Value::String(key) => {
-                let value = self.stack.pop();
-                let object = match &self.stack.pop() {
-                    Value::Object(object) => object.clone(),
-                    Value::Class(class) => (**class).clone(),
-                    // TODO: Get the "object" of other types.
-                    _ => return Err(RuntimeError::InvalidTargetType),
-                };
+        let key = bytecode.constants()[key_index].as_str()?;
+        let value = self.stack.pop();
+        let object = value.as_object()?;
 
-                object.fields_mut().insert((**key).clone(), value.clone());
-                self.stack.push(value);
-            }
-            _ => todo!("Throw an error if the key value is not a string."),
-        }
+        object.fields_mut().insert(key.to_owned(), value.clone());
+        self.stack.push(value);
 
         Ok(())
     }
 
     fn load_field(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
         let key_index = cursor.read_u8() as usize;
-        let value = match &bytecode.constants()[key_index] {
-            Value::String(key) => {
-                let object = match &self.stack.pop() {
-                    Value::Object(object) => object.clone(),
-                    Value::Class(class) => (**class).clone(),
-                    // TODO: Get the "object" of other types.
-                    _ => return Err(RuntimeError::InvalidTargetType),
-                };
-                let fields = object.fields();
-
-                match fields.get(&**key) {
-                    Some(field) => field.clone(),
-                    None => Value::Null,
-                }
-            }
-            _ => todo!("Throw an error if the key value is not a string."),
+        let key = bytecode.constants()[key_index].as_str()?;
+        let value = self.stack.pop();
+        let object = value.as_object()?;
+        let fields = object.fields();
+        let value = match fields.get(key) {
+            Some(field) => field.clone(),
+            None => Value::Null,
         };
 
         self.stack.push(value);
@@ -496,20 +472,16 @@ where
         let target = self.stack.peek(0);
 
         match target {
-            Value::Object(object) => match &index {
-                Value::String(field) => {
-                    object.fields_mut().insert((**field).clone(), value.clone());
-                    *target = value;
-                }
-                _ => todo!("Return invalid key type"),
-            },
-            Value::List(list) => match index {
-                Value::Int(index) => {
-                    list.elements_mut()[index as usize] = value.clone();
-                    *target = value;
-                }
-                _ => todo!("Return invalid key type"),
-            },
+            Value::Object(object) => {
+                let field = index.as_str()?;
+                object.fields_mut().insert(field.to_owned(), value.clone());
+                *target = value;
+            }
+            Value::List(list) => {
+                let index = index.as_int()?;
+                list.elements_mut()[index as usize] = value.clone();
+                *target = value;
+            }
             _ => todo!("Return invalid index target error."),
         };
 
@@ -522,14 +494,14 @@ where
         let target = self.stack.peek(0);
 
         let result = match target {
-            Value::Object(object) => match &index {
-                Value::String(field) => object.fields().get(&**field).cloned(),
-                _ => todo!("Return invalid key type"),
-            },
-            Value::List(list) => match index {
-                Value::Int(index) => list.elements().get(index as usize).cloned(),
-                _ => todo!("Return invalid key type"),
-            },
+            Value::Object(object) => {
+                let field = index.as_str()?;
+                object.fields().get(field).cloned()
+            }
+            Value::List(list) => {
+                let index = index.as_int()?;
+                list.elements().get(index as usize).cloned()
+            }
             _ => todo!("Return invalid index target error."),
         };
 
@@ -540,19 +512,12 @@ where
 
     fn store_method(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
         let key_index = cursor.read_u8() as usize;
-        match &bytecode.constants()[key_index] {
-            Value::String(key) => {
-                let value = self.stack.pop();
-                let object = self.stack.pop();
-                let object = match &object {
-                    Value::Class(class) => class,
-                    _ => return Err(RuntimeError::InvalidTargetType),
-                };
+        let key = bytecode.constants()[key_index].as_str()?;
+        let value = self.stack.pop();
+        let object = self.stack.pop();
+        let class = object.as_class()?;
 
-                object.methods_mut().insert((**key).clone(), value.clone());
-            }
-            _ => todo!("Throw an error if the key value is not a string."),
-        }
+        class.methods_mut().insert(key.to_owned(), value.clone());
 
         Ok(())
     }
@@ -644,7 +609,7 @@ where
             Value::Class(class) => {
                 let class = class.clone();
 
-                // TODO: Create object, copy instance methods over, call constructor (if one exists).
+                // TODO: Create object, copy bound instance methods over, call constructor (if one exists).
 
                 if let Some(_constructor) = &class.constructor() {
                     todo!("Actually handle the constructor case.")

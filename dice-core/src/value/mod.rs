@@ -90,28 +90,28 @@ impl Value {
     pub fn as_bool(&self) -> Result<bool, TypeError> {
         match self {
             Value::Bool(bool) => Ok(*bool),
-            _ => Err(TypeError::NotAString),
+            _ => Err(TypeError::NotABool),
         }
     }
 
     pub fn as_int(&self) -> Result<i64, TypeError> {
         match self {
             Value::Int(int) => Ok(*int),
-            _ => Err(TypeError::NotAString),
+            _ => Err(TypeError::NotAFunction),
         }
     }
 
     pub fn as_float(&self) -> Result<f64, TypeError> {
         match self {
             Value::Float(float) => Ok(*float),
-            _ => Err(TypeError::NotAString),
+            _ => Err(TypeError::NotAFloat),
         }
     }
 
     pub fn as_list(&self) -> Result<&List, TypeError> {
         match self {
             Value::List(list) => Ok(list),
-            _ => Err(TypeError::NotAString),
+            _ => Err(TypeError::NotAList),
         }
     }
 
@@ -125,14 +125,15 @@ impl Value {
     pub fn as_object(&self) -> Result<&Object, TypeError> {
         match self {
             Value::Object(object) => Ok(object),
-            _ => Err(TypeError::NotAString),
+            Value::Class(class) => Ok(&(**class)),
+            _ => Err(TypeError::NotAnObject),
         }
     }
 
     pub fn as_class(&self) -> Result<&Class, TypeError> {
         match self {
             Value::Class(class) => Ok(class),
-            _ => todo!("Real error OMEGALUL"),
+            _ => Err(TypeError::NotAClass),
         }
     }
 
