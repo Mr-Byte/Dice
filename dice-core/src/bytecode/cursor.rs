@@ -1,5 +1,4 @@
 use crate::bytecode::instruction::Instruction;
-use crate::id::type_id::TypeId;
 use bytes::Buf as _;
 use std::io::Cursor;
 
@@ -31,11 +30,6 @@ impl<'a> BytecodeCursor<'a> {
     #[inline]
     pub fn read_u8(&mut self) -> u8 {
         self.cursor.get_u8()
-    }
-
-    #[inline]
-    pub fn read_type_id(&mut self) -> TypeId {
-        self.cursor.get_u64().into()
     }
 
     #[inline]

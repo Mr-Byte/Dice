@@ -38,7 +38,7 @@ where
                 Instruction::POP => std::mem::drop(self.stack.pop()),
                 Instruction::DUP => self.dup(&mut cursor),
                 Instruction::CREATE_LIST => self.create_list(&mut cursor),
-                Instruction::CREATE_OBJECT => self.create_object(&mut cursor),
+                Instruction::CREATE_OBJECT => self.create_object(),
                 Instruction::CREATE_CLASS => self.create_class(&bytecode, &mut cursor),
                 Instruction::NEG => self.neg()?,
                 Instruction::NOT => self.not()?,
@@ -290,9 +290,8 @@ where
         self.stack.push(Value::List(items.to_vec().into()));
     }
 
-    fn create_object(&mut self, cursor: &mut BytecodeCursor) {
-        let type_id = cursor.read_type_id();
-        let object = Object::new::<_, &str>(type_id, None);
+    fn create_object(&mut self) {
+        let object = Object::new::<_, &str>(TypeId::new(None, None, "Object"), None);
 
         self.stack.push(Value::Object(object));
     }

@@ -14,7 +14,7 @@ pub struct FnClosureInner {
 
 impl Debug for FnClosureInner {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "closure{{{}}}", self.fn_script)
+        write!(f, "Closure{{{}}}", self.fn_script)
     }
 }
 

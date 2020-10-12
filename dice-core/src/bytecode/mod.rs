@@ -75,7 +75,6 @@ impl Display for Bytecode {
 
             match instruction {
                 Instruction::JUMP | Instruction::JUMP_IF_FALSE => write!(f, "{}", cursor.read_offset())?,
-                Instruction::CREATE_OBJECT => write!(f, "typeid={:#010X}", cursor.read_type_id())?,
                 Instruction::PUSH_CONST
                 | Instruction::DUP
                 | Instruction::LOAD_MODULE
