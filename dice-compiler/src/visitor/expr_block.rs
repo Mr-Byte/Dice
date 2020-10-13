@@ -10,23 +10,18 @@ pub enum BlockKind<'args, T: AsRef<str>> {
     Block,
     Loop,
     Function(&'args [T]),
+    Method(&'args [T]),
 }
 
 impl<'args, T: AsRef<str>> NodeVisitor<(&Block, BlockKind<'args, T>)> for Compiler {
     fn visit(&mut self, (block, kind): (&Block, BlockKind<'args, T>)) -> Result<(), CompilerError> {
         self.context()?.scope_stack().push_scope(ScopeKind::Block, None);
 
-        if let BlockKind::Function(args) = kind {
-            let mut has_self = false;
-
-            for arg in args {
-                if arg.as_ref() == "self" {
-                    has_self = true;
-                    continue;
-                }
-
+        if let BlockKind::Function(args) | BlockKind::Method(args) = kind {
+            // NOTE: The calling convention uses the first parameter as self in methods, but for functions it's inaccessible.
+            if let BlockKind::Function(_) = kind {
                 self.context()?.scope_stack().add_local(
-                    arg.as_ref().to_owned(),
+                    "",
                     State::Local {
                         is_mutable: false,
                         is_initialized: true,
@@ -34,9 +29,9 @@ impl<'args, T: AsRef<str>> NodeVisitor<(&Block, BlockKind<'args, T>)> for Compil
                 )?;
             }
 
-            if has_self {
+            for arg in args {
                 self.context()?.scope_stack().add_local(
-                    "self",
+                    arg.as_ref().to_owned(),
                     State::Local {
                         is_mutable: false,
                         is_initialized: true,

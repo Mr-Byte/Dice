@@ -1,5 +1,5 @@
 use crate::id::type_id::TypeId;
-use crate::value::{Object, Value};
+use crate::value::{Object, Value, ValueMap};
 use gc::{Finalize, Gc, GcCell, GcCellRef, GcCellRefMut, Trace};
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
@@ -35,7 +35,7 @@ impl Display for Class {
 pub struct ClassInner {
     path: String,
     name: String,
-    methods: GcCell<HashMap<String, Value>>,
+    methods: GcCell<ValueMap>,
     constructor: Option<Value>,
     object: Object,
     #[unsafe_ignore_trace]
@@ -51,11 +51,11 @@ impl ClassInner {
         &*self.name
     }
 
-    pub fn methods(&self) -> GcCellRef<'_, HashMap<String, Value>> {
+    pub fn methods(&self) -> GcCellRef<'_, ValueMap> {
         self.methods.borrow()
     }
 
-    pub fn methods_mut(&self) -> GcCellRefMut<'_, HashMap<String, Value>> {
+    pub fn methods_mut(&self) -> GcCellRefMut<'_, ValueMap> {
         self.methods.borrow_mut()
     }
 

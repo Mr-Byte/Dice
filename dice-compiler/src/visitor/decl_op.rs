@@ -1,5 +1,6 @@
 use super::NodeVisitor;
 use crate::compiler::Compiler;
+use crate::visitor::FnKind;
 use dice_core::{
     constants::OPERATORS,
     value::{FnScript, Value},
@@ -11,7 +12,7 @@ impl NodeVisitor<&OpDecl> for Compiler {
     // TODO: Only allow operators to compile in the context of a prelude?
     fn visit(&mut self, node: &OpDecl) -> Result<(), CompilerError> {
         let body = self.syntax_tree.child(node.body).expect("Node should not be missing.");
-        let mut op_context = self.compile_fn(body, &node.args)?;
+        let mut op_context = self.compile_fn(body, &node.args, FnKind::Function)?;
         let name = format!("#{}", node.name);
 
         if !OPERATORS.contains(&&*name) {

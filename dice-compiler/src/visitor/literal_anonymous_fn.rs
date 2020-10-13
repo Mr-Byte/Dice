@@ -1,5 +1,6 @@
 use super::NodeVisitor;
 use crate::compiler::Compiler;
+use crate::visitor::FnKind;
 use dice_core::value::{FnScript, Value};
 use dice_error::compiler_error::CompilerError;
 use dice_syntax::LitAnonymousFn;
@@ -9,7 +10,7 @@ impl NodeVisitor<&LitAnonymousFn> for Compiler {
         let id = uuid::Uuid::new_v4();
         let name = format!("__anonymous_fn_{:X}", id.clone().to_simple());
         let body = self.syntax_tree.child(node.body).expect("Node should not be missing.");
-        let mut fn_context = self.compile_fn(body, &node.args)?;
+        let mut fn_context = self.compile_fn(body, &node.args, FnKind::Function)?;
         let upvalues = fn_context.upvalues().clone();
         let bytecode = fn_context.finish();
         let value = Value::FnScript(FnScript::new(name, node.args.len(), bytecode, id));

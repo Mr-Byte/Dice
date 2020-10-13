@@ -1,3 +1,4 @@
+mod call_frame;
 mod interpreter;
 mod stack;
 
@@ -6,6 +7,7 @@ use crate::{
     runtime::stack::Stack,
 };
 use dice_core::runtime::Module;
+use dice_core::value::ValueMap;
 use dice_core::{
     bytecode::Bytecode,
     upvalue::{Upvalue, UpvalueState},
@@ -21,7 +23,7 @@ where
 {
     stack: Stack,
     open_upvalues: VecDeque<Upvalue>,
-    globals: HashMap<String, Value>,
+    globals: ValueMap,
     loaded_modules: HashMap<ModuleId, Value>,
     module_loader: L,
 }
@@ -40,7 +42,7 @@ where
 
     pub(super) fn run_module(&mut self, bytecode: Bytecode, export: Value) -> Result<Value, RuntimeError> {
         let stack_frame = self.stack.reserve_slots(bytecode.slot_count());
-        *self.stack.slot(stack_frame.start) = export;
+        *self.stack.slot(stack_frame.start()) = export;
         let result = self.execute_bytecode(&bytecode, stack_frame, None);
         self.stack.release_slots(bytecode.slot_count());
 

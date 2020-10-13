@@ -1,14 +1,9 @@
 use super::NodeVisitor;
+use crate::visitor::FnKind;
 use crate::{compiler::Compiler, scope_stack::State};
 use dice_core::value::{FnScript, Value};
 use dice_error::compiler_error::CompilerError;
 use dice_syntax::FnDecl;
-
-#[derive(Clone, Copy, Eq, PartialEq)]
-pub enum FnKind {
-    Function,
-    Method,
-}
 
 impl NodeVisitor<(&FnDecl, FnKind)> for Compiler {
     fn visit(&mut self, (fn_decl, fn_kind): (&FnDecl, FnKind)) -> Result<(), CompilerError> {
@@ -16,12 +11,17 @@ impl NodeVisitor<(&FnDecl, FnKind)> for Compiler {
             .syntax_tree
             .child(fn_decl.body)
             .expect("Node should not be missing.");
-        let mut fn_context = self.compile_fn(body, &fn_decl.args)?;
+        let mut fn_context = self.compile_fn(body, &fn_decl.args, fn_kind)?;
         let upvalues = fn_context.upvalues().clone();
         let bytecode = fn_context.finish();
+        let arity = match fn_kind {
+            FnKind::Function => fn_decl.args.len(),
+            FnKind::Method => fn_decl.args.len() - 1,
+        };
+
         let value = Value::FnScript(FnScript::new(
             fn_decl.name.clone(),
-            fn_decl.args.len(),
+            arity,
             bytecode,
             uuid::Uuid::new_v4(),
         ));

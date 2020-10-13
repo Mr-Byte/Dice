@@ -1,7 +1,6 @@
 use crate::compiler::Compiler;
 use crate::scope_stack::State;
-use crate::visitor::decl_fn::FnKind;
-use crate::visitor::NodeVisitor;
+use crate::visitor::{FnKind, NodeVisitor};
 use dice_error::compiler_error::CompilerError;
 use dice_syntax::{ClassDecl, SyntaxNode};
 

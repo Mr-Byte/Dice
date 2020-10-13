@@ -37,3 +37,9 @@ pub use expr_block::BlockKind;
 pub(super) trait NodeVisitor<T> {
     fn visit(&mut self, node: T) -> Result<(), CompilerError>;
 }
+
+#[derive(Clone, Copy, Eq, PartialEq)]
+pub enum FnKind {
+    Function,
+    Method,
+}

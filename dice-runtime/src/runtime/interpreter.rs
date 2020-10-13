@@ -1,4 +1,5 @@
 use crate::module::ModuleLoader;
+use crate::runtime::call_frame::CallFrame;
 use crate::runtime::Runtime;
 use dice_core::id::type_id::TypeId;
 use dice_core::value::{Class, FnBound};
@@ -9,7 +10,7 @@ use dice_core::{
     value::{FnClosure, Object, Value},
 };
 use dice_error::runtime_error::RuntimeError;
-use std::{collections::hash_map::Entry, ops::Range};
+use std::collections::hash_map::Entry;
 
 impl<L> Runtime<L>
 where
@@ -18,7 +19,7 @@ where
     pub(super) fn execute_bytecode(
         &mut self,
         bytecode: &Bytecode,
-        stack_frame: Range<usize>,
+        call_frame: CallFrame,
         closure: Option<FnClosure>,
     ) -> Result<Value, RuntimeError> {
         let initial_stack_depth = self.stack.len();
@@ -40,7 +41,7 @@ where
                 Instruction::CREATE_LIST => self.create_list(&mut cursor),
                 Instruction::CREATE_OBJECT => self.create_object(),
                 Instruction::CREATE_CLASS => self.create_class(&bytecode, &mut cursor)?,
-                Instruction::CREATE_CLOSURE => self.create_closure(bytecode, &stack_frame, &closure, &mut cursor)?,
+                Instruction::CREATE_CLOSURE => self.create_closure(bytecode, call_frame, &closure, &mut cursor)?,
                 Instruction::NEG => self.neg()?,
                 Instruction::NOT => self.not()?,
                 Instruction::MUL => self.mul()?,
@@ -56,11 +57,11 @@ where
                 Instruction::NEQ => self.neq(),
                 Instruction::JUMP => self.jump(&mut cursor),
                 Instruction::JUMP_IF_FALSE => self.jump_if_false(&mut cursor)?,
-                Instruction::LOAD_LOCAL => self.load_local(stack_frame.clone(), &mut cursor),
-                Instruction::STORE_LOCAL => self.store_local(stack_frame.clone(), &mut cursor),
+                Instruction::LOAD_LOCAL => self.load_local(call_frame, &mut cursor),
+                Instruction::STORE_LOCAL => self.store_local(call_frame, &mut cursor),
                 Instruction::LOAD_UPVALUE => self.load_upvalue(&closure, &mut cursor),
                 Instruction::STORE_UPVALUE => self.store_upvalue(&closure, &mut cursor),
-                Instruction::CLOSE_UPVALUE => self.close_upvalue(&stack_frame, &mut cursor),
+                Instruction::CLOSE_UPVALUE => self.close_upvalue(call_frame, &mut cursor),
                 Instruction::LOAD_GLOBAL => self.load_global(bytecode, &mut cursor)?,
                 Instruction::STORE_GLOBAL => self.store_global(bytecode, &mut cursor)?,
                 Instruction::LOAD_FIELD => self.load_field(bytecode, &mut cursor)?,
@@ -326,19 +327,19 @@ where
         Ok(())
     }
 
-    fn load_local(&mut self, stack_frame: Range<usize>, cursor: &mut BytecodeCursor) {
+    fn load_local(&mut self, call_frame: CallFrame, cursor: &mut BytecodeCursor) {
         // TODO Bounds check the slot?
         let slot = cursor.read_u8() as usize;
-        let frame = self.stack.slots(stack_frame);
+        let frame = &self.stack[call_frame];
         let value = frame[slot].clone();
         self.stack.push(value);
     }
 
-    fn store_local(&mut self, stack_frame: Range<usize>, cursor: &mut BytecodeCursor) {
+    fn store_local(&mut self, call_frame: CallFrame, cursor: &mut BytecodeCursor) {
         let value = self.stack.pop();
         let slot = cursor.read_u8() as usize;
 
-        self.stack.slots(stack_frame)[slot] = value.clone();
+        self.stack[call_frame][slot] = value.clone();
         self.stack.push(value);
     }
 
@@ -379,10 +380,10 @@ where
         }
     }
 
-    fn close_upvalue(&mut self, stack_frame: &Range<usize>, cursor: &mut BytecodeCursor) {
+    fn close_upvalue(&mut self, call_frame: CallFrame, cursor: &mut BytecodeCursor) {
         let offset = cursor.read_u8() as usize;
-        let value = std::mem::replace(&mut self.stack.slots(stack_frame.clone())[offset], Value::Null);
-        let offset = stack_frame.start + offset;
+        let value = std::mem::replace(&mut self.stack[call_frame][offset], Value::Null);
+        let offset = call_frame.start() + offset;
         let found_upvalue = self.find_open_upvalue(offset);
 
         if let Some((index, _)) = found_upvalue {
@@ -518,7 +519,7 @@ where
     fn create_closure(
         &mut self,
         bytecode: &Bytecode,
-        stack_frame: &Range<usize>,
+        call_frame: CallFrame,
         closure: &Option<FnClosure>,
         cursor: &mut BytecodeCursor,
     ) -> Result<(), RuntimeError> {
@@ -534,10 +535,10 @@ where
                     let index = cursor.read_u8() as usize;
 
                     if is_parent_local {
-                        let offset = stack_frame.start + index;
+                        let offset = call_frame.start() + index;
                         match self.find_open_upvalue(offset) {
                             None => {
-                                let upvalue = Upvalue::new_open(stack_frame.start + index);
+                                let upvalue = Upvalue::new_open(call_frame.start() + index);
                                 self.open_upvalues.push_back(upvalue.clone());
                                 upvalues.push(upvalue);
                             }
@@ -572,17 +573,9 @@ where
     // TODO: Replace this mutually recursive call with an execution stack to prevent the thread's stack from overflowing.
     pub(super) fn call_fn(&mut self, arg_count: usize) -> Result<(), RuntimeError> {
         let (target, arg_count, receiver) = match self.stack.peek(arg_count) {
-            Value::FnBound(fn_bound) => (
-                fn_bound.function.clone(),
-                arg_count + 1,
-                Some(fn_bound.receiver.clone()),
-            ),
+            Value::FnBound(fn_bound) => (fn_bound.function.clone(), arg_count, Some(fn_bound.receiver.clone())),
             value => (value.clone(), arg_count, None),
         };
-
-        if let Some(receiver) = receiver {
-            self.stack.push(receiver);
-        }
 
         let (bytecode, closure) = match &target {
             Value::FnClosure(closure) => {
@@ -601,20 +594,11 @@ where
 
                 (fn_script.bytecode.clone(), None)
             }
-            Value::FnNative(fn_native) => {
-                let fn_native = fn_native.clone();
-                let args = self.stack.pop_count(arg_count);
-                let result = fn_native.call(self, &args)?;
-
-                self.stack.release_slots(1);
-                self.stack.push(result);
-
-                return Ok(());
-            }
             Value::Class(class) => {
                 let class = class.clone();
+                let object = Object::new(class.instance_type_id(), Value::Class(class.clone()));
 
-                // TODO: Create object, copy bound instance methods over, call constructor (if one exists).
+                // TODO: Call constructor (if one exists).
 
                 if let Some(_constructor) = &class.constructor() {
                     todo!("Actually handle the constructor case.")
@@ -623,13 +607,26 @@ where
                         return Err(RuntimeError::InvalidFunctionArgs(0, arg_count));
                     }
 
-                    let object = Object::new(class.instance_type_id(), Value::Class(class.clone()));
-
                     self.stack.release_slots(1);
-                    self.stack.push(Value::Object(object));
-
-                    return Ok(());
                 }
+
+                self.stack.push(Value::Object(object));
+                return Ok(());
+            }
+            Value::FnNative(fn_native) => {
+                let fn_native = fn_native.clone();
+                // NOTE: Include the function/receiver slot as the first parameter to the native function call.
+                let mut args = self.stack.pop_count(arg_count + 1);
+
+                if let Some(receiver) = receiver {
+                    args[0] = receiver;
+                }
+
+                let result = fn_native.call(self, &args)?;
+
+                self.stack.push(result);
+
+                return Ok(());
             }
             _ => return Err(RuntimeError::NotAFunction),
         };
@@ -638,7 +635,14 @@ where
         let reserved = slots - arg_count;
         // NOTE: Reserve only the slots needed to cover locals beyond the arguments already on the stack.
         let stack_frame = self.stack.reserve_slots(reserved);
-        let stack_frame = (stack_frame.start - arg_count)..stack_frame.end;
+        // NOTE: Calling convention includes an extra parameter. This parameter is the function itself for bare functions
+        // and the receiver for methods.
+        let stack_frame = stack_frame.prepend(arg_count + 1);
+
+        if let Some(receiver) = receiver {
+            self.stack[stack_frame][0] = receiver;
+        }
+
         let result = self.execute_bytecode(&bytecode, stack_frame, closure)?;
 
         // NOTE: Release the number of reserved slots plus the number of arguments plus a slot for the function itself.

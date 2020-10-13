@@ -1,8 +1,7 @@
 use crate::id::type_id::TypeId;
-use crate::value::{Class, Value};
+use crate::value::{Class, Value, ValueMap};
 use gc::{Finalize, Gc, GcCell, GcCellRef, GcCellRefMut, Trace};
 use std::{
-    collections::HashMap,
     fmt::{Display, Formatter},
     ops::Deref,
 };
@@ -63,7 +62,7 @@ impl Display for Object {
 #[derive(Debug, Trace, Finalize)]
 pub struct ObjectInner {
     class: Option<Value>,
-    fields: GcCell<HashMap<String, Value>>,
+    fields: GcCell<ValueMap>,
     #[unsafe_ignore_trace]
     type_id: TypeId,
     #[unsafe_ignore_trace]
@@ -71,11 +70,11 @@ pub struct ObjectInner {
 }
 
 impl ObjectInner {
-    pub fn fields(&self) -> GcCellRef<'_, HashMap<String, Value>> {
+    pub fn fields(&self) -> GcCellRef<'_, ValueMap> {
         self.fields.borrow()
     }
 
-    pub fn fields_mut(&self) -> GcCellRefMut<'_, HashMap<String, Value>> {
+    pub fn fields_mut(&self) -> GcCellRefMut<'_, ValueMap> {
         self.fields.borrow_mut()
     }
 

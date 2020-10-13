@@ -1,5 +1,6 @@
+use crate::runtime::call_frame::CallFrame;
 use dice_core::value::Value;
-use std::ops::Range;
+use std::ops::{Index, IndexMut};
 
 // NOTE: Allocate 1MB of stack space, this is 65,536 values when sizeof(Value) == 16
 const MAX_STACK_SIZE: usize = (1024 * 1024) / std::mem::size_of::<Value>();
@@ -43,16 +44,17 @@ impl Stack {
         result
     }
 
-    pub fn reserve_slots(&mut self, count: usize) -> Range<usize> {
+    pub fn reserve_slots(&mut self, count: usize) -> CallFrame {
         let start = self.stack_ptr;
         let new_stack_ptr = self.stack_ptr + count;
 
         self.stack_ptr = new_stack_ptr;
         assert!(self.stack_ptr < MAX_STACK_SIZE, "Stack Overflowed");
 
-        start..new_stack_ptr
+        CallFrame::new(start, new_stack_ptr)
     }
 
+    // TODO: Should this be a release call frame?
     pub fn release_slots(&mut self, count: usize) {
         let new_stack_ptr = self.stack_ptr - count;
         for value in &mut self.values[new_stack_ptr..self.stack_ptr] {
@@ -63,11 +65,6 @@ impl Stack {
 
         // NOTE: If the stack ptr is greater than the stack size, the stack ptr underflowed.
         assert!(self.stack_ptr < MAX_STACK_SIZE, "Stack Underflowed")
-    }
-
-    #[inline]
-    pub fn slots(&mut self, slots: Range<usize>) -> &mut [Value] {
-        &mut self.values[slots]
     }
 
     #[inline]
@@ -89,6 +86,20 @@ impl Stack {
     #[inline]
     pub fn len(&self) -> usize {
         self.stack_ptr
+    }
+}
+
+impl Index<CallFrame> for Stack {
+    type Output = [Value];
+
+    fn index(&self, index: CallFrame) -> &Self::Output {
+        &self.values[index.range()]
+    }
+}
+
+impl IndexMut<CallFrame> for Stack {
+    fn index_mut(&mut self, index: CallFrame) -> &mut Self::Output {
+        &mut self.values[index.range()]
     }
 }
 

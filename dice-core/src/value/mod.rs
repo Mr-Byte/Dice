@@ -10,6 +10,9 @@ pub use fn_native::*;
 pub use fn_script::*;
 pub use list::*;
 pub use object::*;
+use std::collections::HashMap;
+use std::hash::BuildHasherDefault;
+use twox_hash::XxHash;
 
 mod class;
 mod fn_bound;
@@ -18,6 +21,8 @@ mod fn_native;
 mod fn_script;
 mod list;
 mod object;
+
+pub type ValueMap = HashMap<String, Value, BuildHasherDefault<XxHash>>;
 
 #[derive(Clone, Debug, Trace, Finalize)]
 pub enum Value {
