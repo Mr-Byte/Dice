@@ -292,7 +292,7 @@ where
     }
 
     fn create_object(&mut self) {
-        let object = Object::new::<_, &str>(TypeId::new(None, None, "Object"), None);
+        let object = Object::new(TypeId::new(None, None, "Object"), None);
 
         self.stack.push(Value::Object(object));
     }
@@ -443,7 +443,13 @@ where
         let fields = object.fields();
         let value = match fields.get(key) {
             Some(field) => field.clone(),
-            None => Value::Null,
+            None => match object.class() {
+                Some(class) => match class.methods().get(key) {
+                    Some(method) => Value::FnBound(FnBound::new(value.clone(), method.clone())),
+                    None => Value::Null,
+                },
+                None => Value::Null,
+            },
         };
 
         self.stack.push(value);
@@ -617,12 +623,7 @@ where
                         return Err(RuntimeError::InvalidFunctionArgs(0, arg_count));
                     }
 
-                    let object = Object::new(class.instance_type_id(), class.name());
-
-                    for (name, method) in class.methods().iter() {
-                        let bound_method = Value::FnBound(FnBound::new(Value::Object(object.clone()), method.clone()));
-                        object.fields_mut().insert(name.clone(), bound_method);
-                    }
+                    let object = Object::new(class.instance_type_id(), Value::Class(class.clone()));
 
                     self.stack.release_slots(1);
                     self.stack.push(Value::Object(object));
@@ -654,7 +655,7 @@ where
         let module = match self.loaded_modules.entry(module.id) {
             Entry::Occupied(entry) => entry.get().clone(),
             Entry::Vacant(entry) => {
-                let export = Value::Object(Object::new(TypeId::new(None, path, "#export"), "Export"));
+                let export = Value::Object(Object::new(TypeId::new(None, path, "#export"), None));
                 entry.insert(export.clone());
                 self.run_module(module.bytecode, export)?
             }

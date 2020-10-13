@@ -1,5 +1,5 @@
 use crate::id::type_id::TypeId;
-use crate::value::Value;
+use crate::value::{Class, Value};
 use gc::{Finalize, Gc, GcCell, GcCellRef, GcCellRefMut, Trace};
 use std::{
     collections::HashMap,
@@ -13,14 +13,13 @@ pub struct Object {
 }
 
 impl Object {
-    pub fn new<N, S>(type_id: TypeId, name: N) -> Self
+    pub fn new<N>(type_id: TypeId, class: N) -> Self
     where
-        N: Into<Option<S>>,
-        S: Into<String>,
+        N: Into<Option<Value>>,
     {
         Self {
             inner: Gc::new(ObjectInner {
-                name: name.into().map(Into::into),
+                class: class.into(),
                 fields: Default::default(),
                 mixin_type_ids: Vec::new(),
                 type_id,
@@ -52,8 +51,9 @@ impl Display for Object {
         // TODO: Should this print more useful info?
         write!(f, "Object")?;
 
-        if let Some(name) = &self.name {
-            write!(f, "{{{}}}", name)?;
+        let class = self.class.as_ref().and_then(|value| value.as_class().ok());
+        if let Some(class) = class {
+            write!(f, "{{{}}}", class.name())?;
         }
 
         Ok(())
@@ -62,7 +62,7 @@ impl Display for Object {
 
 #[derive(Debug, Trace, Finalize)]
 pub struct ObjectInner {
-    name: Option<String>,
+    class: Option<Value>,
     fields: GcCell<HashMap<String, Value>>,
     #[unsafe_ignore_trace]
     type_id: TypeId,
@@ -84,6 +84,12 @@ impl ObjectInner {
     }
 
     pub fn name(&self) -> Option<&str> {
-        self.name.as_deref()
+        self.class
+            .as_ref()
+            .and_then(|value| value.as_class().map(|class| class.name()).ok())
+    }
+
+    pub fn class(&self) -> Option<&Class> {
+        self.class.as_ref().and_then(|value| value.as_class().ok())
     }
 }

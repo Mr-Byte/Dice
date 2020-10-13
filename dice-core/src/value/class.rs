@@ -16,7 +16,7 @@ impl Class {
             instance_type_id: TypeId::new(None, path.as_str(), name.as_str()),
             methods: Default::default(),
             constructor: None,
-            object: Object::new(TypeId::new(None, None, "ClassObject"), &name),
+            object: Object::new(TypeId::new(None, None, "ClassObject"), None),
             name,
             path,
         };
