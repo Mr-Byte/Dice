@@ -16,8 +16,8 @@ pub enum TypeError {
     NotAString,
     #[error("The specified value is not a list.")]
     NotAList,
-    #[error("The specified value is not a class.")]
-    NotAnObject,
     #[error("The specified value is not an object.")]
+    NotAnObject,
+    #[error("The specified value is not a class.")]
     NotAClass,
 }

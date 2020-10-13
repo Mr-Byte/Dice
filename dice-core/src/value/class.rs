@@ -1,6 +1,6 @@
 use crate::id::type_id::TypeId;
 use crate::value::{Object, Value};
-use gc::{Finalize, Gc, GcCell, GcCellRefMut, Trace};
+use gc::{Finalize, Gc, GcCell, GcCellRef, GcCellRefMut, Trace};
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::ops::Deref;
@@ -49,6 +49,10 @@ impl ClassInner {
 
     pub fn name(&self) -> &str {
         &*self.name
+    }
+
+    pub fn methods(&self) -> GcCellRef<'_, HashMap<String, Value>> {
+        self.methods.borrow()
     }
 
     pub fn methods_mut(&self) -> GcCellRefMut<'_, HashMap<String, Value>> {

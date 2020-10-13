@@ -1,7 +1,7 @@
 use crate::module::ModuleLoader;
 use crate::runtime::Runtime;
 use dice_core::id::type_id::TypeId;
-use dice_core::value::Class;
+use dice_core::value::{Class, FnBound};
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
     constants::{ADD, DIV, GT, GTE, LT, LTE, MUL, REM, SUB},
@@ -39,7 +39,7 @@ where
                 Instruction::DUP => self.dup(&mut cursor),
                 Instruction::CREATE_LIST => self.create_list(&mut cursor),
                 Instruction::CREATE_OBJECT => self.create_object(),
-                Instruction::CREATE_CLASS => self.create_class(&bytecode, &mut cursor),
+                Instruction::CREATE_CLASS => self.create_class(&bytecode, &mut cursor)?,
                 Instruction::CREATE_CLOSURE => self.create_closure(bytecode, &stack_frame, &closure, &mut cursor)?,
                 Instruction::NEG => self.neg()?,
                 Instruction::NOT => self.not()?,
@@ -96,13 +96,13 @@ where
 
     #[inline]
     fn dup(&mut self, cursor: &mut BytecodeCursor) {
-        let value = self.stack.peek(cursor.read_u8() as usize).clone();
+        let value = self.stack.peek_mut(cursor.read_u8() as usize).clone();
         self.stack.push(value);
     }
 
     #[inline]
     fn assert_bool(&mut self) -> Result<(), RuntimeError> {
-        if !self.stack.peek(0).is_bool() {
+        if !self.stack.peek_mut(0).is_bool() {
             return Err(RuntimeError::Aborted(String::from(
                 "Right hand side must evaluate to a boolean.",
             )));
@@ -113,7 +113,7 @@ where
 
     #[inline]
     fn not(&mut self) -> Result<(), RuntimeError> {
-        match self.stack.peek(0) {
+        match self.stack.peek_mut(0) {
             Value::Bool(value) => *value = !*value,
             _ => return Err(RuntimeError::Aborted(String::from("Value must be a boolean."))),
         }
@@ -123,7 +123,7 @@ where
 
     #[inline]
     fn neg(&mut self) -> Result<(), RuntimeError> {
-        match self.stack.peek(0) {
+        match self.stack.peek_mut(0) {
             Value::Int(value) => *value = -*value,
             Value::Float(value) => *value = -*value,
             _ => {
@@ -138,7 +138,7 @@ where
 
     #[inline]
     fn mul(&mut self) -> Result<(), RuntimeError> {
-        match (self.stack.pop(), self.stack.peek(0)) {
+        match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Int(rhs), Value::Int(lhs)) => *lhs *= rhs,
             (Value::Float(rhs), Value::Float(lhs)) => *lhs *= rhs,
             (rhs, _) => self.call_bin_op(MUL, rhs)?,
@@ -149,7 +149,7 @@ where
 
     #[inline]
     fn div(&mut self) -> Result<(), RuntimeError> {
-        match (self.stack.pop(), self.stack.peek(0)) {
+        match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Int(rhs), Value::Int(lhs)) => {
                 if rhs == 0 {
                     return Err(RuntimeError::DivideByZero);
@@ -166,7 +166,7 @@ where
 
     #[inline]
     fn rem(&mut self) -> Result<(), RuntimeError> {
-        match (self.stack.pop(), self.stack.peek(0)) {
+        match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Int(rhs), Value::Int(lhs)) => {
                 if rhs == 0 {
                     return Err(RuntimeError::DivideByZero);
@@ -183,7 +183,7 @@ where
 
     #[inline]
     fn add(&mut self) -> Result<(), RuntimeError> {
-        match (self.stack.pop(), self.stack.peek(0)) {
+        match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Int(rhs), Value::Int(lhs)) => *lhs += rhs,
             (Value::Float(rhs), Value::Float(lhs)) => *lhs += rhs,
             (rhs, _) => self.call_bin_op(ADD, rhs)?,
@@ -194,10 +194,10 @@ where
 
     #[inline]
     fn gt(&mut self) -> Result<(), RuntimeError> {
-        match (self.stack.pop(), self.stack.peek(0)) {
+        match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Bool(rhs), Value::Bool(lhs)) => *lhs = *lhs > rhs,
-            (Value::Int(rhs), Value::Int(lhs)) => *self.stack.peek(0) = Value::Bool(*lhs > rhs),
-            (Value::Float(rhs), Value::Float(lhs)) => *self.stack.peek(0) = Value::Bool(*lhs > rhs),
+            (Value::Int(rhs), Value::Int(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs > rhs),
+            (Value::Float(rhs), Value::Float(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs > rhs),
             (rhs, _) => self.call_bin_op(GT, rhs)?,
         }
 
@@ -206,10 +206,10 @@ where
 
     #[inline]
     fn gte(&mut self) -> Result<(), RuntimeError> {
-        match (self.stack.pop(), self.stack.peek(0)) {
+        match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Bool(rhs), Value::Bool(lhs)) => *lhs = *lhs >= rhs,
-            (Value::Int(rhs), Value::Int(lhs)) => *self.stack.peek(0) = Value::Bool(*lhs >= rhs),
-            (Value::Float(rhs), Value::Float(lhs)) => *self.stack.peek(0) = Value::Bool(*lhs >= rhs),
+            (Value::Int(rhs), Value::Int(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs >= rhs),
+            (Value::Float(rhs), Value::Float(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs >= rhs),
             (rhs, _) => self.call_bin_op(GTE, rhs)?,
         }
 
@@ -218,10 +218,10 @@ where
 
     #[inline]
     fn lt(&mut self) -> Result<(), RuntimeError> {
-        match (self.stack.pop(), self.stack.peek(0)) {
+        match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Bool(rhs), Value::Bool(lhs)) => *lhs = *lhs < rhs,
-            (Value::Int(rhs), Value::Int(lhs)) => *self.stack.peek(0) = Value::Bool(*lhs < rhs),
-            (Value::Float(rhs), Value::Float(lhs)) => *self.stack.peek(0) = Value::Bool(*lhs < rhs),
+            (Value::Int(rhs), Value::Int(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs < rhs),
+            (Value::Float(rhs), Value::Float(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs < rhs),
             (rhs, _) => self.call_bin_op(LT, rhs)?,
         }
 
@@ -230,10 +230,10 @@ where
 
     #[inline]
     fn lte(&mut self) -> Result<(), RuntimeError> {
-        match (self.stack.pop(), self.stack.peek(0)) {
+        match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Bool(rhs), Value::Bool(lhs)) => *lhs = *lhs <= rhs,
-            (Value::Int(rhs), Value::Int(lhs)) => *self.stack.peek(0) = Value::Bool(*lhs <= rhs),
-            (Value::Float(rhs), Value::Float(lhs)) => *self.stack.peek(0) = Value::Bool(*lhs <= rhs),
+            (Value::Int(rhs), Value::Int(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs <= rhs),
+            (Value::Float(rhs), Value::Float(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs <= rhs),
             (rhs, _) => self.call_bin_op(LTE, rhs)?,
         }
 
@@ -242,7 +242,7 @@ where
 
     #[inline]
     fn sub(&mut self) -> Result<(), RuntimeError> {
-        match (self.stack.pop(), self.stack.peek(0)) {
+        match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Int(rhs), Value::Int(lhs)) => *lhs -= rhs,
             (Value::Float(rhs), Value::Float(lhs)) => *lhs -= rhs,
             (rhs, _) => self.call_bin_op(SUB, rhs)?,
@@ -254,7 +254,7 @@ where
     #[inline]
     fn eq(&mut self) {
         let rhs = self.stack.pop();
-        let lhs = self.stack.peek(0);
+        let lhs = self.stack.peek_mut(0);
 
         *lhs = Value::Bool(rhs == *lhs);
     }
@@ -262,24 +262,24 @@ where
     #[inline]
     fn neq(&mut self) {
         let rhs = self.stack.pop();
-        let lhs = self.stack.peek(0);
+        let lhs = self.stack.peek_mut(0);
 
         *lhs = Value::Bool(rhs != *lhs);
     }
 
     #[inline]
     fn call_bin_op(&mut self, operator: &str, rhs: Value) -> Result<(), RuntimeError> {
-        match self.globals.get(operator) {
-            Some(value) => {
-                let lhs = self.stack.pop();
-                self.stack.push(value.clone());
-                self.stack.push(lhs);
-                self.stack.push(rhs);
-                self.call_fn(2)?;
-            }
-            // TODO: change how this works to try to resolve operator on LHS before falling back on global.
-            None => return Err(RuntimeError::Aborted("No global operator defined.".to_owned())),
-        }
+        // TODO: Resolve operators from class members.
+        let value = self
+            .globals
+            .get(operator)
+            .ok_or_else(|| RuntimeError::Aborted("No global operator defined.".to_owned()))?;
+        let lhs = self.stack.pop();
+
+        self.stack.push(value.clone());
+        self.stack.push(lhs);
+        self.stack.push(rhs);
+        self.call_fn(2)?;
 
         Ok(())
     }
@@ -297,18 +297,16 @@ where
         self.stack.push(Value::Object(object));
     }
 
-    fn create_class(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) {
+    fn create_class(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
         let name_slot = cursor.read_u8() as usize;
         let path_slot = cursor.read_u8() as usize;
-
-        let class = match (&bytecode.constants()[name_slot], &bytecode.constants()[path_slot]) {
-            (Value::String(name), Value::String(path)) => {
-                Class::new(name.as_str().to_owned(), path.as_str().to_owned())
-            }
-            _ => unreachable!("Invalid constant types for class creation."),
-        };
+        let name = bytecode.constants()[name_slot].as_str()?;
+        let path = bytecode.constants()[path_slot].as_str()?;
+        let class = Class::new(name.to_owned(), path.to_owned());
 
         self.stack.push(Value::Class(class));
+
+        Ok(())
     }
 
     fn push_const(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) {
@@ -319,14 +317,7 @@ where
 
     fn jump_if_false(&mut self, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
         let offset = cursor.read_offset();
-        let value = match self.stack.pop() {
-            Value::Bool(value) => value,
-            _ => {
-                return Err(RuntimeError::Aborted(String::from(
-                    "JUMP_IF_FALSE requires a boolean operand.",
-                )));
-            }
-        };
+        let value = self.stack.pop().as_bool()?;
 
         if !value {
             cursor.offset_position(offset)
@@ -404,19 +395,14 @@ where
     fn store_global(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
         let const_pos = cursor.read_u8() as usize;
         let value = &bytecode.constants()[const_pos];
+        let global_name = value.as_str()?.to_owned();
+        let global = self.stack.pop();
 
-        if let Value::String(global) = value {
-            let global_name = (**global).clone();
-            let global = self.stack.pop();
-
-            match self.globals.entry(global_name) {
-                Entry::Occupied(_) => todo!("Return error that global already exists."),
-                Entry::Vacant(entry) => {
-                    entry.insert(global);
-                }
+        match self.globals.entry(global_name) {
+            Entry::Occupied(_) => todo!("Return error that global already exists."),
+            Entry::Vacant(entry) => {
+                entry.insert(global);
             }
-        } else {
-            return Err(RuntimeError::InvalidGlobalNameType);
         }
 
         Ok(())
@@ -440,7 +426,8 @@ where
         let key_index = cursor.read_u8() as usize;
         let key = bytecode.constants()[key_index].as_str()?;
         let value = self.stack.pop();
-        let object = value.as_object()?;
+        let object = self.stack.pop();
+        let object = object.as_object()?;
 
         object.fields_mut().insert(key.to_owned(), value.clone());
         self.stack.push(value);
@@ -469,7 +456,7 @@ where
     fn store_index(&mut self) -> Result<(), RuntimeError> {
         let value = self.stack.pop();
         let index = self.stack.pop();
-        let target = self.stack.peek(0);
+        let target = self.stack.peek_mut(0);
 
         match target {
             Value::Object(object) => {
@@ -491,7 +478,7 @@ where
     #[inline]
     fn load_index(&mut self) -> Result<(), RuntimeError> {
         let index = self.stack.pop();
-        let target = self.stack.peek(0);
+        let target = self.stack.peek_mut(0);
 
         let result = match target {
             Value::Object(object) => {
@@ -578,8 +565,20 @@ where
 
     // TODO: Replace this mutually recursive call with an execution stack to prevent the thread's stack from overflowing.
     pub(super) fn call_fn(&mut self, arg_count: usize) -> Result<(), RuntimeError> {
-        let target = self.stack.peek(arg_count);
-        let (bytecode, closure) = match target {
+        let (target, arg_count, receiver) = match self.stack.peek(arg_count) {
+            Value::FnBound(fn_bound) => (
+                fn_bound.function.clone(),
+                arg_count + 1,
+                Some(fn_bound.receiver.clone()),
+            ),
+            value => (value.clone(), arg_count, None),
+        };
+
+        if let Some(receiver) = receiver {
+            self.stack.push(receiver);
+        }
+
+        let (bytecode, closure) = match &target {
             Value::FnClosure(closure) => {
                 let fn_script = &closure.fn_script;
 
@@ -618,10 +617,15 @@ where
                         return Err(RuntimeError::InvalidFunctionArgs(0, arg_count));
                     }
 
-                    let object = Value::Object(Object::new(class.instance_type_id(), class.name()));
+                    let object = Object::new(class.instance_type_id(), class.name());
+
+                    for (name, method) in class.methods().iter() {
+                        let bound_method = Value::FnBound(FnBound::new(Value::Object(object.clone()), method.clone()));
+                        object.fields_mut().insert(name.clone(), bound_method);
+                    }
 
                     self.stack.release_slots(1);
-                    self.stack.push(object);
+                    self.stack.push(Value::Object(object));
 
                     return Ok(());
                 }

@@ -77,8 +77,13 @@ impl Stack {
 
     // NOTE: Returns the value offset from the top of the stack.
     #[inline]
-    pub fn peek(&mut self, offset: usize) -> &mut Value {
+    pub fn peek_mut(&mut self, offset: usize) -> &mut Value {
         &mut self.values[self.stack_ptr - offset - 1]
+    }
+
+    #[inline]
+    pub fn peek(&self, offset: usize) -> &Value {
+        &self.values[self.stack_ptr - offset - 1]
     }
 
     #[inline]

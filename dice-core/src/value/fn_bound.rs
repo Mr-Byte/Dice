@@ -1,8 +1,9 @@
 use crate::value::Value;
 use gc::{Finalize, Gc, Trace};
+use std::fmt::{Debug, Formatter};
 use std::{fmt::Display, ops::Deref};
 
-#[derive(Debug, Trace, Finalize)]
+#[derive(Trace, Finalize)]
 pub struct FnBoundInner {
     pub receiver: Value,
     pub function: Value,
@@ -37,6 +38,12 @@ impl PartialEq for FnBound {
 
 impl Display for FnBound {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "FnBound{}", self.function)
+        write!(f, "FnBound{{{}}}", self.function)
+    }
+}
+
+impl Debug for FnBoundInner {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Debug::fmt(&self.function, f)
     }
 }
