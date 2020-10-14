@@ -12,14 +12,14 @@ impl Compiler {
         kind: FnKind,
     ) -> Result<CompilerContext, CompilerError> {
         self.compiler_stack.push(CompilerKind::Function);
-        let root = syntax_tree.get(syntax_tree.root()).expect("Node should not be empty");
+        let root = syntax_tree.get(syntax_tree.root());
         let body = if let SyntaxNode::Block(body) = root {
             body.clone()
         } else {
             Block {
                 expressions: Vec::new(),
                 trailing_expression: Some(syntax_tree.root()),
-                span: syntax_tree.get(syntax_tree.root()).expect("Node should exist.").span(),
+                span: syntax_tree.get(syntax_tree.root()).span(),
             }
         };
 

@@ -18,7 +18,7 @@ impl NodeVisitor<&ExportDecl> for Compiler {
         self.context()?.assembler().load_local(export_slot, node.span);
         self.visit(node.export)?;
 
-        let field_name = match self.syntax_tree.get(node.export).expect("Node should exist.") {
+        let field_name = match self.syntax_tree.get(node.export) {
             SyntaxNode::VarDecl(VarDecl {
                 kind: VarDeclKind::Singular(name),
                 ..

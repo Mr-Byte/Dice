@@ -5,7 +5,7 @@ use dice_syntax::{SyntaxNode, WhileLoop};
 
 impl NodeVisitor<&WhileLoop> for Compiler {
     fn visit(&mut self, WhileLoop { condition, body, span }: &WhileLoop) -> Result<(), CompilerError> {
-        if let Some(SyntaxNode::Block(block)) = self.syntax_tree.get(*body) {
+        if let SyntaxNode::Block(block) = self.syntax_tree.get(*body) {
             let block = block.clone();
             let loop_start = self.context()?.assembler().current_position();
 

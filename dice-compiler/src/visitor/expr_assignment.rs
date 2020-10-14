@@ -5,10 +5,7 @@ use dice_syntax::{Assignment, AssignmentOperator, FieldAccess, Index, SyntaxNode
 
 impl NodeVisitor<&Assignment> for Compiler {
     fn visit(&mut self, assignment: &Assignment) -> Result<(), CompilerError> {
-        let lhs = self
-            .syntax_tree
-            .get(assignment.lhs_expression)
-            .expect("Node should exist.");
+        let lhs = self.syntax_tree.get(assignment.lhs_expression);
 
         match lhs {
             SyntaxNode::LitIdent(lit_ident) => {

@@ -93,7 +93,7 @@ impl NodeVisitor<&RangeLoop> for Compiler {
 
 impl Compiler {
     pub(super) fn lower_to_range_loop(&self, for_loop: &ForLoop) -> Option<RangeLoop> {
-        let source = self.syntax_tree.get(for_loop.source).expect("Node should exist.");
+        let source = self.syntax_tree.get(for_loop.source);
 
         match source {
             SyntaxNode::Binary(binary) => {

@@ -6,11 +6,7 @@ use dice_syntax::{SyntaxNode, SyntaxNodeId};
 
 impl NodeVisitor<SyntaxNodeId> for Compiler {
     fn visit(&mut self, node: SyntaxNodeId) -> Result<(), CompilerError> {
-        let node = self
-            .syntax_tree
-            .get(node)
-            .cloned()
-            .expect("Node should never be empty.");
+        let node = self.syntax_tree.get(node).clone();
 
         match &node {
             SyntaxNode::LitIdent(literal) => self.visit(literal)?,

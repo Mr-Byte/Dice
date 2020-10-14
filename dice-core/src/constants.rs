@@ -29,3 +29,4 @@ pub const OPERATORS: &[&str] = &[
 ];
 
 pub const EXPORT: &str = "#export";
+pub const SELF: &str = "self";

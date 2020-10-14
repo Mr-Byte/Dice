@@ -15,7 +15,7 @@ impl Compiler {
     }
 
     fn scan_expr(&mut self, expression: SyntaxNodeId) -> Result<(), CompilerError> {
-        let node = self.syntax_tree.get(expression).expect("Node should exist.");
+        let node = self.syntax_tree.get(expression);
 
         match node {
             SyntaxNode::FnDecl(fn_decl) => {

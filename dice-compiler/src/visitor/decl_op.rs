@@ -11,7 +11,7 @@ use dice_syntax::OpDecl;
 impl NodeVisitor<&OpDecl> for Compiler {
     // TODO: Only allow operators to compile in the context of a prelude?
     fn visit(&mut self, node: &OpDecl) -> Result<(), CompilerError> {
-        let body = self.syntax_tree.child(node.body).expect("Node should not be missing.");
+        let body = self.syntax_tree.child(node.body);
         let mut op_context = self.compile_fn(body, &node.args, FnKind::Function)?;
         let name = format!("#{}", node.name);
 

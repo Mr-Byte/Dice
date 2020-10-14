@@ -24,15 +24,18 @@ impl SyntaxTree {
         self.root
     }
 
-    pub fn get(&self, id: SyntaxNodeId) -> Option<&SyntaxNode> {
-        self.nodes.get(id)
+    pub fn get(&self, id: SyntaxNodeId) -> &SyntaxNode {
+        self.nodes.get(id).expect("Node should always exist.")
     }
 
-    pub fn child(&self, id: SyntaxNodeId) -> Option<SyntaxTree> {
-        self.nodes.get(id).map(|_| Self {
-            root: id,
-            nodes: self.nodes.clone(),
-        })
+    pub fn child(&self, id: SyntaxNodeId) -> SyntaxTree {
+        self.nodes
+            .get(id)
+            .map(|_| Self {
+                root: id,
+                nodes: self.nodes.clone(),
+            })
+            .expect("Node should always exist.")
     }
 }
 

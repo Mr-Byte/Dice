@@ -1,6 +1,7 @@
 use crate::compiler::Compiler;
 use crate::scope_stack::State;
 use crate::visitor::{FnKind, NodeVisitor};
+use dice_core::constants::SELF;
 use dice_error::compiler_error::CompilerError;
 use dice_syntax::{ClassDecl, SyntaxNode};
 
@@ -33,12 +34,12 @@ impl NodeVisitor<&ClassDecl> for Compiler {
         }
 
         for associated_item in node.associated_items.iter().copied() {
-            let node = self.syntax_tree.get(associated_item).expect("Node should exist.");
+            let node = self.syntax_tree.get(associated_item);
 
             match node {
                 SyntaxNode::FnDecl(fn_decl) => {
                     let fn_decl = fn_decl.clone();
-                    let is_method = fn_decl.args.first().map(|arg| arg == "self").unwrap_or(false);
+                    let is_method = fn_decl.args.first().map(|arg| arg == SELF).unwrap_or(false);
 
                     self.visit((&fn_decl, FnKind::Method))?;
 
