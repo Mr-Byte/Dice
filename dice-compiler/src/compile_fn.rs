@@ -1,6 +1,8 @@
-use crate::compiler::Compiler;
-use crate::compiler_stack::{CompilerContext, CompilerKind};
-use crate::visitor::{BlockKind, FnKind, NodeVisitor};
+use crate::{
+    compiler::Compiler,
+    compiler_stack::{CompilerContext, CompilerKind},
+    visitor::{BlockKind, FnKind, NodeVisitor},
+};
 use dice_error::compiler_error::CompilerError;
 use dice_syntax::{Block, SyntaxNode, SyntaxTree};
 

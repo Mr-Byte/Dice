@@ -1,7 +1,8 @@
-use crate::hash::Hash;
-use crate::value::Value;
-use std::fmt::{Debug, Formatter};
-use std::mem::Discriminant;
+use crate::{hash::Hash, value::Value};
+use std::{
+    fmt::{Debug, Formatter},
+    mem::Discriminant,
+};
 
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Debug, Hash)]
 #[repr(transparent)]

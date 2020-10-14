@@ -1,13 +1,13 @@
-use crate::module::ModuleLoader;
-use crate::runtime::call_frame::CallFrame;
-use crate::runtime::Runtime;
-use dice_core::id::type_id::TypeId;
-use dice_core::value::{Class, FnBound};
+use crate::{
+    module::ModuleLoader,
+    runtime::{call_frame::CallFrame, Runtime},
+};
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
     constants::{ADD, DIV, GT, GTE, LT, LTE, MUL, REM, SUB},
+    id::type_id::TypeId,
     upvalue::{Upvalue, UpvalueState},
-    value::{FnClosure, Object, Value},
+    value::{Class, FnBound, FnClosure, Object, Value},
 };
 use dice_error::runtime_error::RuntimeError;
 use std::collections::hash_map::Entry;

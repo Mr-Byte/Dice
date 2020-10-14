@@ -6,12 +6,11 @@ use crate::{
     module::{file_loader::FileModuleLoader, ModuleId, ModuleLoader},
     runtime::stack::Stack,
 };
-use dice_core::runtime::Module;
-use dice_core::value::ValueMap;
 use dice_core::{
     bytecode::Bytecode,
+    runtime::Module,
     upvalue::{Upvalue, UpvalueState},
-    value::{FnNative, NativeFn, Value},
+    value::{FnNative, NativeFn, Value, ValueMap},
 };
 use dice_error::runtime_error::RuntimeError;
 use std::collections::{HashMap, VecDeque};

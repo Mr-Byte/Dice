@@ -1,6 +1,5 @@
 use super::NodeVisitor;
-use crate::compiler::Compiler;
-use crate::visitor::FnKind;
+use crate::{compiler::Compiler, visitor::FnKind};
 use dice_core::{
     constants::OPERATORS,
     value::{FnScript, Value},

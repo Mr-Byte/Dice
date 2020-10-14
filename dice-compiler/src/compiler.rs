@@ -1,11 +1,14 @@
-use crate::assembler::Assembler;
 use crate::{
+    assembler::Assembler,
     compiler_stack::{CompilerContext, CompilerKind, CompilerStack},
     scope_stack::State,
     visitor::NodeVisitor,
 };
-use dice_core::source::{Source, SourceKind};
-use dice_core::{bytecode::Bytecode, constants::EXPORT};
+use dice_core::{
+    bytecode::Bytecode,
+    constants::EXPORT,
+    source::{Source, SourceKind},
+};
 use dice_error::{compiler_error::CompilerError, span::Span};
 use dice_syntax::{Parser, SyntaxTree};
 

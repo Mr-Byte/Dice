@@ -1,5 +1,7 @@
-use crate::id::type_id::TypeId;
-use crate::value::{Class, Value, ValueMap};
+use crate::{
+    id::type_id::TypeId,
+    value::{Class, Value, ValueMap},
+};
 use gc::{Finalize, Gc, GcCell, GcCellRef, GcCellRefMut, Trace};
 use std::{
     fmt::{Display, Formatter},

@@ -1,5 +1,7 @@
-use std::hash;
-use std::hash::{BuildHasher, BuildHasherDefault, Hasher};
+use std::{
+    hash,
+    hash::{BuildHasher, BuildHasherDefault, Hasher},
+};
 use twox_hash::XxHash64;
 
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Debug, Hash)]

@@ -1,7 +1,9 @@
 use crate::value::Value;
 use gc::{Finalize, Gc, Trace};
-use std::fmt::{Debug, Formatter};
-use std::{fmt::Display, ops::Deref};
+use std::{
+    fmt::{Debug, Display, Formatter},
+    ops::Deref,
+};
 
 #[derive(Trace, Finalize)]
 pub struct FnBoundInner {

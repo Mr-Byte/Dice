@@ -10,8 +10,7 @@ pub use fn_native::*;
 pub use fn_script::*;
 pub use list::*;
 pub use object::*;
-use std::collections::HashMap;
-use std::hash::BuildHasherDefault;
+use std::{collections::HashMap, hash::BuildHasherDefault};
 use twox_hash::XxHash;
 
 mod class;

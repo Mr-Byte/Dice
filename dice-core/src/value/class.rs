@@ -1,9 +1,13 @@
-use crate::id::type_id::TypeId;
-use crate::value::{Object, Value, ValueMap};
+use crate::{
+    id::type_id::TypeId,
+    value::{Object, Value, ValueMap},
+};
 use gc::{Finalize, Gc, GcCell, GcCellRef, GcCellRefMut, Trace};
-use std::collections::HashMap;
-use std::fmt::{Display, Formatter};
-use std::ops::Deref;
+use std::{
+    collections::HashMap,
+    fmt::{Display, Formatter},
+    ops::Deref,
+};
 
 #[derive(Clone, Debug, Trace, Finalize)]
 pub struct Class {

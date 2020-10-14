@@ -1,6 +1,8 @@
-use crate::compiler::Compiler;
-use crate::scope_stack::State;
-use crate::visitor::{FnKind, NodeVisitor};
+use crate::{
+    compiler::Compiler,
+    scope_stack::State,
+    visitor::{FnKind, NodeVisitor},
+};
 use dice_core::constants::SELF;
 use dice_error::compiler_error::CompilerError;
 use dice_syntax::{ClassDecl, SyntaxNode};
