@@ -469,7 +469,6 @@ where
         Ok(())
     }
 
-    // TODO: Work on this to make classes index-able.
     #[inline]
     fn store_index(&mut self) -> Result<(), RuntimeError> {
         let value = self.stack.pop();

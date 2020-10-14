@@ -38,7 +38,6 @@ pub enum Value {
     String(Gc<String>),
     Object(Object),
     Class(Class),
-    Trait(),
 }
 
 impl Value {
@@ -147,7 +146,6 @@ impl Value {
         match self {
             Value::Object(_) => TypeId::new(discriminant, None, "Object"),
             Value::Class(class) => TypeId::new(discriminant, class.path(), class.name()),
-            Value::Trait() => todo!(),
             _ => TypeId::new(discriminant, None, None),
         }
     }
@@ -194,7 +192,6 @@ impl Display for Value {
             Value::String(string) => string.fmt(fmt),
             Value::Object(object) => object.fmt(fmt),
             Value::Class(class) => class.fmt(fmt),
-            Value::Trait() => write!(fmt, "Trait"),
         }
     }
 }

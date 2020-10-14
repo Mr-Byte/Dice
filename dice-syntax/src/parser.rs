@@ -399,7 +399,8 @@ impl Parser {
         let node = match self.lexer.peek().kind {
             TokenKind::Let => self.var_decl()?,
             TokenKind::Function => self.fn_decl()?,
-            _ => todo!("unsupported export type"),
+            TokenKind::Class => self.class_decl()?,
+            _ => unreachable!("Unsupported export type encountered."),
         };
 
         let span_end = self.lexer.current().span();
@@ -691,9 +692,6 @@ impl Parser {
             Ok(self.arena.alloc(node))
         } else {
             let expression = self.expression()?;
-            // TODO: Detect trailing commas and produce a tuple instead of a group?
-            // How to support single-element tuples?
-            // Do like rust and require a singular trailing comma for single element tuples!
             self.lexer.consume(TokenKind::RightParen)?;
 
             Ok(expression)

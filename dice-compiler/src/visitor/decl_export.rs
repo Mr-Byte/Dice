@@ -24,6 +24,7 @@ impl NodeVisitor<&ExportDecl> for Compiler {
                 ..
             }) => name.clone(),
             SyntaxNode::FnDecl(fn_decl) => fn_decl.name.clone(),
+            SyntaxNode::ClassDecl(class_decl) => class_decl.name.clone(),
             _ => todo!("Error about invalid export type."),
         };
 

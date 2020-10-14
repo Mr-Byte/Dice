@@ -49,7 +49,6 @@ impl PartialEq for Object {
 
 impl Display for Object {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        // TODO: Should this print more useful info?
         write!(f, "Object")?;
 
         let class = self.class.as_ref().and_then(|value| value.as_class().ok());
