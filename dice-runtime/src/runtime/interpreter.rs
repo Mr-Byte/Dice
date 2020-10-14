@@ -2,6 +2,7 @@ use crate::{
     module::ModuleLoader,
     runtime::{call_frame::CallFrame, Runtime},
 };
+use dice_core::constants::NEW;
 use dice_core::value::{FnNative, FnScript};
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
@@ -349,7 +350,7 @@ where
             let upvalue_slot = cursor.read_u8() as usize;
             let upvalue = closure.upvalues[upvalue_slot].clone();
             let value = match &*upvalue.state_mut() {
-                UpvalueState::Open(slot) => self.stack.slot(*slot).clone(),
+                UpvalueState::Open(slot) => self.stack[*slot].clone(),
                 UpvalueState::Closed(value) => value.clone(),
             };
 
@@ -366,7 +367,7 @@ where
             let value = self.stack.pop();
             let result = match &mut *upvalue.state_mut() {
                 UpvalueState::Open(slot) => {
-                    *self.stack.slot(*slot) = value.clone();
+                    self.stack[*slot] = value.clone();
                     value
                 }
                 UpvalueState::Closed(closed_value) => {
@@ -440,18 +441,27 @@ where
     fn load_field(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
         let key_index = cursor.read_u8() as usize;
         let key = bytecode.constants()[key_index].as_str()?;
+
         let value = self.stack.pop();
         let object = value.as_object()?;
         let fields = object.fields();
         let value = match fields.get(key) {
             Some(field) => field.clone(),
-            None => match object.class() {
-                Some(class) => match class.methods().get(key) {
-                    Some(method) => Value::FnBound(FnBound::new(value.clone(), method.clone())),
+            None => {
+                if key == NEW {
+                    return Err(RuntimeError::Aborted(String::from(
+                        "TODO: the new function cannot be accessed directly.",
+                    )));
+                }
+
+                match object.class() {
+                    Some(class) => match class.methods().get(key) {
+                        Some(method) => Value::FnBound(FnBound::new(value.clone(), method.clone())),
+                        None => Value::Null,
+                    },
                     None => Value::Null,
-                },
-                None => Value::Null,
-            },
+                }
+            }
         };
 
         self.stack.push(value);
@@ -594,20 +604,18 @@ where
 
     fn call_class_constructor(&mut self, arg_count: usize, class: &Class) -> Result<Value, RuntimeError> {
         let class = class.clone();
-        let object = Object::new(class.instance_type_id(), Value::Class(class.clone()));
+        let object = Value::Object(Object::new(class.instance_type_id(), Value::Class(class.clone())));
 
-        // TODO: Call constructor (if one exists).
-        if let Some(_constructor) = &class.constructor() {
-            todo!("Actually handle the constructor case.")
-        } else {
-            if arg_count > 0 {
-                return Err(RuntimeError::InvalidFunctionArgs(0, arg_count));
-            }
-
-            self.stack.release_slots(1);
+        if let Some(new) = class.methods().get(NEW) {
+            let bound = Value::FnBound(FnBound::new(object.clone(), new.clone()));
+            *self.stack.peek_mut(arg_count) = bound;
+            self.call_fn(arg_count)?;
         }
 
-        Ok(Value::Object(object))
+        // NOTE: Regardless of whether or not there was a constructor, clean up the stack.
+        self.stack.release_slots(1);
+
+        Ok(object)
     }
 
     fn call_fn_native(

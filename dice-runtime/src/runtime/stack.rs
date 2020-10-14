@@ -67,11 +67,6 @@ impl Stack {
         assert!(self.stack_ptr < MAX_STACK_SIZE, "Stack Underflowed")
     }
 
-    #[inline]
-    pub fn slot(&mut self, slot: usize) -> &mut Value {
-        &mut self.values[slot]
-    }
-
     // NOTE: Returns the value offset from the top of the stack.
     #[inline]
     pub fn peek_mut(&mut self, offset: usize) -> &mut Value {
@@ -86,6 +81,20 @@ impl Stack {
     #[inline]
     pub fn len(&self) -> usize {
         self.stack_ptr
+    }
+}
+
+impl Index<usize> for Stack {
+    type Output = Value;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.values[index]
+    }
+}
+
+impl IndexMut<usize> for Stack {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.values[index]
     }
 }
 

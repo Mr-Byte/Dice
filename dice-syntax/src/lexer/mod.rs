@@ -172,7 +172,7 @@ pub mod test {
             struct
             type
             typeof
-            instanceof
+            is
             enum
             virtual
             override
@@ -207,7 +207,7 @@ pub mod test {
         assert_next_token!(tokens, TokenKind::Class);
         assert_next_token!(tokens, TokenKind::Type);
         assert_next_token!(tokens, TokenKind::TypeOf);
-        assert_next_token!(tokens, TokenKind::InstanceOf);
+        assert_next_token!(tokens, TokenKind::Is);
         assert_next_token!(tokens, TokenKind::Enum);
         assert_next_token!(tokens, TokenKind::Impl);
         assert_next_token!(tokens, TokenKind::Import);

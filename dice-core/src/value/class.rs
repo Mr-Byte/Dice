@@ -1,6 +1,6 @@
 use crate::{
     id::type_id::TypeId,
-    value::{Object, Value, ValueMap},
+    value::{Object, ValueMap},
 };
 use gc::{Finalize, Gc, GcCell, GcCellRef, GcCellRefMut, Trace};
 use std::{
@@ -18,7 +18,6 @@ impl Class {
         let inner = ClassInner {
             instance_type_id: TypeId::new(None, path.as_str(), name.as_str()),
             methods: Default::default(),
-            constructor: None,
             object: Object::new(TypeId::new(None, None, "ClassObject"), None),
             name,
             path,
@@ -39,7 +38,6 @@ pub struct ClassInner {
     path: String,
     name: String,
     methods: GcCell<ValueMap>,
-    constructor: Option<Value>,
     object: Object,
     #[unsafe_ignore_trace]
     instance_type_id: TypeId,
@@ -60,10 +58,6 @@ impl ClassInner {
 
     pub fn methods_mut(&self) -> GcCellRefMut<'_, ValueMap> {
         self.methods.borrow_mut()
-    }
-
-    pub fn constructor(&self) -> Option<Value> {
-        self.constructor.clone()
     }
 
     pub fn instance_type_id(&self) -> TypeId {

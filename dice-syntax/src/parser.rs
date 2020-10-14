@@ -547,8 +547,8 @@ impl Parser {
         let (_, name) = self.lexer.consume_ident()?;
         self.lexer.consume(TokenKind::LeftCurly)?;
 
-        let mut associated_items = Vec::new();
         let mut next_token = self.lexer.peek();
+        let mut associated_items = Vec::new();
 
         while !matches!(next_token.kind, TokenKind::RightCurly) {
             let expression = match next_token.kind {

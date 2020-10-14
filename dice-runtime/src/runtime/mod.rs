@@ -41,7 +41,7 @@ where
 
     pub(super) fn run_module(&mut self, bytecode: Bytecode, export: Value) -> Result<Value, RuntimeError> {
         let stack_frame = self.stack.reserve_slots(bytecode.slot_count());
-        *self.stack.slot(stack_frame.start()) = export;
+        self.stack[stack_frame.start()] = export;
         let result = self.execute_bytecode(&bytecode, stack_frame, None);
         self.stack.release_slots(bytecode.slot_count());
 

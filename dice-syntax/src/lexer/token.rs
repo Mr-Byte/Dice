@@ -180,8 +180,8 @@ pub enum TokenKind {
     Type,
     #[token("typeof")]
     TypeOf,
-    #[token("instanceof")]
-    InstanceOf,
+    #[token("is")]
+    Is,
     #[token("enum")]
     Enum,
     #[token("impl")]
