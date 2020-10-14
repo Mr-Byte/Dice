@@ -42,7 +42,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn print_value(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
-    if let [arg, ..] = args {
+    if let [_, arg, ..] = args {
         println!("{}", arg);
     }
 
@@ -50,7 +50,7 @@ fn print_value(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, Runt
 }
 
 fn filter(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
-    if let [list, filter_fn, ..] = args {
+    if let [_, list, filter_fn, ..] = args {
         let list = list.as_list()?;
         let mut result = Vec::new();
 

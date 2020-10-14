@@ -34,12 +34,7 @@ impl NodeVisitor<(&FnDecl, FnKind)> for Compiler {
 }
 
 impl Compiler {
-    fn emit_fn(
-        &mut self,
-        fn_decl: &FnDecl,
-        upvalues: &Vec<UpvalueDescriptor>,
-        value: Value,
-    ) -> Result<(), CompilerError> {
+    fn emit_fn(&mut self, fn_decl: &FnDecl, upvalues: &[UpvalueDescriptor], value: Value) -> Result<(), CompilerError> {
         let context = self.context()?;
 
         let fn_name = fn_decl.name.clone();
@@ -78,7 +73,7 @@ impl Compiler {
     fn emit_method(
         &mut self,
         fn_decl: &FnDecl,
-        upvalues: &Vec<UpvalueDescriptor>,
+        upvalues: &[UpvalueDescriptor],
         value: Value,
     ) -> Result<(), CompilerError> {
         emit_bytecode! {

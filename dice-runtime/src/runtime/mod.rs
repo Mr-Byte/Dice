@@ -75,8 +75,8 @@ where
     fn call_function(&mut self, target: Value, args: &[Value]) -> Result<Value, RuntimeError> {
         self.stack.push(target);
         self.stack.push_slice(args);
+        self.call_fn(args.len())?;
 
-        Self::call_fn(self, args.len())?;
         Ok(self.stack.pop())
     }
 

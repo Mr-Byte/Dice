@@ -2,6 +2,7 @@ use crate::{
     module::ModuleLoader,
     runtime::{call_frame::CallFrame, Runtime},
 };
+use dice_core::value::{FnNative, FnScript};
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
     constants::{ADD, DIV, GT, GTE, LT, LTE, MUL, REM, SUB},
@@ -564,74 +565,80 @@ where
         Ok(())
     }
 
-    #[inline]
-    fn call(&mut self, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
+    pub fn call(&mut self, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
         let arg_count = cursor.read_u8() as usize;
         self.call_fn(arg_count)
     }
 
     // TODO: Replace this mutually recursive call with an execution stack to prevent the thread's stack from overflowing.
     pub(super) fn call_fn(&mut self, arg_count: usize) -> Result<(), RuntimeError> {
-        let (target, arg_count, receiver) = match self.stack.peek(arg_count) {
-            Value::FnBound(fn_bound) => (fn_bound.function.clone(), arg_count, Some(fn_bound.receiver.clone())),
-            value => (value.clone(), arg_count, None),
+        let (function, receiver) = match self.stack.peek(arg_count) {
+            Value::FnBound(fn_bound) => (fn_bound.function.clone(), Some(fn_bound.receiver.clone())),
+            value => (value.clone(), None),
         };
 
-        let (bytecode, closure) = match &target {
+        let value = match &function {
             Value::FnClosure(closure) => {
-                let fn_script = &closure.fn_script;
-
-                if arg_count != fn_script.arity {
-                    return Err(RuntimeError::InvalidFunctionArgs(fn_script.arity, arg_count));
-                }
-
-                (fn_script.bytecode.clone(), Some(closure.clone()))
+                self.call_fn_script(arg_count, receiver, &closure.fn_script, Some(closure.clone()))?
             }
-            Value::FnScript(fn_script) => {
-                if arg_count != fn_script.arity {
-                    return Err(RuntimeError::InvalidFunctionArgs(fn_script.arity, arg_count));
-                }
-
-                (fn_script.bytecode.clone(), None)
-            }
-            Value::Class(class) => {
-                let class = class.clone();
-                let object = Object::new(class.instance_type_id(), Value::Class(class.clone()));
-
-                // TODO: Call constructor (if one exists).
-
-                if let Some(_constructor) = &class.constructor() {
-                    todo!("Actually handle the constructor case.")
-                } else {
-                    if arg_count > 0 {
-                        return Err(RuntimeError::InvalidFunctionArgs(0, arg_count));
-                    }
-
-                    self.stack.release_slots(1);
-                }
-
-                self.stack.push(Value::Object(object));
-                return Ok(());
-            }
-            Value::FnNative(fn_native) => {
-                let fn_native = fn_native.clone();
-                // NOTE: Include the function/receiver slot as the first parameter to the native function call.
-                let mut args = self.stack.pop_count(arg_count + 1);
-
-                if let Some(receiver) = receiver {
-                    args[0] = receiver;
-                }
-
-                let result = fn_native.call(self, &args)?;
-
-                self.stack.push(result);
-
-                return Ok(());
-            }
+            Value::FnScript(fn_script) => self.call_fn_script(arg_count, receiver, &fn_script, None)?,
+            Value::Class(class) => self.call_class_constructor(arg_count, class)?,
+            Value::FnNative(fn_native) => self.call_fn_native(arg_count, receiver, fn_native)?,
             _ => return Err(RuntimeError::NotAFunction),
         };
 
-        let slots = bytecode.slot_count();
+        self.stack.push(value);
+
+        Ok(())
+    }
+
+    fn call_class_constructor(&mut self, arg_count: usize, class: &Class) -> Result<Value, RuntimeError> {
+        let class = class.clone();
+        let object = Object::new(class.instance_type_id(), Value::Class(class.clone()));
+
+        // TODO: Call constructor (if one exists).
+        if let Some(_constructor) = &class.constructor() {
+            todo!("Actually handle the constructor case.")
+        } else {
+            if arg_count > 0 {
+                return Err(RuntimeError::InvalidFunctionArgs(0, arg_count));
+            }
+
+            self.stack.release_slots(1);
+        }
+
+        Ok(Value::Object(object))
+    }
+
+    fn call_fn_native(
+        &mut self,
+        arg_count: usize,
+        receiver: Option<Value>,
+        fn_native: &FnNative,
+    ) -> Result<Value, RuntimeError> {
+        let fn_native = fn_native.clone();
+        // NOTE: Include the function/receiver slot as the first parameter to the native function call.
+        let mut args = self.stack.pop_count(arg_count + 1);
+
+        if let Some(receiver) = receiver {
+            args[0] = receiver;
+        }
+
+        fn_native.call(self, &args)
+    }
+
+    fn call_fn_script(
+        &mut self,
+        arg_count: usize,
+        receiver: Option<Value>,
+        fn_script: &FnScript,
+        closure: Option<FnClosure>,
+    ) -> Result<Value, RuntimeError> {
+        if arg_count != fn_script.arity {
+            return Err(RuntimeError::InvalidFunctionArgs(fn_script.arity, arg_count));
+        }
+
+        let slots = fn_script.bytecode.slot_count();
         let reserved = slots - arg_count;
         // NOTE: Reserve only the slots needed to cover locals beyond the arguments already on the stack.
         let stack_frame = self.stack.reserve_slots(reserved);
@@ -643,13 +650,12 @@ where
             self.stack[stack_frame][0] = receiver;
         }
 
-        let result = self.execute_bytecode(&bytecode, stack_frame, closure)?;
+        let result = self.execute_bytecode(&fn_script.bytecode, stack_frame, closure)?;
 
         // NOTE: Release the number of reserved slots plus the number of arguments plus a slot for the function itself.
         self.stack.release_slots(reserved + arg_count + 1);
-        self.stack.push(result);
 
-        Ok(())
+        Ok(result)
     }
 
     fn load_module(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
