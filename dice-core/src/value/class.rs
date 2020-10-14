@@ -4,7 +4,6 @@ use crate::{
 };
 use gc::{Finalize, Gc, GcCell, GcCellRef, GcCellRefMut, Trace};
 use std::{
-    collections::HashMap,
     fmt::{Display, Formatter},
     ops::Deref,
 };

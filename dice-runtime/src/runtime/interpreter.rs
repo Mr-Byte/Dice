@@ -196,7 +196,7 @@ where
     #[inline]
     fn gt(&mut self) -> Result<(), RuntimeError> {
         match (self.stack.pop(), self.stack.peek_mut(0)) {
-            (Value::Bool(rhs), Value::Bool(lhs)) => *lhs = *lhs > rhs,
+            (Value::Bool(rhs), Value::Bool(lhs)) => *lhs &= !rhs,
             (Value::Int(rhs), Value::Int(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs > rhs),
             (Value::Float(rhs), Value::Float(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs > rhs),
             (rhs, _) => self.call_bin_op(GT, rhs)?,
@@ -220,7 +220,7 @@ where
     #[inline]
     fn lt(&mut self) -> Result<(), RuntimeError> {
         match (self.stack.pop(), self.stack.peek_mut(0)) {
-            (Value::Bool(rhs), Value::Bool(lhs)) => *lhs = *lhs < rhs,
+            (Value::Bool(rhs), Value::Bool(lhs)) => *lhs = !(*lhs) & rhs,
             (Value::Int(rhs), Value::Int(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs < rhs),
             (Value::Float(rhs), Value::Float(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs < rhs),
             (rhs, _) => self.call_bin_op(LT, rhs)?,
@@ -511,7 +511,7 @@ where
         let object = self.stack.pop();
         let class = object.as_class()?;
 
-        class.methods_mut().insert(key.to_owned(), value.clone());
+        class.methods_mut().insert(key.to_owned(), value);
 
         Ok(())
     }
