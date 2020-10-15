@@ -1,7 +1,7 @@
 use super::NodeVisitor;
 use crate::{compiler::Compiler, visitor::FnKind};
 use dice_core::{
-    constants::OPERATORS,
+    protocol::operator::OPERATORS,
     value::{FnScript, Value},
 };
 use dice_error::compiler_error::CompilerError;

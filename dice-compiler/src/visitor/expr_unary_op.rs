@@ -1,6 +1,6 @@
 use super::NodeVisitor;
 use crate::compiler::Compiler;
-use dice_core::constants::DIE_ROLL;
+use dice_core::protocol::operator::DIE_ROLL;
 use dice_error::{compiler_error::CompilerError, span::Span};
 use dice_syntax::{SyntaxNodeId, Unary, UnaryOperator};
 

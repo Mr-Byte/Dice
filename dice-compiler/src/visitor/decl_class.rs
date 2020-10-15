@@ -4,7 +4,7 @@ use crate::{
     scope_stack::State,
     visitor::{FnKind, NodeVisitor},
 };
-use dice_core::constants::SELF;
+use dice_core::protocol::class::SELF;
 use dice_error::compiler_error::CompilerError;
 use dice_syntax::{ClassDecl, SyntaxNode};
 

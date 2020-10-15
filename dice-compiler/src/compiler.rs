@@ -6,7 +6,7 @@ use crate::{
 };
 use dice_core::{
     bytecode::Bytecode,
-    constants::EXPORT,
+    protocol::module::EXPORT,
     source::{Source, SourceKind},
 };
 use dice_error::{compiler_error::CompilerError, span::Span};

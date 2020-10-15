@@ -2,12 +2,12 @@ use crate::{
     module::ModuleLoader,
     runtime::{call_frame::CallFrame, Runtime},
 };
-use dice_core::constants::NEW;
+use dice_core::protocol::class::NEW;
 use dice_core::value::{FnNative, FnScript};
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
-    constants::{ADD, DIV, GT, GTE, LT, LTE, MUL, REM, SUB},
     id::type_id::TypeId,
+    protocol::operator::{ADD, DIV, GT, GTE, LT, LTE, MUL, REM, SUB},
     upvalue::{Upvalue, UpvalueState},
     value::{Class, FnBound, FnClosure, Object, Value},
 };

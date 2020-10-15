@@ -1,6 +1,6 @@
 use super::NodeVisitor;
 use crate::compiler::Compiler;
-use dice_core::constants::{DICE_ROLL, RANGE_EXCLUSIVE, RANGE_INCLUSIVE};
+use dice_core::protocol::operator::{DICE_ROLL, RANGE_EXCLUSIVE, RANGE_INCLUSIVE};
 use dice_error::{compiler_error::CompilerError, span::Span};
 use dice_syntax::{Binary, BinaryOperator, SyntaxNodeId};
 
