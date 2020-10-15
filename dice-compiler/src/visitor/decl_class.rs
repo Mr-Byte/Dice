@@ -1,3 +1,4 @@
+use crate::scope_stack::ScopeKind;
 use crate::{
     compiler::Compiler,
     scope_stack::State,
@@ -16,6 +17,8 @@ pub enum ClassKind {
 impl NodeVisitor<(&ClassDecl, ClassKind)> for Compiler {
     fn visit(&mut self, (node, kind): (&ClassDecl, ClassKind)) -> Result<(), CompilerError> {
         let source = self.source.clone();
+
+        self.context()?.scope_stack().push_scope(ScopeKind::Block, None);
 
         let slot = {
             let class_name = node.name.clone();
@@ -89,6 +92,8 @@ impl NodeVisitor<(&ClassDecl, ClassKind)> for Compiler {
                 _ => unreachable!("Unexpected node kind encountered."),
             }
         }
+
+        self.context()?.scope_stack().pop_scope()?;
 
         Ok(())
     }

@@ -31,9 +31,7 @@ impl ParserRule {
             precedence,
         }
     }
-}
 
-impl ParserRule {
     fn for_token(token: &Token) -> Result<ParserRule, SyntaxError> {
         let rule = match token.kind {
             // Empty rules
