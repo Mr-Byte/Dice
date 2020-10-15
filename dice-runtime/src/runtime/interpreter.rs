@@ -443,6 +443,14 @@ where
         let key = bytecode.constants()[key_index].as_str()?;
 
         let value = self.stack.pop();
+        let value = self.get_field(key, value)?;
+
+        self.stack.push(value);
+
+        Ok(())
+    }
+
+    fn get_field(&self, key: &str, value: Value) -> Result<Value, RuntimeError> {
         let object = value.as_object()?;
         let fields = object.fields();
         let value = match fields.get(key) {
@@ -464,9 +472,7 @@ where
             }
         };
 
-        self.stack.push(value);
-
-        Ok(())
+        Ok(value)
     }
 
     #[inline]
@@ -495,21 +501,20 @@ where
     #[inline]
     fn load_index(&mut self) -> Result<(), RuntimeError> {
         let index = self.stack.pop();
-        let target = self.stack.peek_mut(0);
-
+        let target = self.stack.peek(0);
         let result = match target {
-            Value::Object(object) => {
+            Value::Object(_) => {
                 let field = index.as_str()?;
-                object.fields().get(field).cloned()
+                self.get_field(field, target.clone())?
             }
             Value::List(list) => {
                 let index = index.as_int()?;
-                list.elements().get(index as usize).cloned()
+                list.elements().get(index as usize).cloned().unwrap_or(Value::Null)
             }
             _ => todo!("Return invalid index target error."),
         };
 
-        *target = result.unwrap_or(Value::Null);
+        *self.stack.peek_mut(0) = result;
 
         Ok(())
     }
