@@ -400,6 +400,10 @@ impl Parser {
             TokenKind::Let => self.var_decl()?,
             TokenKind::Function => self.fn_decl()?,
             TokenKind::Class => self.class_decl()?,
+            TokenKind::Identifier(name) => self.arena.alloc(SyntaxNode::LitIdent(LitIdent {
+                name,
+                span: self.lexer.peek().span(),
+            })),
             _ => unreachable!("Unsupported export type encountered."),
         };
 

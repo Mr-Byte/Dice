@@ -129,6 +129,8 @@ pub enum TokenKind {
     LazyAnd,
     #[token("|>")]
     Pipeline,
+    #[token("::")]
+    UniversalMethodAccess,
     // Keywords
     #[token("object")]
     Object,

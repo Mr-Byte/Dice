@@ -9,3 +9,7 @@ export class Point {
         (self.x * self.x) + (self.y * self.y) + (self.z * self.z)
     }
 }
+
+let message = "Hello, world!";
+
+export message;
