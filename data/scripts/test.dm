@@ -10,6 +10,15 @@ export class Point {
     }
 }
 
+export class Iterator {
+    class Result {
+        fn new(value, is_done) {
+            self.value = value;
+            self.is_done = is_done;
+        }
+    }
+}
+
 let message = "Hello, world!";
 
 export message;

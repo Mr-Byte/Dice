@@ -558,6 +558,7 @@ impl Parser {
         while !matches!(next_token.kind, TokenKind::RightCurly) {
             let expression = match next_token.kind {
                 TokenKind::Function => self.fn_decl()?,
+                TokenKind::Class => self.class_decl()?,
                 _ => return Err(SyntaxError::UnexpectedToken(next_token.to_string(), next_token.span())),
             };
 
