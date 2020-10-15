@@ -73,6 +73,7 @@ pub enum SyntaxNode {
 
     // Control flow
     IfExpression(IfExpression),
+    Loop(Loop),
     WhileLoop(WhileLoop),
     ForLoop(ForLoop),
     Block(Block),
@@ -110,6 +111,7 @@ impl SyntaxNode {
             SyntaxNode::IfExpression(IfExpression { span, .. }) => *span,
             SyntaxNode::WhileLoop(WhileLoop { span, .. }) => *span,
             SyntaxNode::ForLoop(ForLoop { span, .. }) => *span,
+            SyntaxNode::Loop(Loop { span, .. }) => *span,
             SyntaxNode::Block(Block { span, .. }) => *span,
             SyntaxNode::Break(Break { span, .. }) => *span,
             SyntaxNode::Return(Return { span, .. }) => *span,

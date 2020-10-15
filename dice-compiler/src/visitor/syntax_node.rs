@@ -29,6 +29,7 @@ impl NodeVisitor<SyntaxNodeId> for Compiler {
             SyntaxNode::ImportDecl(import) => self.visit(import)?,
             SyntaxNode::ExportDecl(export) => self.visit(export)?,
             SyntaxNode::IfExpression(conditional) => self.visit(conditional)?,
+            SyntaxNode::Loop(loop_) => self.visit(loop_)?,
             SyntaxNode::WhileLoop(while_loop) => self.visit(while_loop)?,
             SyntaxNode::ForLoop(for_loop) => self.visit(for_loop)?,
             SyntaxNode::Break(break_node) => self.visit(break_node)?,

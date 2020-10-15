@@ -14,6 +14,7 @@ mod expr_fn_call;
 mod expr_for;
 mod expr_if;
 mod expr_index;
+mod expr_loop;
 mod expr_range_loop;
 mod expr_return;
 mod expr_safe_field_access;

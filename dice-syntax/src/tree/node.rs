@@ -224,6 +224,12 @@ pub struct ForLoop {
 }
 
 #[derive(Debug, Clone)]
+pub struct Loop {
+    pub body: SyntaxNodeId,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone)]
 pub struct Block {
     pub expressions: Vec<SyntaxNodeId>,
     pub trailing_expression: Option<SyntaxNodeId>,
