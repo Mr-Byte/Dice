@@ -57,17 +57,21 @@ pub enum SyntaxNode {
     SafeAccess(SafeAccess),
     FieldAccess(FieldAccess),
     Index(Index),
+    UniversalMethodAccess(UniversalMethodAccess),
 
     // Operators
     Unary(Unary),
     Binary(Binary),
     Assignment(Assignment),
+    TraitImpl(TraitImpl),
 
     // Declarations
     VarDecl(VarDecl),
     FnDecl(FnDecl),
+    AbstractFnDecl(AbstractFnDecl),
     OpDecl(OpDecl),
     ClassDecl(ClassDecl),
+    TraitDecl(TraitDecl),
     ImportDecl(ImportDecl),
     ExportDecl(ExportDecl),
 
@@ -102,10 +106,13 @@ impl SyntaxNode {
             SyntaxNode::Unary(Unary { span, .. }) => *span,
             SyntaxNode::Binary(Binary { span, .. }) => *span,
             SyntaxNode::Assignment(Assignment { span, .. }) => *span,
+            SyntaxNode::TraitImpl(TraitImpl { span, .. }) => *span,
             SyntaxNode::VarDecl(VarDecl { span, .. }) => *span,
             SyntaxNode::FnDecl(FnDecl { span, .. }) => *span,
+            SyntaxNode::AbstractFnDecl(AbstractFnDecl { span, .. }) => *span,
             SyntaxNode::OpDecl(OpDecl { span, .. }) => *span,
             SyntaxNode::ClassDecl(ClassDecl { span, .. }) => *span,
+            SyntaxNode::TraitDecl(TraitDecl { span, .. }) => *span,
             SyntaxNode::ImportDecl(ImportDecl { span, .. }) => *span,
             SyntaxNode::ExportDecl(ExportDecl { span, .. }) => *span,
             SyntaxNode::IfExpression(IfExpression { span, .. }) => *span,
@@ -117,6 +124,7 @@ impl SyntaxNode {
             SyntaxNode::Return(Return { span, .. }) => *span,
             SyntaxNode::Continue(Continue { span, .. }) => *span,
             SyntaxNode::FunctionCall(FunctionCall { span, .. }) => *span,
+            SyntaxNode::UniversalMethodAccess(UniversalMethodAccess { span, .. }) => *span,
         }
     }
 }

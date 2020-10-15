@@ -89,6 +89,13 @@ pub struct FunctionCall {
 }
 
 #[derive(Debug, Clone)]
+pub struct UniversalMethodAccess {
+    pub source: SyntaxNodeId,
+    pub target: String,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone)]
 pub struct Index {
     pub expression: SyntaxNodeId,
     pub index_expression: SyntaxNodeId,
@@ -150,6 +157,16 @@ pub enum AssignmentOperator {
 }
 
 #[derive(Debug, Clone)]
+pub struct TraitImpl {
+    pub trait_: String,
+    // TODO: Should traits also be targets?
+    pub target: String,
+    pub name: Option<String>,
+    pub associated_items: Vec<SyntaxNodeId>,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone)]
 pub struct VarDecl {
     pub kind: VarDeclKind,
     pub is_mutable: bool,
@@ -168,6 +185,13 @@ pub struct FnDecl {
     pub name: String,
     pub args: Vec<String>,
     pub body: SyntaxNodeId,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone)]
+pub struct AbstractFnDecl {
+    pub name: String,
+    pub args: Vec<String>,
     pub span: Span,
 }
 
@@ -195,6 +219,13 @@ pub struct OpDecl {
 
 #[derive(Debug, Clone)]
 pub struct ClassDecl {
+    pub name: String,
+    pub span: Span,
+    pub associated_items: Vec<SyntaxNodeId>,
+}
+
+#[derive(Debug, Clone)]
+pub struct TraitDecl {
     pub name: String,
     pub span: Span,
     pub associated_items: Vec<SyntaxNodeId>,
