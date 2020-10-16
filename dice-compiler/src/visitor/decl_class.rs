@@ -8,43 +8,28 @@ use dice_core::protocol::class::SELF;
 use dice_error::compiler_error::CompilerError;
 use dice_syntax::{ClassDecl, SyntaxNode};
 
-#[derive(Clone, Copy, Eq, PartialEq)]
-pub enum ClassKind {
-    TopLevel,
-    Nested,
-}
-
-impl NodeVisitor<(&ClassDecl, ClassKind)> for Compiler {
-    fn visit(&mut self, (node, kind): (&ClassDecl, ClassKind)) -> Result<(), CompilerError> {
+impl NodeVisitor<&ClassDecl> for Compiler {
+    fn visit(&mut self, node: &ClassDecl) -> Result<(), CompilerError> {
         let source = self.source.clone();
 
         self.context()?.scope_stack().push_scope(ScopeKind::Block, None);
 
         let slot = {
             let class_name = node.name.clone();
+            let local = self.context()?.scope_stack().local(&class_name).ok_or_else(|| {
+                CompilerError::InternalCompilerError(String::from("Class not already declared in scope."))
+            })?;
 
-            match kind {
-                ClassKind::TopLevel => {
-                    let local = self.context()?.scope_stack().local(&class_name).ok_or_else(|| {
-                        CompilerError::InternalCompilerError(String::from("Class not already declared in scope."))
-                    })?;
-
-                    // NOTE: Check if a class of the given name has already been initialized.
-                    if let State::Class { ref mut is_initialized } = &mut local.state {
-                        if *is_initialized {
-                            return Err(CompilerError::ItemAlreadyDeclared(class_name));
-                        }
-
-                        *is_initialized = true;
-                    }
-
-                    local.slot as u8
+            // NOTE: Check if a class of the given name has already been initialized.
+            if let State::Class { ref mut is_initialized } = &mut local.state {
+                if *is_initialized {
+                    return Err(CompilerError::ItemAlreadyDeclared(class_name));
                 }
-                ClassKind::Nested => self
-                    .context()?
-                    .scope_stack()
-                    .add_local(&class_name, State::initialized(false))? as u8,
+
+                *is_initialized = true;
             }
+
+            local.slot as u8
         };
 
         emit_bytecode! {
@@ -74,18 +59,6 @@ impl NodeVisitor<(&ClassDecl, ClassKind)> for Compiler {
                                 POP;
                                 LOAD_LOCAL slot;
                             ]
-                        ]
-                    }
-                }
-                SyntaxNode::ClassDecl(class_decl) => {
-                    let class_decl = class_decl.clone();
-                    self.visit((&class_decl, ClassKind::Nested))?;
-
-                    emit_bytecode! {
-                        self.assembler()?, class_decl.span => [
-                            STORE_FIELD &class_decl.name;
-                            POP;
-                            LOAD_LOCAL slot;
                         ]
                     }
                 }
