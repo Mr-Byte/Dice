@@ -82,7 +82,7 @@ where
         // NOTE: subtract 1 to compensate for the last item of the stack not yet being popped.
         let final_stack_depth = self.stack.len() - 1;
 
-        assert_eq!(
+        debug_assert_eq!(
             initial_stack_depth, final_stack_depth,
             "Stack was left in a bad state. Initial depth {}, final depth {}",
             initial_stack_depth, final_stack_depth

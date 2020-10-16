@@ -87,6 +87,7 @@ impl NodeVisitor<&RangeLoop> for Compiler {
                 PUSH_UNIT;
             ]
         }
+
         Ok(())
     }
 }

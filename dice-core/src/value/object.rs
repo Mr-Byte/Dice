@@ -56,6 +56,12 @@ impl Display for Object {
             write!(f, "{{{}}}", class.name())?;
         }
 
+        write!(f, " -> [")?;
+        for (name, field) in self.fields.borrow().iter() {
+            write!(f, "{} = {}, ", name, field)?;
+        }
+        write!(f, "]")?;
+
         Ok(())
     }
 }

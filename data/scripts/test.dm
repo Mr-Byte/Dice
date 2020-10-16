@@ -1,24 +1,22 @@
-export class Point {
-    fn new(self, x, y, z) {
-        self.x = x;
-        self.y = y;
-        self.z = z;
+export class Range {
+    fn new(self, start, end) {
+        self.current = start;
+        self.end = end;
     }
 
-    fn len_sqr(self) {
-        (self.x * self.x) + (self.y * self.y) + (self.z * self.z)
-    }
-}
+    fn next(self) {
+        let result = if self.current < self.end {
+            object { value: self.current, done: false }
+        } else {
+            object { done: true }
+        };
 
-export class Iterator {
-    class Result {
-        fn new(value, is_done) {
-            self.value = value;
-            self.is_done = is_done;
-        }
+        self.current += 1;
+
+        result
     }
 }
 
-let message = "Hello, world!";
-
-export message;
+op #range_exclusive(start, end) {
+    Range(start, end)
+}

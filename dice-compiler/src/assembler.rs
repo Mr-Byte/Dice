@@ -474,6 +474,11 @@ macro_rules! emit_bytecode {
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     }};
 
+    ($assembler:expr, $span:expr => [NOT; $($rest:tt)*] ) => {{
+        $assembler.not($span);
+        emit_bytecode! { $assembler, $span => [$($rest)*] }
+    }};
+
     ($assembler:expr, $span:expr => [JUMP_IF_FALSE -> $loc:ident; $($rest:tt)*] ) => {
         $loc = $assembler.jump_if_false($span);
         emit_bytecode! { $assembler, $span => [$($rest)*] }
@@ -512,6 +517,11 @@ macro_rules! emit_bytecode {
 
     ($assembler:expr, $span:expr => [LOAD_MODULE $module:expr; $($rest:tt)*] ) => {
         $assembler.load_module($module, $span)?;
+        emit_bytecode! { $assembler, $span => [$($rest)*] }
+    };
+
+    ($assembler:expr, $span:expr => [CALL $arg_count:expr; $($rest:tt)*] ) => {
+        $assembler.call($arg_count, $span);
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
 

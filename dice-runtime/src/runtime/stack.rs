@@ -1,5 +1,6 @@
 use crate::runtime::call_frame::CallFrame;
 use dice_core::value::Value;
+use std::fmt::{Display, Formatter};
 use std::ops::{Index, IndexMut};
 
 // NOTE: Allocate 1MB of stack space, this is 65,536 values when sizeof(Value) == 16
@@ -118,5 +119,22 @@ impl Default for Stack {
             values: vec![Value::Null; MAX_STACK_SIZE],
             stack_ptr: 0,
         }
+    }
+}
+
+impl Display for Stack {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "Stack = [")?;
+
+        for (index, value) in self.values.iter().enumerate() {
+            if index >= self.stack_ptr {
+                break;
+            }
+
+            writeln!(f, "\t[{:#06X}] = {},", index, value)?;
+        }
+
+        write!(f, "]")?;
+        Ok(())
     }
 }
