@@ -2,9 +2,10 @@ use dice::{Dice, Runtime, RuntimeError, Value};
 use std::io::Write;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut runtime = Dice::default();
-    runtime.register_native_fn("print", print_value);
-    runtime.register_native_fn("filter", filter);
+    let mut dice = Dice::default();
+    dice.runtime().function("print", print_value);
+    dice.runtime().function("filter", filter);
+    dice.runtime().load_prelude("data/scripts/prelude.dm")?;
 
     loop {
         print!("Input: ");
@@ -25,7 +26,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let input = String::from_utf8(input)?;
         let start = std::time::Instant::now();
 
-        match runtime.run_script(input) {
+        match dice.run_script(input) {
             Ok(result) => {
                 let elapsed = start.elapsed();
                 let type_id = result.type_id();

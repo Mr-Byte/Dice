@@ -6,6 +6,8 @@ use crate::{
     module::{file_loader::FileModuleLoader, ModuleId, ModuleLoader},
     runtime::stack::Stack,
 };
+use dice_core::id::type_id::TypeId;
+use dice_core::value::Object;
 use dice_core::{
     bytecode::Bytecode,
     runtime::Module,
@@ -82,5 +84,17 @@ where
 
     fn module(&mut self, _name: &str) -> Result<Module, RuntimeError> {
         unimplemented!()
+    }
+
+    fn load_prelude(&mut self, path: &str) -> Result<(), RuntimeError> {
+        let module = self.module_loader.load_module(path)?;
+        let prelude = Value::Object(Object::new(TypeId::new(None, path, "#prelude"), None));
+        let prelude = self.run_module(module.bytecode, prelude)?;
+
+        for (name, value) in &*prelude.as_object()?.fields() {
+            self.globals.entry(name.clone()).or_insert_with(|| value.clone());
+        }
+
+        Ok(())
     }
 }
