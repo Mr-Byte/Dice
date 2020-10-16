@@ -11,6 +11,8 @@ thiserror = "1.0"
 anyhow = "1.0"
 twox-hash = "1.5.0"
 gc = { version = "0.3", features = ["derive"] }
+wyhash = "0.4"
+
 
 dice-error = {path = "../dice-error"}
 dice-syntax = {path = "../dice-syntax"}

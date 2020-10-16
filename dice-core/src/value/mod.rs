@@ -11,7 +11,7 @@ pub use fn_script::*;
 pub use list::*;
 pub use object::*;
 use std::{collections::HashMap, hash::BuildHasherDefault};
-use twox_hash::XxHash;
+use wyhash::WyHash;
 
 mod class;
 mod fn_bound;
@@ -21,7 +21,7 @@ mod fn_script;
 mod list;
 mod object;
 
-pub type ValueMap = HashMap<String, Value, BuildHasherDefault<XxHash>>;
+pub type ValueMap = HashMap<String, Value, BuildHasherDefault<WyHash>>;
 
 #[derive(Clone, Debug, Trace, Finalize)]
 pub enum Value {
