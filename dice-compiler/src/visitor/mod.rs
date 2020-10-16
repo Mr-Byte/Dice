@@ -43,4 +43,5 @@ pub(super) trait NodeVisitor<T> {
 pub enum FnKind {
     Function,
     Method,
+    StaticMethod,
 }

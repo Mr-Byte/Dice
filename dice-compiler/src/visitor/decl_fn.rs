@@ -13,7 +13,7 @@ impl NodeVisitor<(&FnDecl, FnKind)> for Compiler {
         // NOTE: Methods have an arity 1 less than the actual number of parameters, since the self parameter
         // is passed in as a bound receiver.
         let arity = match fn_kind {
-            FnKind::Function => fn_decl.args.len(),
+            FnKind::Function | FnKind::StaticMethod => fn_decl.args.len(),
             FnKind::Method => fn_decl.args.len() - 1,
         };
         let value = Value::FnScript(FnScript::new(

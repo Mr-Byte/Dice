@@ -26,7 +26,7 @@ impl Compiler {
         };
 
         let block_kind = match kind {
-            FnKind::Function => BlockKind::Function(args),
+            FnKind::Function | FnKind::StaticMethod => BlockKind::Function(args),
             FnKind::Method => BlockKind::Method(args),
         };
 

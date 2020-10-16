@@ -4,7 +4,7 @@ use crate::{
     scope_stack::State,
     visitor::{FnKind, NodeVisitor},
 };
-use dice_core::protocol::class::SELF;
+use dice_core::protocol::class::{NEW, SELF};
 use dice_error::compiler_error::CompilerError;
 use dice_syntax::{ClassDecl, SyntaxNode};
 
@@ -46,8 +46,17 @@ impl NodeVisitor<&ClassDecl> for Compiler {
                 SyntaxNode::FnDecl(fn_decl) => {
                     let fn_decl = fn_decl.clone();
                     let is_method = fn_decl.args.first().map(|arg| arg == SELF).unwrap_or(false);
+                    let kind = if is_method {
+                        FnKind::Method
+                    } else {
+                        if fn_decl.name == NEW {
+                            todo!("Error about new requiring a self parameter.")
+                        }
 
-                    self.visit((&fn_decl, FnKind::Method))?;
+                        FnKind::StaticMethod
+                    };
+
+                    self.visit((&fn_decl, kind))?;
 
                     emit_bytecode! {
                         self.assembler()?, fn_decl.span => [
