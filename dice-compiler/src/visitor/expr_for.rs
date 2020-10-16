@@ -11,8 +11,10 @@ impl NodeVisitor<&ForLoop> for Compiler {
             return self.visit(&range_loop);
         }
 
-        // NOTE: Visit the source first and leave it on the stack.
+        // NOTE: Visit the source first.
         self.visit(for_loop.source)?;
+        // NOTE: NExt load the NEXT function and leave it on the stack.
+        self.assembler()?.load_field(NEXT, for_loop.span)?;
 
         let context = self.context()?;
         let loop_start = context.assembler().current_position();
@@ -27,7 +29,6 @@ impl NodeVisitor<&ForLoop> for Compiler {
         emit_bytecode! {
             context.assembler(), for_loop.span => [
                 DUP 0;
-                LOAD_FIELD NEXT;
                 CALL 0;
                 DUP 0;
                 LOAD_FIELD DONE;

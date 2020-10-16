@@ -1,5 +1,6 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use dice::Dice;
+use dice::Runtime;
 use std::time::Duration;
 
 fn loop_in_place_addition(criterion: &mut Criterion) {
@@ -20,6 +21,32 @@ fn loop_addition_with_assignment(criterion: &mut Criterion) {
         bencher.iter(|| {
             dice.run_script(black_box("let mut x = 0; while x < 100000 { x = x + 1; }"))
                 .unwrap()
+        })
+    });
+}
+
+fn range_for_loop_addition_with_assignment(criterion: &mut Criterion) {
+    let mut dice = Dice::default();
+    dice.runtime().load_prelude("../data/scripts/prelude.dm").unwrap();
+
+    criterion.bench_function("range-for-loop-addition-with-assignment", |bencher| {
+        bencher.iter(|| {
+            dice.run_script(black_box("let mut x = 0; for n in 0..100000 { x += 1; }"))
+                .unwrap()
+        })
+    });
+}
+
+fn iterator_for_loop_addition_with_assignment(criterion: &mut Criterion) {
+    let mut dice = Dice::default();
+    dice.runtime().load_prelude("../data/scripts/prelude.dm").unwrap();
+
+    criterion.bench_function("iterator-for-loop-addition-with-assignment", |bencher| {
+        bencher.iter(|| {
+            dice.run_script(black_box(
+                "let mut x = 0; let iter = 0..100000; for n in iter { x += 1; }",
+            ))
+            .unwrap()
         })
     });
 }
@@ -77,7 +104,12 @@ fn closure_called_outside_declaring_scope(criterion: &mut Criterion) {
 criterion_group!(
     name = loops;
     config = Criterion::default().sample_size(100).measurement_time(Duration::from_secs(10)).nresamples(5000);
-    targets = loop_in_place_addition, loop_addition_with_assignment, loop_function_call, loop_closure_call
+    targets = loop_in_place_addition,
+        loop_addition_with_assignment,
+        loop_function_call,
+        loop_closure_call,
+        range_for_loop_addition_with_assignment,
+        iterator_for_loop_addition_with_assignment
 );
 
 criterion_group!(

@@ -9,8 +9,6 @@ impl NodeVisitor<&ExportDecl> for Compiler {
             todo!("Error about how exports can only be used in modules.");
         }
 
-        dbg!(self.context()?.scope_stack().top_mut()?.depth);
-
         // TODO: Fix this depth.
         if self.context()?.scope_stack().top_mut()?.depth > 1 {
             todo!("Error about how exports can only be used as top-level declarations.");
