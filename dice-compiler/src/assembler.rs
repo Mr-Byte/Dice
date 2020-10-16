@@ -215,6 +215,16 @@ impl Assembler {
         patch_pos
     }
 
+    #[must_use = "Jumps must be patched."]
+    pub fn jump_if_true(&mut self, span: Span) -> u64 {
+        self.source_map.insert(self.data.len() as u64, span);
+        self.data.put_u8(Instruction::JUMP_IF_TRUE.value());
+        let patch_pos = self.data.len() as u64;
+        self.data.put_i16(0);
+
+        patch_pos
+    }
+
     pub fn patch_jump(&mut self, jump_position: u64) {
         let offset = (self.current_position() - jump_position - 2) as i16;
         (&mut self.data[jump_position as usize..]).put_i16(offset)
@@ -289,17 +299,17 @@ impl Assembler {
     }
 
     pub fn store_global(&mut self, global: impl Into<String>, span: Span) -> Result<(), CompilerError> {
-        self.store_global_impl(global.into(), span)
-    }
+        fn store_global_impl(assembler: &mut Assembler, global: String, span: Span) -> Result<(), CompilerError> {
+            let const_slot = assembler.make_constant(Value::new_string(global))?;
 
-    fn store_global_impl(&mut self, global: String, span: Span) -> Result<(), CompilerError> {
-        let const_slot = self.make_constant(Value::new_string(global))?;
+            assembler.source_map.insert(assembler.data.len() as u64, span);
+            assembler.data.put_u8(Instruction::STORE_GLOBAL.value());
+            assembler.data.put_u8(const_slot);
 
-        self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::STORE_GLOBAL.value());
-        self.data.put_u8(const_slot);
+            Ok(())
+        }
 
-        Ok(())
+        store_global_impl(self, global.into(), span)
     }
 
     pub fn load_global(&mut self, global: impl Into<String>, span: Span) -> Result<(), CompilerError> {
@@ -338,6 +348,16 @@ impl Assembler {
     pub fn store_index(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
         self.data.put_u8(Instruction::STORE_INDEX.value());
+    }
+
+    pub fn load_field_to_local(&mut self, field: &str, local_slot: u8, span: Span) -> Result<(), CompilerError> {
+        self.source_map.insert(self.data.len() as u64, span);
+        let const_slot = self.make_constant(Value::String(field.to_owned().into()))?;
+        self.data.put_u8(Instruction::LOAD_FIELD_TO_LOCAL.value());
+        self.data.put_u8(const_slot);
+        self.data.put_u8(local_slot);
+
+        Ok(())
     }
 
     pub fn call(&mut self, arg_count: u8, span: Span) {
@@ -484,6 +504,12 @@ macro_rules! emit_bytecode {
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
 
+    ($assembler:expr, $span:expr => [JUMP_IF_TRUE -> $loc:ident; $($rest:tt)*] ) => {
+        $loc = $assembler.jump_if_true($span);
+        emit_bytecode! { $assembler, $span => [$($rest)*] }
+    };
+
+
     ($assembler:expr, $span:expr => [JUMP_BACK $offset:expr; $($rest:tt)*] ) => {
         $assembler.jump_back($offset, $span);
         emit_bytecode! { $assembler, $span => [$($rest)*] }
@@ -512,6 +538,10 @@ macro_rules! emit_bytecode {
     };
     ($assembler:expr, $span:expr => [STORE_GLOBAL $global:expr; $($rest:tt)*] ) => {
         $assembler.store_global($global, $span)?;
+        emit_bytecode! { $assembler, $span => [$($rest)*] }
+    };
+    ($assembler:expr, $span:expr => [LOAD_FIELD_TO_LOCAL $field:expr, $slot:expr; $($rest:tt)*] ) => {
+        $assembler.load_field_to_local($field, $slot, $span)?;
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
 

@@ -59,6 +59,7 @@ where
                 Instruction::NEQ => self.neq(),
                 Instruction::JUMP => self.jump(&mut cursor),
                 Instruction::JUMP_IF_FALSE => self.jump_if_false(&mut cursor)?,
+                Instruction::JUMP_IF_TRUE => self.jump_if_true(&mut cursor)?,
                 Instruction::LOAD_LOCAL => self.load_local(call_frame, &mut cursor),
                 Instruction::STORE_LOCAL => self.store_local(call_frame, &mut cursor),
                 Instruction::LOAD_UPVALUE => self.load_upvalue(&closure, &mut cursor),
@@ -71,6 +72,7 @@ where
                 Instruction::LOAD_INDEX => self.load_index()?,
                 Instruction::STORE_INDEX => self.store_index()?,
                 Instruction::STORE_METHOD => self.store_method(bytecode, &mut cursor)?,
+                Instruction::LOAD_FIELD_TO_LOCAL => self.load_field_to_local(bytecode, call_frame, &mut cursor)?,
                 Instruction::CALL => self.call(&mut cursor)?,
                 Instruction::ASSERT_BOOL => self.assert_bool()?,
                 Instruction::LOAD_MODULE => self.load_module(&bytecode, &mut cursor)?,
@@ -329,6 +331,17 @@ where
         Ok(())
     }
 
+    fn jump_if_true(&mut self, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
+        let offset = cursor.read_offset();
+        let value = self.stack.pop().as_bool()?;
+
+        if value {
+            cursor.offset_position(offset)
+        }
+
+        Ok(())
+    }
+
     fn load_local(&mut self, call_frame: CallFrame, cursor: &mut BytecodeCursor) {
         // TODO Bounds check the slot?
         let slot = cursor.read_u8() as usize;
@@ -527,6 +540,24 @@ where
         let class = object.as_class()?;
 
         class.methods_mut().insert(key.to_owned(), value);
+
+        Ok(())
+    }
+
+    fn load_field_to_local(
+        &mut self,
+        bytecode: &Bytecode,
+        call_frame: CallFrame,
+        cursor: &mut BytecodeCursor,
+    ) -> Result<(), RuntimeError> {
+        let key_index = cursor.read_u8() as usize;
+        let local_slot = cursor.read_u8() as usize;
+        let key = bytecode.constants()[key_index].as_str()?;
+        let value = self.stack.pop();
+        let value = self.get_field(key, value)?;
+
+        self.stack[call_frame][local_slot] = value.clone();
+        self.stack.push(value);
 
         Ok(())
     }

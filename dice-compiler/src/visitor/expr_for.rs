@@ -32,11 +32,8 @@ impl NodeVisitor<&ForLoop> for Compiler {
                 CALL 0;
                 DUP 0;
                 LOAD_FIELD DONE;
-                NOT;
-                JUMP_IF_FALSE -> loop_exit;
-                DUP 0;
-                LOAD_FIELD VALUE;
-                STORE_LOCAL variable_slot;
+                JUMP_IF_TRUE -> loop_exit;
+                LOAD_FIELD_TO_LOCAL VALUE, variable_slot;
                 POP;
             ]
         }
@@ -49,7 +46,6 @@ impl NodeVisitor<&ForLoop> for Compiler {
         let scope_context = context.scope_stack().pop_scope()?;
         emit_bytecode! {
             context.assembler(), for_loop.span => [
-                POP;
                 POP;
                 CLOSE_UPVALUES scope_context.variables;
                 JUMP_BACK loop_start;

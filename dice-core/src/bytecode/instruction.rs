@@ -81,6 +81,8 @@ define_instructions! {
     pub const STORE_FIELD;
     pub const LOAD_INDEX;
     pub const STORE_INDEX;
+
+    pub const LOAD_FIELD_TO_LOCAL;
     // NOTE: Stores the method in a class object's method map.
     // Static functions and the like are stored as fields on the class object itself.
     pub const STORE_METHOD;
@@ -103,6 +105,7 @@ define_instructions! {
     // Control flow instructions
     pub const JUMP;
     pub const JUMP_IF_FALSE;
+    pub const JUMP_IF_TRUE;
     pub const CALL;
     pub const RETURN;
     // Type assertion instructions

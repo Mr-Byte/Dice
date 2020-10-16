@@ -76,7 +76,9 @@ impl Display for Bytecode {
             write!(f, "{:6} | {:<24} | ", position, format!("{}", instruction))?;
 
             match instruction {
-                Instruction::JUMP | Instruction::JUMP_IF_FALSE => write!(f, "{}", cursor.read_offset())?,
+                Instruction::JUMP | Instruction::JUMP_IF_FALSE | Instruction::JUMP_IF_TRUE => {
+                    write!(f, "offset={}", cursor.read_offset())?
+                }
                 Instruction::PUSH_CONST
                 | Instruction::DUP
                 | Instruction::LOAD_MODULE
@@ -92,6 +94,7 @@ impl Display for Bytecode {
                 | Instruction::STORE_UPVALUE
                 | Instruction::CLOSE_UPVALUE
                 | Instruction::STORE_METHOD => write!(f, "const={}", cursor.read_u8())?,
+                Instruction::LOAD_FIELD_TO_LOCAL => write!(f, "const={} slot={}", cursor.read_u8(), cursor.read_u8())?,
                 Instruction::CREATE_CLASS => {
                     write!(f, "name_const={}, path_const={}", cursor.read_u8(), cursor.read_u8())?
                 }
