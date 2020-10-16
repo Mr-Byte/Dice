@@ -9,6 +9,10 @@ impl NodeVisitor<&ExportDecl> for Compiler {
             todo!("Error about how exports can only be used in modules.");
         }
 
+        if self.context()?.scope_stack().top_mut()?.depth != 0 {
+            todo!("Error about how exports can only be used as top-level declarations.");
+        }
+
         let export_slot = self
             .context()?
             .scope_stack()

@@ -614,6 +614,12 @@ where
             let bound = Value::FnBound(FnBound::new(object.clone(), new.clone()));
             *self.stack.peek_mut(arg_count) = bound;
             self.call_fn(arg_count)?;
+        } else {
+            if arg_count > 0 {
+                return Err(RuntimeError::Aborted(String::from(
+                    "TODO: Constructor has too many parameters error.",
+                )));
+            }
         }
 
         // NOTE: Regardless of whether or not there was a constructor, clean up the stack.
