@@ -120,9 +120,9 @@ impl Value {
         }
     }
 
-    pub fn as_str(&self) -> Result<DString, TypeError> {
+    pub fn as_str(&self) -> Result<&DString, TypeError> {
         match self {
-            Value::String(string) => Ok(string.clone()),
+            Value::String(string) => Ok(string),
             _ => Err(TypeError::NotAString),
         }
     }

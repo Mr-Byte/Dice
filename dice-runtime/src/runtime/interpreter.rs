@@ -308,7 +308,7 @@ where
         let path_slot = cursor.read_u8() as usize;
         let name = bytecode.constants()[name_slot].as_str()?;
         let path = bytecode.constants()[path_slot].as_str()?;
-        let class = Class::new(name, path);
+        let class = Class::new(name.clone(), path.clone());
 
         self.stack.push(Value::Class(class));
 
@@ -432,7 +432,7 @@ where
             .globals
             .get(&global)
             .cloned()
-            .ok_or_else(|| RuntimeError::VariableNotFound((*global).to_owned()))?;
+            .ok_or_else(|| RuntimeError::VariableNotFound((&**global).to_owned()))?;
 
         self.stack.push(value);
 
@@ -446,7 +446,7 @@ where
         let object = self.stack.pop();
         let object = object.as_object()?;
 
-        object.fields_mut().insert(key.into(), value.clone());
+        object.fields_mut().insert(key.clone(), value.clone());
         self.stack.push(value);
 
         Ok(())
@@ -464,13 +464,13 @@ where
         Ok(())
     }
 
-    fn get_field(&self, key: DString, value: Value) -> Result<Value, RuntimeError> {
+    fn get_field(&self, key: &DString, value: Value) -> Result<Value, RuntimeError> {
         let object = value.as_object()?;
         let fields = object.fields();
         let value = match fields.get(&key) {
             Some(field) => field.clone(),
             None => {
-                if &*key == NEW {
+                if &**key == NEW {
                     return Err(RuntimeError::Aborted(String::from(
                         "TODO: the new function cannot be accessed directly.",
                     )));
