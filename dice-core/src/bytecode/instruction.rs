@@ -100,6 +100,7 @@ define_instructions! {
     pub const LTE;
     pub const EQ;
     pub const NEQ;
+    pub const IS;
     pub const LOGICAL_AND;
     pub const LOGICAL_OR;
     // Control flow instructions

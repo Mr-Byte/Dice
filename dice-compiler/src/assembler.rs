@@ -166,6 +166,11 @@ impl Assembler {
         self.data.put_u8(Instruction::NEQ.value());
     }
 
+    pub fn is(&mut self, span: Span) {
+        self.source_map.insert(self.data.len() as u64, span);
+        self.data.put_u8(Instruction::IS.value());
+    }
+
     pub fn gt(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
         self.data.put_u8(Instruction::GT.value());

@@ -58,6 +58,7 @@ where
                 Instruction::LTE => self.lte()?,
                 Instruction::EQ => self.eq(),
                 Instruction::NEQ => self.neq(),
+                Instruction::IS => self.is()?,
                 Instruction::JUMP => self.jump(&mut cursor),
                 Instruction::JUMP_IF_FALSE => self.jump_if_false(&mut cursor)?,
                 Instruction::JUMP_IF_TRUE => self.jump_if_true(&mut cursor)?,
@@ -271,6 +272,17 @@ where
         let lhs = self.stack.peek_mut(0);
 
         *lhs = Value::Bool(rhs != *lhs);
+    }
+
+    #[inline]
+    fn is(&mut self) -> Result<(), RuntimeError> {
+        let rhs = self.stack.pop();
+        let rhs = rhs.as_class()?;
+        let lhs = self.stack.peek(0).as_object()?;
+
+        *self.stack.peek_mut(0) = Value::Bool(lhs.type_id() == rhs.instance_type_id());
+
+        Ok(())
     }
 
     #[inline]

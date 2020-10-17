@@ -178,6 +178,7 @@ impl Compiler {
             BinaryOperator::LessThanEquals => self.context()?.assembler().lte(span),
             BinaryOperator::Equals => self.context()?.assembler().eq(span),
             BinaryOperator::NotEquals => self.context()?.assembler().neq(span),
+            BinaryOperator::Is => self.context()?.assembler().is(span),
             _ => unreachable!(),
         }
 

@@ -137,6 +137,7 @@ pub enum BinaryOperator {
     RangeExclusive,
     Coalesce,
     Pipeline,
+    Is,
 }
 
 #[derive(Debug, Clone)]
