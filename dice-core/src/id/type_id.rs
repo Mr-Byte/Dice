@@ -9,12 +9,8 @@ use std::{
 pub struct TypeId(Hash);
 
 impl TypeId {
-    pub fn new<'a>(
-        base_id: impl Into<Option<Discriminant<Value>>>,
-        path: impl Into<Option<&'a str>>,
-        name: impl Into<Option<&'a str>>,
-    ) -> Self {
-        let hash = Hash::of((base_id.into(), path.into(), name.into()));
+    pub fn new<'a>(base_id: Option<Discriminant<Value>>, path: Option<&'a str>, name: Option<&'a str>) -> Self {
+        let hash = Hash::of((base_id, path, name));
 
         TypeId(hash)
     }

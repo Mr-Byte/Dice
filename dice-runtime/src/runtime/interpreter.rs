@@ -297,7 +297,7 @@ where
     }
 
     fn create_object(&mut self) {
-        let object = Object::new(TypeId::new(None, None, "Object"), None);
+        let object = Object::new(self.object_id, None);
 
         self.stack.push(Value::Object(object));
     }
@@ -714,7 +714,7 @@ where
         let module = match self.loaded_modules.entry(module.id) {
             Entry::Occupied(entry) => entry.get().clone(),
             Entry::Vacant(entry) => {
-                let export = Value::Object(Object::new(TypeId::new(None, path, "#export"), None));
+                let export = Value::Object(Object::new(TypeId::new(None, Some(path), Some("#export")), None));
                 entry.insert(export.clone());
                 self.run_module(module.bytecode, export)?
             }

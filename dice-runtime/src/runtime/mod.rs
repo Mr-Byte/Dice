@@ -17,16 +17,32 @@ use dice_core::{
 use dice_error::runtime_error::RuntimeError;
 use std::collections::{HashMap, VecDeque};
 
-#[derive(Default)]
 pub struct Runtime<L = FileModuleLoader>
 where
     L: ModuleLoader,
 {
     stack: Stack,
+    object_id: TypeId,
     open_upvalues: VecDeque<Upvalue>,
     globals: ValueMap,
     loaded_modules: HashMap<ModuleId, Value>,
     module_loader: L,
+}
+
+impl<L> Default for Runtime<L>
+where
+    L: ModuleLoader,
+{
+    fn default() -> Self {
+        Self {
+            stack: Default::default(),
+            object_id: TypeId::new(None, None, Some("Object")),
+            open_upvalues: Default::default(),
+            globals: Default::default(),
+            loaded_modules: Default::default(),
+            module_loader: Default::default(),
+        }
+    }
 }
 
 impl<L> Runtime<L>
@@ -88,7 +104,7 @@ where
 
     fn load_prelude(&mut self, path: &str) -> Result<(), RuntimeError> {
         let module = self.module_loader.load_module(path)?;
-        let prelude = Value::Object(Object::new(TypeId::new(None, path, "#prelude"), None));
+        let prelude = Value::Object(Object::new(TypeId::new(None, Some(path), Some("#prelude")), None));
         let prelude = self.run_module(module.bytecode, prelude)?;
 
         for (name, value) in &*prelude.as_object()?.fields() {

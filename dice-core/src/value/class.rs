@@ -16,9 +16,9 @@ pub struct Class {
 impl Class {
     pub fn new(name: String, path: String) -> Self {
         let inner = ClassInner {
-            instance_type_id: TypeId::new(None, path.as_str(), name.as_str()),
+            instance_type_id: TypeId::new(None, Some(path.as_str()), Some(name.as_str())),
             methods: Default::default(),
-            object: Object::new(TypeId::new(None, None, "ClassObject"), None),
+            object: Object::new(TypeId::new(None, None, Some("ClassObject")), None),
             name,
             path,
         };

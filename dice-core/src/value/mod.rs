@@ -144,9 +144,9 @@ impl Value {
         let discriminant = std::mem::discriminant(self);
 
         match self {
-            Value::Object(_) => TypeId::new(discriminant, None, "Object"),
-            Value::Class(class) => TypeId::new(discriminant, class.path(), class.name()),
-            _ => TypeId::new(discriminant, None, None),
+            Value::Object(_) => TypeId::new(Some(discriminant), None, Some("Object")),
+            Value::Class(class) => TypeId::new(Some(discriminant), Some(class.path()), Some(class.name())),
+            _ => TypeId::new(Some(discriminant), None, None),
         }
     }
 }
