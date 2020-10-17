@@ -1,9 +1,8 @@
 use super::upvalue::UpvalueDescriptor;
 use bytes::BufMut as _;
-use dice_core::value::Symbol;
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode},
-    value::Value,
+    value::{Symbol, Value},
 };
 use dice_error::{compiler_error::CompilerError, span::Span};
 use std::collections::HashMap;

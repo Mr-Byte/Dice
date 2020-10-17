@@ -1,7 +1,8 @@
-use crate::lexer::{Token, TokenKind};
-use crate::{Parser, SyntaxNodeId};
-use dice_error::span::Span;
-use dice_error::syntax_error::SyntaxError;
+use crate::{
+    lexer::{Token, TokenKind},
+    Parser, SyntaxNodeId,
+};
+use dice_error::{span::Span, syntax_error::SyntaxError};
 
 pub type PrefixParser = fn(&mut Parser, can_assign: bool) -> Result<SyntaxNodeId, SyntaxError>;
 pub type InfixParser =

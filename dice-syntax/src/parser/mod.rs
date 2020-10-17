@@ -6,8 +6,8 @@ use super::{
     IfExpression, LitAnonymousFn, LitBool, LitFloat, LitIdent, LitInt, LitList, LitNull, LitObject, LitString, LitUnit,
     Return, SyntaxNode, SyntaxNodeId, SyntaxTree, Unary, UnaryOperator, VarDecl, WhileLoop,
 };
-use crate::parser::rules::{ParserRule, RulePrecedence};
 use crate::{
+    parser::rules::{ParserRule, RulePrecedence},
     AbstractFnDecl, ClassDecl, FieldAccess, ForLoop, ImportDecl, Index, Loop, OpDecl, SafeAccess, TraitDecl, TraitImpl,
     UniversalMethodAccess, VarDeclKind,
 };

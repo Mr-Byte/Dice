@@ -1,8 +1,8 @@
 use gc::{Finalize, Trace};
-use std::rc::Rc;
 use std::{
     fmt::{Display, Formatter},
     ops::Deref,
+    rc::Rc,
 };
 
 #[derive(Debug, Hash, Clone, Trace, Finalize, PartialEq, Eq)]

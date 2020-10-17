@@ -320,7 +320,7 @@ where
         let path_slot = cursor.read_u8() as usize;
         let name = bytecode.constants()[name_slot].as_symbol()?;
         let path = bytecode.constants()[path_slot].as_symbol()?;
-        let class = Class::new(name.clone(), path.clone());
+        let class = Class::new(name, path);
 
         self.stack.push(Value::Class(class));
 
@@ -424,7 +424,7 @@ where
     fn store_global(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
         let const_pos = cursor.read_u8() as usize;
         let value = &bytecode.constants()[const_pos];
-        let global_name = value.as_symbol()?.to_owned();
+        let global_name = value.as_symbol()?;
         let global = self.stack.pop();
 
         match self.globals.entry(global_name) {
@@ -458,7 +458,7 @@ where
         let object = self.stack.pop();
         let object = object.as_object()?;
 
-        object.fields_mut().insert(key.clone(), value.clone());
+        object.fields_mut().insert(key, value.clone());
         self.stack.push(value);
 
         Ok(())
@@ -510,7 +510,7 @@ where
         match target {
             Value::Object(object) => {
                 let field = index.as_symbol()?;
-                object.fields_mut().insert(field.to_owned(), value.clone());
+                object.fields_mut().insert(field, value.clone());
                 *target = value;
             }
             Value::List(list) => {
@@ -552,7 +552,7 @@ where
         let object = self.stack.pop();
         let class = object.as_class()?;
 
-        class.methods_mut().insert(key.to_owned(), value);
+        class.methods_mut().insert(key, value);
 
         Ok(())
     }

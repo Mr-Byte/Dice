@@ -11,8 +11,7 @@ mod symbol;
 use crate::id::type_id::TypeId;
 use dice_error::type_error::TypeError;
 use gc::{Finalize, Trace};
-use std::fmt::Display;
-use std::{collections::HashMap, hash::BuildHasherDefault};
+use std::{collections::HashMap, fmt::Display, hash::BuildHasherDefault};
 use wyhash::WyHash;
 
 pub use class::*;

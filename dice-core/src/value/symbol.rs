@@ -1,12 +1,11 @@
 use gc::{Finalize, Trace};
-use std::collections::HashSet;
-use std::hash::BuildHasherDefault;
-use std::rc::Rc;
 use std::{
     cell::RefCell,
+    collections::HashSet,
     fmt::{Display, Formatter},
-    hash::{Hash, Hasher},
+    hash::{BuildHasherDefault, Hash, Hasher},
     ops::Deref,
+    rc::Rc,
 };
 use wyhash::WyHash;
 
@@ -59,7 +58,7 @@ impl<'a> From<&'a str> for Symbol {
 
 impl From<super::String> for Symbol {
     fn from(value: super::String) -> Self {
-        value.to_owned().into()
+        value.into()
     }
 }
 
