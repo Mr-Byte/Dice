@@ -11,7 +11,7 @@ pub use fn_script::*;
 pub use list::*;
 pub use object::*;
 use std::{collections::HashMap, hash::BuildHasherDefault};
-use string::DString;
+use string::DiceString;
 use wyhash::WyHash;
 
 mod class;
@@ -23,7 +23,7 @@ mod list;
 mod object;
 pub mod string;
 
-pub type ValueMap = HashMap<DString, Value, BuildHasherDefault<WyHash>>;
+pub type ValueMap = HashMap<DiceString, Value, BuildHasherDefault<WyHash>>;
 
 #[derive(Clone, Debug, Trace, Finalize)]
 pub enum Value {
@@ -37,7 +37,7 @@ pub enum Value {
     FnNative(FnNative),
     FnBound(FnBound),
     List(List),
-    String(DString),
+    String(DiceString),
     Object(Object),
     Class(Class),
 }
@@ -120,7 +120,7 @@ impl Value {
         }
     }
 
-    pub fn as_str(&self) -> Result<&DString, TypeError> {
+    pub fn as_str(&self) -> Result<&DiceString, TypeError> {
         match self {
             Value::String(string) => Ok(string),
             _ => Err(TypeError::NotAString),

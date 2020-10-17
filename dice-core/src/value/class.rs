@@ -1,6 +1,6 @@
 use crate::{
     id::type_id::TypeId,
-    value::{string::DString, Object, ValueMap},
+    value::{string::DiceString, Object, ValueMap},
 };
 use gc::{Finalize, Gc, GcCell, GcCellRef, GcCellRefMut, Trace};
 use std::{
@@ -14,7 +14,7 @@ pub struct Class {
 }
 
 impl Class {
-    pub fn new(name: DString, path: DString) -> Self {
+    pub fn new(name: DiceString, path: DiceString) -> Self {
         let inner = ClassInner {
             instance_type_id: TypeId::new(None, Some(&*path), Some(&*name)),
             methods: Default::default(),
@@ -35,8 +35,8 @@ impl Display for Class {
 
 #[derive(Debug, Trace, Finalize)]
 pub struct ClassInner {
-    path: DString,
-    name: DString,
+    path: DiceString,
+    name: DiceString,
     methods: GcCell<ValueMap>,
     object: Object,
     #[unsafe_ignore_trace]

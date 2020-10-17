@@ -10,7 +10,7 @@ use dice_core::{
         operator::{ADD, DIV, GT, GTE, LT, LTE, MUL, REM, SUB},
     },
     upvalue::{Upvalue, UpvalueState},
-    value::{string::DString, Class, FnBound, FnClosure, FnNative, FnScript, Object, Value},
+    value::{string::DiceString, Class, FnBound, FnClosure, FnNative, FnScript, Object, Value},
 };
 use dice_error::runtime_error::RuntimeError;
 use std::collections::hash_map::Entry;
@@ -464,7 +464,7 @@ where
         Ok(())
     }
 
-    fn get_field(&self, key: &DString, value: Value) -> Result<Value, RuntimeError> {
+    fn get_field(&self, key: &DiceString, value: Value) -> Result<Value, RuntimeError> {
         let object = value.as_object()?;
         let fields = object.fields();
         let value = match fields.get(&key) {
