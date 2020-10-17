@@ -1,7 +1,9 @@
 use crate::runtime::call_frame::CallFrame;
 use dice_core::value::Value;
-use std::fmt::{Display, Formatter};
-use std::ops::{Index, IndexMut};
+use std::{
+    fmt::{Display, Formatter},
+    ops::{Index, IndexMut},
+};
 
 // NOTE: Allocate 1MB of stack space, this is 65,536 values when sizeof(Value) == 16
 const MAX_STACK_SIZE: usize = (1024 * 1024) / std::mem::size_of::<Value>();

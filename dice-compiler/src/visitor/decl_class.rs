@@ -1,7 +1,6 @@
-use crate::scope_stack::ScopeKind;
 use crate::{
     compiler::Compiler,
-    scope_stack::State,
+    scope_stack::{ScopeKind, State},
     visitor::{FnKind, NodeVisitor},
 };
 use dice_core::protocol::class::{NEW, SELF};

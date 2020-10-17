@@ -1,7 +1,9 @@
 use gc::{Finalize, Gc, Trace};
-use std::fmt::{Display, Formatter};
-use std::hash::{Hash, Hasher};
-use std::ops::Deref;
+use std::{
+    fmt::{Display, Formatter},
+    hash::{Hash, Hasher},
+    ops::Deref,
+};
 
 #[derive(Debug, Clone, Trace, Finalize, PartialEq, Eq)]
 #[repr(transparent)]

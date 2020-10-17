@@ -2,15 +2,15 @@ use crate::{
     module::ModuleLoader,
     runtime::{call_frame::CallFrame, Runtime},
 };
-use dice_core::protocol::class::NEW;
-use dice_core::value::string::DString;
-use dice_core::value::{FnNative, FnScript};
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
     id::type_id::TypeId,
-    protocol::operator::{ADD, DIV, GT, GTE, LT, LTE, MUL, REM, SUB},
+    protocol::{
+        class::NEW,
+        operator::{ADD, DIV, GT, GTE, LT, LTE, MUL, REM, SUB},
+    },
     upvalue::{Upvalue, UpvalueState},
-    value::{Class, FnBound, FnClosure, Object, Value},
+    value::{string::DString, Class, FnBound, FnClosure, FnNative, FnScript, Object, Value},
 };
 use dice_error::runtime_error::RuntimeError;
 use std::collections::hash_map::Entry;
@@ -646,12 +646,10 @@ where
             let bound = Value::FnBound(FnBound::new(object.clone(), new.clone()));
             *self.stack.peek_mut(arg_count) = bound;
             self.call_fn(arg_count)?;
-        } else {
-            if arg_count > 0 {
-                return Err(RuntimeError::Aborted(String::from(
-                    "TODO: Constructor has too many parameters error.",
-                )));
-            }
+        } else if arg_count > 0 {
+            return Err(RuntimeError::Aborted(String::from(
+                "TODO: Constructor has too many parameters error.",
+            )));
         }
 
         // NOTE: Regardless of whether or not there was a constructor, clean up the stack.

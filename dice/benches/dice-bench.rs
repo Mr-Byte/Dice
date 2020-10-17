@@ -1,6 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use dice::Dice;
-use dice::Runtime;
+use dice::{Dice, Runtime};
 use std::time::Duration;
 
 fn loop_in_place_addition(criterion: &mut Criterion) {

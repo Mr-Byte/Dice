@@ -1,7 +1,6 @@
-use crate::value::string::DString;
 use crate::{
     id::type_id::TypeId,
-    value::{Object, ValueMap},
+    value::{string::DString, Object, ValueMap},
 };
 use gc::{Finalize, Gc, GcCell, GcCellRef, GcCellRefMut, Trace};
 use std::{

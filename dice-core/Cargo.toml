@@ -5,14 +5,13 @@ authors = ["Josh Rodgers <bytemr@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-bytes = "0.5"
-uuid = "0.8.1"
-thiserror = "1.0"
 anyhow = "1.0"
-internship = "0.6.0"
+bytes = "0.5"
 gc = { version = "0.3", features = ["derive"] }
+internship = "0.6.0"
+thiserror = "1.0"
+uuid = "0.8.1"
 wyhash = "0.4"
-
 
 dice-error = {path = "../dice-error"}
 dice-syntax = {path = "../dice-syntax"}

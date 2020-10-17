@@ -1,6 +1,8 @@
 use super::NodeVisitor;
-use crate::compiler::Compiler;
-use crate::scope_stack::{ScopeKind, State};
+use crate::{
+    compiler::Compiler,
+    scope_stack::{ScopeKind, State},
+};
 use dice_core::protocol::iterator::{DONE, NEXT, VALUE};
 use dice_error::compiler_error::CompilerError;
 use dice_syntax::ForLoop;
