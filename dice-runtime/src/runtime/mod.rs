@@ -87,7 +87,7 @@ where
 {
     fn function(&mut self, name: &str, native_fn: NativeFn) {
         self.globals
-            .insert(name.to_owned(), Value::FnNative(FnNative::new(native_fn)));
+            .insert(name.into(), Value::FnNative(FnNative::new(native_fn)));
     }
 
     fn call_function(&mut self, target: Value, args: &[Value]) -> Result<Value, RuntimeError> {

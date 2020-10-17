@@ -273,7 +273,7 @@ impl Assembler {
 
     pub fn store_field(&mut self, field: &str, span: Span) -> Result<(), CompilerError> {
         self.source_map.insert(self.data.len() as u64, span);
-        let const_slot = self.make_constant(Value::String(field.to_owned().into()))?;
+        let const_slot = self.make_constant(Value::String(field.into()))?;
         self.data.put_u8(Instruction::STORE_FIELD.value());
         self.data.put_u8(const_slot);
 
@@ -282,7 +282,7 @@ impl Assembler {
 
     pub fn store_method(&mut self, method: &str, span: Span) -> Result<(), CompilerError> {
         self.source_map.insert(self.data.len() as u64, span);
-        let const_slot = self.make_constant(Value::String(method.to_owned().into()))?;
+        let const_slot = self.make_constant(Value::String(method.into()))?;
         self.data.put_u8(Instruction::STORE_METHOD.value());
         self.data.put_u8(const_slot);
 
@@ -291,7 +291,7 @@ impl Assembler {
 
     pub fn load_field(&mut self, field: &str, span: Span) -> Result<(), CompilerError> {
         self.source_map.insert(self.data.len() as u64, span);
-        let const_slot = self.make_constant(Value::String(field.to_owned().into()))?;
+        let const_slot = self.make_constant(Value::String(field.into()))?;
         self.data.put_u8(Instruction::LOAD_FIELD.value());
         self.data.put_u8(const_slot);
 
@@ -352,7 +352,7 @@ impl Assembler {
 
     pub fn load_field_to_local(&mut self, field: &str, local_slot: u8, span: Span) -> Result<(), CompilerError> {
         self.source_map.insert(self.data.len() as u64, span);
-        let const_slot = self.make_constant(Value::String(field.to_owned().into()))?;
+        let const_slot = self.make_constant(Value::String(field.into()))?;
         self.data.put_u8(Instruction::LOAD_FIELD_TO_LOCAL.value());
         self.data.put_u8(const_slot);
         self.data.put_u8(local_slot);

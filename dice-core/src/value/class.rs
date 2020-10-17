@@ -1,3 +1,4 @@
+use crate::value::string::DString;
 use crate::{
     id::type_id::TypeId,
     value::{Object, ValueMap},
@@ -14,9 +15,9 @@ pub struct Class {
 }
 
 impl Class {
-    pub fn new(name: String, path: String) -> Self {
+    pub fn new(name: DString, path: DString) -> Self {
         let inner = ClassInner {
-            instance_type_id: TypeId::new(None, Some(path.as_str()), Some(name.as_str())),
+            instance_type_id: TypeId::new(None, Some(&*path), Some(&*name)),
             methods: Default::default(),
             object: Object::new(TypeId::new(None, None, Some("ClassObject")), None),
             name,
@@ -35,8 +36,8 @@ impl Display for Class {
 
 #[derive(Debug, Trace, Finalize)]
 pub struct ClassInner {
-    path: String,
-    name: String,
+    path: DString,
+    name: DString,
     methods: GcCell<ValueMap>,
     object: Object,
     #[unsafe_ignore_trace]
