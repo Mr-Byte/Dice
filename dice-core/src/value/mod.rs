@@ -1,9 +1,9 @@
+mod array;
 mod class;
 mod fn_bound;
 mod fn_closure;
 mod fn_native;
 mod fn_script;
-mod list;
 mod object;
 mod string;
 mod symbol;
@@ -14,12 +14,12 @@ use gc::{Finalize, Trace};
 use std::{collections::HashMap, fmt::Display, hash::BuildHasherDefault};
 use wyhash::WyHash;
 
+pub use array::*;
 pub use class::*;
 pub use fn_bound::*;
 pub use fn_closure::*;
 pub use fn_native::*;
 pub use fn_script::*;
-pub use list::*;
 pub use object::*;
 pub use string::*;
 pub use symbol::*;
@@ -37,7 +37,7 @@ pub enum Value {
     FnScript(FnScript),
     FnNative(FnNative),
     FnBound(FnBound),
-    List(List),
+    Array(Array),
     String(String),
     Symbol(Symbol),
     Object(Object),
@@ -84,8 +84,8 @@ impl Value {
     }
 
     #[inline]
-    pub fn is_list(&self) -> bool {
-        matches!(self, Value::List(_))
+    pub fn is_array(&self) -> bool {
+        matches!(self, Value::Array(_))
     }
 
     #[inline]
@@ -124,9 +124,9 @@ impl Value {
         }
     }
 
-    pub fn as_list(&self) -> Result<&List, TypeError> {
+    pub fn as_array(&self) -> Result<&Array, TypeError> {
         match self {
-            Value::List(list) => Ok(list),
+            Value::Array(list) => Ok(list),
             _ => Err(TypeError::NotAList),
         }
     }
@@ -189,7 +189,7 @@ impl PartialEq for Value {
             (Value::Float(lhs), Value::Float(rhs)) => *lhs == *rhs,
             (Value::FnClosure(lhs), Value::FnClosure(rhs)) => lhs == rhs,
             (Value::FnScript(lhs), Value::FnScript(rhs)) => lhs == rhs,
-            (Value::List(lhs), Value::List(rhs)) => lhs == rhs,
+            (Value::Array(lhs), Value::Array(rhs)) => lhs == rhs,
             (Value::String(lhs), Value::String(rhs)) => lhs == rhs,
             (Value::Symbol(lhs), Value::Symbol(rhs)) => lhs == rhs,
             (Value::Object(lhs), Value::Object(rhs)) => lhs == rhs,
@@ -210,7 +210,7 @@ impl Display for Value {
             Value::FnScript(func) => func.fmt(fmt),
             Value::FnNative(func) => func.fmt(fmt),
             Value::FnBound(func) => func.fmt(fmt),
-            Value::List(list) => list.fmt(fmt),
+            Value::Array(list) => list.fmt(fmt),
             Value::String(string) => string.fmt(fmt),
             Value::Symbol(string) => string.fmt(fmt),
             Value::Object(object) => object.fmt(fmt),

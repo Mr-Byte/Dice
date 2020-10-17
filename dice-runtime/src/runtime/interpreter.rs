@@ -304,7 +304,7 @@ where
         let count = cursor.read_u8() as usize;
         let items = self.stack.pop_count(count);
 
-        self.stack.push(Value::List(items.to_vec().into()));
+        self.stack.push(Value::Array(items.to_vec().into()));
     }
 
     fn create_object(&mut self) {
@@ -511,7 +511,7 @@ where
                 object.fields_mut().insert(field, value.clone());
                 *target = value;
             }
-            Value::List(list) => {
+            Value::Array(list) => {
                 let index = index.as_int()?;
                 list.elements_mut()[index as usize] = value.clone();
                 *target = value;
@@ -531,7 +531,7 @@ where
                 let field = index.as_symbol()?;
                 self.get_field(&field, target.clone())?
             }
-            Value::List(list) => {
+            Value::Array(list) => {
                 let index = index.as_int()?;
                 list.elements().get(index as usize).cloned().unwrap_or(Value::Null)
             }

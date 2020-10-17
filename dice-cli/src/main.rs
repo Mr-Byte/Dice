@@ -52,7 +52,7 @@ fn print_value(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, Runt
 
 fn filter(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
     if let [_, list, filter_fn, ..] = args {
-        let list = list.as_list()?;
+        let list = list.as_array()?;
         let mut result = Vec::new();
 
         for item in &*list.elements() {
@@ -63,7 +63,7 @@ fn filter(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeErr
             }
         }
 
-        return Ok(Value::List(result.into()));
+        return Ok(Value::Array(result.into()));
     }
 
     todo!("Error out here.")

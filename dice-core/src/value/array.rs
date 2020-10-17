@@ -3,9 +3,9 @@ use gc::{Finalize, Gc, GcCell, GcCellRef, GcCellRefMut, Trace};
 use std::fmt::Display;
 
 #[derive(Debug, Clone, PartialEq, Trace, Finalize)]
-pub struct List(Gc<GcCell<Vec<Value>>>);
+pub struct Array(Gc<GcCell<Vec<Value>>>);
 
-impl List {
+impl Array {
     pub fn elements(&self) -> GcCellRef<'_, Vec<Value>> {
         self.0.borrow()
     }
@@ -15,7 +15,7 @@ impl List {
     }
 }
 
-impl Display for List {
+impl Display for Array {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let items = self
             .0
@@ -29,7 +29,7 @@ impl Display for List {
     }
 }
 
-impl From<Vec<Value>> for List {
+impl From<Vec<Value>> for Array {
     fn from(value: Vec<Value>) -> Self {
         Self(Gc::new(GcCell::new(value)))
     }

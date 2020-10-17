@@ -1,38 +1,48 @@
 export class Range {
     fn new(self, start, end) {
-        self.current = start;
+        self.start = start;
         self.end = end;
     }
 
-    fn next(self) {
-        let result = if self.current < self.end {
-            object { value: self.current, done: false }
-        } else {
-            object { done: true }
-        };
+    fn iter(self) {
+        let mut current = self.start;
+        object {
+            next: || {
+                let result = if current < self.end {
+                    object { value: current, done: false }
+                } else {
+                    object { done: true }
+                };
 
-        self.current += 1;
+                current += 1;
 
-        result
+                result
+            }
+        }
     }
 }
 
 export class RangeInclusive {
     fn new(self, start, end) {
-        self.current = start;
+        self.start = start;
         self.end = end;
     }
 
-    fn next(self) {
-        let result = if self.current <= self.end {
-            object { value: self.current, done: false }
-        } else {
-            object { done: true }
-        };
+    fn iter(self) {
+        let mut current = self.start;
+        object {
+            next: || {
+                let result = if current <= self.end {
+                    object { value: current, done: false }
+                } else {
+                    object { done: true }
+                };
 
-        self.current += 1;
+                current += 1;
 
-        result
+                result
+            }
+        }
     }
 }
 
