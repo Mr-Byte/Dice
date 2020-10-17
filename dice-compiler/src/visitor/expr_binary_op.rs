@@ -36,13 +36,19 @@ impl Compiler {
         rhs_expression: SyntaxNodeId,
         span: Span,
     ) -> Result<(), CompilerError> {
-        self.visit(lhs_expression)?;
-        self.context()?.assembler().dup(0, span);
+        let short_circuit_jump;
 
-        let short_circuit_jump = self.context()?.assembler().jump_if_false(span);
-        self.context()?.assembler().pop(span);
-        self.visit(rhs_expression)?;
-        self.context()?.assembler().assert_bool(span);
+        emit_bytecode! {
+            self.assembler()?, span => [
+                { self.visit(lhs_expression)? };
+                DUP 0;
+                ASSERT_BOOL;
+                JUMP_IF_FALSE -> short_circuit_jump;
+                POP;
+                { self.visit(rhs_expression)? };
+                ASSERT_BOOL;
+            ]
+        }
 
         self.compiler_stack
             .top_mut()?
@@ -60,14 +66,19 @@ impl Compiler {
         rhs_expression: SyntaxNodeId,
         span: Span,
     ) -> Result<(), CompilerError> {
-        self.visit(lhs_expression)?;
-        self.context()?.assembler().dup(0, span);
-        self.context()?.assembler().not(span);
+        let short_circuit_jump;
 
-        let short_circuit_jump = self.context()?.assembler().jump_if_false(span);
-        self.context()?.assembler().pop(span);
-        self.visit(rhs_expression)?;
-        self.context()?.assembler().assert_bool(span);
+        emit_bytecode! {
+            self.assembler()?, span => [
+                { self.visit(lhs_expression)? };
+                DUP 0;
+                ASSERT_BOOL;
+                JUMP_IF_TRUE -> short_circuit_jump;
+                POP;
+                { self.visit(rhs_expression)? };
+                ASSERT_BOOL;
+            ]
+        }
 
         self.compiler_stack
             .top_mut()?

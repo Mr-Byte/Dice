@@ -110,9 +110,7 @@ where
     #[inline]
     fn assert_bool(&mut self) -> Result<(), RuntimeError> {
         if !self.stack.peek_mut(0).is_bool() {
-            return Err(RuntimeError::Aborted(String::from(
-                "Right hand side must evaluate to a boolean.",
-            )));
+            return Err(RuntimeError::Aborted(String::from("Value must evaluate to a boolean.")));
         }
 
         Ok(())

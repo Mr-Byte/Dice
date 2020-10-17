@@ -568,5 +568,15 @@ macro_rules! emit_bytecode {
         }
 
         emit_bytecode! { $assembler, $span => [$($rest)*] }
-    }
+    };
+
+    ($assembler:expr, $span:expr => [ASSERT_BOOL; $($rest:tt)*] ) => {
+        $assembler.assert_bool($span);
+        emit_bytecode! { $assembler, $span => [$($rest)*] }
+    };
+
+    ($assembler:expr, $span:expr => [{ $e:expr }; $($rest:tt)*] ) => {
+        $e;
+        emit_bytecode! { $assembler, $span => [$($rest)*] }
+    };
 }
