@@ -3,7 +3,6 @@ use crate::{
     runtime::{call_frame::CallFrame, Runtime},
 };
 use dice_core::protocol::class::NEW;
-use dice_core::value::string::DString;
 use dice_core::value::{FnNative, FnScript};
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
@@ -278,7 +277,7 @@ where
         // TODO: Resolve operators from class members.
         let value = self
             .globals
-            .get(&operator.into())
+            .get(operator)
             .ok_or_else(|| RuntimeError::Aborted("No global operator defined.".to_owned()))?;
         let lhs = self.stack.pop();
 
@@ -308,7 +307,7 @@ where
         let path_slot = cursor.read_u8() as usize;
         let name = bytecode.constants()[name_slot].as_str()?;
         let path = bytecode.constants()[path_slot].as_str()?;
-        let class = Class::new(name.clone(), path.clone());
+        let class = Class::new(name.to_owned(), path.to_owned());
 
         self.stack.push(Value::Class(class));
 
@@ -430,9 +429,9 @@ where
         let global = bytecode.constants()[const_pos].as_str()?;
         let value = self
             .globals
-            .get(&global)
+            .get(global)
             .cloned()
-            .ok_or_else(|| RuntimeError::VariableNotFound((&**global).to_owned()))?;
+            .ok_or_else(|| RuntimeError::VariableNotFound(global.to_owned()))?;
 
         self.stack.push(value);
 
@@ -446,7 +445,7 @@ where
         let object = self.stack.pop();
         let object = object.as_object()?;
 
-        object.fields_mut().insert(key.clone(), value.clone());
+        object.fields_mut().insert(key.to_owned(), value.clone());
         self.stack.push(value);
 
         Ok(())
@@ -464,20 +463,20 @@ where
         Ok(())
     }
 
-    fn get_field(&self, key: &DString, value: Value) -> Result<Value, RuntimeError> {
+    fn get_field(&self, key: &str, value: Value) -> Result<Value, RuntimeError> {
         let object = value.as_object()?;
         let fields = object.fields();
-        let value = match fields.get(&key) {
+        let value = match fields.get(key) {
             Some(field) => field.clone(),
             None => {
-                if &**key == NEW {
+                if key == NEW {
                     return Err(RuntimeError::Aborted(String::from(
                         "TODO: the new function cannot be accessed directly.",
                     )));
                 }
 
                 match object.class() {
-                    Some(class) => match class.methods().get(&key) {
+                    Some(class) => match class.methods().get(key) {
                         Some(method) => Value::FnBound(FnBound::new(value.clone(), method.clone())),
                         None => Value::Null,
                     },
@@ -642,7 +641,7 @@ where
         let class = class.clone();
         let object = Value::Object(Object::new(class.instance_type_id(), Value::Class(class.clone())));
 
-        if let Some(new) = class.methods().get(&NEW.into()) {
+        if let Some(new) = class.methods().get(NEW) {
             let bound = Value::FnBound(FnBound::new(object.clone(), new.clone()));
             *self.stack.peek_mut(arg_count) = bound;
             self.call_fn(arg_count)?;
@@ -711,11 +710,11 @@ where
     fn load_module(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
         let path_slot = cursor.read_u8() as usize;
         let path = bytecode.constants()[path_slot].as_str()?;
-        let module = self.module_loader.load_module(&*path)?;
+        let module = self.module_loader.load_module(path)?;
         let module = match self.loaded_modules.entry(module.id) {
             Entry::Occupied(entry) => entry.get().clone(),
             Entry::Vacant(entry) => {
-                let export = Value::Object(Object::new(TypeId::new(None, Some(&*path), Some("#export")), None));
+                let export = Value::Object(Object::new(TypeId::new(None, Some(path), Some("#export")), None));
                 entry.insert(export.clone());
                 self.run_module(module.bytecode, export)?
             }

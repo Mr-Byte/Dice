@@ -9,7 +9,7 @@ bytes = "0.5"
 uuid = "0.8.1"
 thiserror = "1.0"
 anyhow = "1.0"
-internship = "0.6.0"
+twox-hash = "1.5.0"
 gc = { version = "0.3", features = ["derive"] }
 wyhash = "0.4"
 

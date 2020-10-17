@@ -2,7 +2,7 @@ use std::{
     hash,
     hash::{BuildHasher, BuildHasherDefault, Hasher},
 };
-use wyhash::WyHash;
+use twox_hash::XxHash64;
 
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Debug, Hash)]
 #[repr(transparent)]
@@ -17,7 +17,7 @@ impl Hash {
     }
 
     fn hasher() -> impl Hasher {
-        BuildHasherDefault::<WyHash>::default().build_hasher()
+        BuildHasherDefault::<XxHash64>::default().build_hasher()
     }
 }
 
