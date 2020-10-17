@@ -10,7 +10,7 @@ use dice_core::{
         operator::{ADD, DIV, GT, GTE, LT, LTE, MUL, REM, SUB},
     },
     upvalue::{Upvalue, UpvalueState},
-    value::{string::DiceString, Class, FnBound, FnClosure, FnNative, FnScript, Object, Value},
+    value::{Class, FnBound, FnClosure, FnNative, FnScript, Object, Symbol, Value},
 };
 use dice_error::runtime_error::RuntimeError;
 use std::collections::hash_map::Entry;
@@ -306,8 +306,8 @@ where
     fn create_class(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
         let name_slot = cursor.read_u8() as usize;
         let path_slot = cursor.read_u8() as usize;
-        let name = bytecode.constants()[name_slot].as_str()?;
-        let path = bytecode.constants()[path_slot].as_str()?;
+        let name = bytecode.constants()[name_slot].as_symbol()?;
+        let path = bytecode.constants()[path_slot].as_symbol()?;
         let class = Class::new(name.clone(), path.clone());
 
         self.stack.push(Value::Class(class));
@@ -412,7 +412,7 @@ where
     fn store_global(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
         let const_pos = cursor.read_u8() as usize;
         let value = &bytecode.constants()[const_pos];
-        let global_name = value.as_str()?.to_owned();
+        let global_name = value.as_symbol()?.to_owned();
         let global = self.stack.pop();
 
         match self.globals.entry(global_name) {
@@ -427,12 +427,12 @@ where
 
     fn load_global(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
         let const_pos = cursor.read_u8() as usize;
-        let global = bytecode.constants()[const_pos].as_str()?;
+        let global = bytecode.constants()[const_pos].as_symbol()?;
         let value = self
             .globals
             .get(&global)
             .cloned()
-            .ok_or_else(|| RuntimeError::VariableNotFound((&**global).to_owned()))?;
+            .ok_or_else(|| RuntimeError::VariableNotFound((&*global).to_owned()))?;
 
         self.stack.push(value);
 
@@ -441,7 +441,7 @@ where
 
     fn store_field(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
         let key_index = cursor.read_u8() as usize;
-        let key = bytecode.constants()[key_index].as_str()?;
+        let key = bytecode.constants()[key_index].as_symbol()?;
         let value = self.stack.pop();
         let object = self.stack.pop();
         let object = object.as_object()?;
@@ -454,17 +454,17 @@ where
 
     fn load_field(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
         let key_index = cursor.read_u8() as usize;
-        let key = bytecode.constants()[key_index].as_str()?;
+        let key = bytecode.constants()[key_index].as_symbol()?;
 
         let value = self.stack.pop();
-        let value = self.get_field(key, value)?;
+        let value = self.get_field(&key, value)?;
 
         self.stack.push(value);
 
         Ok(())
     }
 
-    fn get_field(&self, key: &DiceString, value: Value) -> Result<Value, RuntimeError> {
+    fn get_field(&self, key: &Symbol, value: Value) -> Result<Value, RuntimeError> {
         let object = value.as_object()?;
         let fields = object.fields();
         let value = match fields.get(&key) {
@@ -497,7 +497,7 @@ where
 
         match target {
             Value::Object(object) => {
-                let field = index.as_str()?;
+                let field = index.as_symbol()?;
                 object.fields_mut().insert(field.to_owned(), value.clone());
                 *target = value;
             }
@@ -518,8 +518,8 @@ where
         let target = self.stack.peek(0);
         let result = match target {
             Value::Object(_) => {
-                let field = index.as_str()?;
-                self.get_field(field, target.clone())?
+                let field = index.as_symbol()?;
+                self.get_field(&field, target.clone())?
             }
             Value::List(list) => {
                 let index = index.as_int()?;
@@ -535,7 +535,7 @@ where
 
     fn store_method(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
         let key_index = cursor.read_u8() as usize;
-        let key = bytecode.constants()[key_index].as_str()?;
+        let key = bytecode.constants()[key_index].as_symbol()?;
         let value = self.stack.pop();
         let object = self.stack.pop();
         let class = object.as_class()?;
@@ -553,9 +553,9 @@ where
     ) -> Result<(), RuntimeError> {
         let key_index = cursor.read_u8() as usize;
         let local_slot = cursor.read_u8() as usize;
-        let key = bytecode.constants()[key_index].as_str()?;
+        let key = bytecode.constants()[key_index].as_symbol()?;
         let value = self.stack.pop();
-        let value = self.get_field(key, value)?;
+        let value = self.get_field(&key, value)?;
 
         self.stack[call_frame][local_slot] = value.clone();
         self.stack.push(value);
@@ -708,7 +708,7 @@ where
 
     fn load_module(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
         let path_slot = cursor.read_u8() as usize;
-        let path = bytecode.constants()[path_slot].as_str()?;
+        let path = bytecode.constants()[path_slot].as_symbol()?;
         let module = self.module_loader.load_module(&*path)?;
         let module = match self.loaded_modules.entry(module.id) {
             Entry::Occupied(entry) => entry.get().clone(),

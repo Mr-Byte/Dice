@@ -36,7 +36,7 @@ impl NodeVisitor<&OpDecl> for Compiler {
                     CREATE_CLOSURE value, &upvalues;
                 ]
 
-                STORE_GLOBAL &name;
+                STORE_GLOBAL name;
                 PUSH_UNIT;
             ]
         }

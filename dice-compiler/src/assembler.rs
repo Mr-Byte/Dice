@@ -1,5 +1,6 @@
 use super::upvalue::UpvalueDescriptor;
 use bytes::BufMut as _;
+use dice_core::value::Symbol;
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode},
     value::Value,
@@ -122,9 +123,9 @@ impl Assembler {
     pub fn create_class(&mut self, name: &str, path: Option<&str>, span: Span) -> Result<(), CompilerError> {
         self.source_map.insert(self.data.len() as u64, span);
         self.data.put_u8(Instruction::CREATE_CLASS.value());
-        let name_slot = self.make_constant(Value::new_string(name))? as u8;
+        let name_slot = self.make_constant(Value::new_symbol(name))? as u8;
         self.data.put_u8(name_slot);
-        let path_slot = self.make_constant(Value::new_string(path.unwrap_or("")))? as u8;
+        let path_slot = self.make_constant(Value::new_symbol(path.unwrap_or("")))? as u8;
         self.data.put_u8(path_slot);
 
         Ok(())
@@ -273,7 +274,7 @@ impl Assembler {
 
     pub fn store_field(&mut self, field: &str, span: Span) -> Result<(), CompilerError> {
         self.source_map.insert(self.data.len() as u64, span);
-        let const_slot = self.make_constant(Value::String(field.into()))?;
+        let const_slot = self.make_constant(Value::Symbol(field.into()))?;
         self.data.put_u8(Instruction::STORE_FIELD.value());
         self.data.put_u8(const_slot);
 
@@ -282,7 +283,7 @@ impl Assembler {
 
     pub fn store_method(&mut self, method: &str, span: Span) -> Result<(), CompilerError> {
         self.source_map.insert(self.data.len() as u64, span);
-        let const_slot = self.make_constant(Value::String(method.into()))?;
+        let const_slot = self.make_constant(Value::Symbol(method.into()))?;
         self.data.put_u8(Instruction::STORE_METHOD.value());
         self.data.put_u8(const_slot);
 
@@ -291,16 +292,16 @@ impl Assembler {
 
     pub fn load_field(&mut self, field: &str, span: Span) -> Result<(), CompilerError> {
         self.source_map.insert(self.data.len() as u64, span);
-        let const_slot = self.make_constant(Value::String(field.into()))?;
+        let const_slot = self.make_constant(Value::Symbol(field.into()))?;
         self.data.put_u8(Instruction::LOAD_FIELD.value());
         self.data.put_u8(const_slot);
 
         Ok(())
     }
 
-    pub fn store_global(&mut self, global: impl Into<String>, span: Span) -> Result<(), CompilerError> {
-        fn store_global_impl(assembler: &mut Assembler, global: String, span: Span) -> Result<(), CompilerError> {
-            let const_slot = assembler.make_constant(Value::new_string(global))?;
+    pub fn store_global(&mut self, global: impl Into<Symbol>, span: Span) -> Result<(), CompilerError> {
+        fn store_global_impl(assembler: &mut Assembler, global: Symbol, span: Span) -> Result<(), CompilerError> {
+            let const_slot = assembler.make_constant(Value::new_symbol(global))?;
 
             assembler.source_map.insert(assembler.data.len() as u64, span);
             assembler.data.put_u8(Instruction::STORE_GLOBAL.value());
@@ -312,32 +313,32 @@ impl Assembler {
         store_global_impl(self, global.into(), span)
     }
 
-    pub fn load_global(&mut self, global: impl Into<String>, span: Span) -> Result<(), CompilerError> {
-        self.load_global_impl(global.into(), span)
+    pub fn load_global(&mut self, global: impl Into<Symbol>, span: Span) -> Result<(), CompilerError> {
+        fn load_global_impl(assembler: &mut Assembler, global: Symbol, span: Span) -> Result<(), CompilerError> {
+            let const_slot = assembler.make_constant(Value::new_symbol(global))?;
+
+            assembler.source_map.insert(assembler.data.len() as u64, span);
+            assembler.data.put_u8(Instruction::LOAD_GLOBAL.value());
+            assembler.data.put_u8(const_slot);
+
+            Ok(())
+        }
+
+        load_global_impl(self, global.into(), span)
     }
 
-    fn load_global_impl(&mut self, global: String, span: Span) -> Result<(), CompilerError> {
-        let const_slot = self.make_constant(Value::new_string(global))?;
+    pub fn load_module(&mut self, path: impl Into<Symbol>, span: Span) -> Result<(), CompilerError> {
+        fn load_module_impl(assembler: &mut Assembler, path: Symbol, span: Span) -> Result<(), CompilerError> {
+            let const_slot = assembler.make_constant(Value::new_symbol(path))?;
 
-        self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::LOAD_GLOBAL.value());
-        self.data.put_u8(const_slot);
+            assembler.source_map.insert(assembler.data.len() as u64, span);
+            assembler.data.put_u8(Instruction::LOAD_MODULE.value());
+            assembler.data.put_u8(const_slot);
 
-        Ok(())
-    }
+            Ok(())
+        }
 
-    pub fn load_module(&mut self, path: impl Into<String>, span: Span) -> Result<(), CompilerError> {
-        self.load_module_impl(path.into(), span)
-    }
-
-    fn load_module_impl(&mut self, path: String, span: Span) -> Result<(), CompilerError> {
-        let const_slot = self.make_constant(Value::new_string(path))?;
-
-        self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::LOAD_MODULE.value());
-        self.data.put_u8(const_slot);
-
-        Ok(())
+        load_module_impl(self, path.into(), span)
     }
 
     pub fn load_index(&mut self, span: Span) {
@@ -352,7 +353,7 @@ impl Assembler {
 
     pub fn load_field_to_local(&mut self, field: &str, local_slot: u8, span: Span) -> Result<(), CompilerError> {
         self.source_map.insert(self.data.len() as u64, span);
-        let const_slot = self.make_constant(Value::String(field.into()))?;
+        let const_slot = self.make_constant(Value::Symbol(field.into()))?;
         self.data.put_u8(Instruction::LOAD_FIELD_TO_LOCAL.value());
         self.data.put_u8(const_slot);
         self.data.put_u8(local_slot);
@@ -554,11 +555,6 @@ macro_rules! emit_bytecode {
         $assembler.call($arg_count, $span);
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
-
-    // ($assembler:expr, $span:expr => STORE_LOCAL $slot:expr; $($rest:tt)* ) => {
-    //     $assembler.store_local($slot, $span);
-    //     emit_bytecode! { $assembler, $span => [$($rest)*] };
-    // };
 
     ($assembler:expr, $span:expr => [CLOSE_UPVALUES $variables:expr; $($rest:tt)*]) => {
         for variable in $variables {

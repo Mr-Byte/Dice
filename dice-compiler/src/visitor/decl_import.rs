@@ -19,7 +19,7 @@ impl NodeVisitor<&ImportDecl> for Compiler {
 
         emit_bytecode! {
             self.context()?.assembler(), node.span => [
-                LOAD_MODULE &node.relative_path;
+                LOAD_MODULE &*node.relative_path;
 
                 for (field, slot) in imports => [
                     DUP 0;

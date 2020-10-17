@@ -19,13 +19,6 @@ impl CallFrame {
         self.start..self.end
     }
 
-    pub fn extend(self, count: usize) -> Self {
-        Self {
-            start: self.start,
-            end: self.end + count,
-        }
-    }
-
     pub fn prepend(self, count: usize) -> Self {
         Self {
             start: self.start - count,
