@@ -1,4 +1,5 @@
 mod call_frame;
+mod helper;
 mod interpreter;
 mod stack;
 
@@ -10,7 +11,7 @@ use dice_core::{
     bytecode::Bytecode,
     id::type_id::TypeId,
     runtime::Module,
-    upvalue::{Upvalue, UpvalueState},
+    upvalue::Upvalue,
     value::{FnNative, NativeFn, Object, Value, ValueMap},
 };
 use dice_error::runtime_error::RuntimeError;
@@ -61,20 +62,6 @@ where
         self.stack.release_slots(bytecode.slot_count());
 
         Ok(result?)
-    }
-
-    pub(super) fn find_open_upvalue(&self, offset: usize) -> Option<(usize, Upvalue)> {
-        let mut found_upvalue = None;
-
-        for (index, upvalue) in self.open_upvalues.iter().enumerate() {
-            if let UpvalueState::Open(upvalue_offset) = &*upvalue.state() {
-                if *upvalue_offset == offset {
-                    found_upvalue = Some((index, upvalue.clone()));
-                }
-            }
-        }
-
-        found_upvalue
     }
 }
 

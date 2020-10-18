@@ -5,12 +5,9 @@ use crate::{
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
     id::type_id::TypeId,
-    protocol::{
-        class::NEW,
-        operator::{ADD, DIV, GT, GTE, LT, LTE, MUL, REM, SUB},
-    },
+    protocol::operator::{ADD, DIV, GT, GTE, LT, LTE, MUL, REM, SUB},
     upvalue::{Upvalue, UpvalueState},
-    value::{Class, FnBound, FnClosure, FnNative, FnScript, Object, Symbol, Value, OBJECT_TYPE_ID},
+    value::{Class, FnClosure, Object, Value, OBJECT_TYPE_ID},
 };
 use dice_error::runtime_error::RuntimeError;
 use std::collections::hash_map::Entry;
@@ -23,7 +20,7 @@ where
         &mut self,
         bytecode: &Bytecode,
         call_frame: CallFrame,
-        closure: Option<FnClosure>,
+        parent_upvalues: Option<&[Upvalue]>,
     ) -> Result<Value, RuntimeError> {
         let initial_stack_depth = self.stack.len();
         let mut cursor = bytecode.cursor();
@@ -44,7 +41,9 @@ where
                 Instruction::CREATE_LIST => self.create_list(&mut cursor),
                 Instruction::CREATE_OBJECT => self.create_object(),
                 Instruction::CREATE_CLASS => self.create_class(&bytecode, &mut cursor)?,
-                Instruction::CREATE_CLOSURE => self.create_closure(bytecode, call_frame, &closure, &mut cursor)?,
+                Instruction::CREATE_CLOSURE => {
+                    self.create_closure(bytecode, call_frame, parent_upvalues, &mut cursor)?
+                }
                 Instruction::NEG => self.neg()?,
                 Instruction::NOT => self.not()?,
                 Instruction::MUL => self.mul()?,
@@ -64,8 +63,8 @@ where
                 Instruction::JUMP_IF_TRUE => self.jump_if_true(&mut cursor)?,
                 Instruction::LOAD_LOCAL => self.load_local(call_frame, &mut cursor),
                 Instruction::STORE_LOCAL => self.store_local(call_frame, &mut cursor),
-                Instruction::LOAD_UPVALUE => self.load_upvalue(&closure, &mut cursor),
-                Instruction::STORE_UPVALUE => self.store_upvalue(&closure, &mut cursor),
+                Instruction::LOAD_UPVALUE => self.load_upvalue(parent_upvalues, &mut cursor),
+                Instruction::STORE_UPVALUE => self.store_upvalue(parent_upvalues, &mut cursor),
                 Instruction::CLOSE_UPVALUE => self.close_upvalue(call_frame, &mut cursor),
                 Instruction::LOAD_GLOBAL => self.load_global(bytecode, &mut cursor)?,
                 Instruction::STORE_GLOBAL => self.store_global(bytecode, &mut cursor)?,
@@ -95,19 +94,16 @@ where
         Ok(self.stack.pop())
     }
 
-    #[inline]
     fn jump(&mut self, cursor: &mut BytecodeCursor) {
         let offset = cursor.read_offset();
         cursor.offset_position(offset);
     }
 
-    #[inline]
     fn dup(&mut self, cursor: &mut BytecodeCursor) {
         let value = self.stack.peek_mut(cursor.read_u8() as usize).clone();
         self.stack.push(value);
     }
 
-    #[inline]
     fn assert_bool(&mut self) -> Result<(), RuntimeError> {
         if !self.stack.peek_mut(0).is_bool() {
             return Err(RuntimeError::Aborted(String::from("Value must evaluate to a boolean.")));
@@ -116,7 +112,6 @@ where
         Ok(())
     }
 
-    #[inline]
     fn not(&mut self) -> Result<(), RuntimeError> {
         match self.stack.peek_mut(0) {
             Value::Bool(value) => *value = !*value,
@@ -126,7 +121,6 @@ where
         Ok(())
     }
 
-    #[inline]
     fn neg(&mut self) -> Result<(), RuntimeError> {
         match self.stack.peek_mut(0) {
             Value::Int(value) => *value = -*value,
@@ -141,7 +135,6 @@ where
         Ok(())
     }
 
-    #[inline]
     fn mul(&mut self) -> Result<(), RuntimeError> {
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Int(rhs), Value::Int(lhs)) => *lhs *= rhs,
@@ -152,7 +145,6 @@ where
         Ok(())
     }
 
-    #[inline]
     fn div(&mut self) -> Result<(), RuntimeError> {
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Int(rhs), Value::Int(lhs)) => {
@@ -169,7 +161,6 @@ where
         Ok(())
     }
 
-    #[inline]
     fn rem(&mut self) -> Result<(), RuntimeError> {
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Int(rhs), Value::Int(lhs)) => {
@@ -186,7 +177,6 @@ where
         Ok(())
     }
 
-    #[inline]
     fn add(&mut self) -> Result<(), RuntimeError> {
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Int(rhs), Value::Int(lhs)) => *lhs += rhs,
@@ -197,7 +187,6 @@ where
         Ok(())
     }
 
-    #[inline]
     fn gt(&mut self) -> Result<(), RuntimeError> {
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Bool(rhs), Value::Bool(lhs)) => *lhs &= !rhs,
@@ -209,7 +198,6 @@ where
         Ok(())
     }
 
-    #[inline]
     fn gte(&mut self) -> Result<(), RuntimeError> {
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Bool(rhs), Value::Bool(lhs)) => *lhs = *lhs >= rhs,
@@ -221,7 +209,6 @@ where
         Ok(())
     }
 
-    #[inline]
     fn lt(&mut self) -> Result<(), RuntimeError> {
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Bool(rhs), Value::Bool(lhs)) => *lhs = !(*lhs) & rhs,
@@ -233,7 +220,6 @@ where
         Ok(())
     }
 
-    #[inline]
     fn lte(&mut self) -> Result<(), RuntimeError> {
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Bool(rhs), Value::Bool(lhs)) => *lhs = *lhs <= rhs,
@@ -245,7 +231,6 @@ where
         Ok(())
     }
 
-    #[inline]
     fn sub(&mut self) -> Result<(), RuntimeError> {
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Int(rhs), Value::Int(lhs)) => *lhs -= rhs,
@@ -256,7 +241,6 @@ where
         Ok(())
     }
 
-    #[inline]
     fn eq(&mut self) {
         let rhs = self.stack.pop();
         let lhs = self.stack.peek_mut(0);
@@ -264,7 +248,6 @@ where
         *lhs = Value::Bool(rhs == *lhs);
     }
 
-    #[inline]
     fn neq(&mut self) {
         let rhs = self.stack.pop();
         let lhs = self.stack.peek_mut(0);
@@ -272,30 +255,12 @@ where
         *lhs = Value::Bool(rhs != *lhs);
     }
 
-    #[inline]
     fn is(&mut self) -> Result<(), RuntimeError> {
         let rhs = self.stack.pop();
         let rhs = rhs.as_class()?;
-        let lhs = self.stack.peek(0).as_object()?;
+        let lhs = self.stack.peek(0);
 
         *self.stack.peek_mut(0) = Value::Bool(lhs.type_id() == rhs.instance_type_id());
-
-        Ok(())
-    }
-
-    #[inline]
-    fn call_bin_op(&mut self, operator: &str, rhs: Value) -> Result<(), RuntimeError> {
-        // TODO: Resolve operators from class members.
-        let value = self
-            .globals
-            .get(&operator.into())
-            .ok_or_else(|| RuntimeError::Aborted("No global operator defined.".to_owned()))?;
-        let lhs = self.stack.pop();
-
-        self.stack.push(value.clone());
-        self.stack.push(lhs);
-        self.stack.push(rhs);
-        self.call_fn(2)?;
 
         Ok(())
     }
@@ -367,10 +332,10 @@ where
         self.stack.push(value);
     }
 
-    fn load_upvalue(&mut self, closure: &Option<FnClosure>, cursor: &mut BytecodeCursor) {
-        if let Some(closure) = closure {
+    fn load_upvalue(&mut self, parent_upvalues: Option<&[Upvalue]>, cursor: &mut BytecodeCursor) {
+        if let Some(parent_upvalues) = parent_upvalues {
             let upvalue_slot = cursor.read_u8() as usize;
-            let upvalue = closure.upvalues[upvalue_slot].clone();
+            let upvalue = parent_upvalues[upvalue_slot].clone();
             let value = match &*upvalue.state_mut() {
                 UpvalueState::Open(slot) => self.stack[*slot].clone(),
                 UpvalueState::Closed(value) => value.clone(),
@@ -382,10 +347,10 @@ where
         }
     }
 
-    fn store_upvalue(&mut self, closure: &Option<FnClosure>, cursor: &mut BytecodeCursor) {
-        if let Some(closure) = closure {
+    fn store_upvalue(&mut self, parent_upvalues: Option<&[Upvalue]>, cursor: &mut BytecodeCursor) {
+        if let Some(parent_upvalues) = parent_upvalues {
             let upvalue_slot = cursor.read_u8() as usize;
-            let upvalue = closure.upvalues[upvalue_slot].clone();
+            let upvalue = parent_upvalues[upvalue_slot].clone();
             let value = self.stack.pop();
             let result = match &mut *upvalue.state_mut() {
                 UpvalueState::Open(slot) => {
@@ -472,32 +437,6 @@ where
         Ok(())
     }
 
-    fn get_field(&self, key: &Symbol, value: Value) -> Result<Value, RuntimeError> {
-        let object = value.as_object()?;
-        let fields = object.fields();
-        let value = match fields.get(&key) {
-            Some(field) => field.clone(),
-            None => {
-                if &**key == NEW {
-                    return Err(RuntimeError::Aborted(String::from(
-                        "TODO: the new function cannot be accessed directly.",
-                    )));
-                }
-
-                match object.class() {
-                    Some(class) => match class.methods().get(&key) {
-                        Some(method) => Value::FnBound(FnBound::new(value.clone(), method.clone())),
-                        None => Value::Null,
-                    },
-                    None => Value::Null,
-                }
-            }
-        };
-
-        Ok(value)
-    }
-
-    #[inline]
     fn store_index(&mut self) -> Result<(), RuntimeError> {
         let value = self.stack.pop();
         let index = self.stack.pop();
@@ -520,7 +459,6 @@ where
         Ok(())
     }
 
-    #[inline]
     fn load_index(&mut self) -> Result<(), RuntimeError> {
         let index = self.stack.pop();
         let target = self.stack.peek(0);
@@ -575,7 +513,7 @@ where
         &mut self,
         bytecode: &Bytecode,
         call_frame: CallFrame,
-        closure: &Option<FnClosure>,
+        parent_upvalues: Option<&[Upvalue]>,
         cursor: &mut BytecodeCursor,
     ) -> Result<(), RuntimeError> {
         let const_pos = cursor.read_u8() as usize;
@@ -597,12 +535,10 @@ where
                                 self.open_upvalues.push_back(upvalue.clone());
                                 upvalues.push(upvalue);
                             }
-                            Some((_, upvalue)) => {
-                                upvalues.push(upvalue);
-                            }
+                            Some((_, upvalue)) => upvalues.push(upvalue),
                         };
-                    } else if let Some(closure) = closure {
-                        let upvalue = closure.upvalues[index].clone();
+                    } else if let Some(parent_upvalues) = parent_upvalues {
+                        let upvalue = parent_upvalues[index].clone();
                         upvalues.push(upvalue);
                     } else {
                         // NOTE: Produce an unreachable here. This case should never execute, but this is a sanity check to ensure it doesn't.
@@ -622,96 +558,6 @@ where
     pub fn call(&mut self, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
         let arg_count = cursor.read_u8() as usize;
         self.call_fn(arg_count)
-    }
-
-    // TODO: Replace this mutually recursive call with an execution stack to prevent the thread's stack from overflowing.
-    pub(super) fn call_fn(&mut self, arg_count: usize) -> Result<(), RuntimeError> {
-        let (function, receiver) = match self.stack.peek(arg_count) {
-            Value::FnBound(fn_bound) => (fn_bound.function.clone(), Some(fn_bound.receiver.clone())),
-            value => (value.clone(), None),
-        };
-
-        let value = match &function {
-            Value::FnClosure(closure) => {
-                self.call_fn_script(arg_count, receiver, &closure.fn_script, Some(closure.clone()))?
-            }
-            Value::FnScript(fn_script) => self.call_fn_script(arg_count, receiver, &fn_script, None)?,
-            Value::Class(class) => self.call_class_constructor(arg_count, class)?,
-            Value::FnNative(fn_native) => self.call_fn_native(arg_count, receiver, fn_native)?,
-            _ => return Err(RuntimeError::NotAFunction),
-        };
-
-        self.stack.push(value);
-
-        Ok(())
-    }
-
-    fn call_class_constructor(&mut self, arg_count: usize, class: &Class) -> Result<Value, RuntimeError> {
-        let class = class.clone();
-        let object = Value::Object(Object::new(class.instance_type_id(), Value::Class(class.clone())));
-
-        if let Some(new) = class.methods().get(&NEW.into()) {
-            let bound = Value::FnBound(FnBound::new(object.clone(), new.clone()));
-            *self.stack.peek_mut(arg_count) = bound;
-            self.call_fn(arg_count)?;
-        } else if arg_count > 0 {
-            return Err(RuntimeError::Aborted(String::from(
-                "TODO: Constructor has too many parameters error.",
-            )));
-        }
-
-        // NOTE: Regardless of whether or not there was a constructor, clean up the stack.
-        self.stack.release_slots(1);
-
-        Ok(object)
-    }
-
-    fn call_fn_native(
-        &mut self,
-        arg_count: usize,
-        receiver: Option<Value>,
-        fn_native: &FnNative,
-    ) -> Result<Value, RuntimeError> {
-        let fn_native = fn_native.clone();
-        // NOTE: Include the function/receiver slot as the first parameter to the native function call.
-        let mut args = self.stack.pop_count(arg_count + 1);
-
-        if let Some(receiver) = receiver {
-            args[0] = receiver;
-        }
-
-        fn_native.call(self, &args)
-    }
-
-    fn call_fn_script(
-        &mut self,
-        arg_count: usize,
-        receiver: Option<Value>,
-        fn_script: &FnScript,
-        closure: Option<FnClosure>,
-    ) -> Result<Value, RuntimeError> {
-        if arg_count != fn_script.arity {
-            return Err(RuntimeError::InvalidFunctionArgs(fn_script.arity, arg_count));
-        }
-
-        let slots = fn_script.bytecode.slot_count();
-        let reserved = slots - arg_count;
-        // NOTE: Reserve only the slots needed to cover locals beyond the arguments already on the stack.
-        let stack_frame = self.stack.reserve_slots(reserved);
-        // NOTE: Calling convention includes an extra parameter. This parameter is the function itself for bare functions
-        // and the receiver for methods.
-        let stack_frame = stack_frame.prepend(arg_count + 1);
-
-        if let Some(receiver) = receiver {
-            self.stack[stack_frame][0] = receiver;
-        }
-
-        let result = self.execute_bytecode(&fn_script.bytecode, stack_frame, closure)?;
-
-        // NOTE: Release the number of reserved slots plus the number of arguments plus a slot for the function itself.
-        self.stack.release_slots(reserved + arg_count + 1);
-
-        Ok(result)
     }
 
     fn load_module(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
