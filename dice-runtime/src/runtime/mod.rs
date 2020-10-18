@@ -21,7 +21,6 @@ where
     L: ModuleLoader,
 {
     stack: Stack,
-    object_id: TypeId,
     open_upvalues: VecDeque<Upvalue>,
     globals: ValueMap,
     loaded_modules: HashMap<ModuleId, Value>,
@@ -35,7 +34,6 @@ where
     fn default() -> Self {
         Self {
             stack: Default::default(),
-            object_id: TypeId::new(None, None, Some("Object")),
             open_upvalues: Default::default(),
             globals: Default::default(),
             loaded_modules: Default::default(),
@@ -103,7 +101,7 @@ where
 
     fn load_prelude(&mut self, path: &str) -> Result<(), RuntimeError> {
         let module = self.module_loader.load_module(path)?;
-        let prelude = Value::Object(Object::new(TypeId::new(None, Some(path), Some("#prelude")), None));
+        let prelude = Value::Object(Object::new(TypeId::new(), None));
         let prelude = self.run_module(module.bytecode, prelude)?;
 
         for (name, value) in &*prelude.as_object()?.fields() {

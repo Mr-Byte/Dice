@@ -1,3 +1,4 @@
+use crate::value::OBJECT_TYPE_ID;
 use crate::{
     id::type_id::TypeId,
     value::{symbol::Symbol, Object, ValueMap},
@@ -16,9 +17,9 @@ pub struct Class {
 impl Class {
     pub fn new(name: Symbol, path: Symbol) -> Self {
         let inner = ClassInner {
-            instance_type_id: TypeId::new(None, Some(&*path), Some(&*name)),
+            instance_type_id: TypeId::new(),
             methods: Default::default(),
-            object: Object::new(TypeId::new(None, None, Some("ClassObject")), None),
+            object: Object::new(OBJECT_TYPE_ID.with(Clone::clone), None),
             name,
             path,
         };

@@ -26,6 +26,22 @@ pub use symbol::*;
 
 pub type ValueMap = HashMap<Symbol, Value, BuildHasherDefault<WyHash>>;
 
+thread_local! {
+    pub static NULL_TYPE_ID: TypeId = TypeId::new();
+    pub static UNIT_TYPE_ID: TypeId = TypeId::new();
+    pub static BOOL_TYPE_ID: TypeId = TypeId::new();
+    pub static INT_TYPE_ID: TypeId = TypeId::new();
+    pub static FLOAT_TYPE_ID: TypeId = TypeId::new();
+    pub static FN_CLOSURE_TYPE_ID: TypeId = TypeId::new();
+    pub static FN_SCRIPT_TYPE_ID: TypeId = TypeId::new();
+    pub static FN_NATIVE_TYPE_ID: TypeId = TypeId::new();
+    pub static FN_BOUND_TYPE_ID: TypeId = TypeId::new();
+    pub static ARRAY_TYPE_ID: TypeId = TypeId::new();
+    pub static STRING_TYPE_ID: TypeId = TypeId::new();
+    pub static SYMBOL_TYPE_ID: TypeId = TypeId::new();
+    pub static OBJECT_TYPE_ID: TypeId = TypeId::new();
+}
+
 #[derive(Clone, Debug, Trace, Finalize)]
 pub enum Value {
     Null,
@@ -162,12 +178,21 @@ impl Value {
     }
 
     pub fn type_id(&self) -> TypeId {
-        let discriminant = std::mem::discriminant(self);
-
         match self {
-            Value::Object(_) => TypeId::new(Some(discriminant), None, Some("Object")),
-            Value::Class(class) => TypeId::new(Some(discriminant), Some(class.path()), Some(class.name())),
-            _ => TypeId::new(Some(discriminant), None, None),
+            Value::Null => NULL_TYPE_ID.with(Clone::clone),
+            Value::Unit => UNIT_TYPE_ID.with(Clone::clone),
+            Value::Bool(_) => BOOL_TYPE_ID.with(Clone::clone),
+            Value::Int(_) => INT_TYPE_ID.with(Clone::clone),
+            Value::Float(_) => FLOAT_TYPE_ID.with(Clone::clone),
+            Value::FnClosure(_) => FN_CLOSURE_TYPE_ID.with(Clone::clone),
+            Value::FnScript(_) => FN_SCRIPT_TYPE_ID.with(Clone::clone),
+            Value::FnNative(_) => FN_NATIVE_TYPE_ID.with(Clone::clone),
+            Value::FnBound(_) => FN_BOUND_TYPE_ID.with(Clone::clone),
+            Value::Array(_) => ARRAY_TYPE_ID.with(Clone::clone),
+            Value::String(_) => STRING_TYPE_ID.with(Clone::clone),
+            Value::Symbol(_) => SYMBOL_TYPE_ID.with(Clone::clone),
+            Value::Object(_) => OBJECT_TYPE_ID.with(Clone::clone),
+            Value::Class(class) => class.type_id(),
         }
     }
 }

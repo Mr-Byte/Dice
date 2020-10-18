@@ -10,7 +10,7 @@ bytes = "0.5"
 gc = { version = "0.3", features = ["derive"] }
 internship = "0.6.0"
 thiserror = "1.0"
-uuid = "0.8.1"
+uuid = { version = "0.8", features = ["v4"] }
 wyhash = "0.4"
 
 dice-error = {path = "../dice-error"}

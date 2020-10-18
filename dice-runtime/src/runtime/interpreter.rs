@@ -2,6 +2,7 @@ use crate::{
     module::ModuleLoader,
     runtime::{call_frame::CallFrame, Runtime},
 };
+use dice_core::value::OBJECT_TYPE_ID;
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
     id::type_id::TypeId,
@@ -308,7 +309,7 @@ where
     }
 
     fn create_object(&mut self) {
-        let object = Object::new(self.object_id, None);
+        let object = Object::new(OBJECT_TYPE_ID.with(Clone::clone), None);
 
         self.stack.push(Value::Object(object));
     }
@@ -723,7 +724,7 @@ where
         let module = match self.loaded_modules.entry(module.id) {
             Entry::Occupied(entry) => entry.get().clone(),
             Entry::Vacant(entry) => {
-                let export = Value::Object(Object::new(TypeId::new(None, Some(&*path), Some("#export")), None));
+                let export = Value::Object(Object::new(TypeId::new(), None));
                 entry.insert(export.clone());
                 self.run_module(module.bytecode, export)?
             }
