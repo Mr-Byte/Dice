@@ -8,7 +8,7 @@ use std::{
     ops::Deref,
 };
 
-#[derive(Clone, Debug, Trace, Finalize)]
+#[derive(Default, Clone, Debug, Trace, Finalize)]
 pub struct Object {
     inner: Gc<ObjectInner>,
 }
@@ -66,7 +66,7 @@ impl Display for Object {
     }
 }
 
-#[derive(Debug, Trace, Finalize)]
+#[derive(Default, Debug, Trace, Finalize)]
 pub struct ObjectInner {
     class: Option<Value>,
     fields: GcCell<ValueMap>,

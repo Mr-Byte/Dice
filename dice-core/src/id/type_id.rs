@@ -1,18 +1,18 @@
-use std::fmt::{Debug, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 use uuid::Uuid;
 
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Debug, Hash)]
 #[repr(transparent)]
 pub struct TypeId(Uuid);
 
-impl TypeId {
-    pub fn new() -> Self {
-        TypeId(Uuid::new_v4())
+impl Default for TypeId {
+    fn default() -> Self {
+        Self(Uuid::new_v4())
     }
 }
 
-impl std::fmt::UpperHex for TypeId {
+impl Display for TypeId {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        std::fmt::UpperHex::fmt(&self.0.to_simple(), f)
+        write!(f, "0x{:#16X}", self.0.to_simple())
     }
 }

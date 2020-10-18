@@ -2,10 +2,12 @@ use dice::{Dice, Runtime, RuntimeError, Value};
 use std::io::Write;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    std::env::set_current_dir(std::fs::canonicalize("data/scripts")?)?;
+
     let mut dice = Dice::default();
-    dice.runtime().function("print", print_value);
-    dice.runtime().function("filter", filter);
-    dice.runtime().load_prelude("data/scripts/prelude.dm")?;
+    dice.runtime().register_native_function("print", print_value);
+    dice.runtime().register_native_function("filter", filter);
+    dice.runtime().load_prelude("prelude.dm")?;
 
     loop {
         print!("Input: ");
@@ -31,7 +33,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let elapsed = start.elapsed();
                 let type_id = result.type_id();
                 println!(
-                    "Result (time={} ms, typeid={:#10X}): {}",
+                    "Result (time={} ms, typeid={}): {}",
                     (elapsed.as_micros() as f64 / 1000.0),
                     type_id,
                     result,

@@ -16,7 +16,7 @@ pub struct Class {
 impl Class {
     pub fn new(name: Symbol) -> Self {
         let inner = ClassInner {
-            instance_type_id: TypeId::new(),
+            instance_type_id: TypeId::default(),
             methods: Default::default(),
             object: Object::new(OBJECT_TYPE_ID.with(Clone::clone), None),
             name,

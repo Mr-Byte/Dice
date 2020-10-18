@@ -27,19 +27,19 @@ pub use symbol::*;
 pub type ValueMap = HashMap<Symbol, Value, BuildHasherDefault<WyHash>>;
 
 thread_local! {
-    pub static NULL_TYPE_ID: TypeId = TypeId::new();
-    pub static UNIT_TYPE_ID: TypeId = TypeId::new();
-    pub static BOOL_TYPE_ID: TypeId = TypeId::new();
-    pub static INT_TYPE_ID: TypeId = TypeId::new();
-    pub static FLOAT_TYPE_ID: TypeId = TypeId::new();
-    pub static FN_CLOSURE_TYPE_ID: TypeId = TypeId::new();
-    pub static FN_SCRIPT_TYPE_ID: TypeId = TypeId::new();
-    pub static FN_NATIVE_TYPE_ID: TypeId = TypeId::new();
-    pub static FN_BOUND_TYPE_ID: TypeId = TypeId::new();
-    pub static ARRAY_TYPE_ID: TypeId = TypeId::new();
-    pub static STRING_TYPE_ID: TypeId = TypeId::new();
-    pub static SYMBOL_TYPE_ID: TypeId = TypeId::new();
-    pub static OBJECT_TYPE_ID: TypeId = TypeId::new();
+    pub static NULL_TYPE_ID: TypeId = TypeId::default();
+    pub static UNIT_TYPE_ID: TypeId = TypeId::default();
+    pub static BOOL_TYPE_ID: TypeId = TypeId::default();
+    pub static INT_TYPE_ID: TypeId = TypeId::default();
+    pub static FLOAT_TYPE_ID: TypeId = TypeId::default();
+    pub static FN_CLOSURE_TYPE_ID: TypeId = TypeId::default();
+    pub static FN_SCRIPT_TYPE_ID: TypeId = TypeId::default();
+    pub static FN_NATIVE_TYPE_ID: TypeId = TypeId::default();
+    pub static FN_BOUND_TYPE_ID: TypeId = TypeId::default();
+    pub static ARRAY_TYPE_ID: TypeId = TypeId::default();
+    pub static STRING_TYPE_ID: TypeId = TypeId::default();
+    pub static SYMBOL_TYPE_ID: TypeId = TypeId::default();
+    pub static OBJECT_TYPE_ID: TypeId = TypeId::default();
 }
 
 #[derive(Clone, Debug, Trace, Finalize)]
@@ -191,7 +191,10 @@ impl Value {
             Value::Array(_) => ARRAY_TYPE_ID.with(Clone::clone),
             Value::String(_) => STRING_TYPE_ID.with(Clone::clone),
             Value::Symbol(_) => SYMBOL_TYPE_ID.with(Clone::clone),
-            Value::Object(_) => OBJECT_TYPE_ID.with(Clone::clone),
+            Value::Object(object) => match object.class() {
+                None => OBJECT_TYPE_ID.with(Clone::clone),
+                Some(class) => class.instance_type_id(),
+            },
             Value::Class(class) => class.type_id(),
         }
     }

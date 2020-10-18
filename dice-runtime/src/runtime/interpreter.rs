@@ -561,14 +561,16 @@ where
     }
 
     fn load_module(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
-        let path_slot = cursor.read_u8() as usize;
-        let path = bytecode.constants()[path_slot].as_symbol()?;
-        let module = self.module_loader.load_module(&*path)?;
-        let module = match self.loaded_modules.entry(module.id) {
+        let module_slot = cursor.read_u8() as usize;
+        let module_name = bytecode.constants()[module_slot].as_symbol()?;
+
+        let module = match self.loaded_modules.entry(module_name.clone()) {
             Entry::Occupied(entry) => entry.get().clone(),
             Entry::Vacant(entry) => {
-                let export = Value::Object(Object::new(TypeId::new(), None));
+                let export = Value::Object(Object::new(TypeId::default(), None));
                 entry.insert(export.clone());
+
+                let module = self.module_loader.load_module(module_name)?;
                 self.run_module(module.bytecode, export)?
             }
         };
