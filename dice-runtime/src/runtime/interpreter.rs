@@ -2,7 +2,6 @@ use crate::{
     module::ModuleLoader,
     runtime::{call_frame::CallFrame, Runtime},
 };
-use dice_core::value::OBJECT_TYPE_ID;
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
     id::type_id::TypeId,
@@ -11,7 +10,7 @@ use dice_core::{
         operator::{ADD, DIV, GT, GTE, LT, LTE, MUL, REM, SUB},
     },
     upvalue::{Upvalue, UpvalueState},
-    value::{Class, FnBound, FnClosure, FnNative, FnScript, Object, Symbol, Value},
+    value::{Class, FnBound, FnClosure, FnNative, FnScript, Object, Symbol, Value, OBJECT_TYPE_ID},
 };
 use dice_error::runtime_error::RuntimeError;
 use std::collections::hash_map::Entry;
