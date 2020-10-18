@@ -9,8 +9,6 @@ use dice_syntax::{ClassDecl, SyntaxNode};
 
 impl NodeVisitor<&ClassDecl> for Compiler {
     fn visit(&mut self, node: &ClassDecl) -> Result<(), CompilerError> {
-        let source = self.source.clone();
-
         self.context()?.scope_stack().push_scope(ScopeKind::Block, None);
 
         let slot = {
@@ -33,7 +31,7 @@ impl NodeVisitor<&ClassDecl> for Compiler {
 
         emit_bytecode! {
             self.assembler()?, node.span => [
-                CREATE_CLASS &node.name, source.path();
+                CREATE_CLASS &node.name;
                 STORE_LOCAL slot;
             ]
         }

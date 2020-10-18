@@ -15,13 +15,12 @@ pub struct Class {
 }
 
 impl Class {
-    pub fn new(name: Symbol, path: Symbol) -> Self {
+    pub fn new(name: Symbol) -> Self {
         let inner = ClassInner {
             instance_type_id: TypeId::new(),
             methods: Default::default(),
             object: Object::new(OBJECT_TYPE_ID.with(Clone::clone), None),
             name,
-            path,
         };
 
         Self { inner: inner.into() }
@@ -36,7 +35,6 @@ impl Display for Class {
 
 #[derive(Debug, Trace, Finalize)]
 pub struct ClassInner {
-    path: Symbol,
     name: Symbol,
     methods: GcCell<ValueMap>,
     object: Object,
@@ -45,10 +43,6 @@ pub struct ClassInner {
 }
 
 impl ClassInner {
-    pub fn path(&self) -> &str {
-        &*self.path
-    }
-
     pub fn name(&self) -> &str {
         &*self.name
     }

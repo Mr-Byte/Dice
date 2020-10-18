@@ -93,11 +93,9 @@ impl Display for Bytecode {
                 | Instruction::LOAD_UPVALUE
                 | Instruction::STORE_UPVALUE
                 | Instruction::CLOSE_UPVALUE
-                | Instruction::STORE_METHOD => write!(f, "const={}", cursor.read_u8())?,
+                | Instruction::STORE_METHOD
+                | Instruction::CREATE_CLASS => write!(f, "const={}", cursor.read_u8())?,
                 Instruction::LOAD_FIELD_TO_LOCAL => write!(f, "const={} slot={}", cursor.read_u8(), cursor.read_u8())?,
-                Instruction::CREATE_CLASS => {
-                    write!(f, "name_const={}, path_const={}", cursor.read_u8(), cursor.read_u8())?
-                }
                 Instruction::CREATE_CLOSURE => {
                     let const_index = cursor.read_u8() as usize;
                     let function = &self.constants()[const_index];

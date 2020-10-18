@@ -316,10 +316,8 @@ where
 
     fn create_class(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
         let name_slot = cursor.read_u8() as usize;
-        let path_slot = cursor.read_u8() as usize;
         let name = bytecode.constants()[name_slot].as_symbol()?;
-        let path = bytecode.constants()[path_slot].as_symbol()?;
-        let class = Class::new(name, path);
+        let class = Class::new(name);
 
         self.stack.push(Value::Class(class));
 

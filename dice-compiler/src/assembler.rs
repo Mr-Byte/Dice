@@ -119,13 +119,11 @@ impl Assembler {
         self.data.put_u8(Instruction::CREATE_OBJECT.value());
     }
 
-    pub fn create_class(&mut self, name: &str, path: Option<&str>, span: Span) -> Result<(), CompilerError> {
+    pub fn create_class(&mut self, name: &str, span: Span) -> Result<(), CompilerError> {
         self.source_map.insert(self.data.len() as u64, span);
         self.data.put_u8(Instruction::CREATE_CLASS.value());
         let name_slot = self.make_constant(Value::new_symbol(name))? as u8;
         self.data.put_u8(name_slot);
-        let path_slot = self.make_constant(Value::new_symbol(path.unwrap_or("")))? as u8;
-        self.data.put_u8(path_slot);
 
         Ok(())
     }
@@ -456,8 +454,8 @@ macro_rules! emit_bytecode {
         $assembler.closure($value, $upvalues, $span)?;
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
-    ($assembler:expr, $span:expr => [CREATE_CLASS $name:expr, $path:expr; $($rest:tt)*] ) => {
-        $assembler.create_class($name, $path, $span)?;
+    ($assembler:expr, $span:expr => [CREATE_CLASS $name:expr; $($rest:tt)*] ) => {
+        $assembler.create_class($name, $span)?;
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
 

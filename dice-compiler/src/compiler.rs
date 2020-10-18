@@ -20,13 +20,12 @@ enum CompilationKind {
 }
 
 pub struct Compiler {
-    pub(crate) source: Source,
     pub(crate) syntax_tree: SyntaxTree,
     pub(crate) compiler_stack: CompilerStack,
 }
 
 impl Compiler {
-    fn new(source: Source, syntax_tree: SyntaxTree, kind: CompilationKind) -> Self {
+    fn new(syntax_tree: SyntaxTree, kind: CompilationKind) -> Self {
         let compiler_kind = match kind {
             CompilationKind::Script => CompilerKind::Script,
             CompilationKind::Module => CompilerKind::Module,
@@ -34,7 +33,6 @@ impl Compiler {
         let compiler_stack = CompilerStack::new(compiler_kind);
 
         Self {
-            source,
             syntax_tree,
             compiler_stack,
         }
@@ -47,7 +45,7 @@ impl Compiler {
             SourceKind::Module => CompilationKind::Module,
             SourceKind::Script => CompilationKind::Script,
         };
-        let mut compiler = Self::new(source, syntax_tree, kind);
+        let mut compiler = Self::new(syntax_tree, kind);
 
         if kind == CompilationKind::Module {
             compiler
