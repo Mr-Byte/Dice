@@ -1,3 +1,4 @@
+use crate::gc_any::GcAnyBox;
 use crate::{
     id::type_id::TypeId,
     value::{Class, Value, ValueMap},
@@ -21,6 +22,22 @@ impl Object {
         Self {
             inner: Gc::new(ObjectInner {
                 class: class.into(),
+                native_tag: GcCell::new(None),
+                fields: Default::default(),
+                mixin_type_ids: Vec::new(),
+                type_id,
+            }),
+        }
+    }
+
+    pub fn with_native_tag<N>(type_id: TypeId, class: N, native_tag: GcAnyBox) -> Self
+    where
+        N: Into<Option<Value>>,
+    {
+        Self {
+            inner: Gc::new(ObjectInner {
+                class: class.into(),
+                native_tag: GcCell::new(Some(native_tag)),
                 fields: Default::default(),
                 mixin_type_ids: Vec::new(),
                 type_id,
@@ -69,6 +86,7 @@ impl Display for Object {
 #[derive(Default, Debug, Trace, Finalize)]
 pub struct ObjectInner {
     class: Option<Value>,
+    native_tag: GcCell<Option<GcAnyBox>>,
     fields: GcCell<ValueMap>,
     #[unsafe_ignore_trace]
     type_id: TypeId,
@@ -97,5 +115,13 @@ impl ObjectInner {
 
     pub fn class(&self) -> Option<&Class> {
         self.class.as_ref().and_then(|value| value.as_class().ok())
+    }
+
+    pub fn native_tag(&self) -> GcCellRef<'_, Option<GcAnyBox>> {
+        self.native_tag.borrow()
+    }
+
+    pub fn set_native_tag(&self, native_tag: GcAnyBox) {
+        *self.native_tag.borrow_mut() = Some(native_tag);
     }
 }

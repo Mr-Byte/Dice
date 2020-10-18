@@ -61,12 +61,16 @@ pub enum Value {
 }
 
 impl Value {
-    pub fn new_string(string: impl Into<String>) -> Self {
+    pub fn with_string(string: impl Into<String>) -> Self {
         Self::String(string.into())
     }
 
-    pub fn new_symbol(string: impl Into<Symbol>) -> Self {
+    pub fn with_symbol(string: impl Into<Symbol>) -> Self {
         Self::Symbol(string.into())
+    }
+
+    pub fn with_native_fn(native_fn: impl Into<NativeFn>) -> Self {
+        Self::FnNative(FnNative::new(native_fn.into()))
     }
 
     #[inline]

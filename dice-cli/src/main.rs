@@ -1,12 +1,12 @@
 use dice::{Dice, Runtime, RuntimeError, Value};
 use std::io::Write;
+use std::rc::Rc;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     std::env::set_current_dir(std::fs::canonicalize("data/scripts")?)?;
 
     let mut dice = Dice::default();
-    dice.runtime().register_native_function("print", print_value);
-    dice.runtime().register_native_function("filter", filter);
+    dice.runtime().register_native_function("print", Rc::new(print_value));
     dice.runtime().load_prelude("prelude.dm")?;
 
     loop {
@@ -50,23 +50,4 @@ fn print_value(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, Runt
     }
 
     Ok(Value::Unit)
-}
-
-fn filter(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
-    if let [_, list, filter_fn, ..] = args {
-        let list = list.as_array()?;
-        let mut result = Vec::new();
-
-        for item in &*list.elements() {
-            let included = runtime.call_function(filter_fn.clone(), &[item.clone()])?.as_bool()?;
-
-            if included {
-                result.push(item.clone());
-            }
-        }
-
-        return Ok(Value::Array(result.into()));
-    }
-
-    todo!("Error out here.")
 }

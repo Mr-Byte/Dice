@@ -99,8 +99,14 @@ where
             .insert(name.into(), Value::FnNative(FnNative::new(native_fn)));
     }
 
-    fn new_module(&mut self, _name: Symbol) -> Result<Module, RuntimeError> {
-        unimplemented!()
+    fn new_module(&mut self, name: Symbol) -> Result<Module, RuntimeError> {
+        let module = Module::default();
+
+        self.loaded_modules
+            .insert(name, Value::Object(module.object().clone()))
+            .ok_or_else(|| RuntimeError::Aborted(String::from("Module already registered.")))?;
+
+        Ok(module)
     }
 
     fn new_class(&mut self, _name: Symbol) -> Result<Class, RuntimeError> {

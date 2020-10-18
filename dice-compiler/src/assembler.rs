@@ -122,7 +122,7 @@ impl Assembler {
     pub fn create_class(&mut self, name: &str, span: Span) -> Result<(), CompilerError> {
         self.source_map.insert(self.data.len() as u64, span);
         self.data.put_u8(Instruction::CREATE_CLASS.value());
-        let name_slot = self.make_constant(Value::new_symbol(name))? as u8;
+        let name_slot = self.make_constant(Value::with_symbol(name))? as u8;
         self.data.put_u8(name_slot);
 
         Ok(())
@@ -303,7 +303,7 @@ impl Assembler {
 
     pub fn store_global(&mut self, global: impl Into<Symbol>, span: Span) -> Result<(), CompilerError> {
         fn store_global_impl(assembler: &mut Assembler, global: Symbol, span: Span) -> Result<(), CompilerError> {
-            let const_slot = assembler.make_constant(Value::new_symbol(global))?;
+            let const_slot = assembler.make_constant(Value::with_symbol(global))?;
 
             assembler.source_map.insert(assembler.data.len() as u64, span);
             assembler.data.put_u8(Instruction::STORE_GLOBAL.value());
@@ -317,7 +317,7 @@ impl Assembler {
 
     pub fn load_global(&mut self, global: impl Into<Symbol>, span: Span) -> Result<(), CompilerError> {
         fn load_global_impl(assembler: &mut Assembler, global: Symbol, span: Span) -> Result<(), CompilerError> {
-            let const_slot = assembler.make_constant(Value::new_symbol(global))?;
+            let const_slot = assembler.make_constant(Value::with_symbol(global))?;
 
             assembler.source_map.insert(assembler.data.len() as u64, span);
             assembler.data.put_u8(Instruction::LOAD_GLOBAL.value());
@@ -331,7 +331,7 @@ impl Assembler {
 
     pub fn load_module(&mut self, path: impl Into<Symbol>, span: Span) -> Result<(), CompilerError> {
         fn load_module_impl(assembler: &mut Assembler, path: Symbol, span: Span) -> Result<(), CompilerError> {
-            let const_slot = assembler.make_constant(Value::new_symbol(path))?;
+            let const_slot = assembler.make_constant(Value::with_symbol(path))?;
 
             assembler.source_map.insert(assembler.data.len() as u64, span);
             assembler.data.put_u8(Instruction::LOAD_MODULE.value());
