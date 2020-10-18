@@ -1,5 +1,4 @@
 pub mod bytecode;
-pub mod hash;
 pub mod id;
 pub mod protocol;
 pub mod runtime;
