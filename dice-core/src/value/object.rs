@@ -53,14 +53,14 @@ impl Display for Object {
 
         let class = self.class.as_ref().and_then(|value| value.as_class().ok());
         if let Some(class) = class {
-            write!(f, "{{{}}}", class.name())?;
+            write!(f, "<{}>", class.name())?;
         }
 
-        write!(f, " -> [")?;
+        write!(f, " {{ ")?;
         for (name, field) in self.fields.borrow().iter() {
-            write!(f, "{} = {}, ", name, field)?;
+            write!(f, "{}: {}, ", name, field)?;
         }
-        write!(f, "]")?;
+        write!(f, "}}")?;
 
         Ok(())
     }
