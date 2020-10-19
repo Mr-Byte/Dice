@@ -225,6 +225,7 @@ impl PartialEq for Value {
             (Value::String(lhs), Value::String(rhs)) => lhs == rhs,
             (Value::Symbol(lhs), Value::Symbol(rhs)) => lhs == rhs,
             (Value::Object(lhs), Value::Object(rhs)) => lhs == rhs,
+            (Value::Class(lhs), Value::Class(rhs)) => lhs == rhs,
             _ => false,
         }
     }

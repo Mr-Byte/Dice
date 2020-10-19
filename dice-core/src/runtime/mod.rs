@@ -1,7 +1,7 @@
 mod class;
 mod module;
 
-use crate::value::{NativeFn, Symbol, Value};
+use crate::value::{NativeFn, Value};
 use dice_error::runtime_error::RuntimeError;
 
 pub use class::*;
@@ -18,8 +18,8 @@ pub trait Runtime {
     fn register_native_function(&mut self, name: &str, native_fn: NativeFn);
 
     /// Create a new native module.
-    fn new_module(&mut self, name: Symbol) -> Result<Module, RuntimeError>;
+    fn new_module(&mut self, name: &str) -> Result<ModuleBuilder, RuntimeError>;
 
     /// Create a new global class.
-    fn new_class(&mut self, name: Symbol) -> Result<Class, RuntimeError>;
+    fn new_class(&mut self, name: &str) -> Result<ClassBuilder, RuntimeError>;
 }

@@ -1,5 +1,5 @@
 pub mod bytecode;
-mod gc_any;
+pub mod gc_any;
 pub mod id;
 pub mod protocol;
 pub mod runtime;

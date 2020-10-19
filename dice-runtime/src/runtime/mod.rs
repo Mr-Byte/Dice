@@ -7,16 +7,15 @@ use crate::{
     module::{file_loader::FileModuleLoader, ModuleLoader},
     runtime::stack::Stack,
 };
-use dice_core::runtime::Class;
-use dice_core::value::Symbol;
 use dice_core::{
     bytecode::Bytecode,
     id::type_id::TypeId,
-    runtime::Module,
+    runtime::{ClassBuilder, ModuleBuilder},
     upvalue::Upvalue,
     value::{FnNative, NativeFn, Object, Value, ValueMap},
 };
 use dice_error::runtime_error::RuntimeError;
+use std::borrow::BorrowMut;
 use std::collections::VecDeque;
 
 pub struct Runtime<L = FileModuleLoader>
@@ -99,17 +98,24 @@ where
             .insert(name.into(), Value::FnNative(FnNative::new(native_fn)));
     }
 
-    fn new_module(&mut self, name: Symbol) -> Result<Module, RuntimeError> {
-        let module = Module::default();
+    fn new_module(&mut self, name: &str) -> Result<ModuleBuilder, RuntimeError> {
+        let module = ModuleBuilder::default();
 
         self.loaded_modules
-            .insert(name, Value::Object(module.object().clone()))
+            .insert(name.into(), Value::Object(module.object().clone()))
             .ok_or_else(|| RuntimeError::Aborted(String::from("Module already registered.")))?;
 
         Ok(module)
     }
 
-    fn new_class(&mut self, _name: Symbol) -> Result<Class, RuntimeError> {
-        unimplemented!()
+    fn new_class(&mut self, name: &str) -> Result<ClassBuilder, RuntimeError> {
+        let builder = ClassBuilder::new(name);
+
+        self.globals
+            .borrow_mut()
+            .insert(name.into(), Value::Class(builder.class()))
+            .ok_or_else(|| RuntimeError::Aborted(String::from("Class already registered.")))?;
+
+        Ok(builder)
     }
 }

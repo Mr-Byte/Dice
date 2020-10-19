@@ -8,7 +8,7 @@ use std::{
     ops::Deref,
 };
 
-#[derive(Clone, Debug, Trace, Finalize)]
+#[derive(Clone, Debug, Trace, Finalize, Eq, PartialEq)]
 pub struct Class {
     inner: Gc<ClassInner>,
 }
@@ -74,3 +74,11 @@ impl Deref for ClassInner {
         &self.object
     }
 }
+
+impl PartialEq for ClassInner {
+    fn eq(&self, other: &Self) -> bool {
+        self.name == other.name && self.type_id() == other.type_id()
+    }
+}
+
+impl Eq for ClassInner {}
