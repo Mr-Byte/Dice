@@ -1,9 +1,9 @@
 use dice_compiler::compiler::Compiler;
-pub use dice_core::{runtime::Runtime, value::Value};
+use dice_core::source::{Source, SourceKind};
 use dice_error::compiler_error::CompilerError;
 use dice_runtime::runtime;
 
-use dice_core::source::{Source, SourceKind};
+pub use dice_core::{gc_any::*, protocol, runtime::Runtime, value};
 pub use dice_error::runtime_error::RuntimeError;
 
 pub struct Dice {
@@ -11,7 +11,7 @@ pub struct Dice {
 }
 
 impl Dice {
-    pub fn run_script(&mut self, input: impl Into<String>) -> Result<Value, DiceError> {
+    pub fn run_script(&mut self, input: impl Into<String>) -> Result<value::Value, DiceError> {
         let source = Source::new(input.into(), SourceKind::Script);
         let bytecode = Compiler::compile(source)?;
         let value = self.runtime.run_bytecode(bytecode)?;

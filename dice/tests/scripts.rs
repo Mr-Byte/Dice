@@ -1,4 +1,4 @@
-use dice::{Dice, DiceError, Value};
+use dice::{value::Value, Dice, DiceError};
 
 #[test]
 fn test_lazy_and_both_true() -> Result<(), DiceError> {

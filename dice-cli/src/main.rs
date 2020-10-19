@@ -1,4 +1,5 @@
-use dice::{Dice, Runtime, RuntimeError, Value};
+use dice::value::Value;
+use dice::{Dice, Runtime, RuntimeError};
 use std::io::Write;
 use std::rc::Rc;
 

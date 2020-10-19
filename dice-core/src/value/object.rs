@@ -1,4 +1,4 @@
-use crate::gc_any::GcAnyBox;
+use crate::gc_any::{GcAny, GcAnyBox};
 use crate::{
     id::type_id::TypeId,
     value::{Class, Value, ValueMap},
@@ -121,7 +121,7 @@ impl ObjectInner {
         self.native_tag.borrow()
     }
 
-    pub fn set_native_tag(&self, native_tag: GcAnyBox) {
-        *self.native_tag.borrow_mut() = Some(native_tag);
+    pub fn native_tag_mut(&self) -> GcCellRefMut<'_, Option<GcAnyBox>> {
+        self.native_tag.borrow_mut()
     }
 }

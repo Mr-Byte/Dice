@@ -101,9 +101,13 @@ where
     fn new_module(&mut self, name: &str) -> Result<ModuleBuilder, RuntimeError> {
         let module = ModuleBuilder::default();
 
-        self.loaded_modules
+        if self
+            .loaded_modules
             .insert(name.into(), Value::Object(module.object().clone()))
-            .ok_or_else(|| RuntimeError::Aborted(String::from("Module already registered.")))?;
+            .is_some()
+        {
+            return Err(RuntimeError::Aborted(String::from("Module already registered.")));
+        }
 
         Ok(module)
     }
@@ -111,10 +115,14 @@ where
     fn new_class(&mut self, name: &str) -> Result<ClassBuilder, RuntimeError> {
         let builder = ClassBuilder::new(name);
 
-        self.globals
+        if self
+            .globals
             .borrow_mut()
             .insert(name.into(), Value::Class(builder.class()))
-            .ok_or_else(|| RuntimeError::Aborted(String::from("Class already registered.")))?;
+            .is_some()
+        {
+            return Err(RuntimeError::Aborted(String::from("Class already registered.")));
+        }
 
         Ok(builder)
     }
