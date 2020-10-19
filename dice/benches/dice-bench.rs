@@ -26,7 +26,7 @@ fn loop_addition_with_assignment(criterion: &mut Criterion) {
 
 fn range_for_loop_addition_with_assignment(criterion: &mut Criterion) {
     let mut dice = Dice::default();
-    dice.runtime().load_prelude("../data/scripts/prelude.dm").unwrap();
+    dice.runtime().load_prelude("data/scripts/prelude.dm").unwrap();
 
     criterion.bench_function("range-for-loop-addition-with-assignment", |bencher| {
         bencher.iter(|| {
@@ -38,7 +38,7 @@ fn range_for_loop_addition_with_assignment(criterion: &mut Criterion) {
 
 fn iterator_for_loop_addition_with_assignment(criterion: &mut Criterion) {
     let mut dice = Dice::default();
-    dice.runtime().load_prelude("../data/scripts/prelude.dm").unwrap();
+    dice.runtime().load_prelude("data/scripts/prelude.dm").unwrap();
 
     criterion.bench_function("iterator-for-loop-addition-with-assignment", |bencher| {
         bencher.iter(|| {
@@ -117,4 +117,17 @@ criterion_group!(
     targets = closure_called_by_another_function_in_parent_scope, closure_called_outside_declaring_scope
 );
 
-criterion_main!(loops, closures);
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    std::env::set_current_dir(
+        std::env::current_dir()?
+            .parent()
+            .expect("Parent directory should exist."),
+    )?;
+
+    loops();
+    closures();
+
+    Criterion::default().configure_from_args().final_summary();
+
+    Ok(())
+}

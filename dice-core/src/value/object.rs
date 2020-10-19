@@ -1,5 +1,6 @@
 use crate::gc_any::{GcAny, GcAnyBox};
 use crate::{
+    gc_any,
     id::type_id::TypeId,
     value::{Class, Value, ValueMap},
 };
@@ -117,11 +118,15 @@ impl ObjectInner {
         self.class.as_ref().and_then(|value| value.as_class().ok())
     }
 
-    pub fn native_tag(&self) -> GcCellRef<'_, Option<GcAnyBox>> {
-        self.native_tag.borrow()
+    pub fn native_tag(&self) -> Option<GcCellRef<'_, GcAnyBox>> {
+        gc_any::transpose(self.native_tag.borrow())
     }
 
-    pub fn native_tag_mut(&self) -> GcCellRefMut<'_, Option<GcAnyBox>> {
-        self.native_tag.borrow_mut()
+    pub fn native_tag_mut(&self) -> Option<GcCellRefMut<'_, GcAnyBox>> {
+        gc_any::transpose_mut(self.native_tag.borrow_mut())
+    }
+
+    pub fn set_native_tag<T: GcAny>(&mut self, tag: Option<T>) {
+        *self.native_tag.borrow_mut() = tag.map(GcAnyBox::new);
     }
 }
