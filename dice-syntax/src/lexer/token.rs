@@ -131,6 +131,8 @@ pub enum TokenKind {
     Pipeline,
     #[token("::")]
     UniversalMethodAccess,
+    #[token("!!")]
+    PropagateError,
     // Keywords
     #[token("object")]
     Object,

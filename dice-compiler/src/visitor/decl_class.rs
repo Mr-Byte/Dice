@@ -47,7 +47,7 @@ impl NodeVisitor<&ClassDecl> for Compiler {
                         FnKind::Method
                     } else {
                         if fn_decl.name == NEW {
-                            todo!("Error about new requiring a self parameter.")
+                            return Err(CompilerError::NewMustHaveSelfReceiver(fn_decl.span));
                         }
 
                         FnKind::StaticMethod

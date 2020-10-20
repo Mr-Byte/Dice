@@ -2,6 +2,8 @@ use crate::{span::Span, syntax_error::SyntaxError};
 
 #[derive(thiserror::Error, Debug)]
 pub enum CompilerError {
+    #[error("The new method on classes must have a self receiver as the first parameter.")]
+    NewMustHaveSelfReceiver(Span),
     #[error("The item {0} has already been declared in this scope.")]
     ItemAlreadyDeclared(String),
     #[error("Encountered undeclared variable {0}.")]

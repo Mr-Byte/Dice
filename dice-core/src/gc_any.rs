@@ -29,7 +29,10 @@ impl GcAnyBox {
     }
 }
 
-pub fn transpose(original: GcCellRef<Option<GcAnyBox>>) -> Option<GcCellRef<GcAnyBox>> {
+pub(crate) fn transpose<T>(original: GcCellRef<Option<T>>) -> Option<GcCellRef<T>>
+where
+    T: GcAny,
+{
     match *original {
         Some(_) => Some(GcCellRef::map(original, |value| match value {
             Some(value) => value,
@@ -39,7 +42,10 @@ pub fn transpose(original: GcCellRef<Option<GcAnyBox>>) -> Option<GcCellRef<GcAn
     }
 }
 
-pub fn transpose_mut(original: GcCellRefMut<Option<GcAnyBox>>) -> Option<GcCellRefMut<GcAnyBox>> {
+pub(crate) fn transpose_mut<T>(original: GcCellRefMut<Option<T>>) -> Option<GcCellRefMut<T>>
+where
+    T: GcAny,
+{
     match *original {
         Some(_) => Some(GcCellRefMut::map(original, |value| match value {
             Some(value) => value,
