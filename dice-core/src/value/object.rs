@@ -1,4 +1,5 @@
 use crate::gc_any::{GcAny, GcAnyBox};
+use crate::value::Symbol;
 use crate::{
     gc_any,
     id::type_id::TypeId,
@@ -108,13 +109,13 @@ impl ObjectInner {
         self.type_id
     }
 
-    pub fn name(&self) -> Option<&str> {
+    pub fn name(&self) -> Option<Symbol> {
         self.class
             .as_ref()
             .and_then(|value| value.as_class().map(|class| class.name()).ok())
     }
 
-    pub fn class(&self) -> Option<&Class> {
+    pub fn class(&self) -> Option<Class> {
         self.class.as_ref().and_then(|value| value.as_class().ok())
     }
 

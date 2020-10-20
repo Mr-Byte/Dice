@@ -11,9 +11,12 @@ mod symbol;
 use crate::id::type_id::TypeId;
 use dice_error::type_error::TypeError;
 use gc::{Finalize, Trace};
+use std::cell::RefCell;
+use std::mem::Discriminant;
 use std::{collections::HashMap, fmt::Display, hash::BuildHasherDefault};
 use wyhash::WyHash;
 
+use crate::runtime::Runtime;
 pub use array::*;
 pub use class::*;
 pub use fn_bound::*;
@@ -40,6 +43,8 @@ thread_local! {
     pub static STRING_TYPE_ID: TypeId = TypeId::default();
     pub static SYMBOL_TYPE_ID: TypeId = TypeId::default();
     pub static OBJECT_TYPE_ID: TypeId = TypeId::default();
+
+    static TYPE_CLASSES: RefCell<HashMap<Discriminant<Value>, Class, BuildHasherDefault<WyHash>>> = Default::default();
 }
 
 #[derive(Clone, Debug, Trace, Finalize)]
@@ -119,6 +124,11 @@ impl Value {
     }
 
     #[inline]
+    pub fn is_object(&self) -> bool {
+        matches!(self, Value::Object(_))
+    }
+
+    #[inline]
     pub fn is_class(&self) -> bool {
         matches!(self, Value::Class(_))
     }
@@ -174,10 +184,17 @@ impl Value {
         }
     }
 
-    pub fn as_class(&self) -> Result<&Class, TypeError> {
+    pub fn as_class(&self) -> Result<Class, TypeError> {
         match self {
-            Value::Class(class) => Ok(class),
+            Value::Class(class) => Ok(class.clone()),
             _ => Err(TypeError::NotAClass),
+        }
+    }
+
+    pub fn class(&self) -> Option<Class> {
+        match self {
+            Value::Object(object) => object.class(),
+            value => TYPE_CLASSES.with(|classes| classes.borrow().get(&std::mem::discriminant(value)).cloned()),
         }
     }
 
@@ -202,6 +219,9 @@ impl Value {
             Value::Class(class) => class.type_id(),
         }
     }
+
+    // TODO: Register known class types with the runtime.
+    pub fn register_classes(_runtime: &mut dyn Runtime) {}
 }
 
 impl Default for Value {

@@ -11,6 +11,7 @@ impl NodeVisitor<&Return> for Compiler {
             return Err(CompilerError::InvalidReturn);
         }
 
+        // TODO: Allow expressionless return inside of constructors.
         match expr_return.result {
             Some(expr) => self.visit(expr)?,
             None => context.assembler().push_unit(expr_return.span),

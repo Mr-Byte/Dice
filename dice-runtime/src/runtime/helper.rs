@@ -37,6 +37,8 @@ impl<L: ModuleLoader> Runtime<L> {
     }
 
     pub(super) fn get_field(&self, key: &Symbol, value: Value) -> Result<Value, RuntimeError> {
+        // TODO: Allow non-object targets to have their methods retrieved.
+
         let object = value.as_object()?;
         let fields = object.fields();
         let value = match fields.get(&key) {

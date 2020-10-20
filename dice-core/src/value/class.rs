@@ -42,8 +42,8 @@ pub struct ClassInner {
 }
 
 impl ClassInner {
-    pub fn name(&self) -> &str {
-        &*self.name
+    pub fn name(&self) -> Symbol {
+        self.name.clone()
     }
 
     pub fn methods(&self) -> GcCellRef<'_, ValueMap> {
