@@ -85,12 +85,17 @@ impl<L: ModuleLoader> Runtime<L> {
 
     fn call_class_constructor(&mut self, arg_count: usize, class: &Class) -> Result<Value, RuntimeError> {
         let class = class.clone();
-        let object = Value::Object(Object::new(class.instance_type_id(), Value::Class(class.clone())));
+        let mut object = Value::Object(Object::new(class.instance_type_id(), Value::Class(class.clone())));
 
         if let Some(new) = class.methods().get(&NEW.into()) {
             let bound = Value::FnBound(FnBound::new(object.clone(), new.clone()));
             *self.stack.peek_mut(arg_count) = bound;
             self.call_fn(arg_count)?;
+
+            // NOTE: Replace the returned object with the top of stack.
+            // In most cases this will be the object itself, but this allows for native constructors
+            // to override the result.
+            object = self.stack.peek(0).clone();
         } else if arg_count > 0 {
             return Err(RuntimeError::Aborted(String::from(
                 "TODO: Constructor has too many parameters error.",
@@ -117,7 +122,7 @@ impl<L: ModuleLoader> Runtime<L> {
             args[0] = receiver;
         }
 
-        fn_native.call(self, &args)
+        fn_native.call(self, &mut args)
     }
 
     fn call_fn_script(

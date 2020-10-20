@@ -573,6 +573,11 @@ macro_rules! emit_bytecode {
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
 
+    ($assembler:expr, $span:expr => [RET; $($rest:tt)*] ) => {
+        $assembler.ret($span);
+        emit_bytecode! { $assembler, $span => [$($rest)*] }
+    };
+
     ($assembler:expr, $span:expr => [{ $e:expr }; $($rest:tt)*] ) => {
         $e;
         emit_bytecode! { $assembler, $span => [$($rest)*] }

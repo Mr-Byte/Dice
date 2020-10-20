@@ -44,7 +44,11 @@ impl NodeVisitor<&ClassDecl> for Compiler {
                     let fn_decl = fn_decl.clone();
                     let is_method = fn_decl.args.first().map(|arg| arg == SELF).unwrap_or(false);
                     let kind = if is_method {
-                        FnKind::Method
+                        if fn_decl.name == NEW {
+                            FnKind::Constructor
+                        } else {
+                            FnKind::Method
+                        }
                     } else {
                         if fn_decl.name == NEW {
                             return Err(CompilerError::NewMustHaveSelfReceiver(fn_decl.span));

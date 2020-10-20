@@ -14,7 +14,7 @@ impl NodeVisitor<(&FnDecl, FnKind)> for Compiler {
         // is passed in as a bound receiver.
         let arity = match fn_kind {
             FnKind::Function | FnKind::StaticMethod => fn_decl.args.len(),
-            FnKind::Method => fn_decl.args.len() - 1,
+            FnKind::Method | FnKind::Constructor => fn_decl.args.len() - 1,
         };
         let value = Value::FnScript(FnScript::new(
             fn_decl.name.clone(),

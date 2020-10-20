@@ -13,7 +13,13 @@ impl Compiler {
         args: &[impl AsRef<str>],
         kind: FnKind,
     ) -> Result<CompilerContext, CompilerError> {
-        self.compiler_stack.push(CompilerKind::Function);
+        let compiler_kind = match kind {
+            FnKind::Constructor => CompilerKind::Constructor,
+            _ => CompilerKind::Function,
+        };
+
+        self.compiler_stack.push(compiler_kind);
+
         let root = syntax_tree.get(syntax_tree.root());
         let body = if let SyntaxNode::Block(body) = root {
             body.clone()
@@ -24,10 +30,9 @@ impl Compiler {
                 span: syntax_tree.get(syntax_tree.root()).span(),
             }
         };
-
         let block_kind = match kind {
             FnKind::Function | FnKind::StaticMethod => BlockKind::Function(args),
-            FnKind::Method => BlockKind::Method(args),
+            FnKind::Method | FnKind::Constructor => BlockKind::Method(args),
         };
 
         self.visit((&body, block_kind))?;

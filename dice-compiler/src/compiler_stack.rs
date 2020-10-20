@@ -11,6 +11,7 @@ pub enum CompilerKind {
     Script,
     Module,
     Function,
+    Constructor,
 }
 
 pub struct CompilerContext {

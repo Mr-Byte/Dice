@@ -563,7 +563,6 @@ where
     fn load_module(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
         let module_slot = cursor.read_u8() as usize;
         let module_name = bytecode.constants()[module_slot].as_symbol()?;
-
         let module = match self.loaded_modules.entry(module_name.clone()) {
             Entry::Occupied(entry) => entry.get().clone(),
             Entry::Vacant(entry) => {

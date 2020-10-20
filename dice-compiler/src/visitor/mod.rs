@@ -44,4 +44,5 @@ pub enum FnKind {
     Function,
     Method,
     StaticMethod,
+    Constructor,
 }

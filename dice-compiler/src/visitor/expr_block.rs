@@ -3,6 +3,7 @@ use crate::{
     compiler::Compiler,
     scope_stack::{ScopeKind, State},
 };
+use dice_core::protocol::class::SELF;
 use dice_error::compiler_error::CompilerError;
 use dice_syntax::Block;
 
@@ -59,9 +60,9 @@ impl<'args, T: AsRef<str>> NodeVisitor<(&Block, BlockKind<'args, T>)> for Compil
             self.context()?.assembler().pop(block.span);
         }
 
-        let scope = self.context()?.scope_stack().pop_scope()?;
+        let scope = self.context()?.scope_stack().top_mut()?;
 
-        for variable in scope.variables {
+        for variable in scope.variables.clone() {
             if variable.is_captured {
                 self.context()?
                     .assembler()
@@ -69,11 +70,29 @@ impl<'args, T: AsRef<str>> NodeVisitor<(&Block, BlockKind<'args, T>)> for Compil
             }
         }
 
-        // NOTE: If in context of a function, implicitly return the top item on the stack.
-        // If the previous instruction was a return, this will never execute.
         if let BlockKind::Function(_) = kind {
+            // NOTE: If in context of a function, implicitly return the top item on the stack.
+            // If the previous instruction was a return, this will never execute.
             self.context()?.assembler().ret(block.span)
+        } else if let BlockKind::Method(_) = kind {
+            // NOTE: If in context of a method, pop the last value, load self, return.
+            let local_slot = self
+                .context()?
+                .scope_stack()
+                .local(SELF)
+                .expect("Methods should always have a self.")
+                .slot as u8;
+
+            emit_bytecode! {
+                self.assembler()?, block.span => [
+                    POP;
+                    LOAD_LOCAL local_slot;
+                    RET;
+                ]
+            }
         }
+
+        self.context()?.scope_stack().pop_scope()?;
 
         Ok(())
     }
