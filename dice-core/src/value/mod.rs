@@ -245,6 +245,17 @@ impl Value {
             }),
         );
 
+        int_class.register_native_method(
+            "sqrt",
+            Rc::new(|_, values| {
+                if let [Value::Int(value), ..] = values {
+                    return Ok(Value::Int((*value as f64).sqrt() as i64));
+                }
+
+                Ok(Value::Null)
+            }),
+        );
+
         TYPE_CLASSES.with(|classes| classes.borrow_mut().insert("Int".into(), int_class.class()));
 
         Ok(())

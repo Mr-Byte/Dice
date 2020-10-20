@@ -37,27 +37,26 @@ impl<L: ModuleLoader> Runtime<L> {
     }
 
     pub(super) fn get_field(&self, key: &Symbol, value: Value) -> Result<Value, RuntimeError> {
-        // TODO: Allow non-object targets to have their methods retrieved.
-
-        let object = value.as_object()?;
-        let fields = object.fields();
-        let value = match fields.get(&key) {
-            Some(field) => field.clone(),
-            None => {
-                if &**key == NEW {
-                    return Err(RuntimeError::Aborted(String::from(
-                        "TODO: the new function cannot be accessed directly.",
-                    )));
-                }
-
-                match object.class() {
-                    Some(class) => match class.methods().get(&key) {
-                        Some(method) => Value::FnBound(FnBound::new(value.clone(), method.clone())),
-                        None => Value::Null,
-                    },
-                    None => Value::Null,
-                }
+        if value.is_object() {
+            let object = value.as_object()?;
+            let fields = object.fields();
+            if let Some(field) = fields.get(&key) {
+                return Ok(field.clone());
             }
+        }
+
+        if &**key == NEW {
+            return Err(RuntimeError::Aborted(String::from(
+                "TODO: the new function cannot be accessed directly.",
+            )));
+        }
+
+        let value = match value.class() {
+            Some(class) => match class.methods().get(&key) {
+                Some(method) => Value::FnBound(FnBound::new(value.clone(), method.clone())),
+                None => Value::Null,
+            },
+            None => Value::Null,
         };
 
         Ok(value)
