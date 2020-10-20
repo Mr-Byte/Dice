@@ -34,13 +34,17 @@ where
     L: ModuleLoader,
 {
     fn default() -> Self {
-        Self {
+        let mut result = Self {
             stack: Default::default(),
             open_upvalues: Default::default(),
             globals: Default::default(),
             loaded_modules: Default::default(),
             module_loader: Default::default(),
-        }
+        };
+
+        Value::register_classes(&mut result).expect("Runtime should never fail to create.");
+
+        result
     }
 }
 

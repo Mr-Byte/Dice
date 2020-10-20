@@ -1,5 +1,6 @@
 mod array;
 mod class;
+mod classes;
 mod fn_bound;
 mod fn_closure;
 mod fn_native;
@@ -12,13 +13,15 @@ use crate::id::type_id::TypeId;
 use dice_error::type_error::TypeError;
 use gc::{Finalize, Trace};
 use std::cell::RefCell;
-use std::mem::Discriminant;
 use std::{collections::HashMap, fmt::Display, hash::BuildHasherDefault};
 use wyhash::WyHash;
 
+use crate::protocol::class::NEW;
 use crate::runtime::Runtime;
 pub use array::*;
 pub use class::*;
+use dice_error::runtime_error::RuntimeError;
+use downcast_rs::__alloc::rc::Rc;
 pub use fn_bound::*;
 pub use fn_closure::*;
 pub use fn_native::*;
@@ -33,7 +36,6 @@ thread_local! {
     pub static NULL_TYPE_ID: TypeId = TypeId::default();
     pub static UNIT_TYPE_ID: TypeId = TypeId::default();
     pub static BOOL_TYPE_ID: TypeId = TypeId::default();
-    pub static INT_TYPE_ID: TypeId = TypeId::default();
     pub static FLOAT_TYPE_ID: TypeId = TypeId::default();
     pub static FN_CLOSURE_TYPE_ID: TypeId = TypeId::default();
     pub static FN_SCRIPT_TYPE_ID: TypeId = TypeId::default();
@@ -44,7 +46,7 @@ thread_local! {
     pub static SYMBOL_TYPE_ID: TypeId = TypeId::default();
     pub static OBJECT_TYPE_ID: TypeId = TypeId::default();
 
-    static TYPE_CLASSES: RefCell<HashMap<Discriminant<Value>, Class, BuildHasherDefault<WyHash>>> = Default::default();
+    static TYPE_CLASSES: RefCell<HashMap<Symbol, Class, BuildHasherDefault<WyHash>>> = Default::default();
 }
 
 #[derive(Clone, Debug, Trace, Finalize)]
@@ -194,7 +196,8 @@ impl Value {
     pub fn class(&self) -> Option<Class> {
         match self {
             Value::Object(object) => object.class(),
-            value => TYPE_CLASSES.with(|classes| classes.borrow().get(&std::mem::discriminant(value)).cloned()),
+            Value::Int(_) => TYPE_CLASSES.with(|classes| classes.borrow().get(&"Int".into()).cloned()),
+            _ => todo!("The others D:"),
         }
     }
 
@@ -203,7 +206,6 @@ impl Value {
             Value::Null => NULL_TYPE_ID.with(Clone::clone),
             Value::Unit => UNIT_TYPE_ID.with(Clone::clone),
             Value::Bool(_) => BOOL_TYPE_ID.with(Clone::clone),
-            Value::Int(_) => INT_TYPE_ID.with(Clone::clone),
             Value::Float(_) => FLOAT_TYPE_ID.with(Clone::clone),
             Value::FnClosure(_) => FN_CLOSURE_TYPE_ID.with(Clone::clone),
             Value::FnScript(_) => FN_SCRIPT_TYPE_ID.with(Clone::clone),
@@ -217,11 +219,36 @@ impl Value {
                 Some(class) => class.instance_type_id(),
             },
             Value::Class(class) => class.type_id(),
+            value => match value.class() {
+                Some(class) => class.instance_type_id(),
+                _ => unreachable!("type_id should always resolve."),
+            },
         }
     }
 
     // TODO: Register known class types with the runtime.
-    pub fn register_classes(_runtime: &mut dyn Runtime) {}
+    pub fn register_classes(_runtime: &mut dyn Runtime) -> Result<(), RuntimeError> {
+        let mut int_class = _runtime.new_class("Int")?;
+
+        int_class.register_native_method(
+            NEW,
+            Rc::new(|_, args| {
+                if let [_, value, ..] = args {
+                    return match value {
+                        Value::Int(int) => Ok(Value::Int(*int)),
+                        Value::Float(float) => Ok(Value::Int(*float as i64)),
+                        _ => Ok(Value::Null),
+                    };
+                }
+
+                Ok(Value::Null)
+            }),
+        );
+
+        TYPE_CLASSES.with(|classes| classes.borrow_mut().insert("Int".into(), int_class.class()));
+
+        Ok(())
+    }
 }
 
 impl Default for Value {
