@@ -32,7 +32,8 @@ impl Compiler {
         };
         let block_kind = match kind {
             FnKind::Function | FnKind::StaticMethod => BlockKind::Function(args),
-            FnKind::Method | FnKind::Constructor => BlockKind::Method(args),
+            FnKind::Method => BlockKind::Method(args),
+            FnKind::Constructor => BlockKind::Constructor(args),
         };
 
         self.visit((&body, block_kind))?;

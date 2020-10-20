@@ -12,13 +12,14 @@ pub enum BlockKind<'args, T: AsRef<str>> {
     Loop,
     Function(&'args [T]),
     Method(&'args [T]),
+    Constructor(&'args [T]),
 }
 
 impl<'args, T: AsRef<str>> NodeVisitor<(&Block, BlockKind<'args, T>)> for Compiler {
     fn visit(&mut self, (block, kind): (&Block, BlockKind<'args, T>)) -> Result<(), CompilerError> {
         self.context()?.scope_stack().push_scope(ScopeKind::Block, None);
 
-        if let BlockKind::Function(args) | BlockKind::Method(args) = kind {
+        if let BlockKind::Function(args) | BlockKind::Method(args) | BlockKind::Constructor(args) = kind {
             // NOTE: The calling convention uses the first parameter as self in methods, but for functions it's inaccessible.
             if let BlockKind::Function(_) = kind {
                 self.context()?.scope_stack().add_local(
@@ -74,8 +75,8 @@ impl<'args, T: AsRef<str>> NodeVisitor<(&Block, BlockKind<'args, T>)> for Compil
             // NOTE: If in context of a function, implicitly return the top item on the stack.
             // If the previous instruction was a return, this will never execute.
             self.context()?.assembler().ret(block.span)
-        } else if let BlockKind::Method(_) = kind {
-            // NOTE: If in context of a method, pop the last value, load self, return.
+        } else if let BlockKind::Constructor(_) = kind {
+            // NOTE: If in context of a constructor, pop the last value, load self, return.
             let local_slot = self
                 .context()?
                 .scope_stack()
