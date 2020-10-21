@@ -20,12 +20,7 @@ impl NodeVisitor<&OpDecl> for Compiler {
 
         let upvalues = op_context.upvalues().clone();
         let bytecode = op_context.finish();
-        let value = Value::FnScript(FnScript::new(
-            name.clone(),
-            node.args.len(),
-            bytecode,
-            uuid::Uuid::new_v4(),
-        ));
+        let value = Value::FnScript(FnScript::new(name.clone(), bytecode, uuid::Uuid::new_v4()));
         let context = self.context()?;
 
         emit_bytecode! {

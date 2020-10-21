@@ -10,18 +10,7 @@ impl NodeVisitor<(&FnDecl, FnKind)> for Compiler {
         let mut fn_context = self.compile_fn(body, &fn_decl.args, fn_kind)?;
         let upvalues = fn_context.upvalues().clone();
         let bytecode = fn_context.finish();
-        // NOTE: Methods have an arity 1 less than the actual number of parameters, since the self parameter
-        // is passed in as a bound receiver.
-        let arity = match fn_kind {
-            FnKind::Function | FnKind::StaticMethod => fn_decl.args.len(),
-            FnKind::Method | FnKind::Constructor => fn_decl.args.len() - 1,
-        };
-        let value = Value::FnScript(FnScript::new(
-            fn_decl.name.clone(),
-            arity,
-            bytecode,
-            uuid::Uuid::new_v4(),
-        ));
+        let value = Value::FnScript(FnScript::new(fn_decl.name.clone(), bytecode, uuid::Uuid::new_v4()));
 
         if fn_kind == FnKind::Function {
             self.emit_fn(fn_decl, &upvalues, value)?;

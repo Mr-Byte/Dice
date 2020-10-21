@@ -143,10 +143,6 @@ impl<L: ModuleLoader> Runtime<L> {
         fn_script: &FnScript,
         parent_upvalues: Option<&[Upvalue]>,
     ) -> Result<Value, RuntimeError> {
-        if arg_count != fn_script.arity {
-            return Err(RuntimeError::InvalidFunctionArgs(fn_script.arity, arg_count));
-        }
-
         let slots = fn_script.bytecode.slot_count();
         let reserved = slots - arg_count;
         // NOTE: Reserve only the slots needed to cover locals beyond the arguments already on the stack.

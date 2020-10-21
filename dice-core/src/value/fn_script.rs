@@ -3,7 +3,6 @@ use std::{fmt::Display, ops::Deref};
 
 #[derive(Debug, Trace, Finalize)]
 pub struct FnScriptInner {
-    pub arity: usize,
     pub name: String,
     pub bytecode: Bytecode,
     #[unsafe_ignore_trace]
@@ -17,14 +16,9 @@ pub struct FnScript {
 }
 
 impl FnScript {
-    pub fn new(name: String, arity: usize, bytecode: Bytecode, id: uuid::Uuid) -> Self {
+    pub fn new(name: String, bytecode: Bytecode, id: uuid::Uuid) -> Self {
         Self {
-            inner: Gc::new(FnScriptInner {
-                arity,
-                bytecode,
-                name,
-                id,
-            }),
+            inner: Gc::new(FnScriptInner { bytecode, name, id }),
         }
     }
 }
@@ -39,12 +33,12 @@ impl Deref for FnScript {
 
 impl PartialEq for FnScript {
     fn eq(&self, other: &Self) -> bool {
-        self.arity == other.arity && self.id == other.id
+        self.id == other.id
     }
 }
 
 impl Display for FnScript {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}/{}", self.name, self.arity)
+        write!(f, "{}", self.name)
     }
 }

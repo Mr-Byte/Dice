@@ -8,8 +8,6 @@ pub enum RuntimeError {
     InvalidTargetType,
     #[error("Runtime Error: Invalid global name type.")]
     InvalidGlobalNameType, // TODO: Move to TypeError.
-    #[error("Runtime Error: Invalid number of parameters passed to function. Expected: {0}, Found: {1}.")]
-    InvalidFunctionArgs(usize, usize),
     #[error("Runtime Error: The target type is not a function.")]
     NotAFunction, // TODO: Move to TypeError.
     #[error("Runtime Error: Variable {0} not found.")]
