@@ -15,13 +15,13 @@ pub fn register(runtime: &mut crate::Runtime<impl ModuleLoader>) {
     runtime.known_types.insert(ValueKind::Float, float.class());
 
     float.register_native_method(NEW, Rc::new(construct_float));
-    float.register_native_method("abs", Rc::new(abs));
-    float.register_native_method("sqrt", Rc::new(sqrt));
-    float.register_native_method("floor", Rc::new(floor));
-    float.register_native_method("ceil", Rc::new(ceil));
-    float.register_native_method("round", Rc::new(round));
-    float.register_native_method("cos", Rc::new(cos));
-    float.register_native_method("sin", Rc::new(sin));
+    float.register_native_method("abs", bind_f64(f64::abs));
+    float.register_native_method("sqrt", bind_f64(f64::sqrt));
+    float.register_native_method("floor", bind_f64(f64::floor));
+    float.register_native_method("ceil", bind_f64(f64::ceil));
+    float.register_native_method("round", bind_f64(f64::round));
+    float.register_native_method("cos", bind_f64(f64::cos));
+    float.register_native_method("sin", bind_f64(f64::sin));
 
     float.register_native_static_property("MAX", Value::Float(f64::MAX));
     float.register_native_static_property("MIN", Value::Float(f64::MIN));
@@ -48,58 +48,14 @@ fn construct_float(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, 
     }
 }
 
-fn abs(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
-    if let [Value::Float(this), ..] = args {
-        Ok(Value::Float(this.abs()))
-    } else {
-        Ok(Value::Null)
-    }
-}
-
-fn sqrt(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
-    if let [Value::Float(this), ..] = args {
-        Ok(Value::Float(this.sqrt()))
-    } else {
-        Ok(Value::Null)
-    }
-}
-
-fn floor(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
-    if let [Value::Float(this), ..] = args {
-        Ok(Value::Float(this.floor()))
-    } else {
-        Ok(Value::Null)
-    }
-}
-
-fn ceil(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
-    if let [Value::Float(this), ..] = args {
-        Ok(Value::Float(this.ceil()))
-    } else {
-        Ok(Value::Null)
-    }
-}
-
-fn round(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
-    if let [Value::Float(this), ..] = args {
-        Ok(Value::Float(this.round()))
-    } else {
-        Ok(Value::Null)
-    }
-}
-
-fn cos(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
-    if let [Value::Float(this), ..] = args {
-        Ok(Value::Float(this.cos()))
-    } else {
-        Ok(Value::Null)
-    }
-}
-
-fn sin(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
-    if let [Value::Float(this), ..] = args {
-        Ok(Value::Float(this.sin()))
-    } else {
-        Ok(Value::Null)
-    }
+fn bind_f64(
+    function: impl Fn(f64) -> f64 + 'static,
+) -> Rc<dyn Fn(&mut dyn Runtime, &[Value]) -> Result<Value, RuntimeError>> {
+    Rc::new(move |_: &mut dyn Runtime, args: &[Value]| {
+        if let [Value::Float(this), ..] = args {
+            Ok(Value::Float(function(*this)))
+        } else {
+            Ok(Value::Null)
+        }
+    })
 }
