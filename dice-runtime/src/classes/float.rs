@@ -17,6 +17,9 @@ pub fn register(runtime: &mut crate::Runtime<impl ModuleLoader>) {
     float.register_native_method(NEW, Rc::new(construct_float));
     float.register_native_method("abs", Rc::new(abs));
     float.register_native_method("sqrt", Rc::new(sqrt));
+    float.register_native_method("floor", Rc::new(floor));
+    float.register_native_method("ceil", Rc::new(ceil));
+    float.register_native_method("round", Rc::new(round));
     float.register_native_method("cos", Rc::new(cos));
     float.register_native_method("sin", Rc::new(sin));
 
@@ -25,6 +28,9 @@ pub fn register(runtime: &mut crate::Runtime<impl ModuleLoader>) {
     float.register_native_static_property("EPSILON", Value::Float(f64::EPSILON));
     float.register_native_static_property("PI", Value::Float(std::f64::consts::PI));
     float.register_native_static_property("E", Value::Float(std::f64::consts::E));
+    float.register_native_static_property("NAN", Value::Float(std::f64::NAN));
+    float.register_native_static_property("INFINITY", Value::Float(std::f64::INFINITY));
+    float.register_native_static_property("NEG_INFINITY", Value::Float(std::f64::NEG_INFINITY));
 
     // TODO: Finish out the entire suite of mathematical functions for f64.
 }
@@ -53,6 +59,30 @@ fn abs(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError
 fn sqrt(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
     if let [Value::Float(this), ..] = args {
         Ok(Value::Float(this.sqrt()))
+    } else {
+        Ok(Value::Null)
+    }
+}
+
+fn floor(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
+    if let [Value::Float(this), ..] = args {
+        Ok(Value::Float(this.floor()))
+    } else {
+        Ok(Value::Null)
+    }
+}
+
+fn ceil(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
+    if let [Value::Float(this), ..] = args {
+        Ok(Value::Float(this.ceil()))
+    } else {
+        Ok(Value::Null)
+    }
+}
+
+fn round(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
+    if let [Value::Float(this), ..] = args {
+        Ok(Value::Float(this.round()))
     } else {
         Ok(Value::Null)
     }

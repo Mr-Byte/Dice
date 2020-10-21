@@ -6,4 +6,5 @@ pub fn register(runtime: &mut crate::Runtime<impl ModuleLoader>) {
     runtime
         .known_type_ids
         .insert(ValueKind::Class, class.class().instance_type_id());
+    runtime.known_types.insert(ValueKind::Class, class.class());
 }

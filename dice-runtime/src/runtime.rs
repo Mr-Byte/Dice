@@ -29,7 +29,7 @@ where
     pub(crate) globals: ValueMap,
     pub(crate) loaded_modules: ValueMap,
     pub(crate) module_loader: L,
-    #[unsafe_ignore_trace]
+    // TODO: Merge these maps?
     pub(crate) known_type_ids: HashMap<ValueKind, TypeId, BuildHasherDefault<WyHash>>,
     pub(crate) known_types: HashMap<ValueKind, Class, BuildHasherDefault<WyHash>>,
 }
