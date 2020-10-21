@@ -39,7 +39,7 @@ impl<L: ModuleLoader> Runtime<L> {
     }
 
     pub(super) fn get_field(&self, key: &Symbol, value: Value) -> Result<Value, RuntimeError> {
-        if value.kind() == ValueKind::Object {
+        if value.kind() == ValueKind::Object || value.kind() == ValueKind::Class {
             let object = value.as_object()?;
             let fields = object.fields();
             if let Some(field) = fields.get(&key) {

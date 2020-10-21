@@ -16,6 +16,9 @@ pub fn register(runtime: &mut crate::Runtime<impl ModuleLoader>) {
 
     int.register_native_method(NEW, Rc::new(construct_int));
     int.register_native_method("abs", Rc::new(abs));
+
+    int.register_native_static_property("MAX", Value::Int(i64::MAX));
+    int.register_native_static_property("MIN", Value::Int(i64::MIN));
 }
 
 fn construct_int(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
@@ -23,6 +26,7 @@ fn construct_int(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, Ru
         match param {
             value @ Value::Int(_) => Ok(value.clone()),
             Value::Float(value) => Ok(Value::Int(*value as i64)),
+            Value::String(string) => Ok(string.parse::<i64>().map_or_else(|_| Value::Null, Value::Int)),
             _ => Ok(Value::Null),
         }
     } else {
