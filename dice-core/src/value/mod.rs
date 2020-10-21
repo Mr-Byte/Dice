@@ -33,10 +33,7 @@ pub enum ValueKind {
     Bool,
     Int,
     Float,
-    FnClosure,
-    FnScript,
-    FnNative,
-    FnBound,
+    Function,
     Array,
     String,
     Symbol,
@@ -73,61 +70,6 @@ impl Value {
 
     pub fn with_native_fn(native_fn: impl Into<NativeFn>) -> Self {
         Self::FnNative(FnNative::new(native_fn.into()))
-    }
-
-    #[inline]
-    pub fn is_null(&self) -> bool {
-        matches!(self, Value::Null)
-    }
-
-    #[inline]
-    pub fn is_unit(&self) -> bool {
-        matches!(self, Value::Unit)
-    }
-
-    #[inline]
-    pub fn is_bool(&self) -> bool {
-        matches!(self, Value::Bool(_))
-    }
-
-    #[inline]
-    pub fn is_int(&self) -> bool {
-        matches!(self, Value::Int(_))
-    }
-
-    #[inline]
-    pub fn is_float(&self) -> bool {
-        matches!(self, Value::Float(_))
-    }
-
-    #[inline]
-    pub fn is_fn(&self) -> bool {
-        matches!(self, Value::FnClosure(_) | Value::FnScript(_) | Value::FnNative(_) | Value::FnBound(_))
-    }
-
-    #[inline]
-    pub fn is_array(&self) -> bool {
-        matches!(self, Value::Array(_))
-    }
-
-    #[inline]
-    pub fn is_string(&self) -> bool {
-        matches!(self, Value::String(_) | Value::Symbol(_))
-    }
-
-    #[inline]
-    pub fn is_symbol(&self) -> bool {
-        matches!(self, Value::Symbol(_))
-    }
-
-    #[inline]
-    pub fn is_object(&self) -> bool {
-        matches!(self, Value::Object(_))
-    }
-
-    #[inline]
-    pub fn is_class(&self) -> bool {
-        matches!(self, Value::Class(_))
     }
 
     pub fn as_bool(&self) -> Result<bool, TypeError> {
@@ -195,10 +137,10 @@ impl Value {
             Value::Bool(_) => ValueKind::Bool,
             Value::Int(_) => ValueKind::Int,
             Value::Float(_) => ValueKind::Float,
-            Value::FnClosure(_) => ValueKind::FnClosure,
-            Value::FnScript(_) => ValueKind::FnScript,
-            Value::FnNative(_) => ValueKind::FnNative,
-            Value::FnBound(_) => ValueKind::FnBound,
+            Value::FnClosure(_) => ValueKind::Function,
+            Value::FnScript(_) => ValueKind::Function,
+            Value::FnNative(_) => ValueKind::Function,
+            Value::FnBound(_) => ValueKind::Function,
             Value::Array(_) => ValueKind::Array,
             Value::String(_) => ValueKind::String,
             Value::Symbol(_) => ValueKind::Symbol,

@@ -1,6 +1,7 @@
 mod helper;
 
 use crate::{module::ModuleLoader, runtime::Runtime, stack::CallFrame};
+use dice_core::value::ValueKind;
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
     id::type_id::TypeId,
@@ -104,7 +105,7 @@ where
     }
 
     fn assert_bool(&mut self) -> Result<(), RuntimeError> {
-        if !self.stack.peek_mut(0).is_bool() {
+        if self.stack.peek_mut(0).kind() != ValueKind::Bool {
             return Err(RuntimeError::Aborted(String::from("Value must evaluate to a boolean.")));
         }
 

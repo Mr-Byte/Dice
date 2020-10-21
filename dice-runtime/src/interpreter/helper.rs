@@ -1,4 +1,5 @@
 use crate::{module::ModuleLoader, runtime::Runtime};
+use dice_core::value::ValueKind;
 use dice_core::{
     protocol::class::NEW,
     upvalue::{Upvalue, UpvalueState},
@@ -38,7 +39,7 @@ impl<L: ModuleLoader> Runtime<L> {
     }
 
     pub(super) fn get_field(&self, key: &Symbol, value: Value) -> Result<Value, RuntimeError> {
-        if value.is_object() {
+        if value.kind() == ValueKind::Object {
             let object = value.as_object()?;
             let fields = object.fields();
             if let Some(field) = fields.get(&key) {
