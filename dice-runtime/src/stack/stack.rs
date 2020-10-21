@@ -1,4 +1,4 @@
-use crate::runtime::call_frame::CallFrame;
+use super::call_frame::CallFrame;
 use dice_core::value::Value;
 use gc::{Finalize, Trace};
 use std::{

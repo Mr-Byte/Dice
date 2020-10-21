@@ -32,13 +32,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         match dice.run_script(input) {
             Ok(result) => {
                 let elapsed = start.elapsed();
-                let type_id = result.type_id();
-                println!(
-                    "Result (time={} ms, typeid={}): {}",
-                    (elapsed.as_micros() as f64 / 1000.0),
-                    type_id,
-                    result,
-                );
+                println!("Result (time={} ms): {}", (elapsed.as_micros() as f64 / 1000.0), result,);
             }
             Err(err) => eprintln!("{}", err),
         };

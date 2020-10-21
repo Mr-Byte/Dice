@@ -64,7 +64,7 @@ impl<L: ModuleLoader> Runtime<L> {
     }
 
     // TODO: Replace this mutually recursive call with an execution stack to prevent the thread's stack from overflowing.
-    pub(super) fn call_fn(&mut self, arg_count: usize) -> Result<(), RuntimeError> {
+    pub(crate) fn call_fn(&mut self, arg_count: usize) -> Result<(), RuntimeError> {
         let (function, receiver) = match self.stack.peek(arg_count) {
             Value::FnBound(fn_bound) => (fn_bound.function.clone(), Some(fn_bound.receiver.clone())),
             value => (value.clone(), None),

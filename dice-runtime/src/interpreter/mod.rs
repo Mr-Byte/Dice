@@ -1,13 +1,14 @@
-use crate::{
-    module::ModuleLoader,
-    runtime::{call_frame::CallFrame, Runtime},
-};
+mod helper;
+
+use crate::module::ModuleLoader;
+use crate::runtime::Runtime;
+use crate::stack::CallFrame;
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
     id::type_id::TypeId,
     protocol::operator::{ADD, DIV, GT, GTE, LT, LTE, MUL, REM, SUB},
     upvalue::{Upvalue, UpvalueState},
-    value::{Class, FnClosure, Object, Value, OBJECT_TYPE_ID},
+    value::{Class, FnClosure, Object, Value},
 };
 use dice_error::runtime_error::RuntimeError;
 use std::collections::hash_map::Entry;
@@ -260,7 +261,13 @@ where
         let rhs = rhs.as_class()?;
         let lhs = self.stack.peek(0);
 
-        *self.stack.peek_mut(0) = Value::Bool(lhs.type_id() == rhs.instance_type_id());
+        let type_id = self
+            .known_type_ids
+            .get(&lhs.kind())
+            .cloned()
+            .or_else(|| lhs.as_object().ok().map(|object| object.type_id()))
+            .unwrap_or_default();
+        *self.stack.peek_mut(0) = Value::Bool(type_id == rhs.instance_type_id());
 
         Ok(())
     }
@@ -273,7 +280,8 @@ where
     }
 
     fn create_object(&mut self) {
-        let object = Object::new(OBJECT_TYPE_ID.with(Clone::clone), None);
+        // TODO: Provide a default object type id.
+        let object = Object::new(TypeId::new(), None);
 
         self.stack.push(Value::Object(object));
     }

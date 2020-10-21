@@ -9,9 +9,6 @@ mod object;
 mod string;
 mod symbol;
 
-use crate::id::type_id::TypeId;
-use crate::runtime::Runtime;
-use dice_error::runtime_error::RuntimeError;
 use dice_error::type_error::TypeError;
 use gc::{Finalize, Trace};
 use std::{collections::HashMap, fmt::Display, hash::BuildHasherDefault};
@@ -29,20 +26,23 @@ pub use symbol::*;
 
 pub type ValueMap = HashMap<Symbol, Value, BuildHasherDefault<WyHash>>;
 
-thread_local! {
-    pub static NULL_TYPE_ID: TypeId = TypeId::default();
-    pub static UNIT_TYPE_ID: TypeId = TypeId::default();
-    pub static BOOL_TYPE_ID: TypeId = TypeId::default();
-    pub static INT_TYPE_ID: TypeId = TypeId::default();
-    pub static FLOAT_TYPE_ID: TypeId = TypeId::default();
-    pub static FN_CLOSURE_TYPE_ID: TypeId = TypeId::default();
-    pub static FN_SCRIPT_TYPE_ID: TypeId = TypeId::default();
-    pub static FN_NATIVE_TYPE_ID: TypeId = TypeId::default();
-    pub static FN_BOUND_TYPE_ID: TypeId = TypeId::default();
-    pub static ARRAY_TYPE_ID: TypeId = TypeId::default();
-    pub static STRING_TYPE_ID: TypeId = TypeId::default();
-    pub static SYMBOL_TYPE_ID: TypeId = TypeId::default();
-    pub static OBJECT_TYPE_ID: TypeId = TypeId::default();
+#[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
+#[repr(u8)]
+pub enum ValueKind {
+    Null,
+    Unit,
+    Bool,
+    Int,
+    Float,
+    FnClosure,
+    FnScript,
+    FnNative,
+    FnBound,
+    Array,
+    String,
+    Symbol,
+    Object,
+    Class,
 }
 
 #[derive(Clone, Debug, Trace, Finalize)]
@@ -189,32 +189,23 @@ impl Value {
         }
     }
 
-    // TODO: Should type_id resolution be a part of the runtime? Compiler has no need for it.
-    pub fn type_id(&self) -> TypeId {
+    pub fn kind(&self) -> ValueKind {
         match self {
-            Value::Null => NULL_TYPE_ID.with(Clone::clone),
-            Value::Unit => UNIT_TYPE_ID.with(Clone::clone),
-            Value::Bool(_) => BOOL_TYPE_ID.with(Clone::clone),
-            Value::Int(_) => INT_TYPE_ID.with(Clone::clone),
-            Value::Float(_) => FLOAT_TYPE_ID.with(Clone::clone),
-            Value::FnClosure(_) => FN_CLOSURE_TYPE_ID.with(Clone::clone),
-            Value::FnScript(_) => FN_SCRIPT_TYPE_ID.with(Clone::clone),
-            Value::FnNative(_) => FN_NATIVE_TYPE_ID.with(Clone::clone),
-            Value::FnBound(_) => FN_BOUND_TYPE_ID.with(Clone::clone),
-            Value::Array(_) => ARRAY_TYPE_ID.with(Clone::clone),
-            Value::String(_) => STRING_TYPE_ID.with(Clone::clone),
-            Value::Symbol(_) => SYMBOL_TYPE_ID.with(Clone::clone),
-            Value::Object(object) => match object.class() {
-                None => OBJECT_TYPE_ID.with(Clone::clone),
-                Some(class) => class.instance_type_id(),
-            },
-            Value::Class(class) => class.type_id(),
+            Value::Null => ValueKind::Null,
+            Value::Unit => ValueKind::Unit,
+            Value::Bool(_) => ValueKind::Bool,
+            Value::Int(_) => ValueKind::Int,
+            Value::Float(_) => ValueKind::Float,
+            Value::FnClosure(_) => ValueKind::FnClosure,
+            Value::FnScript(_) => ValueKind::FnScript,
+            Value::FnNative(_) => ValueKind::FnNative,
+            Value::FnBound(_) => ValueKind::FnBound,
+            Value::Array(_) => ValueKind::Array,
+            Value::String(_) => ValueKind::String,
+            Value::Symbol(_) => ValueKind::Symbol,
+            Value::Object(_) => ValueKind::Object,
+            Value::Class(_) => ValueKind::Class,
         }
-    }
-
-    // TODO: Register known class types with the runtime.
-    pub fn register_classes(_runtime: &mut dyn Runtime) -> Result<(), RuntimeError> {
-        Ok(())
     }
 }
 

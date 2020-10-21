@@ -1,6 +1,6 @@
 use crate::{
     id::type_id::TypeId,
-    value::{symbol::Symbol, Object, ValueMap, OBJECT_TYPE_ID},
+    value::{symbol::Symbol, Object, ValueMap},
 };
 use gc::{Finalize, Gc, GcCell, GcCellRef, GcCellRefMut, Trace};
 use std::{
@@ -16,9 +16,9 @@ pub struct Class {
 impl Class {
     pub fn new(name: Symbol) -> Self {
         let inner = ClassInner {
-            instance_type_id: TypeId::default(),
+            instance_type_id: TypeId::new(),
             methods: Default::default(),
-            object: Object::new(OBJECT_TYPE_ID.with(Clone::clone), None),
+            object: Object::new(TypeId::default(), None),
             name,
         };
 

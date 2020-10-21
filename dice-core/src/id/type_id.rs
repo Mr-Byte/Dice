@@ -1,12 +1,12 @@
 use std::fmt::{Debug, Display, Formatter};
 use uuid::Uuid;
 
-#[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Debug, Hash)]
+#[derive(Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Debug, Hash)]
 #[repr(transparent)]
 pub struct TypeId(Uuid);
 
-impl Default for TypeId {
-    fn default() -> Self {
+impl TypeId {
+    pub fn new() -> Self {
         Self(Uuid::new_v4())
     }
 }

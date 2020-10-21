@@ -7,6 +7,7 @@ edition = "2018"
 [dependencies]
 gc = "0.3"
 thiserror = "1.0"
+wyhash = "0.4"
 
 dice-core = {path = "../dice-core"}
 dice-compiler = {path = "../dice-compiler"}

@@ -1,12 +1,7 @@
-mod call_frame;
-mod helper;
-mod interpreter;
-mod stack;
-
-use crate::{
-    module::{file_loader::FileModuleLoader, ModuleLoader},
-    runtime::stack::Stack,
-};
+use crate::classes;
+use crate::module::{file_loader::FileModuleLoader, ModuleLoader};
+use crate::stack::Stack;
+use dice_core::value::ValueKind;
 use dice_core::{
     bytecode::Bytecode,
     id::type_id::TypeId,
@@ -17,18 +12,22 @@ use dice_core::{
 use dice_error::runtime_error::RuntimeError;
 use gc::{Finalize, Trace};
 use std::borrow::BorrowMut;
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque};
+use std::hash::BuildHasherDefault;
+use wyhash::WyHash;
 
 #[derive(Trace, Finalize)]
 pub struct Runtime<L = FileModuleLoader>
 where
     L: ModuleLoader,
 {
-    stack: Stack,
-    open_upvalues: VecDeque<Upvalue>,
-    globals: ValueMap,
-    loaded_modules: ValueMap,
-    module_loader: L,
+    pub(crate) stack: Stack,
+    pub(crate) open_upvalues: VecDeque<Upvalue>,
+    pub(crate) globals: ValueMap,
+    pub(crate) loaded_modules: ValueMap,
+    pub(crate) module_loader: L,
+    #[unsafe_ignore_trace]
+    pub(crate) known_type_ids: HashMap<ValueKind, TypeId, BuildHasherDefault<WyHash>>,
 }
 
 impl<L> Default for Runtime<L>
@@ -36,17 +35,18 @@ where
     L: ModuleLoader,
 {
     fn default() -> Self {
-        let mut result = Self {
+        let mut runtime = Self {
             stack: Default::default(),
             open_upvalues: Default::default(),
             globals: Default::default(),
             loaded_modules: Default::default(),
             module_loader: Default::default(),
+            known_type_ids: Default::default(),
         };
 
-        Value::register_classes(&mut result).expect("Runtime should never fail to create.");
+        classes::register(&mut runtime);
 
-        result
+        runtime
     }
 }
 
