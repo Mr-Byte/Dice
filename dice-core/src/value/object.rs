@@ -1,9 +1,8 @@
-use crate::gc_any::{GcAny, GcAnyBox};
-use crate::value::Symbol;
 use crate::{
     gc_any,
+    gc_any::{GcAny, GcAnyBox},
     id::type_id::TypeId,
-    value::{Class, Value, ValueMap},
+    value::{Class, Symbol, Value, ValueMap},
 };
 use gc::{Finalize, Gc, GcCell, GcCellRef, GcCellRefMut, Trace};
 use std::{

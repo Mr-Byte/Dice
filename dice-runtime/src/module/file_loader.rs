@@ -1,7 +1,9 @@
 use crate::module::{Module, ModuleLoader};
 use dice_compiler::compiler::Compiler;
-use dice_core::source::{Source, SourceKind};
-use dice_core::value::Symbol;
+use dice_core::{
+    source::{Source, SourceKind},
+    value::Symbol,
+};
 use dice_error::runtime_error::RuntimeError;
 
 #[derive(Default)]

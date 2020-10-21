@@ -1,7 +1,9 @@
 use crate::{runtime::Runtime, value::Value};
 use dice_error::runtime_error::RuntimeError;
-use std::fmt::{Debug, Display};
-use std::rc::Rc;
+use std::{
+    fmt::{Debug, Display},
+    rc::Rc,
+};
 
 pub type NativeFn = Rc<dyn Fn(&mut dyn Runtime, &[Value]) -> Result<Value, RuntimeError>>;
 

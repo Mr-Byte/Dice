@@ -1,19 +1,22 @@
-use crate::classes;
-use crate::module::{file_loader::FileModuleLoader, ModuleLoader};
-use crate::stack::Stack;
-use dice_core::value::ValueKind;
+use crate::{
+    classes,
+    module::{file_loader::FileModuleLoader, ModuleLoader},
+    stack::Stack,
+};
 use dice_core::{
     bytecode::Bytecode,
     id::type_id::TypeId,
     runtime::{ClassBuilder, ModuleBuilder},
     upvalue::Upvalue,
-    value::{FnNative, NativeFn, Object, Value, ValueMap},
+    value::{Class, FnNative, NativeFn, Object, Value, ValueKind, ValueMap},
 };
 use dice_error::runtime_error::RuntimeError;
 use gc::{Finalize, Trace};
-use std::borrow::BorrowMut;
-use std::collections::{HashMap, VecDeque};
-use std::hash::BuildHasherDefault;
+use std::{
+    borrow::BorrowMut,
+    collections::{HashMap, VecDeque},
+    hash::BuildHasherDefault,
+};
 use wyhash::WyHash;
 
 #[derive(Trace, Finalize)]
@@ -28,6 +31,7 @@ where
     pub(crate) module_loader: L,
     #[unsafe_ignore_trace]
     pub(crate) known_type_ids: HashMap<ValueKind, TypeId, BuildHasherDefault<WyHash>>,
+    pub(crate) known_types: HashMap<ValueKind, Class, BuildHasherDefault<WyHash>>,
 }
 
 impl<L> Default for Runtime<L>
@@ -42,6 +46,7 @@ where
             loaded_modules: Default::default(),
             module_loader: Default::default(),
             known_type_ids: Default::default(),
+            known_types: Default::default(),
         };
 
         classes::register(&mut runtime);

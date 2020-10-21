@@ -1,7 +1,6 @@
 pub mod file_loader;
 
-use dice_core::bytecode::Bytecode;
-use dice_core::value::Symbol;
+use dice_core::{bytecode::Bytecode, value::Symbol};
 use dice_error::runtime_error::RuntimeError;
 
 #[derive(Clone)]

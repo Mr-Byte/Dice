@@ -1,8 +1,9 @@
-use crate::module::ModuleLoader;
-use crate::runtime::Runtime;
-use dice_core::protocol::class::NEW;
-use dice_core::upvalue::{Upvalue, UpvalueState};
-use dice_core::value::{Class, FnBound, FnNative, FnScript, Object, Symbol, Value};
+use crate::{module::ModuleLoader, runtime::Runtime};
+use dice_core::{
+    protocol::class::NEW,
+    upvalue::{Upvalue, UpvalueState},
+    value::{Class, FnBound, FnNative, FnScript, Object, Symbol, Value},
+};
 use dice_error::runtime_error::RuntimeError;
 
 impl<L: ModuleLoader> Runtime<L> {
@@ -51,8 +52,15 @@ impl<L: ModuleLoader> Runtime<L> {
             )));
         }
 
-        // TODO: Resolve the class type of built-in types.
-        let value = match value.as_object()?.class() {
+        // NOTE: If the type is an object, try to resolve its class.  It it's not an object or has
+        // no class, try to find it in known types.
+        let class = value
+            .as_object()
+            .ok()
+            .and_then(|object| object.class())
+            .or_else(|| self.known_types.get(&value.kind()).cloned());
+
+        let value = match class {
             Some(class) => match class.methods().get(&key) {
                 Some(method) => Value::FnBound(FnBound::new(value.clone(), method.clone())),
                 None => Value::Null,

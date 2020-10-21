@@ -1,5 +1,7 @@
-use crate::runtime::ClassBuilder;
-use crate::value::{NativeFn, Object, Value};
+use crate::{
+    runtime::ClassBuilder,
+    value::{NativeFn, Object, Value},
+};
 use gc::{Finalize, Trace};
 
 #[derive(Default, Clone, Debug, Trace, Finalize)]

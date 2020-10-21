@@ -1,6 +1,5 @@
 mod array;
 mod class;
-mod classes;
 mod fn_bound;
 mod fn_closure;
 mod fn_native;
@@ -26,7 +25,7 @@ pub use symbol::*;
 
 pub type ValueMap = HashMap<Symbol, Value, BuildHasherDefault<WyHash>>;
 
-#[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
+#[derive(Clone, Debug, Hash, Eq, PartialEq, Trace, Finalize)]
 #[repr(u8)]
 pub enum ValueKind {
     Null,

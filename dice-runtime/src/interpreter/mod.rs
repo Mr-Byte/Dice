@@ -1,8 +1,6 @@
 mod helper;
 
-use crate::module::ModuleLoader;
-use crate::runtime::Runtime;
-use crate::stack::CallFrame;
+use crate::{module::ModuleLoader, runtime::Runtime, stack::CallFrame};
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
     id::type_id::TypeId,
@@ -261,6 +259,7 @@ where
         let rhs = rhs.as_class()?;
         let lhs = self.stack.peek(0);
 
+        // TODO: Work out the exact details of type id resolution.
         let type_id = self
             .known_type_ids
             .get(&lhs.kind())
