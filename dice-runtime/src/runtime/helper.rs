@@ -51,7 +51,8 @@ impl<L: ModuleLoader> Runtime<L> {
             )));
         }
 
-        let value = match value.class() {
+        // TODO: Resolve the class type of built-in types.
+        let value = match value.as_object()?.class() {
             Some(class) => match class.methods().get(&key) {
                 Some(method) => Value::FnBound(FnBound::new(value.clone(), method.clone())),
                 None => Value::Null,

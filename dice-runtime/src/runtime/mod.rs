@@ -15,9 +15,11 @@ use dice_core::{
     value::{FnNative, NativeFn, Object, Value, ValueMap},
 };
 use dice_error::runtime_error::RuntimeError;
+use gc::{Finalize, Trace};
 use std::borrow::BorrowMut;
 use std::collections::VecDeque;
 
+#[derive(Trace, Finalize)]
 pub struct Runtime<L = FileModuleLoader>
 where
     L: ModuleLoader,

@@ -189,13 +189,7 @@ impl Value {
         }
     }
 
-    pub fn class(&self) -> Option<Class> {
-        match self {
-            Value::Object(object) => object.class(),
-            _ => todo!("The others D:"),
-        }
-    }
-
+    // TODO: Should type_id resolution be a part of the runtime? Compiler has no need for it.
     pub fn type_id(&self) -> TypeId {
         match self {
             Value::Null => NULL_TYPE_ID.with(Clone::clone),
