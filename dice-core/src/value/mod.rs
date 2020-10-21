@@ -25,22 +25,6 @@ pub use symbol::*;
 
 pub type ValueMap = HashMap<Symbol, Value, BuildHasherDefault<WyHash>>;
 
-#[derive(Clone, Debug, Hash, Eq, PartialEq, Trace, Finalize)]
-#[repr(u8)]
-pub enum ValueKind {
-    Null,
-    Unit,
-    Bool,
-    Int,
-    Float,
-    Function,
-    Array,
-    String,
-    Symbol,
-    Object,
-    Class,
-}
-
 #[derive(Clone, Debug, Trace, Finalize)]
 pub enum Value {
     Null,
@@ -196,4 +180,25 @@ impl Display for Value {
             Value::Class(class) => class.fmt(fmt),
         }
     }
+}
+
+#[derive(Copy, Clone, Debug, Hash, Eq, PartialEq, Finalize)]
+#[repr(u8)]
+pub enum ValueKind {
+    Null,
+    Unit,
+    Bool,
+    Int,
+    Float,
+    Function,
+    Array,
+    String,
+    Symbol,
+    Object,
+    Class,
+}
+
+// NOTE: This is safe to do, since ValueKind is represented as a primitive type and cannot contain GC values.
+unsafe impl Trace for ValueKind {
+    gc::unsafe_empty_trace!();
 }
