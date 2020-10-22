@@ -1,3 +1,4 @@
+use crate::value::Class;
 use crate::{
     runtime::ClassBuilder,
     value::{NativeFn, Object, Value},
@@ -14,8 +15,8 @@ impl ModuleBuilder {
         self.module_object.clone()
     }
 
-    pub fn new_class(&self, name: &str) -> ClassBuilder {
-        let builder = ClassBuilder::new(name.into());
+    pub fn new_class(&self, name: &str, base: Option<Class>) -> ClassBuilder {
+        let builder = ClassBuilder::new(name.into(), base);
         self.module_object
             .fields_mut()
             .insert(name.into(), Value::Class(builder.class()));

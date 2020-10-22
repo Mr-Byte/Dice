@@ -7,9 +7,9 @@ pub struct ClassBuilder {
 }
 
 impl ClassBuilder {
-    pub fn new(name: &str) -> Self {
+    pub fn new(name: &str, base: Option<Class>) -> Self {
         Self {
-            class: Class::new(name.into()),
+            class: Class::new(name.into(), base),
         }
     }
 

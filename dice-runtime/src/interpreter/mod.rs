@@ -261,10 +261,11 @@ where
         let lhs = self.stack.peek(0);
 
         // TODO: Work out the exact details of type id resolution.
+        // This will need to be fixed to support super/base classes.
         let type_id = self
-            .known_type_ids
+            .known_types
             .get(&lhs.kind())
-            .cloned()
+            .map(|class| class.instance_type_id())
             .or_else(|| lhs.as_object().ok().map(|object| object.type_id()))
             .unwrap_or_default();
         *self.stack.peek_mut(0) = Value::Bool(type_id == rhs.instance_type_id());
@@ -280,8 +281,12 @@ where
     }
 
     fn create_object(&mut self) {
-        // TODO: Provide a default object type id.
-        let object = Object::new(TypeId::new(), None);
+        let object_class = self
+            .known_types
+            .get(&ValueKind::Object)
+            .cloned()
+            .expect("Object should always be registered with the runtime.");
+        let object = Object::new(object_class.instance_type_id(), object_class);
 
         self.stack.push(Value::Object(object));
     }
@@ -289,7 +294,7 @@ where
     fn create_class(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
         let name_slot = cursor.read_u8() as usize;
         let name = bytecode.constants()[name_slot].as_symbol()?;
-        let class = Class::new(name);
+        let class = Class::new(name, self.known_types.get(&ValueKind::Object).cloned());
 
         self.stack.push(Value::Class(class));
 

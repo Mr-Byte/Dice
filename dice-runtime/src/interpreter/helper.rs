@@ -64,7 +64,14 @@ impl<L: ModuleLoader> Runtime<L> {
         let value = match class {
             Some(class) => match class.methods().get(&key) {
                 Some(method) => Value::FnBound(FnBound::new(value.clone(), method.clone())),
-                None => Value::Null,
+                None => match class.base() {
+                    // TODO: Make this resolve all the way up the class hierarchy.
+                    Some(base) => match base.methods().get(&key) {
+                        Some(method) => Value::FnBound(FnBound::new(value.clone(), method.clone())),
+                        None => Value::Null,
+                    },
+                    None => Value::Null,
+                },
             },
             None => Value::Null,
         };
@@ -96,7 +103,7 @@ impl<L: ModuleLoader> Runtime<L> {
 
     fn call_class_constructor(&mut self, arg_count: usize, class: &Class) -> Result<Value, RuntimeError> {
         let class = class.clone();
-        let mut object = Value::Object(Object::new(class.instance_type_id(), Value::Class(class.clone())));
+        let mut object = Value::Object(Object::new(class.instance_type_id(), class.clone()));
 
         if let Some(new) = class.methods().get(&NEW.into()) {
             let bound = Value::FnBound(FnBound::new(object.clone(), new.clone()));

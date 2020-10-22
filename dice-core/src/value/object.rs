@@ -18,7 +18,7 @@ pub struct Object {
 impl Object {
     pub fn new<N>(type_id: TypeId, class: N) -> Self
     where
-        N: Into<Option<Value>>,
+        N: Into<Option<Class>>,
     {
         Self {
             inner: Gc::new(ObjectInner {
@@ -33,7 +33,7 @@ impl Object {
 
     pub fn with_native_tag<N>(type_id: TypeId, class: N, native_tag: GcAnyBox) -> Self
     where
-        N: Into<Option<Value>>,
+        N: Into<Option<Class>>,
     {
         Self {
             inner: Gc::new(ObjectInner {
@@ -69,7 +69,7 @@ impl Display for Object {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "Object")?;
 
-        let class = self.class.as_ref().and_then(|value| value.as_class().ok());
+        let class = self.class.as_ref();
         if let Some(class) = class {
             write!(f, "<{}>", class.name())?;
         }
@@ -86,12 +86,11 @@ impl Display for Object {
 
 #[derive(Default, Debug, Trace, Finalize)]
 pub struct ObjectInner {
-    class: Option<Value>,
+    // TODO: Change this to Option<Class>
+    class: Option<Class>,
     native_tag: GcCell<Option<GcAnyBox>>,
     fields: GcCell<ValueMap>,
-    #[unsafe_ignore_trace]
     type_id: TypeId,
-    #[unsafe_ignore_trace]
     mixin_type_ids: Vec<TypeId>,
 }
 
@@ -109,13 +108,11 @@ impl ObjectInner {
     }
 
     pub fn name(&self) -> Option<Symbol> {
-        self.class
-            .as_ref()
-            .and_then(|value| value.as_class().map(|class| class.name()).ok())
+        self.class.as_ref().map(|value| value.name())
     }
 
     pub fn class(&self) -> Option<Class> {
-        self.class.as_ref().and_then(|value| value.as_class().ok())
+        self.class.clone()
     }
 
     pub fn native_tag(&self) -> Option<GcCellRef<'_, GcAnyBox>> {

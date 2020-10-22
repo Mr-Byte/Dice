@@ -1,7 +1,7 @@
 mod class;
 mod module;
 
-use crate::value::{NativeFn, Value};
+use crate::value::{Class, NativeFn, Value};
 use dice_error::runtime_error::RuntimeError;
 
 pub use class::*;
@@ -21,5 +21,5 @@ pub trait Runtime {
     fn new_module(&mut self, name: &str) -> Result<ModuleBuilder, RuntimeError>;
 
     /// Create a new global class.
-    fn new_class(&mut self, name: &str) -> Result<ClassBuilder, RuntimeError>;
+    fn new_class(&mut self, name: &str, base: Option<Class>) -> Result<ClassBuilder, RuntimeError>;
 }

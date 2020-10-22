@@ -1,4 +1,5 @@
 use crate::module::ModuleLoader;
+use dice_core::value::Class;
 use dice_core::{
     protocol::class::NEW,
     runtime::Runtime,
@@ -7,18 +8,18 @@ use dice_core::{
 use dice_error::runtime_error::RuntimeError;
 use std::rc::Rc;
 
-pub fn register(runtime: &mut crate::Runtime<impl ModuleLoader>) {
-    let mut int = runtime.new_class("Int").unwrap();
-    runtime
-        .known_type_ids
-        .insert(ValueKind::Int, int.class().instance_type_id());
+pub fn register(runtime: &mut crate::Runtime<impl ModuleLoader>, base: Class) {
+    let mut int = runtime.new_class("Int", Some(base)).unwrap();
     runtime.known_types.insert(ValueKind::Int, int.class());
 
     int.register_native_method(NEW, Rc::new(construct_int));
-    int.register_native_method("abs", Rc::new(abs));
+    int.register_native_method("abs", bind_i64_ret_i64(i64::abs));
     int.register_native_method("pow", Rc::new(pow));
-    int.register_native_method("is_positive", Rc::new(is_positive));
-    int.register_native_method("is_negative", Rc::new(is_negative));
+    int.register_native_method("is_positive", bind_i64_ret_bool(i64::is_positive));
+    int.register_native_method("is_negative", bind_i64_ret_bool(i64::is_negative));
+    int.register_native_method("min", bind_i64_i64_ret_i64(i64::min));
+    int.register_native_method("max", bind_i64_i64_ret_i64(i64::max));
+
     // TODO: Decide if the wrapping/overflowing/saturating operators need included.
 
     int.register_native_static_property("MAX", Value::Int(i64::MAX));
@@ -50,33 +51,36 @@ fn construct_int(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, Ru
     }
 }
 
-fn abs(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
-    if let [Value::Int(this), ..] = args {
-        Ok(Value::Int(this.abs()))
-    } else {
-        Ok(Value::Null)
-    }
+fn bind_i64_ret_i64(
+    function: impl Fn(i64) -> i64 + 'static,
+) -> Rc<dyn Fn(&mut dyn Runtime, &[Value]) -> Result<Value, RuntimeError>> {
+    Rc::new(move |_: &mut dyn Runtime, args: &[Value]| match args {
+        [Value::Int(this), ..] => Ok(Value::Int(function(*this))),
+        _ => Ok(Value::Null),
+    })
+}
+
+fn bind_i64_ret_bool(
+    function: impl Fn(i64) -> bool + 'static,
+) -> Rc<dyn Fn(&mut dyn Runtime, &[Value]) -> Result<Value, RuntimeError>> {
+    Rc::new(move |_: &mut dyn Runtime, args: &[Value]| match args {
+        [Value::Int(this), ..] => Ok(Value::Bool(function(*this))),
+        _ => Ok(Value::Null),
+    })
+}
+
+fn bind_i64_i64_ret_i64(
+    function: impl Fn(i64, i64) -> i64 + 'static,
+) -> Rc<dyn Fn(&mut dyn Runtime, &[Value]) -> Result<Value, RuntimeError>> {
+    Rc::new(move |_: &mut dyn Runtime, args: &[Value]| match args {
+        [Value::Int(first), Value::Int(second), ..] => Ok(Value::Int(function(*first, *second))),
+        _ => Ok(Value::Null),
+    })
 }
 
 fn pow(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
     if let [Value::Int(this), Value::Int(exp), ..] = args {
         Ok(Value::Int(this.pow(*exp as u32)))
-    } else {
-        Ok(Value::Null)
-    }
-}
-
-fn is_positive(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
-    if let [Value::Int(this), ..] = args {
-        Ok(Value::Bool(this.is_positive()))
-    } else {
-        Ok(Value::Null)
-    }
-}
-
-fn is_negative(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
-    if let [Value::Int(this), ..] = args {
-        Ok(Value::Bool(this.is_negative()))
     } else {
         Ok(Value::Null)
     }

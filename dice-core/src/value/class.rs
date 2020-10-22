@@ -14,11 +14,12 @@ pub struct Class {
 }
 
 impl Class {
-    pub fn new(name: Symbol) -> Self {
+    pub fn new(name: Symbol, base: Option<Class>) -> Self {
         let inner = ClassInner {
             instance_type_id: TypeId::new(),
             methods: Default::default(),
             object: Object::new(TypeId::default(), None),
+            base,
             name,
         };
 
@@ -37,7 +38,7 @@ pub struct ClassInner {
     name: Symbol,
     methods: GcCell<ValueMap>,
     object: Object,
-    #[unsafe_ignore_trace]
+    base: Option<Class>,
     instance_type_id: TypeId,
 }
 
@@ -56,6 +57,10 @@ impl ClassInner {
 
     pub fn instance_type_id(&self) -> TypeId {
         self.instance_type_id
+    }
+
+    pub fn base(&self) -> Option<Class> {
+        self.base.clone()
     }
 }
 

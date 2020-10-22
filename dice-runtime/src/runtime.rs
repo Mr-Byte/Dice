@@ -29,8 +29,6 @@ where
     pub(crate) globals: ValueMap,
     pub(crate) loaded_modules: ValueMap,
     pub(crate) module_loader: L,
-    // TODO: Merge these maps?
-    pub(crate) known_type_ids: HashMap<ValueKind, TypeId, BuildHasherDefault<WyHash>>,
     pub(crate) known_types: HashMap<ValueKind, Class, BuildHasherDefault<WyHash>>,
 }
 
@@ -45,7 +43,6 @@ where
             globals: Default::default(),
             loaded_modules: Default::default(),
             module_loader: Default::default(),
-            known_type_ids: Default::default(),
             known_types: Default::default(),
         };
 
@@ -123,8 +120,8 @@ where
         Ok(module)
     }
 
-    fn new_class(&mut self, name: &str) -> Result<ClassBuilder, RuntimeError> {
-        let builder = ClassBuilder::new(name);
+    fn new_class(&mut self, name: &str, base: Option<Class>) -> Result<ClassBuilder, RuntimeError> {
+        let builder = ClassBuilder::new(name, base);
 
         if self
             .globals

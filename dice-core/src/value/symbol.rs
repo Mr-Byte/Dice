@@ -68,6 +68,12 @@ impl<'a> From<&'a super::String> for Symbol {
     }
 }
 
+impl Into<super::String> for Symbol {
+    fn into(self) -> super::String {
+        super::String::from(&*self.inner)
+    }
+}
+
 impl PartialEq for Symbol {
     fn eq(&self, other: &Self) -> bool {
         self.as_ptr() == other.as_ptr()
