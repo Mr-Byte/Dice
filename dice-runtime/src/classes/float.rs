@@ -1,4 +1,5 @@
 use crate::module::ModuleLoader;
+use dice_core::runtime::ClassBuilder;
 use dice_core::{
     protocol::class::NEW,
     runtime::Runtime,
@@ -7,8 +8,8 @@ use dice_core::{
 use dice_error::runtime_error::RuntimeError;
 use std::rc::Rc;
 
-pub fn register(runtime: &mut crate::Runtime<impl ModuleLoader>) {
-    let mut float = runtime.new_class("Float").unwrap();
+pub fn register(runtime: &mut crate::Runtime<impl ModuleLoader>, base: &ClassBuilder) {
+    let mut float = base.derive("Float");
     runtime.known_types.insert(ValueKind::Float, float.class());
 
     // NOTE: This does not currently expose all possible functions rust has, just a subset.

@@ -1,4 +1,5 @@
 use crate::module::ModuleLoader;
+use dice_core::runtime::ClassBuilder;
 use dice_core::{
     runtime::Runtime,
     value::{Value, ValueKind},
@@ -6,8 +7,8 @@ use dice_core::{
 use dice_error::runtime_error::RuntimeError;
 use std::rc::Rc;
 
-pub fn register(runtime: &mut crate::Runtime<impl ModuleLoader>) {
-    let mut class = runtime.new_class("Class").unwrap();
+pub fn register(runtime: &mut crate::Runtime<impl ModuleLoader>, base: &ClassBuilder) {
+    let mut class = base.derive("Class");
     runtime.known_types.insert(ValueKind::Class, class.class());
 
     class.register_native_method("name", Rc::new(name));

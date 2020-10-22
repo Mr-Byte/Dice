@@ -17,8 +17,21 @@ impl Class {
     pub fn new(name: Symbol) -> Self {
         let inner = ClassInner {
             instance_type_id: TypeId::new(),
+            base: Default::default(),
             methods: Default::default(),
             object: Object::new(TypeId::default(), None),
+            name,
+        };
+
+        Self { inner: inner.into() }
+    }
+
+    pub fn with_base(name: Symbol, base: Class) -> Self {
+        let inner = ClassInner {
+            instance_type_id: TypeId::new(),
+            methods: Default::default(),
+            object: Object::new(TypeId::default(), None),
+            base: Some(base),
             name,
         };
 
@@ -35,6 +48,7 @@ impl Display for Class {
 #[derive(Debug, Trace, Finalize)]
 pub struct ClassInner {
     name: Symbol,
+    base: Option<Class>,
     methods: GcCell<ValueMap>,
     object: Object,
     instance_type_id: TypeId,

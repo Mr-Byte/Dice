@@ -13,6 +13,12 @@ impl ClassBuilder {
         }
     }
 
+    pub fn derive(&self, name: &str) -> Self {
+        Self {
+            class: Class::with_base(name.into(), self.class.clone()),
+        }
+    }
+
     pub fn class(&self) -> Class {
         self.class.clone()
     }
