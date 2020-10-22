@@ -1,13 +1,12 @@
 mod helper;
 
 use crate::{module::ModuleLoader, runtime::Runtime, stack::CallFrame};
-use dice_core::value::ValueKind;
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
     id::type_id::TypeId,
     protocol::operator::{ADD, DIV, GT, GTE, LT, LTE, MUL, REM, SUB},
     upvalue::{Upvalue, UpvalueState},
-    value::{Class, FnClosure, Object, Value},
+    value::{Class, FnClosure, Object, Value, ValueKind},
 };
 use dice_error::runtime_error::RuntimeError;
 use std::collections::hash_map::Entry;

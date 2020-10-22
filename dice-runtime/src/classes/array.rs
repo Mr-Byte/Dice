@@ -1,7 +1,9 @@
 use crate::module::ModuleLoader;
-use dice_core::protocol::class::NEW;
-use dice_core::value::Value;
-use dice_core::{runtime::Runtime, value::ValueKind};
+use dice_core::{
+    protocol::class::NEW,
+    runtime::Runtime,
+    value::{Value, ValueKind},
+};
 use dice_error::runtime_error::RuntimeError;
 use std::rc::Rc;
 

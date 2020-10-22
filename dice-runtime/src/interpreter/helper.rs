@@ -1,9 +1,8 @@
 use crate::{module::ModuleLoader, runtime::Runtime};
-use dice_core::value::ValueKind;
 use dice_core::{
     protocol::class::NEW,
     upvalue::{Upvalue, UpvalueState},
-    value::{Class, FnBound, FnNative, FnScript, Object, Symbol, Value},
+    value::{Class, FnBound, FnNative, FnScript, Object, Symbol, Value, ValueKind},
 };
 use dice_error::runtime_error::RuntimeError;
 
