@@ -7,9 +7,6 @@ use std::rc::Rc;
 
 pub fn register(runtime: &mut crate::Runtime<impl ModuleLoader>) {
     let mut array = runtime.new_class("Array").unwrap();
-    runtime
-        .known_type_ids
-        .insert(ValueKind::Array, array.class().instance_type_id());
     runtime.known_types.insert(ValueKind::Array, array.class());
 
     array.register_native_method(NEW, Rc::new(construct_array));

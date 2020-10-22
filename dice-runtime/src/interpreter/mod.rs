@@ -262,9 +262,9 @@ where
 
         // TODO: Work out the exact details of type id resolution.
         let type_id = self
-            .known_type_ids
+            .known_types
             .get(&lhs.kind())
-            .cloned()
+            .map(|class| class.instance_type_id())
             .or_else(|| lhs.as_object().ok().map(|object| object.type_id()))
             .unwrap_or_default();
         *self.stack.peek_mut(0) = Value::Bool(type_id == rhs.instance_type_id());
@@ -280,8 +280,13 @@ where
     }
 
     fn create_object(&mut self) {
-        // TODO: Provide a default object type id.
-        let object = Object::new(TypeId::new(), None);
+        let object_class = self
+            .known_types
+            .get(&ValueKind::Object)
+            .expect("Object class should always be registered with runtime.")
+            .clone();
+
+        let object = Object::new(object_class.instance_type_id(), Value::Class(object_class));
 
         self.stack.push(Value::Object(object));
     }
