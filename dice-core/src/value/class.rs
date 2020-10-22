@@ -37,7 +37,6 @@ pub struct ClassInner {
     name: Symbol,
     methods: GcCell<ValueMap>,
     object: Object,
-    #[unsafe_ignore_trace]
     instance_type_id: TypeId,
 }
 

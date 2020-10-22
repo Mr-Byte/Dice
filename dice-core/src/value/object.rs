@@ -89,9 +89,7 @@ pub struct ObjectInner {
     class: Option<Value>,
     native_tag: GcCell<Option<GcAnyBox>>,
     fields: GcCell<ValueMap>,
-    #[unsafe_ignore_trace]
     type_id: TypeId,
-    #[unsafe_ignore_trace]
     mixin_type_ids: Vec<TypeId>,
 }
 
