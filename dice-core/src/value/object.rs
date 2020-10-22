@@ -1,8 +1,9 @@
+use crate::value::ClassInner;
 use crate::{
     gc_any,
     gc_any::{GcAny, GcAnyBox},
     id::type_id::TypeId,
-    value::{Class, Symbol, Value, ValueMap},
+    value::{Class, Symbol, ValueMap},
 };
 use gc::{Finalize, Gc, GcCell, GcCellRef, GcCellRefMut, Trace};
 use std::{
@@ -18,7 +19,7 @@ pub struct Object {
 impl Object {
     pub fn new<N>(type_id: TypeId, class: N) -> Self
     where
-        N: Into<Option<Value>>,
+        N: Into<Option<Class>>,
     {
         Self {
             inner: Gc::new(ObjectInner {
@@ -33,7 +34,7 @@ impl Object {
 
     pub fn with_native_tag<N>(type_id: TypeId, class: N, native_tag: GcAnyBox) -> Self
     where
-        N: Into<Option<Value>>,
+        N: Into<Option<Class>>,
     {
         Self {
             inner: Gc::new(ObjectInner {
@@ -69,8 +70,7 @@ impl Display for Object {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "Object")?;
 
-        let class = self.class.as_ref().and_then(|value| value.as_class().ok());
-        if let Some(class) = class {
+        if let Some(ref class) = self.class {
             write!(f, "<{}>", class.name())?;
         }
 
@@ -86,7 +86,7 @@ impl Display for Object {
 
 #[derive(Default, Debug, Trace, Finalize)]
 pub struct ObjectInner {
-    class: Option<Value>,
+    class: Option<Class>,
     native_tag: GcCell<Option<GcAnyBox>>,
     fields: GcCell<ValueMap>,
     type_id: TypeId,
@@ -107,13 +107,11 @@ impl ObjectInner {
     }
 
     pub fn name(&self) -> Option<Symbol> {
-        self.class
-            .as_ref()
-            .and_then(|value| value.as_class().map(|class| class.name()).ok())
+        self.class.as_deref().map(ClassInner::name)
     }
 
     pub fn class(&self) -> Option<Class> {
-        self.class.as_ref().and_then(|value| value.as_class().ok())
+        self.class.clone()
     }
 
     pub fn native_tag(&self) -> Option<GcCellRef<'_, GcAnyBox>> {

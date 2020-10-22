@@ -279,13 +279,14 @@ where
     }
 
     fn create_object(&mut self) {
+        // TODO: Cache this ahead of time and store it, for more efficient retrievals.
         let object_class = self
             .known_types
             .get(&ValueKind::Object)
             .expect("Object class should always be registered with runtime.")
             .clone();
 
-        let object = Object::new(object_class.instance_type_id(), Value::Class(object_class));
+        let object = Object::new(object_class.instance_type_id(), object_class);
 
         self.stack.push(Value::Object(object));
     }
