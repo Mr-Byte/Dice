@@ -1,4 +1,5 @@
 use crate::module::ModuleLoader;
+use dice_core::value::NativeFn;
 use dice_core::{
     protocol::class::NEW,
     runtime::{ClassBuilder, Runtime},
@@ -77,27 +78,21 @@ fn construct_float(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, 
     }
 }
 
-fn bind_f64_ret_f64(
-    function: impl Fn(f64) -> f64 + 'static,
-) -> Rc<dyn Fn(&mut dyn Runtime, &[Value]) -> Result<Value, RuntimeError>> {
+fn bind_f64_ret_f64(function: impl Fn(f64) -> f64 + 'static) -> NativeFn {
     Rc::new(move |_: &mut dyn Runtime, args: &[Value]| match args {
         [Value::Float(this), ..] => Ok(Value::Float(function(*this))),
         _ => Ok(Value::Null),
     })
 }
 
-fn bind_f64_ret_bool(
-    function: impl Fn(f64) -> bool + 'static,
-) -> Rc<dyn Fn(&mut dyn Runtime, &[Value]) -> Result<Value, RuntimeError>> {
+fn bind_f64_ret_bool(function: impl Fn(f64) -> bool + 'static) -> NativeFn {
     Rc::new(move |_: &mut dyn Runtime, args: &[Value]| match args {
         [Value::Float(this), ..] => Ok(Value::Bool(function(*this))),
         _ => Ok(Value::Null),
     })
 }
 
-fn bind_f64_f64_ret_f64(
-    function: impl Fn(f64, f64) -> f64 + 'static,
-) -> Rc<dyn Fn(&mut dyn Runtime, &[Value]) -> Result<Value, RuntimeError>> {
+fn bind_f64_f64_ret_f64(function: impl Fn(f64, f64) -> f64 + 'static) -> NativeFn {
     Rc::new(move |_: &mut dyn Runtime, args: &[Value]| match args {
         [Value::Float(first), Value::Float(second), ..] => Ok(Value::Float(function(*first, *second))),
         _ => Ok(Value::Null),

@@ -1,4 +1,5 @@
 use crate::module::ModuleLoader;
+use dice_core::value::NativeFn;
 use dice_core::{
     protocol::class::NEW,
     runtime::{ClassBuilder, Runtime},
@@ -53,27 +54,21 @@ fn construct_int(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, Ru
     }
 }
 
-fn bind_i64_ret_i64(
-    function: impl Fn(i64) -> i64 + 'static,
-) -> Rc<dyn Fn(&mut dyn Runtime, &[Value]) -> Result<Value, RuntimeError>> {
+fn bind_i64_ret_i64(function: impl Fn(i64) -> i64 + 'static) -> NativeFn {
     Rc::new(move |_: &mut dyn Runtime, args: &[Value]| match args {
         [Value::Int(this), ..] => Ok(Value::Int(function(*this))),
         _ => Ok(Value::Null),
     })
 }
 
-fn bind_i64_ret_bool(
-    function: impl Fn(i64) -> bool + 'static,
-) -> Rc<dyn Fn(&mut dyn Runtime, &[Value]) -> Result<Value, RuntimeError>> {
+fn bind_i64_ret_bool(function: impl Fn(i64) -> bool + 'static) -> NativeFn {
     Rc::new(move |_: &mut dyn Runtime, args: &[Value]| match args {
         [Value::Int(this), ..] => Ok(Value::Bool(function(*this))),
         _ => Ok(Value::Null),
     })
 }
 
-fn bind_i64_i64_ret_i64(
-    function: impl Fn(i64, i64) -> i64 + 'static,
-) -> Rc<dyn Fn(&mut dyn Runtime, &[Value]) -> Result<Value, RuntimeError>> {
+fn bind_i64_i64_ret_i64(function: impl Fn(i64, i64) -> i64 + 'static) -> NativeFn {
     Rc::new(move |_: &mut dyn Runtime, args: &[Value]| match args {
         [Value::Int(first), Value::Int(second), ..] => Ok(Value::Int(function(*first, *second))),
         _ => Ok(Value::Null),

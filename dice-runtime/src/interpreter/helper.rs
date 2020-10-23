@@ -132,7 +132,7 @@ impl<L: ModuleLoader> Runtime<L> {
             args[0] = receiver;
         }
 
-        fn_native.call(self, &mut args)
+        fn_native.call(self, &args)
     }
 
     fn call_fn_script(
