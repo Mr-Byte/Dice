@@ -131,4 +131,12 @@ where
 
         Ok(builder)
     }
+
+    fn new_object(&mut self) -> Result<Object, RuntimeError> {
+        let object = Object::new(self.known_types.get(&ValueKind::Object).cloned().ok_or_else(|| {
+            RuntimeError::Aborted(String::from("Object should always be registered with the runtime."))
+        })?);
+
+        Ok(object)
+    }
 }

@@ -42,10 +42,8 @@ fn iterator_for_loop_addition_with_assignment(criterion: &mut Criterion) {
 
     criterion.bench_function("iterator-for-loop-addition-with-assignment", |bencher| {
         bencher.iter(|| {
-            dice.run_script(black_box(
-                "let mut x = 0; let xs = 0..100000; for n in xs.iter() { x += 1; }",
-            ))
-            .unwrap()
+            dice.run_script(black_box("let mut x = 0; let xs = 0..100000; for n in xs { x += 1; }"))
+                .unwrap()
         })
     });
 }

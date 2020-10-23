@@ -9,9 +9,9 @@ export class Range {
         object {
             next: || {
                 let result = if current < self.end {
-                    object { value: current, done: false }
+                    object { value: current, is_done: false }
                 } else {
-                    object { done: true }
+                    object { is_done: true }
                 };
 
                 current += 1;

@@ -3,7 +3,7 @@ use crate::{
     compiler::Compiler,
     scope_stack::{ScopeKind, State},
 };
-use dice_core::protocol::iterator::{DONE, NEXT, VALUE};
+use dice_core::protocol::iterator::{DONE, ITER, NEXT, VALUE};
 use dice_error::compiler_error::CompilerError;
 use dice_syntax::ForLoop;
 
@@ -15,8 +15,14 @@ impl NodeVisitor<&ForLoop> for Compiler {
 
         // NOTE: Visit the source first.
         self.visit(for_loop.source)?;
-        // NOTE: NExt load the NEXT function and leave it on the stack.
-        self.assembler()?.load_field(NEXT, for_loop.span)?;
+        // NEXT: Load the iterator method, call it, and load the next method from it.
+        emit_bytecode! {
+            self.assembler()?, for_loop.span => [
+                LOAD_FIELD ITER;
+                CALL 0;
+                LOAD_FIELD NEXT;
+            ]
+        };
 
         let context = self.context()?;
         let loop_start = context.assembler().current_position();

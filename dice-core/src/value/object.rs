@@ -1,3 +1,4 @@
+use crate::value::Value;
 use crate::{
     id::type_id::TypeId,
     value::{Class, ClassInner, Symbol, ValueMap},
@@ -98,5 +99,13 @@ impl ObjectInner {
 
     pub fn class(&self) -> Option<Class> {
         self.class.clone()
+    }
+
+    pub fn set_field(&self, field_name: Symbol, value: Value) {
+        self.fields.borrow_mut().insert(field_name, value);
+    }
+
+    pub fn field(&self, field_name: Symbol) -> Option<Value> {
+        self.fields.borrow().get(&field_name).cloned()
     }
 }

@@ -41,5 +41,10 @@ pub mod class {
 pub mod iterator {
     pub const NEXT: &str = "next";
     pub const VALUE: &str = "value";
-    pub const DONE: &str = "done";
+    pub const DONE: &str = "is_done";
+    pub const ITER: &str = "iter";
+}
+
+pub mod object {
+    pub const TO_STRING: &str = "to_string";
 }
