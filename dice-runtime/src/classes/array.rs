@@ -18,6 +18,9 @@ pub fn register(runtime: &mut crate::Runtime<impl ModuleLoader>, base: &ClassBui
     class.register_native_method("push", Rc::new(push));
     class.register_native_method("pop", Rc::new(pop));
     class.register_native_method("length", Rc::new(length));
+    class.register_native_method("first", Rc::new(first));
+    class.register_native_method("filter", Rc::new(filter));
+    class.register_native_method("map", Rc::new(map));
 }
 
 fn construct_array(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
@@ -55,5 +58,62 @@ fn length(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeEr
         Ok(Value::Int(arr.elements().len() as i64))
     } else {
         Ok(Value::Null)
+    }
+}
+
+fn first(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
+    match args {
+        [Value::Array(arr), predicate, ..] => Ok(arr
+            .elements()
+            .iter()
+            .find(|value| {
+                runtime
+                    .call_function(predicate.clone(), &[(*value).clone()])
+                    .ok()
+                    .and_then(|value| value.as_bool().ok())
+                    .unwrap_or(false)
+            })
+            .cloned()
+            .unwrap_or(Value::Null)),
+        [Value::Array(arr), ..] => Ok(arr.elements().first().cloned().unwrap_or(Value::Null)),
+        _ => Ok(Value::Null),
+    }
+}
+
+fn filter(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
+    match args {
+        [Value::Array(arr), predicate, ..] => Ok(Value::Array(
+            arr.elements()
+                .iter()
+                .filter(|value| {
+                    runtime
+                        .call_function(predicate.clone(), &[(*value).clone()])
+                        .ok()
+                        .and_then(|value| value.as_bool().ok())
+                        .unwrap_or(false)
+                })
+                .cloned()
+                .collect::<Vec<_>>()
+                .into(),
+        )),
+        _ => Ok(Value::Null),
+    }
+}
+
+fn map(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
+    match args {
+        [Value::Array(arr), selector, ..] => Ok(Value::Array(
+            arr.elements()
+                .iter()
+                .map(|value| {
+                    runtime
+                        .call_function(selector.clone(), &[(*value).clone()])
+                        .ok()
+                        .unwrap_or(Value::Null)
+                })
+                .collect::<Vec<_>>()
+                .into(),
+        )),
+        _ => Ok(Value::Null),
     }
 }
