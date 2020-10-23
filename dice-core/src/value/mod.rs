@@ -9,7 +9,6 @@ mod string;
 mod symbol;
 
 use dice_error::type_error::TypeError;
-use gc::{Finalize, Trace};
 use std::{collections::HashMap, fmt::Display, hash::BuildHasherDefault};
 use wyhash::WyHash;
 
@@ -25,7 +24,7 @@ pub use symbol::*;
 
 pub type ValueMap = HashMap<Symbol, Value, BuildHasherDefault<WyHash>>;
 
-#[derive(Clone, Debug, Trace, Finalize)]
+#[derive(Clone, Debug)]
 pub enum Value {
     Null,
     Unit,
@@ -182,7 +181,7 @@ impl Display for Value {
     }
 }
 
-#[derive(Copy, Clone, Debug, Hash, Eq, PartialEq, Finalize)]
+#[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
 #[repr(u8)]
 pub enum ValueKind {
     Null,
@@ -196,9 +195,4 @@ pub enum ValueKind {
     Symbol,
     Object,
     Class,
-}
-
-// NOTE: This is safe to do, since ValueKind is represented as a primitive type and cannot contain GC values.
-unsafe impl Trace for ValueKind {
-    gc::unsafe_empty_trace!();
 }

@@ -1,7 +1,6 @@
 use crate::value::{Class, NativeFn, Value};
-use gc::{Finalize, Trace};
 
-#[derive(Clone, Debug, Trace, Finalize)]
+#[derive(Clone, Debug)]
 pub struct ClassBuilder {
     class: Class,
 }

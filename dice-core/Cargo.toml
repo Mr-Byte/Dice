@@ -7,9 +7,6 @@ edition = "2018"
 [dependencies]
 anyhow = "1.0"
 bytes = "0.5"
-downcast-rs = "1.2"
-gc = { version = "0.3", features = ["derive"] }
-internship = "0.6.0"
 thiserror = "1.0"
 uuid = { version = "0.8", features = ["v4"] }
 wyhash = "0.4"

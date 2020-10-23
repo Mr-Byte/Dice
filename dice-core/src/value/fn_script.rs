@@ -1,24 +1,22 @@
 use crate::bytecode::Bytecode;
-use std::{fmt::Display, ops::Deref};
+use std::{fmt::Display, ops::Deref, rc::Rc};
 
-#[derive(Debug, Trace, Finalize)]
+#[derive(Debug)]
 pub struct FnScriptInner {
     pub name: String,
     pub bytecode: Bytecode,
-    #[unsafe_ignore_trace]
     id: uuid::Uuid,
 }
-use gc::{Finalize, Gc, Trace};
 
-#[derive(Clone, Debug, Trace, Finalize)]
+#[derive(Clone, Debug)]
 pub struct FnScript {
-    inner: Gc<FnScriptInner>,
+    inner: Rc<FnScriptInner>,
 }
 
 impl FnScript {
     pub fn new(name: String, bytecode: Bytecode, id: uuid::Uuid) -> Self {
         Self {
-            inner: Gc::new(FnScriptInner { bytecode, name, id }),
+            inner: Rc::new(FnScriptInner { bytecode, name, id }),
         }
     }
 }

@@ -2,15 +2,16 @@ use crate::{
     id::type_id::TypeId,
     value::{symbol::Symbol, Object, Value, ValueMap},
 };
-use gc::{Finalize, Gc, GcCell, GcCellRefMut, Trace};
 use std::{
+    cell::{RefCell, RefMut},
     fmt::{Display, Formatter},
     ops::Deref,
+    rc::Rc,
 };
 
-#[derive(Clone, Debug, Trace, Finalize, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Class {
-    inner: Gc<ClassInner>,
+    inner: Rc<ClassInner>,
 }
 
 impl Class {
@@ -45,11 +46,11 @@ impl Display for Class {
     }
 }
 
-#[derive(Debug, Trace, Finalize)]
+#[derive(Debug)]
 pub struct ClassInner {
     name: Symbol,
     base: Option<Class>,
-    methods: GcCell<ValueMap>,
+    methods: RefCell<ValueMap>,
     object: Object,
     instance_type_id: TypeId,
 }
@@ -60,7 +61,7 @@ impl ClassInner {
     }
 
     // TODO: Replace this with add_method
-    pub fn methods_mut(&self) -> GcCellRefMut<'_, ValueMap> {
+    pub fn methods_mut(&self) -> RefMut<'_, ValueMap> {
         self.methods.borrow_mut()
     }
 

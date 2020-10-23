@@ -5,7 +5,6 @@ authors = ["Josh Rodgers <bytemr@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-gc = "0.3"
 thiserror = "1.0"
 wyhash = "0.4"
 

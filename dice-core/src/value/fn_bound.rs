@@ -1,25 +1,24 @@
 use crate::value::Value;
-use gc::{Finalize, Gc, Trace};
 use std::{
     fmt::{Debug, Display, Formatter},
     ops::Deref,
+    rc::Rc,
 };
 
-#[derive(Trace, Finalize)]
 pub struct FnBoundInner {
     pub receiver: Value,
     pub function: Value,
 }
 
-#[derive(Clone, Debug, Trace, Finalize)]
+#[derive(Clone, Debug)]
 pub struct FnBound {
-    inner: Gc<FnBoundInner>,
+    inner: Rc<FnBoundInner>,
 }
 
 impl FnBound {
     pub fn new(receiver: Value, function: Value) -> Self {
         Self {
-            inner: Gc::new(FnBoundInner { receiver, function }),
+            inner: Rc::new(FnBoundInner { receiver, function }),
         }
     }
 }

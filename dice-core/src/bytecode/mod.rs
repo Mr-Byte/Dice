@@ -1,26 +1,24 @@
 use crate::value::Value;
 pub use cursor::BytecodeCursor;
 use dice_error::span::Span;
-use gc::{Finalize, Gc, Trace};
 use instruction::Instruction;
-use std::{collections::HashMap, fmt::Display};
+use std::{collections::HashMap, fmt::Display, rc::Rc};
 
 mod cursor;
 pub mod instruction;
 
-#[derive(Debug, Trace, Finalize)]
+#[derive(Debug)]
 struct BytecodeInner {
     slot_count: usize,
     upvalue_count: usize,
     constants: Box<[Value]>,
     data: Box<[u8]>,
-    #[unsafe_ignore_trace]
     source_map: HashMap<u64, Span>,
 }
 
-#[derive(Debug, Clone, Trace, Finalize)]
+#[derive(Debug, Clone)]
 pub struct Bytecode {
-    inner: Gc<BytecodeInner>,
+    inner: Rc<BytecodeInner>,
 }
 
 impl Bytecode {
@@ -32,7 +30,7 @@ impl Bytecode {
         source_map: HashMap<u64, Span>,
     ) -> Self {
         Self {
-            inner: Gc::new(BytecodeInner {
+            inner: Rc::new(BytecodeInner {
                 constants,
                 slot_count,
                 upvalue_count,

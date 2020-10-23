@@ -10,7 +10,6 @@ use dice_core::{
     value::{Class, FnNative, NativeFn, Object, Value, ValueKind, ValueMap},
 };
 use dice_error::runtime_error::RuntimeError;
-use gc::{Finalize, Trace};
 use std::{
     borrow::BorrowMut,
     collections::{HashMap, VecDeque},
@@ -18,7 +17,6 @@ use std::{
 };
 use wyhash::WyHash;
 
-#[derive(Trace, Finalize)]
 pub struct Runtime<L = FileModuleLoader>
 where
     L: ModuleLoader,

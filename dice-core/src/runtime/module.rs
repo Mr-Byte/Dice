@@ -2,9 +2,8 @@ use crate::{
     runtime::ClassBuilder,
     value::{NativeFn, Object, Value},
 };
-use gc::{Finalize, Trace};
 
-#[derive(Default, Clone, Debug, Trace, Finalize)]
+#[derive(Default, Clone, Debug)]
 pub struct ModuleBuilder {
     module_object: Object,
 }

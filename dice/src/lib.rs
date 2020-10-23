@@ -3,7 +3,7 @@ use dice_core::source::{Source, SourceKind};
 use dice_error::compiler_error::CompilerError;
 use dice_runtime::runtime;
 
-pub use dice_core::{gc_any::*, protocol, runtime::Runtime, value};
+pub use dice_core::{protocol, runtime::Runtime, value};
 pub use dice_error::runtime_error::RuntimeError;
 
 pub struct Dice {

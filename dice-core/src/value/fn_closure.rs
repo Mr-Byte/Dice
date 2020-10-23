@@ -1,4 +1,3 @@
-use gc::{Finalize, Gc, Trace};
 use std::{
     fmt::{Debug, Display},
     ops::Deref,
@@ -6,8 +5,8 @@ use std::{
 
 use super::FnScript;
 use crate::upvalue::Upvalue;
+use std::rc::Rc;
 
-#[derive(Trace, Finalize)]
 pub struct FnClosureInner {
     pub fn_script: FnScript,
     pub upvalues: Box<[Upvalue]>,
@@ -19,15 +18,15 @@ impl Debug for FnClosureInner {
     }
 }
 
-#[derive(Clone, Trace, Finalize)]
+#[derive(Clone)]
 pub struct FnClosure {
-    inner: Gc<FnClosureInner>,
+    inner: Rc<FnClosureInner>,
 }
 
 impl FnClosure {
     pub fn new(fn_script: FnScript, upvalues: Box<[Upvalue]>) -> Self {
         Self {
-            inner: Gc::new(FnClosureInner { fn_script, upvalues }),
+            inner: Rc::new(FnClosureInner { fn_script, upvalues }),
         }
     }
 }

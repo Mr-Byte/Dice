@@ -1,16 +1,19 @@
 use crate::value::Value;
-use gc::{Finalize, Gc, GcCell, GcCellRef, GcCellRefMut, Trace};
-use std::fmt::Display;
+use std::{
+    cell::{Ref, RefCell, RefMut},
+    fmt::Display,
+    rc::Rc,
+};
 
-#[derive(Debug, Clone, PartialEq, Trace, Finalize)]
-pub struct Array(Gc<GcCell<Vec<Value>>>);
+#[derive(Debug, Clone, PartialEq)]
+pub struct Array(Rc<RefCell<Vec<Value>>>);
 
 impl Array {
-    pub fn elements(&self) -> GcCellRef<'_, Vec<Value>> {
+    pub fn elements(&self) -> Ref<'_, Vec<Value>> {
         self.0.borrow()
     }
 
-    pub fn elements_mut(&self) -> GcCellRefMut<'_, Vec<Value>> {
+    pub fn elements_mut(&self) -> RefMut<'_, Vec<Value>> {
         self.0.borrow_mut()
     }
 }
@@ -31,6 +34,6 @@ impl Display for Array {
 
 impl From<Vec<Value>> for Array {
     fn from(value: Vec<Value>) -> Self {
-        Self(Gc::new(GcCell::new(value)))
+        Self(Rc::new(RefCell::new(value)))
     }
 }

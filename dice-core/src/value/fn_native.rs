@@ -7,8 +7,8 @@ use std::{
 
 pub type NativeFn = Rc<dyn Fn(&mut dyn Runtime, &[Value]) -> Result<Value, RuntimeError>>;
 
-#[derive(Clone, gc::Trace, gc::Finalize)]
-pub struct FnNative(#[unsafe_ignore_trace] NativeFn);
+#[derive(Clone)]
+pub struct FnNative(NativeFn);
 
 impl FnNative {
     pub fn new(native_fn: NativeFn) -> Self {

@@ -1,18 +1,17 @@
 use crate::{
-    gc_any,
-    gc_any::{GcAny, GcAnyBox},
     id::type_id::TypeId,
     value::{Class, ClassInner, Symbol, ValueMap},
 };
-use gc::{Finalize, Gc, GcCell, GcCellRef, GcCellRefMut, Trace};
 use std::{
+    cell::{Ref, RefCell, RefMut},
     fmt::{Display, Formatter},
     ops::Deref,
+    rc::Rc,
 };
 
-#[derive(Default, Clone, Debug, Trace, Finalize)]
+#[derive(Default, Clone, Debug)]
 pub struct Object {
-    inner: Gc<ObjectInner>,
+    inner: Rc<ObjectInner>,
 }
 
 impl Object {
@@ -21,22 +20,8 @@ impl Object {
         N: Into<Option<Class>>,
     {
         Self {
-            inner: Gc::new(ObjectInner {
+            inner: Rc::new(ObjectInner {
                 class: class.into(),
-                native_tag: GcCell::new(None),
-                fields: Default::default(),
-            }),
-        }
-    }
-
-    pub fn with_native_tag<N>(class: N, native_tag: GcAnyBox) -> Self
-    where
-        N: Into<Option<Class>>,
-    {
-        Self {
-            inner: Gc::new(ObjectInner {
-                class: class.into(),
-                native_tag: GcCell::new(Some(native_tag)),
                 fields: Default::default(),
             }),
         }
@@ -78,19 +63,18 @@ impl Display for Object {
     }
 }
 
-#[derive(Default, Debug, Trace, Finalize)]
+#[derive(Default, Debug)]
 pub struct ObjectInner {
     class: Option<Class>,
-    native_tag: GcCell<Option<GcAnyBox>>,
-    fields: GcCell<ValueMap>,
+    fields: RefCell<ValueMap>,
 }
 
 impl ObjectInner {
-    pub fn fields(&self) -> GcCellRef<'_, ValueMap> {
+    pub fn fields(&self) -> Ref<'_, ValueMap> {
         self.fields.borrow()
     }
 
-    pub fn fields_mut(&self) -> GcCellRefMut<'_, ValueMap> {
+    pub fn fields_mut(&self) -> RefMut<'_, ValueMap> {
         self.fields.borrow_mut()
     }
 
@@ -114,17 +98,5 @@ impl ObjectInner {
 
     pub fn class(&self) -> Option<Class> {
         self.class.clone()
-    }
-
-    pub fn native_tag(&self) -> Option<GcCellRef<'_, GcAnyBox>> {
-        gc_any::transpose(self.native_tag.borrow())
-    }
-
-    pub fn native_tag_mut(&self) -> Option<GcCellRefMut<'_, GcAnyBox>> {
-        gc_any::transpose_mut(self.native_tag.borrow_mut())
-    }
-
-    pub fn set_native_tag<T: GcAny>(&mut self, tag: Option<T>) {
-        *self.native_tag.borrow_mut() = tag.map(GcAnyBox::new);
     }
 }

@@ -1,15 +1,12 @@
-use gc::{Finalize, Trace};
 use std::{
     fmt::{Display, Formatter},
     ops::Deref,
     rc::Rc,
 };
 
-#[derive(Debug, Hash, Clone, Trace, Finalize, PartialEq, Eq)]
+#[derive(Debug, Hash, Clone, PartialEq, Eq)]
 #[repr(transparent)]
 pub struct String {
-    // NOTE: Strings cannot have references to anything other than a string, so they're safe to store in an Rc and don't need to be traced.
-    #[unsafe_ignore_trace]
     inner: Rc<str>,
 }
 

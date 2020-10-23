@@ -1,4 +1,3 @@
-use gc::{Finalize, Trace};
 use std::{
     cell::RefCell,
     collections::HashSet,
@@ -15,10 +14,9 @@ thread_local! {
     static INTERNED_SYMBOLS: RefCell<HashSet<Rc<str>, BuildHasherDefault<WyHash>>> = Default::default();
 }
 
-#[derive(Debug, Clone, Trace, Finalize, Eq)]
+#[derive(Debug, Clone, Eq)]
 #[repr(transparent)]
 pub struct Symbol {
-    #[unsafe_ignore_trace]
     inner: Rc<str>,
 }
 
