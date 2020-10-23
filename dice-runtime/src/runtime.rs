@@ -5,7 +5,6 @@ use crate::{
 };
 use dice_core::{
     bytecode::Bytecode,
-    id::type_id::TypeId,
     runtime::{ClassBuilder, ModuleBuilder},
     upvalue::Upvalue,
     value::{Class, FnNative, NativeFn, Object, Value, ValueKind, ValueMap},
@@ -111,7 +110,7 @@ where
 
         if self
             .loaded_modules
-            .insert(name.into(), Value::Object(module.object().clone()))
+            .insert(name.into(), Value::Object(module.object()))
             .is_some()
         {
             return Err(RuntimeError::Aborted(String::from("Module already registered.")));

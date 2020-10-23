@@ -1,8 +1,7 @@
 use crate::module::ModuleLoader;
-use dice_core::runtime::ClassBuilder;
 use dice_core::{
     protocol::class::NEW,
-    runtime::Runtime,
+    runtime::{ClassBuilder, Runtime},
     value::{Value, ValueKind},
 };
 use dice_error::runtime_error::RuntimeError;

@@ -1,16 +1,14 @@
-use crate::value::ClassInner;
 use crate::{
     gc_any,
     gc_any::{GcAny, GcAnyBox},
     id::type_id::TypeId,
-    value::{Class, Symbol, ValueMap},
+    value::{Class, ClassInner, Symbol, ValueMap},
 };
 use gc::{Finalize, Gc, GcCell, GcCellRef, GcCellRefMut, Trace};
 use std::{
     fmt::{Display, Formatter},
     ops::Deref,
 };
-use uuid::Uuid;
 
 #[derive(Default, Clone, Debug, Trace, Finalize)]
 pub struct Object {
@@ -99,7 +97,7 @@ impl ObjectInner {
     pub fn type_id(&self) -> TypeId {
         self.class
             .as_ref()
-            .map_or_else(|| TypeId::default(), |class| class.instance_type_id())
+            .map_or_else(TypeId::default, |class| class.instance_type_id())
     }
 
     pub fn has_type_id(&self, type_id: TypeId) -> bool {

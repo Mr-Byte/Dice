@@ -1,7 +1,6 @@
 use crate::module::ModuleLoader;
-use dice_core::runtime::ClassBuilder;
 use dice_core::{
-    runtime::Runtime,
+    runtime::{ClassBuilder, Runtime},
     value::{Value, ValueKind},
 };
 use dice_error::runtime_error::RuntimeError;
@@ -28,9 +27,7 @@ fn name(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
 fn base_class(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
     match args {
         [Value::Class(class), ..] => {
-            let result = class
-                .base()
-                .map_or_else(|| Value::Null, |base| Value::Class(base.clone()));
+            let result = class.base().map_or_else(|| Value::Null, Value::Class);
             Ok(result)
         }
         _ => Ok(Value::Null),

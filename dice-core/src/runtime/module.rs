@@ -15,7 +15,7 @@ impl ModuleBuilder {
     }
 
     pub fn new_class(&self, name: &str) -> ClassBuilder {
-        let builder = ClassBuilder::new(name.into());
+        let builder = ClassBuilder::new(name);
         self.module_object
             .fields_mut()
             .insert(name.into(), Value::Class(builder.class()));

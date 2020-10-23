@@ -1,7 +1,6 @@
-use crate::value::Value;
 use crate::{
     id::type_id::TypeId,
-    value::{symbol::Symbol, Object, ValueMap},
+    value::{symbol::Symbol, Object, Value, ValueMap},
 };
 use gc::{Finalize, Gc, GcCell, GcCellRefMut, Trace};
 use std::{

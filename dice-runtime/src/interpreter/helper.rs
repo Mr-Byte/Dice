@@ -62,7 +62,7 @@ impl<L: ModuleLoader> Runtime<L> {
 
         let value = match class {
             Some(class) => match class.method(key) {
-                Some(method) => Value::FnBound(FnBound::new(value.clone(), method.clone())),
+                Some(method) => Value::FnBound(FnBound::new(value, method)),
                 None => Value::Null,
             },
             None => Value::Null,
@@ -98,7 +98,7 @@ impl<L: ModuleLoader> Runtime<L> {
         let mut object = Value::Object(Object::new(class.clone()));
 
         if let Some(new) = class.method(&NEW.into()) {
-            let bound = Value::FnBound(FnBound::new(object.clone(), new.clone()));
+            let bound = Value::FnBound(FnBound::new(object.clone(), new));
             *self.stack.peek_mut(arg_count) = bound;
             self.call_fn(arg_count)?;
 
