@@ -10,6 +10,7 @@ use std::{
     fmt::{Display, Formatter},
     ops::Deref,
 };
+use uuid::Uuid;
 
 #[derive(Default, Clone, Debug, Trace, Finalize)]
 pub struct Object {
@@ -17,7 +18,7 @@ pub struct Object {
 }
 
 impl Object {
-    pub fn new<N>(type_id: TypeId, class: N) -> Self
+    pub fn new<N>(class: N) -> Self
     where
         N: Into<Option<Class>>,
     {
@@ -26,13 +27,11 @@ impl Object {
                 class: class.into(),
                 native_tag: GcCell::new(None),
                 fields: Default::default(),
-                mixin_type_ids: Vec::new(),
-                type_id,
             }),
         }
     }
 
-    pub fn with_native_tag<N>(type_id: TypeId, class: N, native_tag: GcAnyBox) -> Self
+    pub fn with_native_tag<N>(class: N, native_tag: GcAnyBox) -> Self
     where
         N: Into<Option<Class>>,
     {
@@ -41,8 +40,6 @@ impl Object {
                 class: class.into(),
                 native_tag: GcCell::new(Some(native_tag)),
                 fields: Default::default(),
-                mixin_type_ids: Vec::new(),
-                type_id,
             }),
         }
     }
@@ -58,11 +55,10 @@ impl Deref for Object {
 
 impl PartialEq for Object {
     fn eq(&self, other: &Self) -> bool {
-        self.type_id == other.type_id
-            && std::ptr::eq(
-                &*self.inner as *const ObjectInner as *const u8,
-                &*other.inner as *const ObjectInner as *const u8,
-            )
+        std::ptr::eq(
+            &*self.inner as *const ObjectInner as *const u8,
+            &*other.inner as *const ObjectInner as *const u8,
+        )
     }
 }
 
@@ -89,8 +85,6 @@ pub struct ObjectInner {
     class: Option<Class>,
     native_tag: GcCell<Option<GcAnyBox>>,
     fields: GcCell<ValueMap>,
-    type_id: TypeId,
-    mixin_type_ids: Vec<TypeId>,
 }
 
 impl ObjectInner {
@@ -103,7 +97,17 @@ impl ObjectInner {
     }
 
     pub fn type_id(&self) -> TypeId {
-        self.type_id
+        self.class
+            .as_ref()
+            .map_or_else(|| TypeId::default(), |class| class.instance_type_id())
+    }
+
+    pub fn has_type_id(&self, type_id: TypeId) -> bool {
+        dbg!(&type_id);
+        dbg!(self
+            .class
+            .as_ref()
+            .map_or_else(|| false, |class| class.contains_type_id(type_id)))
     }
 
     pub fn name(&self) -> Option<Symbol> {

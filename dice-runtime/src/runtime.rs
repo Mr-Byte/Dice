@@ -80,7 +80,7 @@ where
 {
     fn load_prelude(&mut self, path: &str) -> Result<(), RuntimeError> {
         let module = self.module_loader.load_module(path.into())?;
-        let prelude = Value::Object(Object::new(TypeId::default(), None));
+        let prelude = Value::Object(Object::new(None));
         // NOTE: Add the loaded prelude module as a registered module.
         self.loaded_modules.insert(module.id.clone(), prelude.clone());
 

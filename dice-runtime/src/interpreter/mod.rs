@@ -259,14 +259,17 @@ where
         let rhs = rhs.as_class()?;
         let lhs = self.stack.peek(0);
 
+        let instance_type_id = rhs.instance_type_id();
+
         // TODO: Work out the exact details of type id resolution.
-        let type_id = self
-            .known_types
-            .get(&lhs.kind())
-            .map(|class| class.instance_type_id())
-            .or_else(|| lhs.as_object().ok().map(|object| object.type_id()))
-            .unwrap_or_default();
-        *self.stack.peek_mut(0) = Value::Bool(type_id == rhs.instance_type_id());
+        let is_type = lhs
+            .as_object()
+            .ok()
+            .and_then(|object| object.class())
+            .or_else(|| self.known_types.get(&lhs.kind()).cloned())
+            .map_or(false, |class| class.contains_type_id(instance_type_id));
+
+        *self.stack.peek_mut(0) = Value::Bool(is_type);
 
         Ok(())
     }
@@ -286,7 +289,7 @@ where
             .expect("Object class should always be registered with runtime.")
             .clone();
 
-        let object = Object::new(object_class.instance_type_id(), object_class);
+        let object = Object::new(object_class);
 
         self.stack.push(Value::Object(object));
     }
@@ -586,7 +589,7 @@ where
         let module = match self.loaded_modules.entry(module_name.clone()) {
             Entry::Occupied(entry) => entry.get().clone(),
             Entry::Vacant(entry) => {
-                let export = Value::Object(Object::new(TypeId::default(), None));
+                let export = Value::Object(Object::new(None));
                 entry.insert(export.clone());
 
                 let module = self.module_loader.load_module(module_name)?;

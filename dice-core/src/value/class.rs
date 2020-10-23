@@ -20,7 +20,7 @@ impl Class {
             instance_type_id: TypeId::new(),
             base: Default::default(),
             methods: Default::default(),
-            object: Object::new(TypeId::default(), None),
+            object: Object::new(None),
             name,
         };
 
@@ -31,7 +31,7 @@ impl Class {
         let inner = ClassInner {
             instance_type_id: TypeId::new(),
             methods: Default::default(),
-            object: Object::new(TypeId::default(), None),
+            object: Object::new(None),
             base: Some(base),
             name,
         };
@@ -67,6 +67,15 @@ impl ClassInner {
 
     pub fn instance_type_id(&self) -> TypeId {
         self.instance_type_id
+    }
+
+    pub fn contains_type_id(&self, type_id: TypeId) -> bool {
+        // TODO: Expand this to check trait_type_ids when traits are added.
+        self.instance_type_id == type_id
+            || self
+                .base
+                .as_ref()
+                .map_or_else(|| false, |base| base.contains_type_id(type_id))
     }
 
     pub fn method(&self, name: &Symbol) -> Option<Value> {

@@ -95,7 +95,7 @@ impl<L: ModuleLoader> Runtime<L> {
 
     fn call_class_constructor(&mut self, arg_count: usize, class: &Class) -> Result<Value, RuntimeError> {
         let class = class.clone();
-        let mut object = Value::Object(Object::new(class.instance_type_id(), class.clone()));
+        let mut object = Value::Object(Object::new(class.clone()));
 
         if let Some(new) = class.method(&NEW.into()) {
             let bound = Value::FnBound(FnBound::new(object.clone(), new.clone()));
