@@ -1,8 +1,9 @@
+use crate::value::Value;
 use crate::{
     id::type_id::TypeId,
     value::{symbol::Symbol, Object, ValueMap},
 };
-use gc::{Finalize, Gc, GcCell, GcCellRef, GcCellRefMut, Trace};
+use gc::{Finalize, Gc, GcCell, GcCellRefMut, Trace};
 use std::{
     fmt::{Display, Formatter},
     ops::Deref,
@@ -59,16 +60,25 @@ impl ClassInner {
         self.name.clone()
     }
 
-    pub fn methods(&self) -> GcCellRef<'_, ValueMap> {
-        self.methods.borrow()
-    }
-
+    // TODO: Replace this with add_method
     pub fn methods_mut(&self) -> GcCellRefMut<'_, ValueMap> {
         self.methods.borrow_mut()
     }
 
     pub fn instance_type_id(&self) -> TypeId {
         self.instance_type_id
+    }
+
+    pub fn method(&self, name: &Symbol) -> Option<Value> {
+        self.methods
+            .borrow()
+            .get(&name)
+            .cloned()
+            .or_else(|| self.base.as_ref().and_then(|base| base.method(name)))
+    }
+
+    pub fn base(&self) -> Option<Class> {
+        self.base.clone()
     }
 }
 

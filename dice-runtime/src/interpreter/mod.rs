@@ -292,9 +292,16 @@ where
     }
 
     fn create_class(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
+        // TODO: Cache this ahead of time and store it, for more efficient retrievals.
+        let object_class = self
+            .known_types
+            .get(&ValueKind::Object)
+            .expect("Object class should always be registered with runtime.")
+            .clone();
+
         let name_slot = cursor.read_u8() as usize;
         let name = bytecode.constants()[name_slot].as_symbol()?;
-        let class = Class::new(name);
+        let class = Class::with_base(name, object_class);
 
         self.stack.push(Value::Class(class));
 

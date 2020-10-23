@@ -9,13 +9,16 @@ use dice_error::runtime_error::RuntimeError;
 use std::rc::Rc;
 
 pub fn register(runtime: &mut crate::Runtime<impl ModuleLoader>, base: &ClassBuilder) {
-    let mut array = base.derive("Array");
-    runtime.known_types.insert(ValueKind::Array, array.class());
+    let mut class = base.derive("Array");
+    runtime.known_types.insert(ValueKind::Array, class.class());
+    runtime
+        .globals
+        .insert(class.class().name(), Value::Class(class.class()));
 
-    array.register_native_method(NEW, Rc::new(construct_array));
-    array.register_native_method("push", Rc::new(push));
-    array.register_native_method("pop", Rc::new(pop));
-    array.register_native_method("length", Rc::new(length));
+    class.register_native_method(NEW, Rc::new(construct_array));
+    class.register_native_method("push", Rc::new(push));
+    class.register_native_method("pop", Rc::new(pop));
+    class.register_native_method("length", Rc::new(length));
 }
 
 fn construct_array(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
