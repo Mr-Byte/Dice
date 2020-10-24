@@ -1,6 +1,6 @@
 use crate::{module::ModuleLoader, Runtime};
 
-pub mod object;
+pub mod any;
 
 mod array;
 mod bool;

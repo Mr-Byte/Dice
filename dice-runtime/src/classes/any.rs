@@ -1,6 +1,6 @@
 use crate::module::ModuleLoader;
 use dice_core::{
-    protocol::object::{OBJECT_CLASS, TO_STRING},
+    protocol::object::{ANY_CLASS, TO_STRING},
     runtime::Runtime,
     value::{Class, NativeFn, Value},
 };
@@ -11,8 +11,8 @@ impl<L> crate::Runtime<L>
 where
     L: ModuleLoader,
 {
-    pub fn new_object_class() -> Class {
-        let class = Class::new(OBJECT_CLASS.into());
+    pub fn new_any_class() -> Class {
+        let class = Class::new(ANY_CLASS.into());
 
         class.set_method(TO_STRING, Rc::new(to_string) as NativeFn);
 

@@ -12,7 +12,7 @@ where
     L: ModuleLoader,
 {
     pub(super) fn register_bool(&mut self) {
-        let class = self.object_class.derive("Bool");
+        let class = self.any_class.derive("Bool");
 
         class.set_method(NEW, Rc::new(construct_bool) as NativeFn);
 

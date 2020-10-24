@@ -15,7 +15,7 @@ where
     L: ModuleLoader,
 {
     pub(super) fn register_array(&mut self) {
-        let class = self.object_class.derive("Array");
+        let class = self.any_class.derive("Array");
 
         class.set_method(NEW, Rc::new(construct_array) as NativeFn);
         class.set_method("push", Rc::new(push) as NativeFn);

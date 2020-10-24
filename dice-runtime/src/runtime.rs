@@ -18,12 +18,12 @@ pub struct Runtime<L = FileModuleLoader>
 where
     L: ModuleLoader,
 {
-    pub(crate) stack: Stack,
+    pub(super) stack: Stack,
     pub(crate) open_upvalues: VecDeque<Upvalue>,
     pub(crate) globals: ValueMap,
     pub(crate) loaded_modules: ValueMap,
     pub(crate) module_loader: L,
-    pub(crate) object_class: Class,
+    pub(crate) any_class: Class,
     pub(crate) module_class: Class,
     pub(crate) value_class_mapping: HashMap<ValueKind, Class, BuildHasherDefault<WyHash>>,
 }
@@ -33,10 +33,10 @@ where
     L: ModuleLoader,
 {
     fn default() -> Self {
-        let object_class = Self::new_object_class();
-        let module_class = Self::new_module_class(&object_class);
+        let any_class = Self::new_any_class();
+        let module_class = Self::new_module_class(&any_class);
         let mut globals: ValueMap = ValueMap::default();
-        globals.insert(object_class.name(), Value::Class(object_class.clone()));
+        globals.insert(any_class.name(), Value::Class(any_class.clone()));
         globals.insert(module_class.name(), Value::Class(module_class.clone()));
 
         let mut runtime = Self {
@@ -46,7 +46,7 @@ where
             module_loader: Default::default(),
             value_class_mapping: Default::default(),
             globals,
-            object_class,
+            any_class,
             module_class,
         };
 
@@ -101,13 +101,13 @@ where
     }
 
     fn new_class(&mut self, name: &str) -> Result<Class, RuntimeError> {
-        let class = Class::with_base(name.into(), self.object_class.clone());
+        let class = Class::with_base(name.into(), self.any_class.clone());
 
         Ok(class)
     }
 
     fn new_object(&mut self) -> Result<Object, RuntimeError> {
-        let object = Object::new(self.object_class.clone());
+        let object = Object::new(self.any_class.clone());
 
         Ok(object)
     }

@@ -11,7 +11,7 @@ where
     L: ModuleLoader,
 {
     pub fn register_class(&mut self) {
-        let class = self.object_class.derive("Class");
+        let class = self.any_class.derive("Class");
         class.set_method("name", Rc::new(name) as NativeFn);
         class.set_method("base", Rc::new(base_class) as NativeFn);
 

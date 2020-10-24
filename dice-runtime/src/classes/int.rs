@@ -12,7 +12,7 @@ where
     L: ModuleLoader,
 {
     pub(super) fn register_int(&mut self) {
-        let class = self.object_class.derive("Int");
+        let class = self.any_class.derive("Int");
 
         class.set_method(NEW, Rc::new(construct_int) as NativeFn);
         class.set_method("abs", bind_i64_ret_i64(i64::abs));

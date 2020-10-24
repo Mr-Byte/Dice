@@ -12,7 +12,7 @@ where
     L: ModuleLoader,
 {
     pub(super) fn register_function(&mut self) {
-        let class = self.object_class.derive("Function");
+        let class = self.any_class.derive("Function");
 
         class.set_method(NEW, Rc::new(construct_function) as NativeFn);
 

@@ -281,7 +281,7 @@ where
     }
 
     fn create_object(&mut self) {
-        let object = Object::new(self.object_class.clone());
+        let object = Object::new(self.any_class.clone());
 
         self.stack.push(Value::Object(object));
     }
@@ -289,7 +289,7 @@ where
     fn create_class(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
         let name_slot = cursor.read_u8() as usize;
         let name = bytecode.constants()[name_slot].as_symbol()?;
-        let class = Class::with_base(name, self.object_class.clone());
+        let class = Class::with_base(name, self.any_class.clone());
 
         self.stack.push(Value::Class(class));
 

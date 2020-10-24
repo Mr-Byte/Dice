@@ -12,7 +12,7 @@ where
     L: ModuleLoader,
 {
     pub(super) fn register_string(&mut self) {
-        let class = self.object_class.derive("String");
+        let class = self.any_class.derive("String");
 
         class.set_method(NEW, Rc::new(construct_string) as NativeFn);
 

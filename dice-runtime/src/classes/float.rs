@@ -12,7 +12,7 @@ where
     L: ModuleLoader,
 {
     pub fn register_float(&mut self) {
-        let class = self.object_class.derive("Float");
+        let class = self.any_class.derive("Float");
 
         // NOTE: This does not currently expose all possible functions rust has, just a subset.
         // If the need arises, this list can be further expanded.
