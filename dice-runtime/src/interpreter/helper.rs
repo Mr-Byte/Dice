@@ -58,7 +58,7 @@ impl<L: ModuleLoader> Runtime<L> {
             .as_object()
             .ok()
             .and_then(|object| object.class())
-            .or_else(|| self.known_types.get(&value.kind()).cloned());
+            .or_else(|| self.value_class_mapping.get(&value.kind()).cloned());
 
         let value = match class {
             Some(class) => match class.method(key) {

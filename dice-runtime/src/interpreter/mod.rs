@@ -265,7 +265,7 @@ where
             .as_object()
             .ok()
             .and_then(|object| object.class())
-            .or_else(|| self.known_types.get(&lhs.kind()).cloned())
+            .or_else(|| self.value_class_mapping.get(&lhs.kind()).cloned())
             .map_or(false, |class| class.contains_type_id(instance_type_id));
 
         *self.stack.peek_mut(0) = Value::Bool(is_type);

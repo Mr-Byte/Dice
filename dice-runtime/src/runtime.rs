@@ -5,7 +5,6 @@ use crate::{
 };
 use dice_core::{
     bytecode::Bytecode,
-    runtime::Runtime as _,
     upvalue::Upvalue,
     value::{Class, Object, Value, ValueKind, ValueMap},
 };
@@ -28,7 +27,7 @@ where
     pub(crate) module_loader: L,
     pub(crate) object_class: Class,
     pub(crate) module_class: Class,
-    pub(crate) known_types: HashMap<ValueKind, Class, BuildHasherDefault<WyHash>>,
+    pub(crate) value_class_mapping: HashMap<ValueKind, Class, BuildHasherDefault<WyHash>>,
 }
 
 impl<L> Default for Runtime<L>
@@ -36,26 +35,25 @@ where
     L: ModuleLoader,
 {
     fn default() -> Self {
+        // TODO: Push the creation of runtime components into a separate method.
         let object_class = classes::object::new();
         // TODO: Push this off to a module of its own and add appropriate methods.
         let module_class = object_class.derive("Module");
+        let mut globals: ValueMap = ValueMap::default();
+        globals.insert(object_class.name(), Value::Class(object_class.clone()));
+        globals.insert(module_class.name(), Value::Class(module_class.clone()));
+
         let mut runtime = Self {
             stack: Default::default(),
             open_upvalues: Default::default(),
+            globals,
             loaded_modules: Default::default(),
             module_loader: Default::default(),
-            known_types: Default::default(),
-            globals: ValueMap::default(),
+            value_class_mapping: Default::default(),
             object_class: object_class.clone(),
             module_class: object_class.clone(),
         };
 
-        runtime
-            .add_global(&*object_class.name(), Value::Class(object_class.clone()))
-            .unwrap();
-        runtime
-            .add_global(&*module_class.name(), Value::Class(module_class.clone()))
-            .unwrap();
         runtime.register_known_types();
         runtime
     }

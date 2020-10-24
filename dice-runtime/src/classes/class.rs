@@ -15,7 +15,7 @@ where
         class.set_method("name", Rc::new(name) as NativeFn);
         class.set_method("base", Rc::new(base_class) as NativeFn);
 
-        self.known_types.insert(ValueKind::Class, class.clone());
+        self.value_class_mapping.insert(ValueKind::Class, class.clone());
         self.globals.insert(class.name(), Value::Class(class.clone()));
     }
 }

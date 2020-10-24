@@ -26,7 +26,7 @@ where
         class.set_method("map", Rc::new(map) as NativeFn);
         class.set_method("iter", Rc::new(iter) as NativeFn);
 
-        self.known_types.insert(ValueKind::Array, class.clone());
+        self.value_class_mapping.insert(ValueKind::Array, class.clone());
         self.globals.insert(class.name(), Value::Class(class.clone()));
     }
 }

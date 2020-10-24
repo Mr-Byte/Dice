@@ -40,7 +40,7 @@ where
         class.set_field("U8_MIN", Value::Int(u8::MIN as i64));
 
         // TODO: Unify this between all the loaders?
-        self.known_types.insert(ValueKind::Int, class.clone());
+        self.value_class_mapping.insert(ValueKind::Int, class.clone());
         self.globals.insert(class.name(), Value::Class(class.clone()));
     }
 }

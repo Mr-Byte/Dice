@@ -63,7 +63,7 @@ where
         class.set_field("INFINITY", Value::Float(std::f64::INFINITY));
         class.set_field("NEG_INFINITY", Value::Float(std::f64::NEG_INFINITY));
 
-        self.known_types.insert(ValueKind::Float, class.clone());
+        self.value_class_mapping.insert(ValueKind::Float, class.clone());
         self.globals.insert(class.name(), Value::Class(class.clone()));
     }
 }
