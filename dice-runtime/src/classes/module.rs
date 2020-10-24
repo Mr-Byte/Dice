@@ -1,6 +1,5 @@
 use crate::module::ModuleLoader;
-use dice_core::protocol::object::MODULE_CLASS;
-use dice_core::value::Class;
+use dice_core::{protocol::object::MODULE_CLASS, value::Class};
 
 impl<L> crate::Runtime<L>
 where

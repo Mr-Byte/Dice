@@ -9,7 +9,6 @@ use dice_core::{
 };
 use dice_error::runtime_error::RuntimeError;
 use std::{
-    borrow::BorrowMut,
     collections::{HashMap, VecDeque},
     hash::BuildHasherDefault,
 };
@@ -101,20 +100,8 @@ where
         Ok(module)
     }
 
-    fn new_class(&mut self, name: &str, _module: Option<&Object>) -> Result<Class, RuntimeError> {
+    fn new_class(&mut self, name: &str) -> Result<Class, RuntimeError> {
         let class = Class::with_base(name.into(), self.object_class.clone());
-
-        // TODO: Insert into a module if one is provided.
-        // if let Some(module) = module {}
-
-        if self
-            .globals
-            .borrow_mut()
-            .insert(name.into(), Value::Class(class.clone()))
-            .is_some()
-        {
-            return Err(RuntimeError::Aborted(String::from("Class already registered.")));
-        }
 
         Ok(class)
     }
