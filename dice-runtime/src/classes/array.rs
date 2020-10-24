@@ -1,14 +1,14 @@
 use crate::module::ModuleLoader;
-use dice_core::protocol::iterator::{DONE, NEXT, VALUE};
-use dice_core::value::{Class, NativeFn, Symbol};
 use dice_core::{
-    protocol::class::NEW,
+    protocol::{
+        class::NEW,
+        iterator::{DONE, NEXT, VALUE},
+    },
     runtime::Runtime,
-    value::{Value, ValueKind},
+    value::{Class, NativeFn, Symbol, Value, ValueKind},
 };
 use dice_error::runtime_error::RuntimeError;
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
 pub fn register(runtime: &mut crate::Runtime<impl ModuleLoader>, base: &Class) {
     let class = base.derive("Array");

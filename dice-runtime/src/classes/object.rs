@@ -1,9 +1,8 @@
 use crate::module::ModuleLoader;
-use dice_core::protocol::object::TO_STRING;
-use dice_core::value::{Class, NativeFn};
 use dice_core::{
+    protocol::object::TO_STRING,
     runtime::Runtime,
-    value::{Value, ValueKind},
+    value::{Class, NativeFn, Value, ValueKind},
 };
 use dice_error::runtime_error::RuntimeError;
 use std::rc::Rc;

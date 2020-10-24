@@ -1,7 +1,6 @@
-use crate::value::Value;
 use crate::{
     id::type_id::TypeId,
-    value::{Class, ClassInner, Symbol, ValueMap},
+    value::{Class, ClassInner, Symbol, Value, ValueMap},
 };
 use std::{
     cell::{Ref, RefCell},

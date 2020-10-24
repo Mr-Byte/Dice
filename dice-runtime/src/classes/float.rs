@@ -1,15 +1,14 @@
 use crate::module::ModuleLoader;
-use dice_core::value::Class;
 use dice_core::{
     protocol::class::NEW,
     runtime::Runtime,
-    value::{NativeFn, Value, ValueKind},
+    value::{Class, NativeFn, Value, ValueKind},
 };
 use dice_error::runtime_error::RuntimeError;
 use std::rc::Rc;
 
 pub fn register(runtime: &mut crate::Runtime<impl ModuleLoader>, base: &Class) {
-    let mut class = base.derive("Float");
+    let class = base.derive("Float");
     runtime.known_types.insert(ValueKind::Float, class.clone());
     runtime.globals.insert(class.name(), Value::Class(class.clone()));
 

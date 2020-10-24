@@ -1,5 +1,5 @@
-use dice::{value::Value, Dice, Runtime, RuntimeError};
-use std::{io::Write, rc::Rc};
+use dice::{Dice, Runtime};
+use std::io::Write;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     std::env::set_current_dir(std::fs::canonicalize("data/scripts")?)?;
