@@ -3,7 +3,7 @@ use crate::{
     value::{symbol::Symbol, Object, Value, ValueMap},
 };
 use std::{
-    cell::{RefCell, RefMut},
+    cell::RefCell,
     fmt::{Display, Formatter},
     ops::Deref,
     rc::Rc,
@@ -38,6 +38,10 @@ impl Class {
 
         Self { inner: inner.into() }
     }
+
+    pub fn derive(&self, name: &str) -> Self {
+        Self::with_base(name.into(), self.clone())
+    }
 }
 
 impl Display for Class {
@@ -60,11 +64,6 @@ impl ClassInner {
         self.name.clone()
     }
 
-    // TODO: Replace this with add_method
-    pub fn methods_mut(&self) -> RefMut<'_, ValueMap> {
-        self.methods.borrow_mut()
-    }
-
     pub fn instance_type_id(&self) -> TypeId {
         self.instance_type_id
     }
@@ -84,6 +83,12 @@ impl ClassInner {
             .get(&name)
             .cloned()
             .or_else(|| self.base.as_ref().and_then(|base| base.method(name)))
+    }
+
+    pub fn set_method(&self, name: impl Into<Symbol>, method: impl Into<Value>) {
+        // TODO: Assert method.is_function()
+
+        self.methods.borrow_mut().insert(name.into(), method.into());
     }
 
     pub fn base(&self) -> Option<Class> {

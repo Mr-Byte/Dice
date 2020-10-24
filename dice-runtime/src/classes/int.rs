@@ -1,43 +1,42 @@
 use crate::module::ModuleLoader;
+use dice_core::value::Class;
 use dice_core::{
     protocol::class::NEW,
-    runtime::{ClassBuilder, Runtime},
+    runtime::Runtime,
     value::{NativeFn, Value, ValueKind},
 };
 use dice_error::runtime_error::RuntimeError;
 use std::rc::Rc;
 
-pub fn register(runtime: &mut crate::Runtime<impl ModuleLoader>, base: &ClassBuilder) {
-    let mut class = base.derive("Int");
-    runtime.known_types.insert(ValueKind::Int, class.class());
-    runtime
-        .globals
-        .insert(class.class().name(), Value::Class(class.class()));
+pub fn register(runtime: &mut crate::Runtime<impl ModuleLoader>, base: &Class) {
+    let class = base.derive("Int");
+    runtime.known_types.insert(ValueKind::Int, class.clone());
+    runtime.globals.insert(class.name(), Value::Class(class.clone()));
 
-    class.register_native_method(NEW, Rc::new(construct_int));
-    class.register_native_method("abs", bind_i64_ret_i64(i64::abs));
-    class.register_native_method("pow", Rc::new(pow));
-    class.register_native_method("is_positive", bind_i64_ret_bool(i64::is_positive));
-    class.register_native_method("is_negative", bind_i64_ret_bool(i64::is_negative));
-    class.register_native_method("min", bind_i64_i64_ret_i64(i64::min));
-    class.register_native_method("max", bind_i64_i64_ret_i64(i64::max));
+    class.set_method(NEW, Rc::new(construct_int) as NativeFn);
+    class.set_method("abs", bind_i64_ret_i64(i64::abs));
+    class.set_method("pow", Rc::new(pow) as NativeFn);
+    class.set_method("is_positive", bind_i64_ret_bool(i64::is_positive));
+    class.set_method("is_negative", bind_i64_ret_bool(i64::is_negative));
+    class.set_method("min", bind_i64_i64_ret_i64(i64::min));
+    class.set_method("max", bind_i64_i64_ret_i64(i64::max));
 
     // TODO: Decide if the wrapping/overflowing/saturating operators need included.
 
-    class.register_native_static_property("MAX", Value::Int(i64::MAX));
-    class.register_native_static_property("MIN", Value::Int(i64::MIN));
-    class.register_native_static_property("I32_MAX", Value::Int(i32::MAX as i64));
-    class.register_native_static_property("I32_MIN", Value::Int(i32::MIN as i64));
-    class.register_native_static_property("U32_MAX", Value::Int(u32::MAX as i64));
-    class.register_native_static_property("U32_MIN", Value::Int(u32::MIN as i64));
-    class.register_native_static_property("I16_MAX", Value::Int(i16::MAX as i64));
-    class.register_native_static_property("I16_MIN", Value::Int(i16::MIN as i64));
-    class.register_native_static_property("U16_MAX", Value::Int(u16::MAX as i64));
-    class.register_native_static_property("U16_MIN", Value::Int(u16::MIN as i64));
-    class.register_native_static_property("I8_MAX", Value::Int(i8::MAX as i64));
-    class.register_native_static_property("I8_MIN", Value::Int(i8::MIN as i64));
-    class.register_native_static_property("U8_MAX", Value::Int(u8::MAX as i64));
-    class.register_native_static_property("U8_MIN", Value::Int(u8::MIN as i64));
+    class.set_field("MAX", Value::Int(i64::MAX));
+    class.set_field("MIN", Value::Int(i64::MIN));
+    class.set_field("I32_MAX", Value::Int(i32::MAX as i64));
+    class.set_field("I32_MIN", Value::Int(i32::MIN as i64));
+    class.set_field("U32_MAX", Value::Int(u32::MAX as i64));
+    class.set_field("U32_MIN", Value::Int(u32::MIN as i64));
+    class.set_field("I16_MAX", Value::Int(i16::MAX as i64));
+    class.set_field("I16_MIN", Value::Int(i16::MIN as i64));
+    class.set_field("U16_MAX", Value::Int(u16::MAX as i64));
+    class.set_field("U16_MIN", Value::Int(u16::MIN as i64));
+    class.set_field("I8_MAX", Value::Int(i8::MAX as i64));
+    class.set_field("I8_MIN", Value::Int(i8::MIN as i64));
+    class.set_field("U8_MAX", Value::Int(u8::MAX as i64));
+    class.set_field("U8_MIN", Value::Int(u8::MIN as i64));
 }
 
 fn construct_int(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {

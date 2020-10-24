@@ -1,30 +1,28 @@
 use crate::module::ModuleLoader;
 use dice_core::protocol::iterator::{DONE, NEXT, VALUE};
-use dice_core::value::{NativeFn, Symbol};
+use dice_core::value::{Class, NativeFn, Symbol};
 use dice_core::{
     protocol::class::NEW,
-    runtime::{ClassBuilder, Runtime},
+    runtime::Runtime,
     value::{Value, ValueKind},
 };
 use dice_error::runtime_error::RuntimeError;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-pub fn register(runtime: &mut crate::Runtime<impl ModuleLoader>, base: &ClassBuilder) {
-    let mut class = base.derive("Array");
-    runtime.known_types.insert(ValueKind::Array, class.class());
-    runtime
-        .globals
-        .insert(class.class().name(), Value::Class(class.class()));
+pub fn register(runtime: &mut crate::Runtime<impl ModuleLoader>, base: &Class) {
+    let class = base.derive("Array");
+    runtime.known_types.insert(ValueKind::Array, class.clone());
+    runtime.globals.insert(class.name(), Value::Class(class.clone()));
 
-    class.register_native_method(NEW, Rc::new(construct_array));
-    class.register_native_method("push", Rc::new(push));
-    class.register_native_method("pop", Rc::new(pop));
-    class.register_native_method("length", Rc::new(length));
-    class.register_native_method("first", Rc::new(first));
-    class.register_native_method("filter", Rc::new(filter));
-    class.register_native_method("map", Rc::new(map));
-    class.register_native_method("iter", Rc::new(iter));
+    class.set_method(NEW, Rc::new(construct_array) as NativeFn);
+    class.set_method("push", Rc::new(push) as NativeFn);
+    class.set_method("pop", Rc::new(pop) as NativeFn);
+    class.set_method("length", Rc::new(length) as NativeFn);
+    class.set_method("first", Rc::new(first) as NativeFn);
+    class.set_method("filter", Rc::new(filter) as NativeFn);
+    class.set_method("map", Rc::new(map) as NativeFn);
+    class.set_method("iter", Rc::new(iter) as NativeFn);
 }
 
 fn construct_array(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
@@ -144,7 +142,7 @@ fn iter(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError
             });
 
             let iterator = runtime.new_object()?;
-            iterator.set_field(NEXT.into(), Value::with_native_fn(next));
+            iterator.set_field(NEXT, Value::with_native_fn(next));
 
             Ok(Value::Object(iterator))
         }

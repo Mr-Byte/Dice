@@ -441,7 +441,7 @@ where
         let object = self.stack.pop();
         let object = object.as_object()?;
 
-        object.fields_mut().insert(key, value.clone());
+        object.set_field(key, value.clone());
         self.stack.push(value);
 
         Ok(())
@@ -467,7 +467,7 @@ where
         match target {
             Value::Object(object) => {
                 let field = index.as_symbol()?;
-                object.fields_mut().insert(field, value.clone());
+                object.set_field(field, value.clone());
                 *target = value;
             }
             Value::Array(list) => {
@@ -508,7 +508,7 @@ where
         let object = self.stack.pop();
         let class = object.as_class()?;
 
-        class.methods_mut().insert(key, value);
+        class.set_method(key, value);
 
         Ok(())
     }

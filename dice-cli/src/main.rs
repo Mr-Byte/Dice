@@ -5,7 +5,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     std::env::set_current_dir(std::fs::canonicalize("data/scripts")?)?;
 
     let mut dice = Dice::default();
-    dice.runtime().register_native_function("print", Rc::new(print_value));
     dice.runtime().load_prelude("prelude.dm")?;
 
     loop {
@@ -35,12 +34,4 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             Err(err) => eprintln!("{}", err),
         };
     }
-}
-
-fn print_value(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
-    if let [_, arg, ..] = args {
-        println!("{}", arg);
-    }
-
-    Ok(Value::Unit)
 }

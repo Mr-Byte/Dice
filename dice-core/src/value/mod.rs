@@ -31,6 +31,7 @@ pub enum Value {
     Bool(bool),
     Int(i64),
     Float(f64),
+    // TODO: Combine these down to one function variant?
     FnClosure(FnClosure),
     FnScript(FnScript),
     FnNative(FnNative),
@@ -157,6 +158,12 @@ impl PartialEq for Value {
             (Value::Class(lhs), Value::Class(rhs)) => lhs == rhs,
             _ => false,
         }
+    }
+}
+
+impl From<NativeFn> for Value {
+    fn from(value: NativeFn) -> Self {
+        Value::with_native_fn(value)
     }
 }
 

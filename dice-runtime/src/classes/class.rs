@@ -1,20 +1,19 @@
 use crate::module::ModuleLoader;
+use dice_core::value::{Class, NativeFn};
 use dice_core::{
-    runtime::{ClassBuilder, Runtime},
+    runtime::Runtime,
     value::{Value, ValueKind},
 };
 use dice_error::runtime_error::RuntimeError;
 use std::rc::Rc;
 
-pub fn register(runtime: &mut crate::Runtime<impl ModuleLoader>, base: &ClassBuilder) {
+pub fn register(runtime: &mut crate::Runtime<impl ModuleLoader>, base: &Class) {
     let mut class = base.derive("Class");
-    runtime.known_types.insert(ValueKind::Class, class.class());
-    runtime
-        .globals
-        .insert(class.class().name(), Value::Class(class.class()));
+    runtime.known_types.insert(ValueKind::Class, class.clone());
+    runtime.globals.insert(class.name(), Value::Class(class.clone()));
 
-    class.register_native_method("name", Rc::new(name));
-    class.register_native_method("base", Rc::new(base_class));
+    class.set_method("name", Rc::new(name) as NativeFn);
+    class.set_method("base", Rc::new(base_class) as NativeFn);
 }
 
 fn name(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {

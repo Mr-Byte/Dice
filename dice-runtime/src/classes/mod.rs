@@ -1,8 +1,12 @@
 mod array;
+mod bool;
 mod class;
 mod float;
+mod function;
 mod int;
 mod object;
+mod string;
+mod unit;
 
 use crate::{module::ModuleLoader, runtime::Runtime};
 

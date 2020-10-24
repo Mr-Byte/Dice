@@ -4,7 +4,7 @@ use crate::{
     value::{Class, ClassInner, Symbol, ValueMap},
 };
 use std::{
-    cell::{Ref, RefCell, RefMut},
+    cell::{Ref, RefCell},
     fmt::{Display, Formatter},
     ops::Deref,
     rc::Rc,
@@ -71,14 +71,6 @@ pub struct ObjectInner {
 }
 
 impl ObjectInner {
-    pub fn fields(&self) -> Ref<'_, ValueMap> {
-        self.fields.borrow()
-    }
-
-    pub fn fields_mut(&self) -> RefMut<'_, ValueMap> {
-        self.fields.borrow_mut()
-    }
-
     pub fn type_id(&self) -> TypeId {
         self.class
             .as_ref()
@@ -101,11 +93,15 @@ impl ObjectInner {
         self.class.clone()
     }
 
-    pub fn set_field(&self, field_name: Symbol, value: Value) {
-        self.fields.borrow_mut().insert(field_name, value);
+    pub fn set_field(&self, field_name: impl Into<Symbol>, value: impl Into<Value>) {
+        self.fields.borrow_mut().insert(field_name.into(), value.into());
     }
 
     pub fn field(&self, field_name: Symbol) -> Option<Value> {
         self.fields.borrow().get(&field_name).cloned()
+    }
+
+    pub fn fields(&self) -> Ref<'_, ValueMap> {
+        self.fields.borrow()
     }
 }
