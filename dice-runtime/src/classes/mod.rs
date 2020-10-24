@@ -1,19 +1,24 @@
+use crate::{module::ModuleLoader, Runtime};
+
+pub mod object;
+
 mod array;
 mod bool;
 mod class;
 mod float;
 mod function;
 mod int;
-mod object;
 mod string;
 mod unit;
 
-use crate::{module::ModuleLoader, runtime::Runtime};
-
-pub fn register(runtime: &mut Runtime<impl ModuleLoader>) {
-    let base = object::register(runtime);
-    array::register(runtime, &base);
-    class::register(runtime, &base);
-    float::register(runtime, &base);
-    int::register(runtime, &base);
+impl<L> Runtime<L>
+where
+    L: ModuleLoader,
+{
+    pub(super) fn register_known_types(&mut self) {
+        self.register_array();
+        self.register_class();
+        self.register_float();
+        self.register_int();
+    }
 }

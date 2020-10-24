@@ -7,7 +7,7 @@ pub trait Runtime {
     fn new_object(&mut self) -> Result<Object, RuntimeError>;
 
     fn load_prelude(&mut self, path: &str) -> Result<(), RuntimeError>;
-    fn add_global(&mut self, name: &str, value: Value);
+    fn add_global(&mut self, name: &str, value: Value) -> Result<(), RuntimeError>;
 
     fn call_function(&mut self, target: Value, args: &[Value]) -> Result<Value, RuntimeError>;
 }

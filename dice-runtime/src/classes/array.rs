@@ -5,24 +5,30 @@ use dice_core::{
         iterator::{DONE, NEXT, VALUE},
     },
     runtime::Runtime,
-    value::{Class, NativeFn, Symbol, Value, ValueKind},
+    value::{NativeFn, Symbol, Value, ValueKind},
 };
 use dice_error::runtime_error::RuntimeError;
 use std::{cell::RefCell, rc::Rc};
 
-pub fn register(runtime: &mut crate::Runtime<impl ModuleLoader>, base: &Class) {
-    let class = base.derive("Array");
-    runtime.known_types.insert(ValueKind::Array, class.clone());
-    runtime.globals.insert(class.name(), Value::Class(class.clone()));
+impl<L> crate::Runtime<L>
+where
+    L: ModuleLoader,
+{
+    pub(super) fn register_array(&mut self) {
+        let class = self.object_class.derive("Array");
 
-    class.set_method(NEW, Rc::new(construct_array) as NativeFn);
-    class.set_method("push", Rc::new(push) as NativeFn);
-    class.set_method("pop", Rc::new(pop) as NativeFn);
-    class.set_method("length", Rc::new(length) as NativeFn);
-    class.set_method("first", Rc::new(first) as NativeFn);
-    class.set_method("filter", Rc::new(filter) as NativeFn);
-    class.set_method("map", Rc::new(map) as NativeFn);
-    class.set_method("iter", Rc::new(iter) as NativeFn);
+        class.set_method(NEW, Rc::new(construct_array) as NativeFn);
+        class.set_method("push", Rc::new(push) as NativeFn);
+        class.set_method("pop", Rc::new(pop) as NativeFn);
+        class.set_method("length", Rc::new(length) as NativeFn);
+        class.set_method("first", Rc::new(first) as NativeFn);
+        class.set_method("filter", Rc::new(filter) as NativeFn);
+        class.set_method("map", Rc::new(map) as NativeFn);
+        class.set_method("iter", Rc::new(iter) as NativeFn);
+
+        self.known_types.insert(ValueKind::Array, class.clone());
+        self.globals.insert(class.name(), Value::Class(class.clone()));
+    }
 }
 
 fn construct_array(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {

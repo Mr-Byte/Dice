@@ -281,29 +281,15 @@ where
     }
 
     fn create_object(&mut self) {
-        // TODO: Cache this ahead of time and store it, for more efficient retrievals.
-        let object_class = self
-            .known_types
-            .get(&ValueKind::Object)
-            .expect("Object class should always be registered with runtime.")
-            .clone();
-
-        let object = Object::new(object_class);
+        let object = Object::new(self.object_class.clone());
 
         self.stack.push(Value::Object(object));
     }
 
     fn create_class(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
-        // TODO: Cache this ahead of time and store it, for more efficient retrievals.
-        let object_class = self
-            .known_types
-            .get(&ValueKind::Object)
-            .expect("Object class should always be registered with runtime.")
-            .clone();
-
         let name_slot = cursor.read_u8() as usize;
         let name = bytecode.constants()[name_slot].as_symbol()?;
-        let class = Class::with_base(name, object_class);
+        let class = Class::with_base(name, self.object_class.clone());
 
         self.stack.push(Value::Class(class));
 
@@ -588,7 +574,7 @@ where
         let module = match self.loaded_modules.entry(module_name.clone()) {
             Entry::Occupied(entry) => entry.get().clone(),
             Entry::Vacant(entry) => {
-                let export = Value::Object(Object::new(None));
+                let export = Value::Object(Object::new(self.module_class.clone()));
                 entry.insert(export.clone());
 
                 let module = self.module_loader.load_module(module_name)?;

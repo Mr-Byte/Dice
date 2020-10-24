@@ -5,6 +5,7 @@ use crate::{
 };
 use dice_core::{
     bytecode::Bytecode,
+    runtime::Runtime as _,
     upvalue::Upvalue,
     value::{Class, Object, Value, ValueKind, ValueMap},
 };
@@ -25,6 +26,8 @@ where
     pub(crate) globals: ValueMap,
     pub(crate) loaded_modules: ValueMap,
     pub(crate) module_loader: L,
+    pub(crate) object_class: Class,
+    pub(crate) module_class: Class,
     pub(crate) known_types: HashMap<ValueKind, Class, BuildHasherDefault<WyHash>>,
 }
 
@@ -33,17 +36,27 @@ where
     L: ModuleLoader,
 {
     fn default() -> Self {
+        let object_class = classes::object::new();
+        // TODO: Push this off to a module of its own and add appropriate methods.
+        let module_class = object_class.derive("Module");
         let mut runtime = Self {
             stack: Default::default(),
             open_upvalues: Default::default(),
-            globals: Default::default(),
             loaded_modules: Default::default(),
             module_loader: Default::default(),
             known_types: Default::default(),
+            globals: ValueMap::default(),
+            object_class: object_class.clone(),
+            module_class: object_class.clone(),
         };
 
-        classes::register(&mut runtime);
-
+        runtime
+            .add_global(&*object_class.name(), Value::Class(object_class.clone()))
+            .unwrap();
+        runtime
+            .add_global(&*module_class.name(), Value::Class(module_class.clone()))
+            .unwrap();
+        runtime.register_known_types();
         runtime
     }
 }
@@ -89,7 +102,7 @@ where
     }
 
     fn new_class(&mut self, name: &str, _module: Option<&Object>) -> Result<Class, RuntimeError> {
-        let class = Class::new(name.into());
+        let class = Class::with_base(name.into(), self.object_class.clone());
 
         // TODO: Insert into a module if one is provided.
         // if let Some(module) = module {}
@@ -107,16 +120,15 @@ where
     }
 
     fn new_object(&mut self) -> Result<Object, RuntimeError> {
-        let object = Object::new(self.known_types.get(&ValueKind::Object).cloned().ok_or_else(|| {
-            RuntimeError::Aborted(String::from("Object should always be registered with the runtime."))
-        })?);
+        let object = Object::new(self.object_class.clone());
 
         Ok(object)
     }
 
     fn load_prelude(&mut self, path: &str) -> Result<(), RuntimeError> {
+        // TODO: Clean this up unify module loading with the runtime's own module loading process.
         let module = self.module_loader.load_module(path.into())?;
-        let prelude = Value::Object(Object::new(None));
+        let prelude = Value::Object(Object::new(self.module_class.clone()));
         // NOTE: Add the loaded prelude module as a registered module.
         self.loaded_modules.insert(module.id.clone(), prelude.clone());
 
@@ -129,8 +141,13 @@ where
         Ok(())
     }
 
-    fn add_global(&mut self, _name: &str, _value: Value) {
-        unimplemented!()
+    fn add_global(&mut self, name: &str, value: Value) -> Result<(), RuntimeError> {
+        if self.globals.insert(name.into(), value).is_some() {
+            // TODO: Create a separate error variant for this.
+            return Err(RuntimeError::Aborted(String::from("Global already registered.")));
+        }
+
+        Ok(())
     }
 
     fn call_function(&mut self, target: Value, args: &[Value]) -> Result<Value, RuntimeError> {
