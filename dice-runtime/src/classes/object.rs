@@ -1,3 +1,4 @@
+use crate::module::ModuleLoader;
 use dice_core::{
     protocol::object::{OBJECT_CLASS, TO_STRING},
     runtime::Runtime,
@@ -6,12 +7,17 @@ use dice_core::{
 use dice_error::runtime_error::RuntimeError;
 use std::rc::Rc;
 
-pub fn new() -> Class {
-    let class = Class::new(OBJECT_CLASS.into());
+impl<L> crate::Runtime<L>
+where
+    L: ModuleLoader,
+{
+    pub fn new_object_class() -> Class {
+        let class = Class::new(OBJECT_CLASS.into());
 
-    class.set_method(TO_STRING, Rc::new(to_string) as NativeFn);
+        class.set_method(TO_STRING, Rc::new(to_string) as NativeFn);
 
-    class
+        class
+    }
 }
 
 fn to_string(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {

@@ -48,4 +48,5 @@ pub mod iterator {
 pub mod object {
     pub const TO_STRING: &str = "to_string";
     pub const OBJECT_CLASS: &str = "Object";
+    pub const MODULE_CLASS: &str = "Module";
 }

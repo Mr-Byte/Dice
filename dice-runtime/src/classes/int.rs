@@ -39,22 +39,19 @@ where
         class.set_field("U8_MAX", Value::Int(u8::MAX as i64));
         class.set_field("U8_MIN", Value::Int(u8::MIN as i64));
 
-        // TODO: Unify this between all the loaders?
-        self.value_class_mapping.insert(ValueKind::Int, class.clone());
-        self.globals.insert(class.name(), Value::Class(class.clone()));
+        self.set_value_class(ValueKind::Int, class);
     }
 }
 
 fn construct_int(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
-    if let [_, param, ..] = args {
-        match param {
+    match args {
+        [_, param, ..] => match param {
             value @ Value::Int(_) => Ok(value.clone()),
             Value::Float(value) => Ok(Value::Int(*value as i64)),
             Value::String(string) => Ok(string.parse::<i64>().map_or_else(|_| Value::Null, Value::Int)),
             _ => Ok(Value::Null),
-        }
-    } else {
-        Ok(Value::Null)
+        },
+        _ => Ok(Value::Null),
     }
 }
 

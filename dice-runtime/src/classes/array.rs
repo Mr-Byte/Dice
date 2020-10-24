@@ -26,18 +26,14 @@ where
         class.set_method("map", Rc::new(map) as NativeFn);
         class.set_method("iter", Rc::new(iter) as NativeFn);
 
-        self.value_class_mapping.insert(ValueKind::Array, class.clone());
-        self.globals.insert(class.name(), Value::Class(class.clone()));
+        self.set_value_class(ValueKind::Array, class);
     }
 }
 
 fn construct_array(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
-    if let [_, rest @ ..] = args {
-        let arr = rest.to_vec();
-
-        Ok(Value::Array(arr.into()))
-    } else {
-        Ok(Value::Null)
+    match args {
+        [_, rest @ ..] => Ok(Value::Array(rest.to_vec().into())),
+        _ => Ok(Value::Null),
     }
 }
 

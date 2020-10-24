@@ -1,5 +1,4 @@
 use crate::{
-    classes,
     module::{file_loader::FileModuleLoader, ModuleLoader},
     stack::Stack,
 };
@@ -35,10 +34,8 @@ where
     L: ModuleLoader,
 {
     fn default() -> Self {
-        // TODO: Push the creation of runtime components into a separate method.
-        let object_class = classes::object::new();
-        // TODO: Push this off to a module of its own and add appropriate methods.
-        let module_class = object_class.derive("Module");
+        let object_class = Self::new_object_class();
+        let module_class = Self::new_module_class(&object_class);
         let mut globals: ValueMap = ValueMap::default();
         globals.insert(object_class.name(), Value::Class(object_class.clone()));
         globals.insert(module_class.name(), Value::Class(module_class.clone()));
@@ -78,6 +75,11 @@ where
         self.stack.release_slots(bytecode.slot_count());
 
         Ok(result?)
+    }
+
+    pub(super) fn set_value_class(&mut self, value_kind: ValueKind, class: Class) {
+        self.value_class_mapping.insert(value_kind, class.clone());
+        self.globals.insert(class.name(), Value::Class(class));
     }
 }
 

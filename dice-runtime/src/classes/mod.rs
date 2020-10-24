@@ -8,6 +8,7 @@ mod class;
 mod float;
 mod function;
 mod int;
+mod module;
 mod string;
 mod unit;
 
@@ -17,8 +18,12 @@ where
 {
     pub(super) fn register_known_types(&mut self) {
         self.register_array();
+        self.register_bool();
         self.register_class();
         self.register_float();
+        self.register_function();
         self.register_int();
+        self.register_string();
+        self.register_unit();
     }
 }

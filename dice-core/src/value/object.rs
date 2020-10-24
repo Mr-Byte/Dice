@@ -1,5 +1,5 @@
 use crate::{
-    id::type_id::TypeId,
+    type_id::TypeId,
     value::{Class, ClassInner, Symbol, Value, ValueMap},
 };
 use std::{

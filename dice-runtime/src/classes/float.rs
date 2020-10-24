@@ -63,21 +63,19 @@ where
         class.set_field("INFINITY", Value::Float(std::f64::INFINITY));
         class.set_field("NEG_INFINITY", Value::Float(std::f64::NEG_INFINITY));
 
-        self.value_class_mapping.insert(ValueKind::Float, class.clone());
-        self.globals.insert(class.name(), Value::Class(class.clone()));
+        self.set_value_class(ValueKind::Float, class);
     }
 }
 
 fn construct_float(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
-    if let [_, param, ..] = args {
-        match param {
+    match args {
+        [_, param, ..] => match param {
             value @ Value::Float(_) => Ok(value.clone()),
             Value::Int(value) => Ok(Value::Float(*value as f64)),
             Value::String(string) => Ok(string.parse::<f64>().map_or_else(|_| Value::Null, Value::Float)),
             _ => Ok(Value::Null),
-        }
-    } else {
-        Ok(Value::Null)
+        },
+        _ => Ok(Value::Null),
     }
 }
 
