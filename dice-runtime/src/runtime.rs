@@ -46,12 +46,12 @@ where
         let mut runtime = Self {
             stack: Default::default(),
             open_upvalues: Default::default(),
-            globals,
             loaded_modules: Default::default(),
             module_loader: Default::default(),
             value_class_mapping: Default::default(),
-            object_class: object_class.clone(),
-            module_class: object_class.clone(),
+            globals,
+            object_class,
+            module_class,
         };
 
         runtime.register_known_types();
