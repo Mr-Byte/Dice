@@ -17,6 +17,7 @@ where
         class.set_method(TO_STRING, Rc::new(to_string) as NativeFn);
         class.set_method("fields", Rc::new(fields) as NativeFn);
         class.set_method("methods", Rc::new(methods) as NativeFn);
+        class.set_method("class_of", Rc::new(class_of) as NativeFn);
         class
     }
 }
@@ -46,8 +47,7 @@ fn fields(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
 }
 
 fn methods(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
-    let result = args
-        .first()
+    args.first()
         .and_then(|value| value.as_object().ok())
         .map_or(Ok(Value::Null), |object| {
             let fields = object
@@ -59,7 +59,15 @@ fn methods(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeEr
                 .collect::<Vec<_>>();
 
             Ok::<Value, RuntimeError>(Value::with_vec(fields))
-        })?;
+        })
+}
 
-    Ok(result)
+fn class_of(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
+    args.first()
+        .and_then(|value| value.as_object().ok())
+        .map_or(Ok(Value::Null), |object| {
+            let class = object.class().map(Ok).unwrap_or_else(|| runtime.any_class())?;
+
+            Ok(Value::Class(class))
+        })
 }
