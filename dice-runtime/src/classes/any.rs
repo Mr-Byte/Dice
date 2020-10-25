@@ -47,27 +47,24 @@ fn fields(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
 }
 
 fn methods(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
-    args.first()
-        .and_then(|value| value.as_object().ok())
-        .map_or(Ok(Value::Null), |object| {
-            let fields = object
-                .class()
-                .map_or_else(|| runtime.any_class(), Ok)?
+    match args {
+        [this, ..] => {
+            let class = runtime.class_of(this)?;
+            let result = class
                 .methods()
                 .iter()
                 .map(|(key, _)| Value::with_string(key))
                 .collect::<Vec<_>>();
 
-            Ok::<Value, RuntimeError>(Value::with_vec(fields))
-        })
+            Ok(Value::with_vec(result))
+        }
+        _ => Ok(Value::Null),
+    }
 }
 
 fn class_of(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
-    args.first()
-        .and_then(|value| value.as_object().ok())
-        .map_or(Ok(Value::Null), |object| {
-            let class = object.class().map(Ok).unwrap_or_else(|| runtime.any_class())?;
-
-            Ok(Value::Class(class))
-        })
+    match args {
+        [this, ..] => Ok(Value::Class(runtime.class_of(this)?)),
+        _ => Ok(Value::Null),
+    }
 }
