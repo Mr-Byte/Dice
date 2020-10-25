@@ -15,7 +15,8 @@ where
         let class = Class::new(ANY_CLASS.into());
 
         class.set_method(TO_STRING, Rc::new(to_string) as NativeFn);
-
+        class.set_method("fields", Rc::new(fields) as NativeFn);
+        class.set_method("methods", Rc::new(methods) as NativeFn);
         class
     }
 }
@@ -25,4 +26,39 @@ fn to_string(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError>
         [value, ..] => Ok(Value::with_string(format!("{}", value))),
         _ => Ok(Value::Null),
     }
+}
+
+fn fields(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
+    let result = args
+        .first()
+        .and_then(|value| value.as_object().ok())
+        .map_or(Value::Null, |object| {
+            let fields = object
+                .fields()
+                .keys()
+                .map(|key| Value::with_string(key))
+                .collect::<Vec<_>>();
+
+            Value::with_vec(fields)
+        });
+
+    Ok(result)
+}
+
+fn methods(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
+    let result = args
+        .first()
+        .and_then(|value| value.as_object().ok())
+        .map_or(Value::Null, |object| {
+            let fields = object
+                .class()
+                .iter()
+                .flat_map(|class| class.methods())
+                .map(|(key, _)| Value::with_string(key))
+                .collect::<Vec<_>>();
+
+            Value::with_vec(fields)
+        });
+
+    Ok(result)
 }

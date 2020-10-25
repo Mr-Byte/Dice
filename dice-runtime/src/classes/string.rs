@@ -16,6 +16,8 @@ where
 
         class.set_method(NEW, Rc::new(construct_string) as NativeFn);
 
+        // TODO: Figure out what methods to expose for strings.
+
         self.set_value_class(ValueKind::String, class);
     }
 }

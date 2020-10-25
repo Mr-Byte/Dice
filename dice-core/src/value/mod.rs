@@ -56,6 +56,10 @@ impl Value {
         Self::FnNative(FnNative::new(native_fn.into()))
     }
 
+    pub fn with_vec(vec: Vec<Value>) -> Self {
+        Value::Array(vec.into())
+    }
+
     pub fn as_bool(&self) -> Result<bool, TypeError> {
         match self {
             Value::Bool(bool) => Ok(*bool),

@@ -1,5 +1,3 @@
-use crate::{module::ModuleLoader, Runtime};
-
 pub mod any;
 
 mod array;
@@ -11,6 +9,8 @@ mod int;
 mod module;
 mod string;
 mod unit;
+
+use crate::{module::ModuleLoader, Runtime};
 
 impl<L> Runtime<L>
 where

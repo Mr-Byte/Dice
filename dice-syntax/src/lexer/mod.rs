@@ -1,6 +1,7 @@
 mod token;
 
 use dice_error::syntax_error::SyntaxError;
+
 pub use token::{Token, TokenKind};
 
 pub struct Lexer {

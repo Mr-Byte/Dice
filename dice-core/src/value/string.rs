@@ -1,3 +1,4 @@
+use crate::value::Symbol;
 use std::{
     fmt::{Display, Formatter},
     ops::Deref,
@@ -24,9 +25,25 @@ impl<'a> From<&'a std::string::String> for String {
     }
 }
 
-impl<'a> From<&'a str> for String {
-    fn from(value: &'a str) -> Self {
+impl From<&'_ str> for String {
+    fn from(value: &'_ str) -> Self {
         Self { inner: value.into() }
+    }
+}
+
+impl From<Symbol> for String {
+    fn from(value: Symbol) -> Self {
+        Self {
+            inner: (&*value).into(),
+        }
+    }
+}
+
+impl From<&'_ Symbol> for String {
+    fn from(value: &Symbol) -> Self {
+        Self {
+            inner: (&**value).into(),
+        }
     }
 }
 

@@ -257,10 +257,7 @@ where
         let rhs = self.stack.pop();
         let rhs = rhs.as_class()?;
         let lhs = self.stack.peek(0);
-
         let instance_type_id = rhs.instance_type_id();
-
-        // TODO: Work out the exact details of type id resolution.
         let is_type = lhs
             .as_object()
             .ok()

@@ -91,6 +91,16 @@ impl ClassInner {
         self.methods.borrow_mut().insert(name.into(), method.into());
     }
 
+    pub fn methods(&self) -> Vec<(Symbol, Value)> {
+        // TODO: Make this handle multiple, conflicting methods when traits are added.
+        self.methods
+            .borrow()
+            .iter()
+            .map(|(key, value)| (key.clone(), value.clone()))
+            .chain(self.base.iter().flat_map(|base| base.methods()))
+            .collect::<Vec<_>>()
+    }
+
     pub fn base(&self) -> Option<Class> {
         self.base.clone()
     }

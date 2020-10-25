@@ -33,6 +33,7 @@ mod literal_variable;
 mod syntax_node;
 
 use dice_error::compiler_error::CompilerError;
+
 pub use expr_block::BlockKind;
 
 pub(super) trait NodeVisitor<T> {
