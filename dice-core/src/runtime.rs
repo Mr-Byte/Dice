@@ -10,4 +10,6 @@ pub trait Runtime {
     fn add_global(&mut self, name: &str, value: Value) -> Result<(), RuntimeError>;
 
     fn call_function(&mut self, target: Value, args: &[Value]) -> Result<Value, RuntimeError>;
+
+    fn any_class(&mut self) -> Result<Class, RuntimeError>;
 }

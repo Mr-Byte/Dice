@@ -144,4 +144,8 @@ where
 
         Ok(self.stack.pop())
     }
+
+    fn any_class(&mut self) -> Result<Class, RuntimeError> {
+        Ok(self.any_class.clone())
+    }
 }

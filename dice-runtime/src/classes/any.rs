@@ -45,20 +45,21 @@ fn fields(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
     Ok(result)
 }
 
-fn methods(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
+fn methods(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
     let result = args
         .first()
         .and_then(|value| value.as_object().ok())
-        .map_or(Value::Null, |object| {
+        .map_or(Ok(Value::Null), |object| {
             let fields = object
                 .class()
+                .map_or_else(|| runtime.any_class(), Ok)?
+                .methods()
                 .iter()
-                .flat_map(|class| class.methods())
                 .map(|(key, _)| Value::with_string(key))
                 .collect::<Vec<_>>();
 
-            Value::with_vec(fields)
-        });
+            Ok::<Value, RuntimeError>(Value::with_vec(fields))
+        })?;
 
     Ok(result)
 }
