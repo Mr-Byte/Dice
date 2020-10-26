@@ -38,7 +38,7 @@ fn fields(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
             let fields = object
                 .fields()
                 .keys()
-                .map(|key| Value::with_string(key))
+                .map(Value::with_string)
                 .collect::<Vec<_>>();
 
             Value::with_vec(fields)

@@ -15,7 +15,7 @@ impl NodeVisitor<&ClassDecl> for Compiler {
 
         let slot = {
             let class_name: Symbol = (&*node.name).into();
-            let local = self.context()?.scope_stack().local(class_name.clone()).ok_or_else(|| {
+            let local = self.context()?.scope_stack().local(class_name).ok_or_else(|| {
                 CompilerError::InternalCompilerError(String::from("Class not already declared in scope."))
             })?;
 
@@ -46,13 +46,13 @@ impl NodeVisitor<&ClassDecl> for Compiler {
                     let fn_decl = fn_decl.clone();
                     let is_method = fn_decl.args.first().map(|arg| arg == &*SELF.get()).unwrap_or(false);
                     let kind = if is_method {
-                        if fn_decl.name == &*NEW.get() {
+                        if fn_decl.name == *NEW.get() {
                             FnKind::Constructor
                         } else {
                             FnKind::Method
                         }
                     } else {
-                        if fn_decl.name == &*NEW.get() {
+                        if fn_decl.name == *NEW.get() {
                             return Err(CompilerError::NewMustHaveSelfReceiver(fn_decl.span));
                         }
 

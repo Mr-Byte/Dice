@@ -74,7 +74,7 @@ impl Compiler {
             if let Some(local) = self.context()?.scope_stack().local(target.clone()) {
                 let local = local.clone();
                 self.assign_local(
-                    target.clone(),
+                    target,
                     assignment.operator,
                     assignment.rhs_expression,
                     assignment.span,
@@ -82,7 +82,7 @@ impl Compiler {
                 )
             } else if let Some(upvalue) = self.compiler_stack.resolve_upvalue(target.clone(), 0) {
                 self.assign_upvalue(
-                    target.clone(),
+                    target,
                     assignment.operator,
                     assignment.rhs_expression,
                     assignment.span,

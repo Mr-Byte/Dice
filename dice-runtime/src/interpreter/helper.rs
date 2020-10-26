@@ -62,7 +62,7 @@ impl<L: ModuleLoader> Runtime<L> {
             }
         }
 
-        if &**key == &*NEW.get() {
+        if *key == NEW.get() {
             return Err(RuntimeError::Aborted(String::from(
                 "TODO: the new function cannot be accessed directly.",
             )));

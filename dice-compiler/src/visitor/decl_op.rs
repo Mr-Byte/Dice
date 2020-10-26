@@ -15,7 +15,7 @@ impl NodeVisitor<&OpDecl> for Compiler {
         let name = format!("#{}", node.name);
 
         if !OPERATORS.with(|ops| ops.contains(&(&*name).into())) {
-            return Err(CompilerError::InvalidOperatorName(name.clone(), node.span));
+            return Err(CompilerError::InvalidOperatorName(name, node.span));
         }
 
         let upvalues = op_context.upvalues().clone();
