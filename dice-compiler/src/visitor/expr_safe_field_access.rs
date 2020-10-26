@@ -21,7 +21,7 @@ impl NodeVisitor<&SafeAccess> for Compiler {
                 PUSH_NULL;
                 NEQ;
                 JUMP_IF_FALSE -> safe_access_jump;
-                LOAD_FIELD field;
+                LOAD_FIELD &**field;
             ]
         }
 

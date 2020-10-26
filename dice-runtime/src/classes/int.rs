@@ -14,7 +14,7 @@ where
     pub(super) fn register_int(&mut self) {
         let class = self.any_class.derive("Int");
 
-        class.set_method(NEW, Rc::new(construct_int) as NativeFn);
+        class.set_method(&NEW, Rc::new(construct_int) as NativeFn);
         class.set_method("abs", bind_i64_ret_i64(i64::abs));
         class.set_method("pow", Rc::new(pow) as NativeFn);
         class.set_method("is_positive", bind_i64_ret_bool(i64::is_positive));

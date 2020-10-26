@@ -11,7 +11,7 @@ impl NodeVisitor<&ImportDecl> for Compiler {
                 let slot = self
                     .context()?
                     .scope_stack()
-                    .add_local(item, State::initialized(false))?;
+                    .add_local(item.clone(), State::initialized(false))?;
 
                 Ok((item.as_str(), slot as u8))
             })
@@ -34,7 +34,7 @@ impl NodeVisitor<&ImportDecl> for Compiler {
             let module_slot = self
                 .context()?
                 .scope_stack()
-                .add_local(module_import, State::initialized(false))?;
+                .add_local(module_import.clone(), State::initialized(false))?;
 
             self.context()?.assembler().store_local(module_slot as u8, node.span);
         }

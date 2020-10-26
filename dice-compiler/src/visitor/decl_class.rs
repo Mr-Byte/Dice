@@ -4,6 +4,8 @@ use crate::{
     visitor::{FnKind, NodeVisitor},
 };
 use dice_core::protocol::class::{NEW, SELF};
+use dice_core::protocol::ProtocolSymbol;
+use dice_core::value::Symbol;
 use dice_error::compiler_error::CompilerError;
 use dice_syntax::{ClassDecl, SyntaxNode};
 
@@ -12,15 +14,15 @@ impl NodeVisitor<&ClassDecl> for Compiler {
         self.context()?.scope_stack().push_scope(ScopeKind::Block, None);
 
         let slot = {
-            let class_name = node.name.clone();
-            let local = self.context()?.scope_stack().local(&class_name).ok_or_else(|| {
+            let class_name: Symbol = (&*node.name).into();
+            let local = self.context()?.scope_stack().local(class_name.clone()).ok_or_else(|| {
                 CompilerError::InternalCompilerError(String::from("Class not already declared in scope."))
             })?;
 
             // NOTE: Check if a class of the given name has already been initialized.
             if let State::Class { ref mut is_initialized } = &mut local.state {
                 if *is_initialized {
-                    return Err(CompilerError::ItemAlreadyDeclared(class_name));
+                    return Err(CompilerError::ItemAlreadyDeclared(node.name.to_owned()));
                 }
 
                 *is_initialized = true;
@@ -42,15 +44,15 @@ impl NodeVisitor<&ClassDecl> for Compiler {
             match node {
                 SyntaxNode::FnDecl(fn_decl) => {
                     let fn_decl = fn_decl.clone();
-                    let is_method = fn_decl.args.first().map(|arg| arg == SELF).unwrap_or(false);
+                    let is_method = fn_decl.args.first().map(|arg| arg == &*SELF.get()).unwrap_or(false);
                     let kind = if is_method {
-                        if fn_decl.name == NEW {
+                        if fn_decl.name == &*NEW.get() {
                             FnKind::Constructor
                         } else {
                             FnKind::Method
                         }
                     } else {
-                        if fn_decl.name == NEW {
+                        if fn_decl.name == &*NEW.get() {
                             return Err(CompilerError::NewMustHaveSelfReceiver(fn_decl.span));
                         }
 
@@ -62,10 +64,10 @@ impl NodeVisitor<&ClassDecl> for Compiler {
                     emit_bytecode! {
                         self.assembler()?, fn_decl.span => [
                             if is_method => [
-                                STORE_METHOD &fn_decl.name;
+                                STORE_METHOD &*fn_decl.name;
                                 LOAD_LOCAL slot;
                             ] else [
-                                STORE_FIELD &fn_decl.name;
+                                STORE_FIELD &*fn_decl.name;
                                 POP;
                                 LOAD_LOCAL slot;
                             ]

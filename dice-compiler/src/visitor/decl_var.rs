@@ -39,7 +39,7 @@ impl Compiler {
                 let slot = self
                     .context()?
                     .scope_stack()
-                    .add_local(item, State::initialized(false))?;
+                    .add_local(item.clone(), State::initialized(false))?;
 
                 Ok((item.as_str(), slot as u8))
             })

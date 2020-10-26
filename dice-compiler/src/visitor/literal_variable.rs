@@ -1,17 +1,18 @@
 use super::NodeVisitor;
 use crate::compiler::Compiler;
+use dice_core::value::Symbol;
 use dice_error::compiler_error::CompilerError;
 use dice_syntax::LitIdent;
 
 impl NodeVisitor<&LitIdent> for Compiler {
     fn visit(&mut self, LitIdent { name, span }: &LitIdent) -> Result<(), CompilerError> {
-        let name_symbol = name.clone();
+        let name_symbol: Symbol = name.clone().into();
 
         {
             let context = self.context()?;
-            if let Some(scope_variable) = context.scope_stack().local(&name_symbol) {
+            if let Some(scope_variable) = context.scope_stack().local(name_symbol.clone()) {
                 if !scope_variable.is_initialized() {
-                    return Err(CompilerError::UninitializedVariable(scope_variable.name.clone()));
+                    return Err(CompilerError::UninitializedVariable((&*scope_variable.name).to_owned()));
                 }
 
                 let slot = scope_variable.slot as u8;

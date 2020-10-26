@@ -4,6 +4,7 @@ use crate::{
     scope_stack::State,
     visitor::NodeVisitor,
 };
+use dice_core::protocol::ProtocolSymbol;
 use dice_core::{
     bytecode::Bytecode,
     protocol::module::EXPORT,
@@ -51,7 +52,7 @@ impl Compiler {
             compiler
                 .context()?
                 .scope_stack()
-                .add_local(EXPORT, State::initialized(false))?;
+                .add_local(&EXPORT, State::initialized(false))?;
         }
 
         compiler.visit(compiler.syntax_tree.root())?;
@@ -60,7 +61,7 @@ impl Compiler {
             let exports_slot = compiler
                 .context()?
                 .scope_stack()
-                .local(EXPORT)
+                .local(&*EXPORT.get())
                 .expect("#export should always be defined for modules.")
                 .slot as u8;
 

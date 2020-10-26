@@ -137,7 +137,7 @@ where
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Int(rhs), Value::Int(lhs)) => *lhs *= rhs,
             (Value::Float(rhs), Value::Float(lhs)) => *lhs *= rhs,
-            (rhs, _) => self.call_bin_op(MUL, rhs)?,
+            (rhs, _) => self.call_bin_op(&MUL, rhs)?,
         }
 
         Ok(())
@@ -153,7 +153,7 @@ where
                 *lhs /= rhs;
             }
             (Value::Float(rhs), Value::Float(lhs)) => *lhs /= rhs,
-            (rhs, _) => self.call_bin_op(DIV, rhs)?,
+            (rhs, _) => self.call_bin_op(&DIV, rhs)?,
         }
 
         Ok(())
@@ -169,7 +169,7 @@ where
                 *lhs %= rhs;
             }
             (Value::Float(rhs), Value::Float(lhs)) => *lhs %= rhs,
-            (rhs, _) => self.call_bin_op(REM, rhs)?,
+            (rhs, _) => self.call_bin_op(&REM, rhs)?,
         }
 
         Ok(())
@@ -179,7 +179,7 @@ where
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Int(rhs), Value::Int(lhs)) => *lhs += rhs,
             (Value::Float(rhs), Value::Float(lhs)) => *lhs += rhs,
-            (rhs, _) => self.call_bin_op(ADD, rhs)?,
+            (rhs, _) => self.call_bin_op(&ADD, rhs)?,
         }
 
         Ok(())
@@ -190,7 +190,7 @@ where
             (Value::Bool(rhs), Value::Bool(lhs)) => *lhs &= !rhs,
             (Value::Int(rhs), Value::Int(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs > rhs),
             (Value::Float(rhs), Value::Float(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs > rhs),
-            (rhs, _) => self.call_bin_op(GT, rhs)?,
+            (rhs, _) => self.call_bin_op(&GT, rhs)?,
         }
 
         Ok(())
@@ -201,7 +201,7 @@ where
             (Value::Bool(rhs), Value::Bool(lhs)) => *lhs = *lhs >= rhs,
             (Value::Int(rhs), Value::Int(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs >= rhs),
             (Value::Float(rhs), Value::Float(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs >= rhs),
-            (rhs, _) => self.call_bin_op(GTE, rhs)?,
+            (rhs, _) => self.call_bin_op(&GTE, rhs)?,
         }
 
         Ok(())
@@ -212,7 +212,7 @@ where
             (Value::Bool(rhs), Value::Bool(lhs)) => *lhs = !(*lhs) & rhs,
             (Value::Int(rhs), Value::Int(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs < rhs),
             (Value::Float(rhs), Value::Float(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs < rhs),
-            (rhs, _) => self.call_bin_op(LT, rhs)?,
+            (rhs, _) => self.call_bin_op(&LT, rhs)?,
         }
 
         Ok(())
@@ -223,7 +223,7 @@ where
             (Value::Bool(rhs), Value::Bool(lhs)) => *lhs = *lhs <= rhs,
             (Value::Int(rhs), Value::Int(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs <= rhs),
             (Value::Float(rhs), Value::Float(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs <= rhs),
-            (rhs, _) => self.call_bin_op(LTE, rhs)?,
+            (rhs, _) => self.call_bin_op(&LTE, rhs)?,
         }
 
         Ok(())
@@ -233,7 +233,7 @@ where
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Int(rhs), Value::Int(lhs)) => *lhs -= rhs,
             (Value::Float(rhs), Value::Float(lhs)) => *lhs -= rhs,
-            (rhs, _) => self.call_bin_op(SUB, rhs)?,
+            (rhs, _) => self.call_bin_op(&SUB, rhs)?,
         }
 
         Ok(())

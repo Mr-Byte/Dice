@@ -4,6 +4,7 @@ use crate::{
     scope_stack::{ScopeKind, State},
 };
 use dice_core::protocol::class::SELF;
+use dice_core::protocol::ProtocolSymbol;
 use dice_error::compiler_error::CompilerError;
 use dice_syntax::Block;
 
@@ -80,7 +81,7 @@ impl<'args, T: AsRef<str>> NodeVisitor<(&Block, BlockKind<'args, T>)> for Compil
             let local_slot = self
                 .context()?
                 .scope_stack()
-                .local(SELF)
+                .local(&*SELF.get())
                 .expect("Methods should always have a self.")
                 .slot as u8;
 

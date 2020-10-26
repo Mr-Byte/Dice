@@ -1,6 +1,6 @@
 use super::NodeVisitor;
 use crate::{compiler::Compiler, scope_stack::State, upvalue::UpvalueDescriptor, visitor::FnKind};
-use dice_core::value::{FnScript, Value};
+use dice_core::value::{FnScript, Symbol, Value};
 use dice_error::compiler_error::CompilerError;
 use dice_syntax::FnDecl;
 
@@ -25,16 +25,15 @@ impl NodeVisitor<(&FnDecl, FnKind)> for Compiler {
 impl Compiler {
     fn emit_fn(&mut self, fn_decl: &FnDecl, upvalues: &[UpvalueDescriptor], value: Value) -> Result<(), CompilerError> {
         let context = self.context()?;
-
-        let fn_name = fn_decl.name.clone();
-        let local = context.scope_stack().local(&fn_name).ok_or_else(|| {
+        let fn_name: Symbol = (&*fn_decl.name).into();
+        let local = context.scope_stack().local(fn_name).ok_or_else(|| {
             CompilerError::InternalCompilerError(String::from("Function not already declared in scope."))
         })?;
 
         // NOTE: Check if a function of the given name has already been initialized.
         match &mut local.state {
             State::Function { ref mut is_initialized } if *is_initialized => {
-                return Err(CompilerError::ItemAlreadyDeclared(fn_name))
+                return Err(CompilerError::ItemAlreadyDeclared(fn_decl.name.to_owned()))
             }
             State::Function { ref mut is_initialized } => *is_initialized = true,
             _ => unreachable!("Unexpected non-function local state while compiling a function."),

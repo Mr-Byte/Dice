@@ -13,7 +13,7 @@ impl NodeVisitor<&FieldAccess> for Compiler {
         }: &FieldAccess,
     ) -> Result<(), CompilerError> {
         self.visit(*expression)?;
-        self.context()?.assembler().load_field(field, *span)?;
+        self.context()?.assembler().load_field(&**field, *span)?;
 
         Ok(())
     }

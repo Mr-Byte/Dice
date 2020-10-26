@@ -4,6 +4,7 @@ use super::{
     upvalue::UpvalueDescriptor,
 };
 use dice_core::bytecode::Bytecode;
+use dice_core::value::Symbol;
 use dice_error::compiler_error::CompilerError;
 
 #[derive(Copy, Clone, Eq, PartialEq)]
@@ -102,8 +103,8 @@ impl CompilerStack {
         self.stack.get_mut(index)
     }
 
-    pub fn resolve_upvalue(&mut self, name: String, depth: usize) -> Option<usize> {
-        let parent_local = self.offset(depth + 1)?.scope_stack().local(&name);
+    pub fn resolve_upvalue(&mut self, name: Symbol, depth: usize) -> Option<usize> {
+        let parent_local = self.offset(depth + 1)?.scope_stack().local(name.clone());
         let descriptor = match parent_local {
             Some(parent_local) => {
                 parent_local.is_captured = true;

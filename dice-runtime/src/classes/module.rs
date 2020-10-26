@@ -6,7 +6,7 @@ where
     L: ModuleLoader,
 {
     pub fn new_module_class(base: &Class) -> Class {
-        let class = base.derive(MODULE_CLASS);
+        let class = base.derive(&MODULE_CLASS);
 
         class
     }

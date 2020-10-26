@@ -1,52 +1,94 @@
+use crate::value::Symbol;
+use std::thread::LocalKey;
+
 pub mod operator {
-    pub const DICE_ROLL: &str = "#dice_roll";
-    pub const DIE_ROLL: &str = "#die_roll";
-    pub const MUL: &str = "#mul";
-    pub const DIV: &str = "#div";
-    pub const REM: &str = "#rem";
-    pub const ADD: &str = "#add";
-    pub const SUB: &str = "#sub";
-    pub const GT: &str = "#gt";
-    pub const GTE: &str = "#gte";
-    pub const LT: &str = "#lt";
-    pub const LTE: &str = "#lte";
-    pub const RANGE_INCLUSIVE: &str = "#range_inclusive";
-    pub const RANGE_EXCLUSIVE: &str = "#range_exclusive";
-    pub const OPERATORS: &[&str] = &[
-        DICE_ROLL,
-        DIE_ROLL,
-        MUL,
-        DIV,
-        REM,
-        ADD,
-        SUB,
-        GT,
-        GTE,
-        LT,
-        LTE,
-        RANGE_EXCLUSIVE,
-        RANGE_INCLUSIVE,
-    ];
+    use super::*;
+
+    thread_local! {
+        pub static DICE_ROLL: Symbol = "#dice_roll".into();
+        pub static DIE_ROLL: Symbol = "#die_roll".into();
+        pub static MUL: Symbol = "#mul".into();
+        pub static DIV: Symbol = "#div".into();
+        pub static REM: Symbol = "#rem".into();
+        pub static ADD: Symbol = "#add".into();
+        pub static SUB: Symbol = "#sub".into();
+        pub static GT: Symbol = "#gt".into();
+        pub static GTE: Symbol = "#gte".into();
+        pub static LT: Symbol = "#lt".into();
+        pub static LTE: Symbol = "#lte".into();
+        pub static RANGE_INCLUSIVE: Symbol = "#range_inclusive".into();
+        pub static RANGE_EXCLUSIVE: Symbol = "#range_exclusive".into();
+        pub static OPERATORS: [Symbol; 13] = [
+            DICE_ROLL.get(),
+            DIE_ROLL.get(),
+            MUL.get(),
+            DIV.get(),
+            REM.get(),
+            ADD.get(),
+            SUB.get(),
+            GT.get(),
+            GTE.get(),
+            LT.get(),
+            LTE.get(),
+            RANGE_EXCLUSIVE.get(),
+            RANGE_INCLUSIVE.get(),
+        ];
+    }
 }
 
 pub mod module {
-    pub const EXPORT: &str = "#export";
+    use super::*;
+
+    thread_local! {
+        pub static EXPORT: Symbol = "#export".into();
+    }
 }
 
 pub mod class {
-    pub const SELF: &str = "self";
-    pub const NEW: &str = "new";
+    use super::*;
+
+    thread_local! {
+        pub static SELF: Symbol = "self".into();
+        pub static NEW: Symbol = "new".into();
+    }
 }
 
 pub mod iterator {
-    pub const NEXT: &str = "next";
-    pub const VALUE: &str = "value";
-    pub const DONE: &str = "is_done";
-    pub const ITER: &str = "iter";
+    use super::*;
+
+    thread_local! {
+        pub static NEXT: Symbol = "next".into();
+        pub static VALUE: Symbol = "value".into();
+        pub static DONE: Symbol = "is_done".into();
+        pub static ITER: Symbol = "iter".into();
+    }
 }
 
 pub mod object {
-    pub const TO_STRING: &str = "to_string";
-    pub const ANY_CLASS: &str = "Any";
-    pub const MODULE_CLASS: &str = "Module";
+    use super::*;
+
+    thread_local! {
+        pub static TO_STRING: Symbol = "to_string".into();
+        pub static ANY_CLASS: Symbol = "Any".into();
+        pub static MODULE_CLASS: Symbol = "Module".into();
+    }
+}
+
+pub trait ProtocolSymbol {
+    fn get(&'static self) -> Symbol;
+}
+
+impl ProtocolSymbol for LocalKey<Symbol> {
+    fn get(&'static self) -> Symbol {
+        self.with(Clone::clone)
+    }
+}
+
+impl<S> From<&'static S> for Symbol
+where
+    S: ProtocolSymbol + 'static,
+{
+    fn from(value: &'static S) -> Self {
+        value.get()
+    }
 }

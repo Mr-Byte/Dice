@@ -1,4 +1,5 @@
 use crate::{module::ModuleLoader, runtime::Runtime};
+use dice_core::protocol::ProtocolSymbol;
 use dice_core::{
     protocol::class::NEW,
     upvalue::{Upvalue, UpvalueState},
@@ -21,20 +22,35 @@ impl<L: ModuleLoader> Runtime<L> {
         found_upvalue
     }
 
-    pub(super) fn call_bin_op(&mut self, operator: &str, rhs: Value) -> Result<(), RuntimeError> {
-        // TODO: Resolve operators from class members.
-        let value = self
-            .globals
-            .get(&operator.into())
-            .ok_or_else(|| RuntimeError::Aborted("No global operator defined.".to_owned()))?;
-        let lhs = self.stack.pop();
+    pub(super) fn call_bin_op(&mut self, operator: impl Into<Symbol>, rhs: Value) -> Result<(), RuntimeError> {
+        fn get_field<L: ModuleLoader>(
+            runtime: &mut Runtime<L>,
+            operator: Symbol,
+            rhs: Value,
+        ) -> Result<(), RuntimeError> {
+            let lhs = runtime.stack.pop();
+            let method = runtime.get_field(&operator, lhs.clone())?;
 
-        self.stack.push(value.clone());
-        self.stack.push(lhs);
-        self.stack.push(rhs);
-        self.call_fn(2)?;
+            if method != Value::Null {
+                runtime.stack.push(method);
+                runtime.stack.push(rhs);
+                runtime.call_fn(1)?;
+            } else {
+                let value = runtime
+                    .globals
+                    .get(&operator)
+                    .ok_or_else(|| RuntimeError::Aborted("No global operator defined.".to_owned()))?;
 
-        Ok(())
+                runtime.stack.push(value.clone());
+                runtime.stack.push(lhs);
+                runtime.stack.push(rhs);
+                runtime.call_fn(2)?;
+            }
+
+            Ok(())
+        }
+
+        get_field(self, operator.into(), rhs)
     }
 
     pub(super) fn get_field(&self, key: &Symbol, value: Value) -> Result<Value, RuntimeError> {
@@ -46,7 +62,7 @@ impl<L: ModuleLoader> Runtime<L> {
             }
         }
 
-        if &**key == NEW {
+        if &**key == &*NEW.get() {
             return Err(RuntimeError::Aborted(String::from(
                 "TODO: the new function cannot be accessed directly.",
             )));
@@ -61,7 +77,7 @@ impl<L: ModuleLoader> Runtime<L> {
             .or_else(|| self.value_class_mapping.get(&value.kind()).cloned());
 
         let value = match class {
-            Some(class) => match class.method(key) {
+            Some(class) => match class.method(&**key) {
                 Some(method) => Value::FnBound(FnBound::new(value, method)),
                 None => Value::Null,
             },
@@ -97,7 +113,7 @@ impl<L: ModuleLoader> Runtime<L> {
         let class = class.clone();
         let mut object = Value::Object(Object::new(class.clone()));
 
-        if let Some(new) = class.method(&NEW.into()) {
+        if let Some(new) = class.method(&NEW) {
             let bound = Value::FnBound(FnBound::new(object.clone(), new));
             *self.stack.peek_mut(arg_count) = bound;
             self.call_fn(arg_count)?;

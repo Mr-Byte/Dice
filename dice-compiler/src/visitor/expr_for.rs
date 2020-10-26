@@ -18,9 +18,9 @@ impl NodeVisitor<&ForLoop> for Compiler {
         // NEXT: Load the iterator method, call it, and load the next method from it.
         emit_bytecode! {
             self.assembler()?, for_loop.span => [
-                LOAD_FIELD ITER;
+                LOAD_FIELD &ITER;
                 CALL 0;
-                LOAD_FIELD NEXT;
+                LOAD_FIELD &NEXT;
             ]
         };
 
@@ -39,9 +39,9 @@ impl NodeVisitor<&ForLoop> for Compiler {
                 DUP 0;
                 CALL 0;
                 DUP 0;
-                LOAD_FIELD DONE;
+                LOAD_FIELD &DONE;
                 JUMP_IF_TRUE -> loop_exit;
-                LOAD_FIELD_TO_LOCAL VALUE, variable_slot;
+                LOAD_FIELD_TO_LOCAL &VALUE, variable_slot;
                 POP;
             ]
         }

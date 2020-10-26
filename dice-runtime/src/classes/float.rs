@@ -16,7 +16,7 @@ where
 
         // NOTE: This does not currently expose all possible functions rust has, just a subset.
         // If the need arises, this list can be further expanded.
-        class.set_method(NEW, Rc::new(construct_float) as NativeFn);
+        class.set_method(&NEW, Rc::new(construct_float) as NativeFn);
         class.set_method("abs", bind_f64_ret_f64(f64::abs));
         class.set_method("sqrt", bind_f64_ret_f64(f64::sqrt));
         class.set_method("cbrt", bind_f64_ret_f64(f64::cbrt));

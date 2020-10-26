@@ -1,6 +1,7 @@
 use super::NodeVisitor;
 use crate::compiler::Compiler;
 use dice_core::protocol::operator::DIE_ROLL;
+use dice_core::protocol::ProtocolSymbol;
 use dice_error::{compiler_error::CompilerError, span::Span};
 use dice_syntax::{SyntaxNodeId, Unary, UnaryOperator};
 
@@ -37,7 +38,7 @@ impl Compiler {
     }
 
     fn die_roll(&mut self, expression: SyntaxNodeId, span: Span) -> Result<(), CompilerError> {
-        self.context()?.assembler().load_global(DIE_ROLL, span)?;
+        self.context()?.assembler().load_global(DIE_ROLL.get(), span)?;
         self.visit(expression)?;
         self.context()?.assembler().call(1, span);
 

@@ -1,6 +1,7 @@
 use super::NodeVisitor;
 use crate::compiler::Compiler;
 use dice_core::protocol::operator::{DICE_ROLL, RANGE_EXCLUSIVE, RANGE_INCLUSIVE};
+use dice_core::protocol::ProtocolSymbol;
 use dice_error::{compiler_error::CompilerError, span::Span};
 use dice_syntax::{Binary, BinaryOperator, SyntaxNodeId};
 
@@ -107,7 +108,7 @@ impl Compiler {
         rhs_expression: SyntaxNodeId,
         span: Span,
     ) -> Result<(), CompilerError> {
-        self.context()?.assembler().load_global(DICE_ROLL, span)?;
+        self.context()?.assembler().load_global(DICE_ROLL.get(), span)?;
         self.visit(lhs_expression)?;
         self.visit(rhs_expression)?;
         self.context()?.assembler().call(2, span);
@@ -121,7 +122,7 @@ impl Compiler {
         rhs_expression: SyntaxNodeId,
         span: Span,
     ) -> Result<(), CompilerError> {
-        self.context()?.assembler().load_global(RANGE_INCLUSIVE, span)?;
+        self.context()?.assembler().load_global(RANGE_INCLUSIVE.get(), span)?;
         self.visit(lhs_expression)?;
         self.visit(rhs_expression)?;
         self.context()?.assembler().call(2, span);
@@ -135,7 +136,7 @@ impl Compiler {
         rhs_expression: SyntaxNodeId,
         span: Span,
     ) -> Result<(), CompilerError> {
-        self.context()?.assembler().load_global(RANGE_EXCLUSIVE, span)?;
+        self.context()?.assembler().load_global(RANGE_EXCLUSIVE.get(), span)?;
         self.visit(lhs_expression)?;
         self.visit(rhs_expression)?;
         self.context()?.assembler().call(2, span);

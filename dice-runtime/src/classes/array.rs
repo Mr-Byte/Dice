@@ -1,4 +1,5 @@
 use crate::module::ModuleLoader;
+use dice_core::protocol::ProtocolSymbol;
 use dice_core::{
     protocol::{
         class::NEW,
@@ -17,7 +18,7 @@ where
     pub(super) fn register_array(&mut self) {
         let class = self.any_class.derive("Array");
 
-        class.set_method(NEW, Rc::new(construct_array) as NativeFn);
+        class.set_method(&NEW, Rc::new(construct_array) as NativeFn);
         class.set_method("push", Rc::new(push) as NativeFn);
         class.set_method("pop", Rc::new(pop) as NativeFn);
         class.set_method("length", Rc::new(length) as NativeFn);
@@ -127,8 +128,8 @@ fn iter(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError
         [Value::Array(arr), ..] => {
             let arr = arr.clone();
             let current = RefCell::new(0);
-            let value_symbol: Symbol = VALUE.into();
-            let done_symbol: Symbol = DONE.into();
+            let value_symbol: Symbol = VALUE.get();
+            let done_symbol: Symbol = DONE.get();
             let next: NativeFn = Rc::new(move |runtime, _| {
                 let result = runtime.new_object()?;
 
@@ -144,7 +145,7 @@ fn iter(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError
             });
 
             let iterator = runtime.new_object()?;
-            iterator.set_field(NEXT, Value::with_native_fn(next));
+            iterator.set_field(&NEXT, Value::with_native_fn(next));
 
             Ok(Value::Object(iterator))
         }

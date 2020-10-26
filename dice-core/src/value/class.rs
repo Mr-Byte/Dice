@@ -39,7 +39,7 @@ impl Class {
         Self { inner: inner.into() }
     }
 
-    pub fn derive(&self, name: &str) -> Self {
+    pub fn derive(&self, name: impl Into<Symbol>) -> Self {
         Self::with_base(name.into(), self.clone())
     }
 }
@@ -77,7 +77,8 @@ impl ClassInner {
                 .map_or_else(|| false, |base| base.contains_type_id(type_id))
     }
 
-    pub fn method(&self, name: &Symbol) -> Option<Value> {
+    pub fn method(&self, name: impl Into<Symbol>) -> Option<Value> {
+        let name = name.into();
         self.methods
             .borrow()
             .get(&name)

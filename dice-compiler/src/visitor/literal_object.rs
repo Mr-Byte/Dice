@@ -10,7 +10,7 @@ impl NodeVisitor<&LitObject> for Compiler {
         for (field, value) in items {
             self.context()?.assembler().dup(0, *span);
             self.visit(*value)?;
-            self.context()?.assembler().store_field(field, *span)?;
+            self.context()?.assembler().store_field(field.clone(), *span)?;
             self.context()?.assembler().pop(*span);
         }
 

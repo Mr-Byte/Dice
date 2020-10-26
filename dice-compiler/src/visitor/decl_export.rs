@@ -1,5 +1,6 @@
 use crate::{compiler::Compiler, compiler_stack::CompilerKind, visitor::NodeVisitor};
 use dice_core::protocol::module::EXPORT;
+use dice_core::protocol::ProtocolSymbol;
 use dice_error::compiler_error::CompilerError;
 use dice_syntax::{ExportDecl, SyntaxNode, VarDecl, VarDeclKind};
 
@@ -17,7 +18,7 @@ impl NodeVisitor<&ExportDecl> for Compiler {
         let export_slot = self
             .context()?
             .scope_stack()
-            .local(EXPORT)
+            .local(&*EXPORT.get())
             .expect("#export should always be defined in modules.")
             .slot as u8;
         self.context()?.assembler().load_local(export_slot, node.span);
@@ -34,7 +35,7 @@ impl NodeVisitor<&ExportDecl> for Compiler {
             _ => todo!("Error about invalid export type."),
         };
 
-        self.context()?.assembler().store_field(&field_name, node.span)?;
+        self.context()?.assembler().store_field(field_name, node.span)?;
 
         Ok(())
     }

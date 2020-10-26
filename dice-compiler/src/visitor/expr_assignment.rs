@@ -1,5 +1,6 @@
 use super::NodeVisitor;
 use crate::{compiler::Compiler, scope_stack::ScopeVariable};
+use dice_core::value::Symbol;
 use dice_error::{compiler_error::CompilerError, span::Span};
 use dice_syntax::{Assignment, AssignmentOperator, FieldAccess, Index, SyntaxNode, SyntaxNodeId};
 
@@ -9,7 +10,7 @@ impl NodeVisitor<&Assignment> for Compiler {
 
         match lhs {
             SyntaxNode::LitIdent(lit_ident) => {
-                let target = lit_ident.name.clone();
+                let target: Symbol = (&*lit_ident.name).into();
                 self.assign_ident(target, assignment)
             }
             SyntaxNode::FieldAccess(field_access) => {
@@ -54,26 +55,26 @@ impl Compiler {
         match assignment.operator {
             AssignmentOperator::Assignment => {
                 self.visit(assignment.rhs_expression)?;
-                self.context()?.assembler().store_field(&target.field, target.span)?;
+                self.context()?.assembler().store_field(target.field, target.span)?;
             }
             operator => {
                 self.context()?.assembler().dup(0, target.span);
-                self.context()?.assembler().load_field(&target.field, target.span)?;
+                self.context()?.assembler().load_field(&*target.field, target.span)?;
                 self.visit(assignment.rhs_expression)?;
                 self.visit_operator(operator, target.span)?;
-                self.context()?.assembler().store_field(&target.field, target.span)?;
+                self.context()?.assembler().store_field(target.field, target.span)?;
             }
         }
 
         Ok(())
     }
 
-    fn assign_ident(&mut self, target: String, assignment: &Assignment) -> Result<(), CompilerError> {
+    fn assign_ident(&mut self, target: Symbol, assignment: &Assignment) -> Result<(), CompilerError> {
         {
-            if let Some(local) = self.context()?.scope_stack().local(&target) {
+            if let Some(local) = self.context()?.scope_stack().local(target.clone()) {
                 let local = local.clone();
                 self.assign_local(
-                    target,
+                    target.clone(),
                     assignment.operator,
                     assignment.rhs_expression,
                     assignment.span,
@@ -81,28 +82,28 @@ impl Compiler {
                 )
             } else if let Some(upvalue) = self.compiler_stack.resolve_upvalue(target.clone(), 0) {
                 self.assign_upvalue(
-                    target,
+                    target.clone(),
                     assignment.operator,
                     assignment.rhs_expression,
                     assignment.span,
                     upvalue,
                 )
             } else {
-                Err(CompilerError::UndeclaredVariable(target))
+                Err(CompilerError::UndeclaredVariable((&*target).to_owned()))
             }
         }
     }
 
     fn assign_upvalue(
         &mut self,
-        target: String,
+        target: Symbol,
         operator: AssignmentOperator,
         rhs_expression: SyntaxNodeId,
         span: Span,
         upvalue: usize,
     ) -> Result<(), CompilerError> {
         if !self.context()?.upvalues()[upvalue].is_mutable() {
-            return Err(CompilerError::ImmutableVariable(target));
+            return Err(CompilerError::ImmutableVariable((&*target).to_owned()));
         }
         match operator {
             AssignmentOperator::Assignment => {
@@ -122,7 +123,7 @@ impl Compiler {
 
     fn assign_local(
         &mut self,
-        target: String,
+        target: Symbol,
         operator: AssignmentOperator,
         rhs_expression: SyntaxNodeId,
         span: Span,
@@ -131,7 +132,7 @@ impl Compiler {
         let slot = local.slot as u8;
 
         if !local.is_mutable() {
-            return Err(CompilerError::ImmutableVariable(target));
+            return Err(CompilerError::ImmutableVariable((&*target).to_owned()));
         }
 
         match operator {
