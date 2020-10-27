@@ -481,14 +481,15 @@ where
         let target = self.stack.peek_mut(0);
 
         match target {
-            Value::Object(object) => {
-                let field = index.as_symbol()?;
-                object.set_field(field, value.clone());
+            Value::Array(array) if index.kind() == ValueKind::Int => {
+                let index = index.as_int()?;
+                array.elements_mut()[index as usize] = value.clone();
                 *target = value;
             }
-            Value::Array(list) => {
-                let index = index.as_int()?;
-                list.elements_mut()[index as usize] = value.clone();
+            target => {
+                let object = target.as_object()?;
+                let field = index.as_symbol()?;
+                object.set_field(field, value.clone());
                 *target = value;
             }
             _ => todo!("Return invalid index target error."),
@@ -501,13 +502,13 @@ where
         let index = self.stack.pop();
         let target = self.stack.peek(0);
         let result = match target {
-            Value::Object(_) => {
+            Value::Array(array) if index.kind() == ValueKind::Int => {
+                let index = index.as_int()?;
+                array.elements().get(index as usize).cloned().unwrap_or(Value::Null)
+            }
+            target => {
                 let field = index.as_symbol()?;
                 self.get_field(&field, target.clone())?
-            }
-            Value::Array(list) => {
-                let index = index.as_int()?;
-                list.elements().get(index as usize).cloned().unwrap_or(Value::Null)
             }
             _ => todo!("Return invalid index target error."),
         };

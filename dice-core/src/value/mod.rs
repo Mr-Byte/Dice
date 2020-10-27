@@ -107,6 +107,7 @@ impl Value {
         match self {
             Value::Object(object) => Ok(object),
             Value::Class(class) => Ok(&(**class)),
+            Value::Array(array) => Ok(&(**array)),
             _ => Err(TypeError::NotAnObject),
         }
     }

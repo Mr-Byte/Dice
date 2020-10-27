@@ -40,7 +40,7 @@ fn construct_array(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, 
 
 fn push(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
     if let [Value::Array(arr), param, ..] = args {
-        arr.elements_mut().push(param.clone());
+        arr.push(param.clone());
 
         Ok(Value::Unit)
     } else {
@@ -50,7 +50,7 @@ fn push(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeErro
 
 fn pop(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
     if let [Value::Array(arr), ..] = args {
-        let result = arr.elements_mut().pop().unwrap_or_default();
+        let result = arr.pop().unwrap_or(Value::Unit);
 
         Ok(result)
     } else {
