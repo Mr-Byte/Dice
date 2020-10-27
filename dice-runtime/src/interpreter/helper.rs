@@ -22,8 +22,8 @@ impl<L: ModuleLoader> Runtime<L> {
         found_upvalue
     }
 
-    pub(super) fn call_bin_op(&mut self, operator: impl Into<Symbol>, rhs: Value) -> Result<(), RuntimeError> {
-        fn get_field<L: ModuleLoader>(
+    pub(super) fn call_binary_op(&mut self, operator: impl Into<Symbol>, rhs: Value) -> Result<(), RuntimeError> {
+        fn call_binary_op<L: ModuleLoader>(
             runtime: &mut Runtime<L>,
             operator: Symbol,
             rhs: Value,
@@ -50,7 +50,32 @@ impl<L: ModuleLoader> Runtime<L> {
             Ok(())
         }
 
-        get_field(self, operator.into(), rhs)
+        call_binary_op(self, operator.into(), rhs)
+    }
+
+    pub(super) fn call_unary_op(&mut self, operator: impl Into<Symbol>) -> Result<(), RuntimeError> {
+        fn call_unary_op<L: ModuleLoader>(runtime: &mut Runtime<L>, operator: Symbol) -> Result<(), RuntimeError> {
+            let operand = runtime.stack.pop();
+            let method = runtime.get_field(&operator, operand.clone())?;
+
+            if method != Value::Null {
+                runtime.stack.push(method);
+                runtime.call_fn(0)?;
+            } else {
+                let value = runtime
+                    .globals
+                    .get(&operator)
+                    .ok_or_else(|| RuntimeError::Aborted("No global operator defined.".to_owned()))?;
+
+                runtime.stack.push(value.clone());
+                runtime.stack.push(operand);
+                runtime.call_fn(1)?;
+            }
+
+            Ok(())
+        }
+
+        call_unary_op(self, operator.into())
     }
 
     pub(super) fn get_field(&self, key: &Symbol, value: Value) -> Result<Value, RuntimeError> {

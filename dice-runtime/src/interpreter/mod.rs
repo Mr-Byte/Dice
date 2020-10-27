@@ -1,6 +1,7 @@
 mod helper;
 
 use crate::{module::ModuleLoader, runtime::Runtime, stack::CallFrame};
+use dice_core::protocol::operator::{DICE_ROLL, DIE_ROLL, EQ, NEQ, RANGE_EXCLUSIVE, RANGE_INCLUSIVE};
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
     protocol::operator::{ADD, DIV, GT, GTE, LT, LTE, MUL, REM, SUB},
@@ -44,6 +45,7 @@ where
                 }
                 Instruction::NEG => self.neg()?,
                 Instruction::NOT => self.not()?,
+                Instruction::DIE_ROLL => self.die_roll()?,
                 Instruction::MUL => self.mul()?,
                 Instruction::DIV => self.div()?,
                 Instruction::REM => self.rem()?,
@@ -53,9 +55,12 @@ where
                 Instruction::GTE => self.gte()?,
                 Instruction::LT => self.lt()?,
                 Instruction::LTE => self.lte()?,
-                Instruction::EQ => self.eq(),
-                Instruction::NEQ => self.neq(),
+                Instruction::EQ => self.eq()?,
+                Instruction::NEQ => self.neq()?,
                 Instruction::IS => self.is()?,
+                Instruction::DICE_ROLL => self.dice_roll()?,
+                Instruction::RANGE_EXCLUSIVE => self.range_exclusive()?,
+                Instruction::RANGE_INCLUSIVE => self.range_inclusive()?,
                 Instruction::JUMP => self.jump(&mut cursor),
                 Instruction::JUMP_IF_FALSE => self.jump_if_false(&mut cursor)?,
                 Instruction::JUMP_IF_TRUE => self.jump_if_true(&mut cursor)?,
@@ -119,6 +124,10 @@ where
         Ok(())
     }
 
+    fn die_roll(&mut self) -> Result<(), RuntimeError> {
+        self.call_unary_op(&DIE_ROLL)
+    }
+
     fn neg(&mut self) -> Result<(), RuntimeError> {
         match self.stack.peek_mut(0) {
             Value::Int(value) => *value = -*value,
@@ -137,7 +146,7 @@ where
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Int(rhs), Value::Int(lhs)) => *lhs *= rhs,
             (Value::Float(rhs), Value::Float(lhs)) => *lhs *= rhs,
-            (rhs, _) => self.call_bin_op(&MUL, rhs)?,
+            (rhs, _) => self.call_binary_op(&MUL, rhs)?,
         }
 
         Ok(())
@@ -153,7 +162,7 @@ where
                 *lhs /= rhs;
             }
             (Value::Float(rhs), Value::Float(lhs)) => *lhs /= rhs,
-            (rhs, _) => self.call_bin_op(&DIV, rhs)?,
+            (rhs, _) => self.call_binary_op(&DIV, rhs)?,
         }
 
         Ok(())
@@ -169,7 +178,7 @@ where
                 *lhs %= rhs;
             }
             (Value::Float(rhs), Value::Float(lhs)) => *lhs %= rhs,
-            (rhs, _) => self.call_bin_op(&REM, rhs)?,
+            (rhs, _) => self.call_binary_op(&REM, rhs)?,
         }
 
         Ok(())
@@ -179,7 +188,7 @@ where
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Int(rhs), Value::Int(lhs)) => *lhs += rhs,
             (Value::Float(rhs), Value::Float(lhs)) => *lhs += rhs,
-            (rhs, _) => self.call_bin_op(&ADD, rhs)?,
+            (rhs, _) => self.call_binary_op(&ADD, rhs)?,
         }
 
         Ok(())
@@ -190,7 +199,7 @@ where
             (Value::Bool(rhs), Value::Bool(lhs)) => *lhs &= !rhs,
             (Value::Int(rhs), Value::Int(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs > rhs),
             (Value::Float(rhs), Value::Float(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs > rhs),
-            (rhs, _) => self.call_bin_op(&GT, rhs)?,
+            (rhs, _) => self.call_binary_op(&GT, rhs)?,
         }
 
         Ok(())
@@ -201,7 +210,7 @@ where
             (Value::Bool(rhs), Value::Bool(lhs)) => *lhs = *lhs >= rhs,
             (Value::Int(rhs), Value::Int(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs >= rhs),
             (Value::Float(rhs), Value::Float(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs >= rhs),
-            (rhs, _) => self.call_bin_op(&GTE, rhs)?,
+            (rhs, _) => self.call_binary_op(&GTE, rhs)?,
         }
 
         Ok(())
@@ -212,7 +221,7 @@ where
             (Value::Bool(rhs), Value::Bool(lhs)) => *lhs = !(*lhs) & rhs,
             (Value::Int(rhs), Value::Int(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs < rhs),
             (Value::Float(rhs), Value::Float(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs < rhs),
-            (rhs, _) => self.call_bin_op(&LT, rhs)?,
+            (rhs, _) => self.call_binary_op(&LT, rhs)?,
         }
 
         Ok(())
@@ -223,7 +232,7 @@ where
             (Value::Bool(rhs), Value::Bool(lhs)) => *lhs = *lhs <= rhs,
             (Value::Int(rhs), Value::Int(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs <= rhs),
             (Value::Float(rhs), Value::Float(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs <= rhs),
-            (rhs, _) => self.call_bin_op(&LTE, rhs)?,
+            (rhs, _) => self.call_binary_op(&LTE, rhs)?,
         }
 
         Ok(())
@@ -233,24 +242,47 @@ where
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Int(rhs), Value::Int(lhs)) => *lhs -= rhs,
             (Value::Float(rhs), Value::Float(lhs)) => *lhs -= rhs,
-            (rhs, _) => self.call_bin_op(&SUB, rhs)?,
+            (rhs, _) => self.call_binary_op(&SUB, rhs)?,
         }
 
         Ok(())
     }
 
-    fn eq(&mut self) {
-        let rhs = self.stack.pop();
-        let lhs = self.stack.peek_mut(0);
+    fn eq(&mut self) -> Result<(), RuntimeError> {
+        match (self.stack.pop(), self.stack.peek_mut(0)) {
+            (Value::Bool(rhs), Value::Bool(lhs)) => *lhs = *lhs == rhs,
+            (Value::Int(rhs), Value::Int(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs == rhs),
+            (Value::Float(rhs), Value::Float(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs == rhs),
+            (rhs, _) => self.call_binary_op(&EQ, rhs)?,
+        }
 
-        *lhs = Value::Bool(rhs == *lhs);
+        Ok(())
     }
 
-    fn neq(&mut self) {
-        let rhs = self.stack.pop();
-        let lhs = self.stack.peek_mut(0);
+    fn neq(&mut self) -> Result<(), RuntimeError> {
+        match (self.stack.pop(), self.stack.peek_mut(0)) {
+            (Value::Bool(rhs), Value::Bool(lhs)) => *lhs = *lhs != rhs,
+            (Value::Int(rhs), Value::Int(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs != rhs),
+            (Value::Float(rhs), Value::Float(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs != rhs),
+            (rhs, _) => self.call_binary_op(&NEQ, rhs)?,
+        }
 
-        *lhs = Value::Bool(rhs != *lhs);
+        Ok(())
+    }
+
+    fn dice_roll(&mut self) -> Result<(), RuntimeError> {
+        let rhs = self.stack.pop();
+        self.call_binary_op(&DICE_ROLL, rhs)
+    }
+
+    fn range_inclusive(&mut self) -> Result<(), RuntimeError> {
+        let rhs = self.stack.pop();
+        self.call_binary_op(&RANGE_INCLUSIVE, rhs)
+    }
+
+    fn range_exclusive(&mut self) -> Result<(), RuntimeError> {
+        let rhs = self.stack.pop();
+        self.call_binary_op(&RANGE_EXCLUSIVE, rhs)
     }
 
     fn is(&mut self) -> Result<(), RuntimeError> {

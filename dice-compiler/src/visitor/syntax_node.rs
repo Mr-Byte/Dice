@@ -78,7 +78,7 @@ impl Compiler {
         if context.depth == 0 {
             let exit_points = std::mem::take(&mut context.exit_points);
             for exit_point in exit_points.into_iter() {
-                self.context()?.assembler().patch_jump(exit_point as u64);
+                self.assembler()?.patch_jump(exit_point as u64);
             }
         }
 

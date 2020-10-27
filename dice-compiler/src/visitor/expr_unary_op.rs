@@ -1,7 +1,5 @@
 use super::NodeVisitor;
 use crate::compiler::Compiler;
-use dice_core::protocol::operator::DIE_ROLL;
-use dice_core::protocol::ProtocolSymbol;
 use dice_error::{compiler_error::CompilerError, span::Span};
 use dice_syntax::{SyntaxNodeId, Unary, UnaryOperator};
 
@@ -25,22 +23,21 @@ impl NodeVisitor<&Unary> for Compiler {
 impl Compiler {
     fn negate(&mut self, expression: SyntaxNodeId, span: Span) -> Result<(), CompilerError> {
         self.visit(expression)?;
-        self.context()?.assembler().neg(span);
+        self.assembler()?.neg(span);
 
         Ok(())
     }
 
     fn not(&mut self, expression: SyntaxNodeId, span: Span) -> Result<(), CompilerError> {
         self.visit(expression)?;
-        self.context()?.assembler().not(span);
+        self.assembler()?.not(span);
 
         Ok(())
     }
 
     fn die_roll(&mut self, expression: SyntaxNodeId, span: Span) -> Result<(), CompilerError> {
-        self.context()?.assembler().load_global(DIE_ROLL.get(), span)?;
         self.visit(expression)?;
-        self.context()?.assembler().call(1, span);
+        self.assembler()?.die_roll(span);
 
         Ok(())
     }

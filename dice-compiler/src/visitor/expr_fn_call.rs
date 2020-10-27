@@ -16,7 +16,7 @@ impl NodeVisitor<&FunctionCall> for Compiler {
             self.context()?.scope_stack().top_mut()?.call_context = original_call_context;
         }
 
-        self.context()?.assembler().call(node.args.len() as u8, node.span);
+        self.assembler()?.call(node.args.len() as u8, node.span);
 
         Ok(())
     }

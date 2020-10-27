@@ -188,6 +188,26 @@ impl Assembler {
         self.data.put_u8(Instruction::LTE.value());
     }
 
+    pub fn dice_roll(&mut self, span: Span) {
+        self.source_map.insert(self.data.len() as u64, span);
+        self.data.put_u8(Instruction::DICE_ROLL.value());
+    }
+
+    pub fn range_inclusive(&mut self, span: Span) {
+        self.source_map.insert(self.data.len() as u64, span);
+        self.data.put_u8(Instruction::RANGE_INCLUSIVE.value());
+    }
+
+    pub fn range_exclusive(&mut self, span: Span) {
+        self.source_map.insert(self.data.len() as u64, span);
+        self.data.put_u8(Instruction::RANGE_EXCLUSIVE.value());
+    }
+
+    pub fn die_roll(&mut self, span: Span) {
+        self.source_map.insert(self.data.len() as u64, span);
+        self.data.put_u8(Instruction::DIE_ROLL.value());
+    }
+
     pub fn neg(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
         self.data.put_u8(Instruction::NEG.value());

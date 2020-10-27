@@ -18,7 +18,7 @@ impl NodeVisitor<&ImportDecl> for Compiler {
             .collect::<Result<Vec<_>, CompilerError>>()?;
 
         emit_bytecode! {
-            self.context()?.assembler(), node.span => [
+            self.assembler()?, node.span => [
                 LOAD_MODULE &*node.relative_path;
 
                 for (field, slot) in imports => [
@@ -36,7 +36,7 @@ impl NodeVisitor<&ImportDecl> for Compiler {
                 .scope_stack()
                 .add_local(module_import.clone(), State::initialized(false))?;
 
-            self.context()?.assembler().store_local(module_slot as u8, node.span);
+            self.assembler()?.store_local(module_slot as u8, node.span);
         }
 
         Ok(())

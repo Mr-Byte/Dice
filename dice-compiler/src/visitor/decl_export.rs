@@ -21,7 +21,7 @@ impl NodeVisitor<&ExportDecl> for Compiler {
             .local(&*EXPORT.get())
             .expect("#export should always be defined in modules.")
             .slot as u8;
-        self.context()?.assembler().load_local(export_slot, node.span);
+        self.assembler()?.load_local(export_slot, node.span);
         self.visit(node.export)?;
 
         let field_name = match self.syntax_tree.get(node.export) {
@@ -35,7 +35,7 @@ impl NodeVisitor<&ExportDecl> for Compiler {
             _ => todo!("Error about invalid export type."),
         };
 
-        self.context()?.assembler().store_field(field_name, node.span)?;
+        self.assembler()?.store_field(field_name, node.span)?;
 
         Ok(())
     }

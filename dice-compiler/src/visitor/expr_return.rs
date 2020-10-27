@@ -17,7 +17,7 @@ impl NodeVisitor<&Return> for Compiler {
             None => context.assembler().push_unit(expr_return.span),
         }
 
-        self.context()?.assembler().ret(expr_return.span);
+        self.assembler()?.ret(expr_return.span);
 
         Ok(())
     }

@@ -5,13 +5,13 @@ use dice_syntax::LitObject;
 
 impl NodeVisitor<&LitObject> for Compiler {
     fn visit(&mut self, LitObject { items, span }: &LitObject) -> Result<(), CompilerError> {
-        self.context()?.assembler().create_object(*span);
+        self.assembler()?.create_object(*span);
 
         for (field, value) in items {
-            self.context()?.assembler().dup(0, *span);
+            self.assembler()?.dup(0, *span);
             self.visit(*value)?;
-            self.context()?.assembler().store_field(field.clone(), *span)?;
-            self.context()?.assembler().pop(*span);
+            self.assembler()?.store_field(field.clone(), *span)?;
+            self.assembler()?.pop(*span);
         }
 
         Ok(())

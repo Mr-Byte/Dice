@@ -16,7 +16,7 @@ impl NodeVisitor<&SafeAccess> for Compiler {
         let safe_access_jump;
 
         emit_bytecode! {
-            self.context()?.assembler(), *span => [
+            self.assembler()?, *span => [
                 DUP 0;
                 PUSH_NULL;
                 NEQ;

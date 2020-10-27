@@ -29,7 +29,7 @@ impl NodeVisitor<&LitIdent> for Compiler {
             return Ok(());
         }
 
-        self.context()?.assembler().load_global(&**name, *span)?;
+        self.assembler()?.load_global(&**name, *span)?;
 
         Ok(())
     }

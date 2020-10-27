@@ -103,6 +103,10 @@ define_instructions! {
     pub const IS;
     pub const LOGICAL_AND;
     pub const LOGICAL_OR;
+    pub const DIE_ROLL;
+    pub const DICE_ROLL;
+    pub const RANGE_INCLUSIVE;
+    pub const RANGE_EXCLUSIVE;
     // Control flow instructions
     pub const JUMP;
     pub const JUMP_IF_FALSE;

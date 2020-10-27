@@ -13,7 +13,7 @@ impl NodeVisitor<&Index> for Compiler {
         let original_call_context = std::mem::take(&mut self.context()?.scope_stack().top_mut()?.call_context);
         self.visit(node.index_expression)?;
         self.context()?.scope_stack().top_mut()?.call_context = original_call_context;
-        self.context()?.assembler().load_index(node.span);
+        self.assembler()?.load_index(node.span);
 
         Ok(())
     }

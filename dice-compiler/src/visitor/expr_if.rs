@@ -14,20 +14,20 @@ impl NodeVisitor<&IfExpression> for Compiler {
         }: &IfExpression,
     ) -> Result<(), CompilerError> {
         self.visit(*condition)?;
-        let if_jump = self.context()?.assembler().jump_if_false(*span);
+        let if_jump = self.assembler()?.jump_if_false(*span);
         self.visit(*primary)?;
 
-        let else_jump = self.context()?.assembler().jump(*span);
+        let else_jump = self.assembler()?.jump(*span);
 
-        self.context()?.assembler().patch_jump(if_jump);
+        self.assembler()?.patch_jump(if_jump);
 
         if let Some(secondary) = secondary {
             self.visit(*secondary)?;
         } else {
-            self.context()?.assembler().push_unit(*span);
+            self.assembler()?.push_unit(*span);
         }
 
-        self.context()?.assembler().patch_jump(else_jump);
+        self.assembler()?.patch_jump(else_jump);
 
         Ok(())
     }

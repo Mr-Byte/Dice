@@ -22,7 +22,7 @@ impl Compiler {
             .add_local(name, State::initialized(var_decl.is_mutable))? as u8;
 
         emit_bytecode! {
-            self.context()?.assembler(), var_decl.span => [
+            self.assembler()?, var_decl.span => [
                 STORE_LOCAL slot;
             ]
         }
@@ -46,7 +46,7 @@ impl Compiler {
             .collect::<Result<Vec<_>, CompilerError>>()?;
 
         emit_bytecode! {
-            self.context()?.assembler(), var_decl.span => [
+            self.assembler()?, var_decl.span => [
                 for (field, slot) in imports => [
                     DUP 0;
                     LOAD_FIELD field;

@@ -2,7 +2,7 @@ use super::NodeVisitor;
 use crate::upvalue::UpvalueDescriptor;
 use crate::{compiler::Compiler, visitor::FnKind};
 use dice_core::protocol::operator::{
-    ADD, DIE_ROLL, DIV, EQ, GT, GTE, LT, LTE, MUL, NEQ, RANGE_EXCLUSIVE, RANGE_INCLUSIVE, REM, SUB,
+    ADD, DICE_ROLL, DIE_ROLL, DIV, EQ, GT, GTE, LT, LTE, MUL, NEQ, RANGE_EXCLUSIVE, RANGE_INCLUSIVE, REM, SUB,
 };
 use dice_core::protocol::ProtocolSymbol;
 use dice_core::value::{FnScript, Symbol, Value};
@@ -42,7 +42,7 @@ impl NodeVisitor<(&OpDecl, OpKind)> for Compiler {
 impl Compiler {
     pub fn op_name(node: &OpDecl) -> Symbol {
         let name = match node.operator {
-            OverloadedOperator::DiceRoll => DIE_ROLL.get(),
+            OverloadedOperator::DiceRoll => DICE_ROLL.get(),
             OverloadedOperator::DieRoll => DIE_ROLL.get(),
             OverloadedOperator::Multiply => MUL.get(),
             OverloadedOperator::Divide => DIV.get(),

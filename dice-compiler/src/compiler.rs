@@ -66,7 +66,7 @@ impl Compiler {
                 .slot as u8;
 
             emit_bytecode! {
-                compiler.context()?.assembler(), Span::new(0..0) => [
+                compiler.assembler()?, Span::new(0..0) => [
                     POP;
                     LOAD_LOCAL exports_slot;
                 ]

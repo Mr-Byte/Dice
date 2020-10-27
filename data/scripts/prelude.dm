@@ -54,6 +54,14 @@ op ..=(start, end) {
     RangeInclusive(start, end)
 }
 
+op d(value) {
+    value
+}
+
+op d(lhs, rhs) {
+    lhs * rhs
+}
+
 export class Test {
     fn new(self, value) {
         self.value = value;

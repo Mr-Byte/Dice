@@ -34,15 +34,15 @@ impl Compiler {
         match assignment.operator {
             AssignmentOperator::Assignment => {
                 self.visit(assignment.rhs_expression)?;
-                self.context()?.assembler().store_index(assignment.span);
+                self.assembler()?.store_index(assignment.span);
             }
             operator => {
-                self.context()?.assembler().dup(1, assignment.span);
-                self.context()?.assembler().dup(1, assignment.span);
-                self.context()?.assembler().load_index(assignment.span);
+                self.assembler()?.dup(1, assignment.span);
+                self.assembler()?.dup(1, assignment.span);
+                self.assembler()?.load_index(assignment.span);
                 self.visit(assignment.rhs_expression)?;
                 self.visit_operator(operator, assignment.span)?;
-                self.context()?.assembler().store_index(assignment.span);
+                self.assembler()?.store_index(assignment.span);
             }
         }
 
@@ -55,14 +55,14 @@ impl Compiler {
         match assignment.operator {
             AssignmentOperator::Assignment => {
                 self.visit(assignment.rhs_expression)?;
-                self.context()?.assembler().store_field(target.field, target.span)?;
+                self.assembler()?.store_field(target.field, target.span)?;
             }
             operator => {
-                self.context()?.assembler().dup(0, target.span);
-                self.context()?.assembler().load_field(&*target.field, target.span)?;
+                self.assembler()?.dup(0, target.span);
+                self.assembler()?.load_field(&*target.field, target.span)?;
                 self.visit(assignment.rhs_expression)?;
                 self.visit_operator(operator, target.span)?;
-                self.context()?.assembler().store_field(target.field, target.span)?;
+                self.assembler()?.store_field(target.field, target.span)?;
             }
         }
 
@@ -108,13 +108,13 @@ impl Compiler {
         match operator {
             AssignmentOperator::Assignment => {
                 self.visit(rhs_expression)?;
-                self.context()?.assembler().store_upvalue(upvalue as u8, span);
+                self.assembler()?.store_upvalue(upvalue as u8, span);
             }
             operator => {
-                self.context()?.assembler().load_upvalue(upvalue as u8, span);
+                self.assembler()?.load_upvalue(upvalue as u8, span);
                 self.visit(rhs_expression)?;
                 self.visit_operator(operator, span)?;
-                self.context()?.assembler().store_upvalue(upvalue as u8, span);
+                self.assembler()?.store_upvalue(upvalue as u8, span);
             }
         }
 
@@ -138,13 +138,13 @@ impl Compiler {
         match operator {
             AssignmentOperator::Assignment => {
                 self.visit(rhs_expression)?;
-                self.context()?.assembler().store_local(slot, span);
+                self.assembler()?.store_local(slot, span);
             }
             operator => {
-                self.context()?.assembler().load_local(slot, span);
+                self.assembler()?.load_local(slot, span);
                 self.visit(rhs_expression)?;
                 self.visit_operator(operator, span)?;
-                self.context()?.assembler().store_local(slot, span);
+                self.assembler()?.store_local(slot, span);
             }
         }
 
@@ -153,10 +153,10 @@ impl Compiler {
 
     fn visit_operator(&mut self, operator: AssignmentOperator, span: Span) -> Result<(), CompilerError> {
         match operator {
-            AssignmentOperator::MulAssignment => self.context()?.assembler().mul(span),
-            AssignmentOperator::DivAssignment => self.context()?.assembler().div(span),
-            AssignmentOperator::AddAssignment => self.context()?.assembler().add(span),
-            AssignmentOperator::SubAssignment => self.context()?.assembler().sub(span),
+            AssignmentOperator::MulAssignment => self.assembler()?.mul(span),
+            AssignmentOperator::DivAssignment => self.assembler()?.div(span),
+            AssignmentOperator::AddAssignment => self.assembler()?.add(span),
+            AssignmentOperator::SubAssignment => self.assembler()?.sub(span),
             _ => unreachable!(),
         }
 

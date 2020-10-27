@@ -47,19 +47,19 @@ impl<'args, T: AsRef<str>> NodeVisitor<(&Block, BlockKind<'args, T>)> for Compil
 
         for expression in block.expressions.iter() {
             self.visit(*expression)?;
-            self.context()?.assembler().pop(block.span);
+            self.assembler()?.pop(block.span);
         }
 
         match block.trailing_expression {
             Some(trailing_expression) => {
                 self.visit(trailing_expression)?;
             }
-            None => self.context()?.assembler().push_unit(block.span),
+            None => self.assembler()?.push_unit(block.span),
         }
 
         // NOTE: If in context of a loop, pop the last value off the stack.
         if let BlockKind::Loop = kind {
-            self.context()?.assembler().pop(block.span);
+            self.assembler()?.pop(block.span);
         }
 
         let scope = self.context()?.scope_stack().top_mut()?;
@@ -75,7 +75,7 @@ impl<'args, T: AsRef<str>> NodeVisitor<(&Block, BlockKind<'args, T>)> for Compil
         if let BlockKind::Function(_) = kind {
             // NOTE: If in context of a function, implicitly return the top item on the stack.
             // If the previous instruction was a return, this will never execute.
-            self.context()?.assembler().ret(block.span)
+            self.assembler()?.ret(block.span)
         } else if let BlockKind::Constructor(_) = kind {
             // NOTE: If in context of a constructor, pop the last value, load self, return.
             let local_slot = self
