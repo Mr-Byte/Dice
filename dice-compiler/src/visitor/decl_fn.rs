@@ -10,12 +10,12 @@ impl NodeVisitor<(&FnDecl, FnKind)> for Compiler {
         let mut fn_context = self.compile_fn(body, &fn_decl.args, fn_kind)?;
         let upvalues = fn_context.upvalues().clone();
         let bytecode = fn_context.finish();
-        let value = Value::FnScript(FnScript::new(fn_decl.name.clone(), bytecode, uuid::Uuid::new_v4()));
+        let compiled_fn = Value::FnScript(FnScript::new(&*fn_decl.name, bytecode, uuid::Uuid::new_v4()));
 
         if fn_kind == FnKind::Function {
-            self.emit_fn(fn_decl, &upvalues, value)?;
+            self.emit_fn(fn_decl, &upvalues, compiled_fn)?;
         } else {
-            self.emit_method(fn_decl, &upvalues, value)?;
+            self.emit_method(fn_decl, &upvalues, compiled_fn)?;
         }
 
         Ok(())
@@ -23,7 +23,12 @@ impl NodeVisitor<(&FnDecl, FnKind)> for Compiler {
 }
 
 impl Compiler {
-    fn emit_fn(&mut self, fn_decl: &FnDecl, upvalues: &[UpvalueDescriptor], value: Value) -> Result<(), CompilerError> {
+    fn emit_fn(
+        &mut self,
+        fn_decl: &FnDecl,
+        upvalues: &[UpvalueDescriptor],
+        compiled_fn: Value,
+    ) -> Result<(), CompilerError> {
         let context = self.context()?;
         let fn_name: Symbol = (&*fn_decl.name).into();
         let local = context.scope_stack().local(fn_name).ok_or_else(|| {
@@ -44,9 +49,9 @@ impl Compiler {
         emit_bytecode! {
             self.assembler()?, fn_decl.span => [
                 if upvalues.is_empty() => [
-                    PUSH_CONST value;
+                    PUSH_CONST compiled_fn;
                 ] else [
-                    CREATE_CLOSURE value, upvalues;
+                    CREATE_CLOSURE compiled_fn, upvalues;
                 ]
 
                 STORE_LOCAL slot;
@@ -55,21 +60,19 @@ impl Compiler {
 
         Ok(())
     }
-}
 
-impl Compiler {
     fn emit_method(
         &mut self,
         fn_decl: &FnDecl,
         upvalues: &[UpvalueDescriptor],
-        value: Value,
+        compiled_fn: Value,
     ) -> Result<(), CompilerError> {
         emit_bytecode! {
             self.assembler()?, fn_decl.span => [
                 if upvalues.is_empty() => [
-                    PUSH_CONST value;
+                    PUSH_CONST compiled_fn;
                 ] else [
-                    CREATE_CLOSURE value, upvalues;
+                    CREATE_CLOSURE compiled_fn, upvalues;
                 ]
             ]
         }

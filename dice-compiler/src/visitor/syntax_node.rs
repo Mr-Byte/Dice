@@ -1,4 +1,5 @@
 use super::{expr_block::BlockKind, NodeVisitor};
+use crate::visitor::decl_op::OpKind;
 use crate::{compiler::Compiler, visitor::FnKind};
 use dice_error::compiler_error::CompilerError;
 use dice_syntax::{SyntaxNode, SyntaxNodeId};
@@ -23,7 +24,7 @@ impl NodeVisitor<SyntaxNodeId> for Compiler {
             SyntaxNode::Binary(binary) => self.visit(binary)?,
             SyntaxNode::VarDecl(variable) => self.visit(variable)?,
             SyntaxNode::FnDecl(func) => self.visit((func, FnKind::Function))?,
-            SyntaxNode::OpDecl(func) => self.visit(func)?,
+            SyntaxNode::OpDecl(op) => self.visit((op, OpKind::Global))?,
             SyntaxNode::ClassDecl(class) => self.visit(class)?,
             SyntaxNode::ImportDecl(import) => self.visit(import)?,
             SyntaxNode::ExportDecl(export) => self.visit(export)?,

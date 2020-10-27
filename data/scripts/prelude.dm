@@ -46,10 +46,20 @@ export class RangeInclusive {
     }
 }
 
-op #range_exclusive(start, end) {
+op ..(start, end) {
     Range(start, end)
 }
 
-op #range_inclusive(start, end) {
+op ..=(start, end) {
     RangeInclusive(start, end)
+}
+
+export class Test {
+    fn new(self, value) {
+        self.value = value;
+    }
+
+    op +(self, rhs) {
+        Test(self.value + rhs.value)
+    }
 }

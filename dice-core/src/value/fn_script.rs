@@ -1,9 +1,10 @@
 use crate::bytecode::Bytecode;
+use crate::value::Symbol;
 use std::{fmt::Display, ops::Deref, rc::Rc};
 
 #[derive(Debug)]
 pub struct FnScriptInner {
-    pub name: String,
+    pub name: Symbol,
     pub bytecode: Bytecode,
     id: uuid::Uuid,
 }
@@ -14,9 +15,13 @@ pub struct FnScript {
 }
 
 impl FnScript {
-    pub fn new(name: String, bytecode: Bytecode, id: uuid::Uuid) -> Self {
+    pub fn new(name: impl Into<Symbol>, bytecode: Bytecode, id: uuid::Uuid) -> Self {
         Self {
-            inner: Rc::new(FnScriptInner { bytecode, name, id }),
+            inner: Rc::new(FnScriptInner {
+                bytecode,
+                name: name.into(),
+                id,
+            }),
         }
     }
 }

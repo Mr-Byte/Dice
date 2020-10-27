@@ -16,23 +16,10 @@ pub mod operator {
         pub static GTE: Symbol = "#gte".into();
         pub static LT: Symbol = "#lt".into();
         pub static LTE: Symbol = "#lte".into();
+        pub static EQ: Symbol = "#eq".into();
+        pub static NEQ: Symbol = "#neq".into();
         pub static RANGE_INCLUSIVE: Symbol = "#range_inclusive".into();
         pub static RANGE_EXCLUSIVE: Symbol = "#range_exclusive".into();
-        pub static OPERATORS: [Symbol; 13] = [
-            DICE_ROLL.get(),
-            DIE_ROLL.get(),
-            MUL.get(),
-            DIV.get(),
-            REM.get(),
-            ADD.get(),
-            SUB.get(),
-            GT.get(),
-            GTE.get(),
-            LT.get(),
-            LTE.get(),
-            RANGE_EXCLUSIVE.get(),
-            RANGE_INCLUSIVE.get(),
-        ];
     }
 }
 

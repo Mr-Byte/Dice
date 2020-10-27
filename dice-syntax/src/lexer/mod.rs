@@ -102,8 +102,8 @@ pub mod test {
         let delimiters = ".. ..= -> => . ?. ?? % - + * / ! != == > >= < <= = d && ||";
         let mut tokens = Token::tokenize(delimiters);
 
-        assert_next_token!(tokens, TokenKind::InclusiveRange);
-        assert_next_token!(tokens, TokenKind::ExclusiveRange);
+        assert_next_token!(tokens, TokenKind::RangeInclusive);
+        assert_next_token!(tokens, TokenKind::RangeExclusive);
         assert_next_token!(tokens, TokenKind::Arrow);
         assert_next_token!(tokens, TokenKind::WideArrow);
         assert_next_token!(tokens, TokenKind::Dot);

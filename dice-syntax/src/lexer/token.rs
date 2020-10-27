@@ -76,9 +76,9 @@ pub enum TokenKind {
     Hash,
     // Operators
     #[token("..")]
-    ExclusiveRange,
+    RangeExclusive,
     #[token("..=")]
-    InclusiveRange,
+    RangeInclusive,
     #[token("->")]
     Arrow,
     #[token("=>")]

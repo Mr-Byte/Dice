@@ -8,8 +8,8 @@ use super::{
 };
 use crate::{
     parser::rules::{ParserRule, RulePrecedence},
-    AbstractFnDecl, ClassDecl, FieldAccess, ForLoop, ImportDecl, Index, Loop, OpDecl, SafeAccess, TraitDecl, TraitImpl,
-    UniversalMethodAccess, VarDeclKind,
+    AbstractFnDecl, ClassDecl, FieldAccess, ForLoop, ImportDecl, Index, Loop, OpDecl, OverloadedOperator, SafeAccess,
+    TraitDecl, TraitImpl, UniversalMethodAccess, VarDeclKind,
 };
 use dice_error::{span::Span, syntax_error::SyntaxError};
 use id_arena::Arena;
@@ -414,22 +414,42 @@ impl Parser {
 
     fn op_decl(&mut self) -> SyntaxNodeResult {
         let span_start = self.lexer.consume(TokenKind::Operator)?.span();
-        self.lexer.consume(TokenKind::Hash)?;
-        let name_token = self.lexer.next();
-        let name = match name_token.kind {
-            TokenKind::Identifier(ref name) => name.clone(),
-            _ => return Err(name_token.into()),
+        let operator_token = self.lexer.next();
+        let mut operator = match operator_token.kind {
+            TokenKind::DiceRoll => OverloadedOperator::DiceRoll,
+            TokenKind::Star => OverloadedOperator::Multiply,
+            TokenKind::Slash => OverloadedOperator::Divide,
+            TokenKind::Remainder => OverloadedOperator::Remainder,
+            TokenKind::Plus => OverloadedOperator::Add,
+            TokenKind::Minus => OverloadedOperator::Subtract,
+            TokenKind::Greater => OverloadedOperator::GreaterThan,
+            TokenKind::GreaterEqual => OverloadedOperator::GreaterThanEquals,
+            TokenKind::Less => OverloadedOperator::LessThan,
+            TokenKind::LessEqual => OverloadedOperator::LessThanEquals,
+            TokenKind::Equal => OverloadedOperator::Equals,
+            TokenKind::NotEqual => OverloadedOperator::NotEquals,
+            TokenKind::RangeExclusive => OverloadedOperator::RangeExclusive,
+            TokenKind::RangeInclusive => OverloadedOperator::RangeInclusive,
+            _ => return Err(operator_token.into()),
         };
         let args = self.parse_args(TokenKind::LeftParen, TokenKind::RightParen)?;
 
-        if args.len() > (u8::MAX as usize) {
-            return Err(SyntaxError::FnTooManyArguments(name, name_token.span()));
+        // NOTE: If the operator is a dice roll and only has one argument, reassign to DieRoll operator.
+        // Otherwise enforce that the operator has two arguments.
+        // TODO: Include other unary prefix and postfix operators.
+        if operator == OverloadedOperator::DiceRoll && args.len() == 1 {
+            operator = OverloadedOperator::DieRoll
+        } else if args.len() != 2 {
+            return Err(SyntaxError::FnTooManyArguments(
+                operator.to_string(),
+                operator_token.span(),
+            ));
         }
 
         let body = self.block_expression(false)?;
         let span_end = self.lexer.current().span();
         let node = SyntaxNode::OpDecl(OpDecl {
-            name,
+            operator,
             args,
             body,
             span: span_start + span_end,
@@ -473,7 +493,7 @@ impl Parser {
         while !matches!(next_token.kind, TokenKind::RightCurly) {
             let expression = match next_token.kind {
                 TokenKind::Function => self.fn_decl()?,
-                TokenKind::Class => self.class_decl()?,
+                TokenKind::Operator => self.op_decl()?,
                 _ => return Err(SyntaxError::UnexpectedToken(next_token.to_string(), next_token.span())),
             };
 
@@ -583,8 +603,8 @@ impl Parser {
             TokenKind::Is => BinaryOperator::Is,
             TokenKind::Pipeline => BinaryOperator::Pipeline,
             TokenKind::Coalesce => BinaryOperator::Coalesce,
-            TokenKind::ExclusiveRange => BinaryOperator::RangeExclusive,
-            TokenKind::InclusiveRange => BinaryOperator::RangeInclusive,
+            TokenKind::RangeExclusive => BinaryOperator::RangeExclusive,
+            TokenKind::RangeInclusive => BinaryOperator::RangeInclusive,
             TokenKind::LazyAnd => BinaryOperator::LogicalAnd,
             TokenKind::Pipe => {
                 self.lexer.consume(TokenKind::Pipe)?;

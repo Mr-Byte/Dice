@@ -1,5 +1,6 @@
 use crate::SyntaxNodeId;
 use dice_error::span::Span;
+use std::fmt::{Display, Formatter};
 
 #[derive(Debug, Clone)]
 pub struct LitAnonymousFn {
@@ -212,10 +213,51 @@ pub struct ImportDecl {
 
 #[derive(Debug, Clone)]
 pub struct OpDecl {
-    pub name: String,
+    pub operator: OverloadedOperator,
     pub args: Vec<String>,
     pub body: SyntaxNodeId,
     pub span: Span,
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum OverloadedOperator {
+    DiceRoll,
+    DieRoll,
+    Multiply,
+    Divide,
+    Remainder,
+    Add,
+    Subtract,
+    GreaterThan,
+    LessThan,
+    GreaterThanEquals,
+    LessThanEquals,
+    Equals,
+    NotEquals,
+    RangeInclusive,
+    RangeExclusive,
+}
+
+impl Display for OverloadedOperator {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            OverloadedOperator::DiceRoll => write!(f, "d"),
+            OverloadedOperator::DieRoll => write!(f, "d"),
+            OverloadedOperator::Multiply => write!(f, "*"),
+            OverloadedOperator::Divide => write!(f, "/"),
+            OverloadedOperator::Remainder => write!(f, "%"),
+            OverloadedOperator::Add => write!(f, "+"),
+            OverloadedOperator::Subtract => write!(f, "-"),
+            OverloadedOperator::GreaterThan => write!(f, ">"),
+            OverloadedOperator::LessThan => write!(f, "<"),
+            OverloadedOperator::GreaterThanEquals => write!(f, ">="),
+            OverloadedOperator::LessThanEquals => write!(f, "<="),
+            OverloadedOperator::Equals => write!(f, "=="),
+            OverloadedOperator::NotEquals => write!(f, "!="),
+            OverloadedOperator::RangeInclusive => write!(f, ".."),
+            OverloadedOperator::RangeExclusive => write!(f, "..="),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]

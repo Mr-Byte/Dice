@@ -73,8 +73,8 @@ impl ParserRule {
             // Operators
             TokenKind::Pipeline => ParserRule::new(None, Some(Parser::binary), RulePrecedence::Pipeline),
             TokenKind::Coalesce => ParserRule::new(None, Some(Parser::binary), RulePrecedence::Coalesce),
-            TokenKind::ExclusiveRange => ParserRule::new(None, Some(Parser::binary), RulePrecedence::Range),
-            TokenKind::InclusiveRange => ParserRule::new(None, Some(Parser::binary), RulePrecedence::Range),
+            TokenKind::RangeExclusive => ParserRule::new(None, Some(Parser::binary), RulePrecedence::Range),
+            TokenKind::RangeInclusive => ParserRule::new(None, Some(Parser::binary), RulePrecedence::Range),
             TokenKind::LazyAnd => ParserRule::new(None, Some(Parser::binary), RulePrecedence::And),
             TokenKind::Pipe => ParserRule::new(Some(Parser::anonymous_fn), Some(Parser::binary), RulePrecedence::Or),
             TokenKind::Equal => ParserRule::new(None, Some(Parser::binary), RulePrecedence::Comparison),
