@@ -3,8 +3,7 @@ use crate::{
     compiler::Compiler,
     scope_stack::{ScopeKind, State},
 };
-use dice_core::protocol::class::SELF;
-use dice_core::protocol::ProtocolSymbol;
+use dice_core::protocol::{class::SELF, ProtocolSymbol};
 use dice_error::compiler_error::CompilerError;
 use dice_syntax::Block;
 

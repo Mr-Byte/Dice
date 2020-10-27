@@ -1,11 +1,14 @@
 use super::NodeVisitor;
-use crate::upvalue::UpvalueDescriptor;
-use crate::{compiler::Compiler, visitor::FnKind};
-use dice_core::protocol::operator::{
-    ADD, DICE_ROLL, DIE_ROLL, DIV, EQ, GT, GTE, LT, LTE, MUL, NEQ, RANGE_EXCLUSIVE, RANGE_INCLUSIVE, REM, SUB,
+use crate::{compiler::Compiler, upvalue::UpvalueDescriptor, visitor::FnKind};
+use dice_core::{
+    protocol::{
+        operator::{
+            ADD, DICE_ROLL, DIE_ROLL, DIV, EQ, GT, GTE, LT, LTE, MUL, NEQ, RANGE_EXCLUSIVE, RANGE_INCLUSIVE, REM, SUB,
+        },
+        ProtocolSymbol,
+    },
+    value::{FnScript, Symbol, Value},
 };
-use dice_core::protocol::ProtocolSymbol;
-use dice_core::value::{FnScript, Symbol, Value};
 use dice_error::compiler_error::CompilerError;
 use dice_syntax::{OpDecl, OverloadedOperator};
 

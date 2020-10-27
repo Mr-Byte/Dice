@@ -1,7 +1,6 @@
 use crate::module::ModuleLoader;
-use dice_core::protocol::operator::ADD;
 use dice_core::{
-    protocol::class::NEW,
+    protocol::{class::NEW, operator::ADD},
     runtime::Runtime,
     value::{NativeFn, Value, ValueKind},
 };

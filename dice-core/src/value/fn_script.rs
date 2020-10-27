@@ -1,5 +1,4 @@
-use crate::bytecode::Bytecode;
-use crate::value::Symbol;
+use crate::{bytecode::Bytecode, value::Symbol};
 use std::{fmt::Display, ops::Deref, rc::Rc};
 
 #[derive(Debug)]

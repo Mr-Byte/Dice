@@ -4,10 +4,9 @@ use crate::{
     scope_stack::State,
     visitor::NodeVisitor,
 };
-use dice_core::protocol::ProtocolSymbol;
 use dice_core::{
     bytecode::Bytecode,
-    protocol::module::EXPORT,
+    protocol::{module::EXPORT, ProtocolSymbol},
     source::{Source, SourceKind},
 };
 use dice_error::{compiler_error::CompilerError, span::Span};

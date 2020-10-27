@@ -1,7 +1,6 @@
 use crate::{module::ModuleLoader, runtime::Runtime};
-use dice_core::protocol::ProtocolSymbol;
 use dice_core::{
-    protocol::class::NEW,
+    protocol::{class::NEW, ProtocolSymbol},
     upvalue::{Upvalue, UpvalueState},
     value::{Class, FnBound, FnNative, FnScript, Object, Symbol, Value, ValueKind},
 };

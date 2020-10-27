@@ -3,8 +3,7 @@ use super::{
     scope_stack::{ScopeKind, ScopeStack},
     upvalue::UpvalueDescriptor,
 };
-use dice_core::bytecode::Bytecode;
-use dice_core::value::Symbol;
+use dice_core::{bytecode::Bytecode, value::Symbol};
 use dice_error::compiler_error::CompilerError;
 
 #[derive(Copy, Clone, Eq, PartialEq)]

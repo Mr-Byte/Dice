@@ -1,6 +1,8 @@
 use super::{expr_block::BlockKind, NodeVisitor};
-use crate::visitor::decl_op::OpKind;
-use crate::{compiler::Compiler, visitor::FnKind};
+use crate::{
+    compiler::Compiler,
+    visitor::{decl_op::OpKind, FnKind},
+};
 use dice_error::compiler_error::CompilerError;
 use dice_syntax::{SyntaxNode, SyntaxNodeId};
 

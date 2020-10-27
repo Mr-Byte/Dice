@@ -1,12 +1,15 @@
-use crate::visitor::decl_op::OpKind;
 use crate::{
     compiler::Compiler,
     scope_stack::{ScopeKind, State},
-    visitor::{FnKind, NodeVisitor},
+    visitor::{decl_op::OpKind, FnKind, NodeVisitor},
 };
-use dice_core::protocol::class::{NEW, SELF};
-use dice_core::protocol::ProtocolSymbol;
-use dice_core::value::Symbol;
+use dice_core::{
+    protocol::{
+        class::{NEW, SELF},
+        ProtocolSymbol,
+    },
+    value::Symbol,
+};
 use dice_error::compiler_error::CompilerError;
 use dice_syntax::{ClassDecl, FnDecl, OpDecl, SyntaxNode};
 

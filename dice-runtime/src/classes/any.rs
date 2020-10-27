@@ -1,7 +1,9 @@
 use crate::module::ModuleLoader;
-use dice_core::protocol::ProtocolSymbol;
 use dice_core::{
-    protocol::object::{ANY_CLASS, TO_STRING},
+    protocol::{
+        object::{ANY_CLASS, TO_STRING},
+        ProtocolSymbol,
+    },
     runtime::Runtime,
     value::{Class, NativeFn, Value},
 };
@@ -35,11 +37,7 @@ fn fields(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
         .first()
         .and_then(|value| value.as_object().ok())
         .map_or(Value::Null, |object| {
-            let fields = object
-                .fields()
-                .keys()
-                .map(Value::with_string)
-                .collect::<Vec<_>>();
+            let fields = object.fields().keys().map(Value::with_string).collect::<Vec<_>>();
 
             Value::with_vec(fields)
         });

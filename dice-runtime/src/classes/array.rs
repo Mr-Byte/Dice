@@ -1,9 +1,9 @@
 use crate::module::ModuleLoader;
-use dice_core::protocol::ProtocolSymbol;
 use dice_core::{
     protocol::{
         class::NEW,
         iterator::{DONE, NEXT, VALUE},
+        ProtocolSymbol,
     },
     runtime::Runtime,
     value::{NativeFn, Symbol, Value, ValueKind},

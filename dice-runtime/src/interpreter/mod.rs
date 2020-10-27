@@ -1,10 +1,11 @@
 mod helper;
 
 use crate::{module::ModuleLoader, runtime::Runtime, stack::CallFrame};
-use dice_core::protocol::operator::{DICE_ROLL, DIE_ROLL, EQ, NEQ, RANGE_EXCLUSIVE, RANGE_INCLUSIVE};
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
-    protocol::operator::{ADD, DIV, GT, GTE, LT, LTE, MUL, REM, SUB},
+    protocol::operator::{
+        ADD, DICE_ROLL, DIE_ROLL, DIV, EQ, GT, GTE, LT, LTE, MUL, NEQ, RANGE_EXCLUSIVE, RANGE_INCLUSIVE, REM, SUB,
+    },
     upvalue::{Upvalue, UpvalueState},
     value::{Class, FnClosure, Object, Value, ValueKind},
 };
