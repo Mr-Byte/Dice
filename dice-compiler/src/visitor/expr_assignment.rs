@@ -26,6 +26,7 @@ impl NodeVisitor<&Assignment> for Compiler {
     }
 }
 
+// TODO: Convert this to the emit_bytecode! macro.
 impl Compiler {
     fn assign_index(&mut self, target: Index, assignment: &Assignment) -> Result<(), CompilerError> {
         self.visit(target.expression)?;
@@ -35,6 +36,8 @@ impl Compiler {
             AssignmentOperator::Assignment => {
                 self.visit(assignment.rhs_expression)?;
                 self.assembler()?.store_index(assignment.span);
+                self.assembler()?.pop(assignment.span);
+                self.assembler()?.push_unit(assignment.span);
             }
             operator => {
                 self.assembler()?.dup(1, assignment.span);
@@ -43,6 +46,8 @@ impl Compiler {
                 self.visit(assignment.rhs_expression)?;
                 self.visit_operator(operator, assignment.span)?;
                 self.assembler()?.store_index(assignment.span);
+                self.assembler()?.pop(assignment.span);
+                self.assembler()?.push_unit(assignment.span);
             }
         }
 
@@ -56,6 +61,8 @@ impl Compiler {
             AssignmentOperator::Assignment => {
                 self.visit(assignment.rhs_expression)?;
                 self.assembler()?.store_field(target.field, target.span)?;
+                self.assembler()?.pop(target.span);
+                self.assembler()?.push_unit(target.span);
             }
             operator => {
                 self.assembler()?.dup(0, target.span);
@@ -63,6 +70,8 @@ impl Compiler {
                 self.visit(assignment.rhs_expression)?;
                 self.visit_operator(operator, target.span)?;
                 self.assembler()?.store_field(target.field, target.span)?;
+                self.assembler()?.pop(target.span);
+                self.assembler()?.push_unit(target.span);
             }
         }
 
@@ -109,12 +118,16 @@ impl Compiler {
             AssignmentOperator::Assignment => {
                 self.visit(rhs_expression)?;
                 self.assembler()?.store_upvalue(upvalue as u8, span);
+                self.assembler()?.pop(span);
+                self.assembler()?.push_unit(span);
             }
             operator => {
                 self.assembler()?.load_upvalue(upvalue as u8, span);
                 self.visit(rhs_expression)?;
                 self.visit_operator(operator, span)?;
                 self.assembler()?.store_upvalue(upvalue as u8, span);
+                self.assembler()?.pop(span);
+                self.assembler()?.push_unit(span);
             }
         }
 
@@ -139,12 +152,16 @@ impl Compiler {
             AssignmentOperator::Assignment => {
                 self.visit(rhs_expression)?;
                 self.assembler()?.store_local(slot, span);
+                self.assembler()?.pop(span);
+                self.assembler()?.push_unit(span);
             }
             operator => {
                 self.assembler()?.load_local(slot, span);
                 self.visit(rhs_expression)?;
                 self.visit_operator(operator, span)?;
                 self.assembler()?.store_local(slot, span);
+                self.assembler()?.pop(span);
+                self.assembler()?.push_unit(span);
             }
         }
 
