@@ -607,6 +607,11 @@ macro_rules! emit_bytecode {
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
 
+($assembler:expr, $span:expr => [PATCH_JUMP <- $value:expr; $($rest:tt)*] ) => {
+        $assembler.patch_jump($value);
+        emit_bytecode! { $assembler, $span => [$($rest)*] }
+    };
+
     ($assembler:expr, $span:expr => [{ $e:expr }; $($rest:tt)*] ) => {
         $e;
         emit_bytecode! { $assembler, $span => [$($rest)*] }

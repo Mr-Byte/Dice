@@ -19,7 +19,7 @@ impl NodeVisitor<&ErrorPropagate> for Compiler {
                 LOAD_FIELD &IS_OK;
                 JUMP_IF_TRUE -> error_propagate_jump;
                 RET;
-                {self.assembler()?.patch_jump(error_propagate_jump)};
+                PATCH_JUMP <- error_propagate_jump;
                 LOAD_FIELD &RESULT;
             ]
         }
