@@ -251,6 +251,12 @@ where
 
     fn eq(&mut self) -> Result<(), RuntimeError> {
         match (self.stack.pop(), self.stack.peek_mut(0)) {
+            (Value::Null, Value::Null) => *self.stack.peek_mut(0) = Value::Bool(true),
+            (Value::Null, _) => *self.stack.peek_mut(0) = Value::Bool(false),
+            (_, Value::Null) => *self.stack.peek_mut(0) = Value::Bool(false),
+            (Value::Unit, Value::Unit) => *self.stack.peek_mut(0) = Value::Bool(true),
+            (Value::Unit, _) => *self.stack.peek_mut(0) = Value::Bool(false),
+            (_, Value::Unit) => *self.stack.peek_mut(0) = Value::Bool(false),
             (Value::Bool(rhs), Value::Bool(lhs)) => *lhs = *lhs == rhs,
             (Value::Int(rhs), Value::Int(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs == rhs),
             (Value::Float(rhs), Value::Float(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs == rhs),
@@ -262,6 +268,12 @@ where
 
     fn neq(&mut self) -> Result<(), RuntimeError> {
         match (self.stack.pop(), self.stack.peek_mut(0)) {
+            (Value::Null, Value::Null) => *self.stack.peek_mut(0) = Value::Bool(false),
+            (Value::Null, _) => *self.stack.peek_mut(0) = Value::Bool(true),
+            (_, Value::Null) => *self.stack.peek_mut(0) = Value::Bool(true),
+            (Value::Unit, Value::Unit) => *self.stack.peek_mut(0) = Value::Bool(false),
+            (Value::Unit, _) => *self.stack.peek_mut(0) = Value::Bool(true),
+            (_, Value::Unit) => *self.stack.peek_mut(0) = Value::Bool(true),
             (Value::Bool(rhs), Value::Bool(lhs)) => *lhs = *lhs != rhs,
             (Value::Int(rhs), Value::Int(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs != rhs),
             (Value::Float(rhs), Value::Float(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs != rhs),
@@ -492,7 +504,6 @@ where
                 object.set_field(field, value.clone());
                 *target = value;
             }
-            _ => todo!("Return invalid index target error."),
         };
 
         Ok(())
@@ -510,7 +521,6 @@ where
                 let field = index.as_symbol()?;
                 self.get_field(&field, target.clone())?
             }
-            _ => todo!("Return invalid index target error."),
         };
 
         *self.stack.peek_mut(0) = result;

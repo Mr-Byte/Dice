@@ -38,9 +38,9 @@ impl NodeVisitor<SyntaxNodeId> for Compiler {
             SyntaxNode::Continue(continue_node) => self.visit(continue_node)?,
             SyntaxNode::Block(block) => self.visit((block, BlockKind::<&str>::Block))?,
             SyntaxNode::Return(return_expr) => self.visit(return_expr)?,
-            SyntaxNode::SafeAccess(safe_access) => {
+            SyntaxNode::NullPropagate(null_propagate) => {
                 self.enter_call()?;
-                self.visit(safe_access)?;
+                self.visit(null_propagate)?;
                 self.exit_call()?;
             }
             SyntaxNode::FieldAccess(field_access) => {

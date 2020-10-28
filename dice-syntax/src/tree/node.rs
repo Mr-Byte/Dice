@@ -69,9 +69,8 @@ pub enum UnaryOperator {
 }
 
 #[derive(Debug, Clone)]
-pub struct SafeAccess {
+pub struct NullPropagate {
     pub expression: SyntaxNodeId,
-    pub field: String,
     pub span: Span,
 }
 

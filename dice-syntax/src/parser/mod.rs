@@ -8,8 +8,8 @@ use super::{
 };
 use crate::{
     parser::rules::{ParserRule, RulePrecedence},
-    AbstractFnDecl, ClassDecl, FieldAccess, ForLoop, ImportDecl, Index, Loop, OpDecl, OverloadedOperator, SafeAccess,
-    TraitDecl, TraitImpl, UniversalMethodAccess, VarDeclKind,
+    AbstractFnDecl, ClassDecl, FieldAccess, ForLoop, ImportDecl, Index, Loop, NullPropagate, OpDecl,
+    OverloadedOperator, TraitDecl, TraitImpl, UniversalMethodAccess, VarDeclKind,
 };
 use dice_error::{span::Span, syntax_error::SyntaxError};
 use id_arena::Arena;
@@ -102,7 +102,20 @@ impl Parser {
             let next_token = self.lexer.peek();
             let rule = ParserRule::for_token(&next_token)?;
 
-            if precedence > rule.precedence {
+            if let Some(postfix_precedence) = rule.postfix_precedence {
+                if precedence > postfix_precedence {
+                    break;
+                }
+
+                node = rule
+                    .postfix
+                    .map(|postfix| postfix(self, node, precedence <= RulePrecedence::Assignment, span_start))
+                    .unwrap_or_else(|| Err(next_token.into()))?;
+
+                continue;
+            }
+
+            if precedence > rule.infix_precedence {
                 break;
             }
 
@@ -624,7 +637,7 @@ impl Parser {
             TokenKind::DiceRoll => BinaryOperator::DiceRoll,
             _ => unreachable!(),
         };
-        let rhs = self.parse_precedence(rule.precedence.increment())?;
+        let rhs = self.parse_precedence(rule.infix_precedence.increment())?;
         let node = SyntaxNode::Binary(Binary {
             operator,
             lhs_expression: lhs,
@@ -648,6 +661,16 @@ impl Parser {
             operator,
             expression: child_node_id,
             span: token.span(),
+        });
+
+        Ok(self.arena.alloc(node))
+    }
+
+    fn null_propagate(&mut self, expression: SyntaxNodeId, _: bool, span_start: Span) -> SyntaxNodeResult {
+        let end = self.lexer.consume(TokenKind::NullPropagate)?.span();
+        let node = SyntaxNode::NullPropagate(NullPropagate {
+            expression,
+            span: span_start + end,
         });
 
         Ok(self.arena.alloc(node))
@@ -682,21 +705,6 @@ impl Parser {
         let lhs_expression = self.arena.alloc(node);
 
         self.parse_assignment(lhs_expression, can_assign, span_start)
-    }
-
-    fn safe_field_access(&mut self, lhs: SyntaxNodeId, _: bool, span_start: Span) -> SyntaxNodeResult {
-        self.lexer.consume(TokenKind::SafeDot)?;
-
-        let (_, field) = self.lexer.consume_ident()?;
-        let span_end = self.lexer.current().span();
-        let node = SyntaxNode::SafeAccess(SafeAccess {
-            expression: lhs,
-            field,
-            span: span_start + span_end,
-        });
-        let lhs_expression = self.arena.alloc(node);
-
-        Ok(lhs_expression)
     }
 
     fn universal_method_access(&mut self, source: SyntaxNodeId, _: bool, span_start: Span) -> SyntaxNodeResult {

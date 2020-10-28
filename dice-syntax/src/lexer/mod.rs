@@ -99,7 +99,7 @@ pub mod test {
 
     #[test]
     fn tokenize_operators() {
-        let delimiters = ".. ..= -> => . ?. ?? % - + * / ! != == > >= < <= = d && ||";
+        let delimiters = ".. ..= -> => . ?? % - + * / ! != == > >= < <= = d && ||";
         let mut tokens = Token::tokenize(delimiters);
 
         assert_next_token!(tokens, TokenKind::RangeInclusive);
@@ -107,7 +107,6 @@ pub mod test {
         assert_next_token!(tokens, TokenKind::Arrow);
         assert_next_token!(tokens, TokenKind::WideArrow);
         assert_next_token!(tokens, TokenKind::Dot);
-        assert_next_token!(tokens, TokenKind::SafeDot);
         assert_next_token!(tokens, TokenKind::Coalesce);
         assert_next_token!(tokens, TokenKind::Minus);
         assert_next_token!(tokens, TokenKind::Remainder);

@@ -48,8 +48,6 @@ pub enum TokenKind {
     // End of input.
     EndOfInput,
     // Delimiters
-    #[token("?(")]
-    SafeCall,
     #[token("(")]
     LeftParen,
     #[token(")")]
@@ -58,8 +56,6 @@ pub enum TokenKind {
     LeftCurly,
     #[token("}")]
     RightCurly,
-    #[token("?[")]
-    SafeIndex,
     #[token("[")]
     LeftSquare,
     #[token("]")]
@@ -85,8 +81,8 @@ pub enum TokenKind {
     WideArrow,
     #[token(".")]
     Dot,
-    #[token("?.")]
-    SafeDot,
+    #[token("?")]
+    NullPropagate,
     #[token("??")]
     Coalesce,
     #[token("-")]

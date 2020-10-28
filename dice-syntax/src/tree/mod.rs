@@ -54,7 +54,6 @@ pub enum SyntaxNode {
     LitAnonymousFn(LitAnonymousFn),
 
     // Member access
-    SafeAccess(SafeAccess),
     FieldAccess(FieldAccess),
     Index(Index),
     UniversalMethodAccess(UniversalMethodAccess),
@@ -62,6 +61,7 @@ pub enum SyntaxNode {
     // Operators
     Unary(Unary),
     Binary(Binary),
+    NullPropagate(NullPropagate),
     Assignment(Assignment),
     TraitImpl(TraitImpl),
 
@@ -100,11 +100,11 @@ impl SyntaxNode {
             SyntaxNode::LitList(LitList { span, .. }) => *span,
             SyntaxNode::LitObject(LitObject { span, .. }) => *span,
             SyntaxNode::LitAnonymousFn(LitAnonymousFn { span, .. }) => *span,
-            SyntaxNode::SafeAccess(SafeAccess { span, .. }) => *span,
             SyntaxNode::FieldAccess(FieldAccess { span, .. }) => *span,
             SyntaxNode::Index(Index { span, .. }) => *span,
             SyntaxNode::Unary(Unary { span, .. }) => *span,
             SyntaxNode::Binary(Binary { span, .. }) => *span,
+            SyntaxNode::NullPropagate(NullPropagate { span, .. }) => *span,
             SyntaxNode::Assignment(Assignment { span, .. }) => *span,
             SyntaxNode::TraitImpl(TraitImpl { span, .. }) => *span,
             SyntaxNode::VarDecl(VarDecl { span, .. }) => *span,
