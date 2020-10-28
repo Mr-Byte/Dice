@@ -83,15 +83,18 @@ impl Display for Bytecode {
                 | Instruction::LOAD_GLOBAL
                 | Instruction::LOAD_LOCAL
                 | Instruction::LOAD_FIELD
+                | Instruction::LOAD_UPVALUE
                 | Instruction::STORE_GLOBAL
                 | Instruction::STORE_LOCAL
                 | Instruction::STORE_FIELD
-                | Instruction::CREATE_LIST
-                | Instruction::CALL
-                | Instruction::LOAD_UPVALUE
-                | Instruction::STORE_UPVALUE
-                | Instruction::CLOSE_UPVALUE
                 | Instruction::STORE_METHOD
+                | Instruction::STORE_UPVALUE
+                | Instruction::ASSIGN_LOCAL
+                | Instruction::ASSIGN_FIELD
+                | Instruction::ASSIGN_UPVALUE
+                | Instruction::CLOSE_UPVALUE
+                | Instruction::CALL
+                | Instruction::CREATE_ARRAY
                 | Instruction::CREATE_CLASS => write!(f, "const={}", cursor.read_u8())?,
                 Instruction::LOAD_FIELD_TO_LOCAL => write!(f, "const={} slot={}", cursor.read_u8(), cursor.read_u8())?,
                 Instruction::CREATE_CLOSURE => {

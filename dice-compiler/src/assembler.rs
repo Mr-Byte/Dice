@@ -115,7 +115,7 @@ impl Assembler {
 
     pub fn create_list(&mut self, length: u8, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::CREATE_LIST.value());
+        self.data.put_u8(Instruction::CREATE_ARRAY.value());
         self.data.put_u8(length);
     }
 
@@ -275,6 +275,12 @@ impl Assembler {
         self.data.put_u8(slot);
     }
 
+    pub fn assign_local(&mut self, slot: u8, span: Span) {
+        self.source_map.insert(self.data.len() as u64, span);
+        self.data.put_u8(Instruction::ASSIGN_LOCAL.value());
+        self.data.put_u8(slot);
+    }
+
     pub fn load_local(&mut self, slot: u8, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
         self.data.put_u8(Instruction::LOAD_LOCAL.value());
@@ -284,6 +290,12 @@ impl Assembler {
     pub fn store_upvalue(&mut self, index: u8, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
         self.data.put_u8(Instruction::STORE_UPVALUE.value());
+        self.data.put_u8(index);
+    }
+
+    pub fn assign_upvalue(&mut self, index: u8, span: Span) {
+        self.source_map.insert(self.data.len() as u64, span);
+        self.data.put_u8(Instruction::ASSIGN_UPVALUE.value());
         self.data.put_u8(index);
     }
 
@@ -303,6 +315,15 @@ impl Assembler {
         self.source_map.insert(self.data.len() as u64, span);
         let const_slot = self.make_constant(Value::Symbol(field.into()))?;
         self.data.put_u8(Instruction::STORE_FIELD.value());
+        self.data.put_u8(const_slot);
+
+        Ok(())
+    }
+
+    pub fn assign_field(&mut self, field: impl Into<Symbol>, span: Span) -> Result<(), CompilerError> {
+        self.source_map.insert(self.data.len() as u64, span);
+        let const_slot = self.make_constant(Value::Symbol(field.into()))?;
+        self.data.put_u8(Instruction::ASSIGN_FIELD.value());
         self.data.put_u8(const_slot);
 
         Ok(())
@@ -378,6 +399,11 @@ impl Assembler {
         self.data.put_u8(Instruction::STORE_INDEX.value());
     }
 
+    pub fn assign_index(&mut self, span: Span) {
+        self.source_map.insert(self.data.len() as u64, span);
+        self.data.put_u8(Instruction::ASSIGN_INDEX.value());
+    }
+
     pub fn load_field_to_local(
         &mut self,
         field: impl Into<Symbol>,
@@ -440,7 +466,7 @@ macro_rules! emit_bytecode {
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
 
-($assembler:expr, $span:expr => [if $c:expr => [ $($t:tt)* ] $($rest:tt)*]) => {
+    ($assembler:expr, $span:expr => [if $c:expr => [ $($t:tt)* ] $($rest:tt)*]) => {
         if $c {
             emit_bytecode! { $assembler, $span => [$($t)*] }
         }
@@ -468,10 +494,12 @@ macro_rules! emit_bytecode {
         $assembler.push_null($span);
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
+
     ($assembler:expr, $span:expr => [PUSH_UNIT; $($rest:tt)*] ) => {
         $assembler.push_unit($span);
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
+
     ($assembler:expr, $span:expr => [PUSH_I1; $($rest:tt)*] ) => {
         $assembler.push_i1($span);
         emit_bytecode! { $assembler, $span => [$($rest)*] }
@@ -480,14 +508,17 @@ macro_rules! emit_bytecode {
         $assembler.push_bool($value, $span);
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
+
     ($assembler:expr, $span:expr => [PUSH_CONST $value:expr; $($rest:tt)*] ) => {
         $assembler.push_const($value, $span)?;
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
+
     ($assembler:expr, $span:expr => [CREATE_CLOSURE $value:expr, $upvalues:expr; $($rest:tt)*] ) => {
         $assembler.closure($value, $upvalues, $span)?;
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
+
     ($assembler:expr, $span:expr => [CREATE_CLASS $name:expr; $($rest:tt)*] ) => {
         $assembler.create_class($name, $span)?;
         emit_bytecode! { $assembler, $span => [$($rest)*] }
@@ -497,10 +528,12 @@ macro_rules! emit_bytecode {
         $assembler.pop($span);
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
+
     ($assembler:expr, $span:expr => [SWAP; $($rest:tt)*] ) => {
         $assembler.swap($span);
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
+
     ($assembler:expr, $span:expr => [DUP $slot:expr; $($rest:tt)*] ) => {
         $assembler.dup($slot, $span);
         emit_bytecode! { $assembler, $span => [$($rest)*] }
@@ -510,26 +543,32 @@ macro_rules! emit_bytecode {
         $assembler.add($span);
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
+
     ($assembler:expr, $span:expr => [EQ; $($rest:tt)*] ) => {{
         $assembler.eq($span);
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     }};
+
     ($assembler:expr, $span:expr => [NEQ; $($rest:tt)*] ) => {{
         $assembler.neq($span);
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     }};
+
     ($assembler:expr, $span:expr => [GT; $($rest:tt)*] ) => {{
         $assembler.gt($span);
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     }};
+
     ($assembler:expr, $span:expr => [GTE; $($rest:tt)*] ) => {{
         $assembler.gte($span);
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     }};
+
     ($assembler:expr, $span:expr => [LT; $($rest:tt)*] ) => {{
         $assembler.lt($span);
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     }};
+
     ($assembler:expr, $span:expr => [LTE; $($rest:tt)*] ) => {{
         $assembler.lte($span);
         emit_bytecode! { $assembler, $span => [$($rest)*] }
@@ -560,8 +599,29 @@ macro_rules! emit_bytecode {
         $assembler.load_local($slot, $span);
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
+
     ($assembler:expr, $span:expr => [STORE_LOCAL $slot:expr; $($rest:tt)*] ) => {
         $assembler.store_local($slot, $span);
+        emit_bytecode! { $assembler, $span => [$($rest)*] }
+    };
+
+    ($assembler:expr, $span:expr => [ASSIGN_LOCAL $slot:expr; $($rest:tt)*] ) => {
+        $assembler.assign_local($slot, $span);
+        emit_bytecode! { $assembler, $span => [$($rest)*] }
+    };
+
+    ($assembler:expr, $span:expr => [LOAD_UPVALUE $slot:expr; $($rest:tt)*] ) => {
+        $assembler.load_upvalue($slot, $span);
+        emit_bytecode! { $assembler, $span => [$($rest)*] }
+    };
+
+    ($assembler:expr, $span:expr => [STORE_UPVALUE $slot:expr; $($rest:tt)*] ) => {
+        $assembler.store_upvalue($slot, $span);
+        emit_bytecode! { $assembler, $span => [$($rest)*] }
+    };
+
+    ($assembler:expr, $span:expr => [ASSIGN_UPVALUE $slot:expr; $($rest:tt)*] ) => {
+        $assembler.assign_upvalue($slot, $span);
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
 
@@ -569,18 +629,42 @@ macro_rules! emit_bytecode {
         $assembler.load_field($field, $span)?;
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
+
     ($assembler:expr, $span:expr => [STORE_FIELD $field:expr; $($rest:tt)*] ) => {
         $assembler.store_field($field, $span)?;
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
+
+    ($assembler:expr, $span:expr => [ASSIGN_FIELD $field:expr; $($rest:tt)*] ) => {
+        $assembler.assign_field($field, $span)?;
+        emit_bytecode! { $assembler, $span => [$($rest)*] }
+    };
+
+    ($assembler:expr, $span:expr => [LOAD_INDEX; $($rest:tt)*] ) => {
+        $assembler.load_index($span);
+        emit_bytecode! { $assembler, $span => [$($rest)*] }
+    };
+
+    ($assembler:expr, $span:expr => [STORE_INDEX; $($rest:tt)*] ) => {
+        $assembler.store_index($span);
+        emit_bytecode! { $assembler, $span => [$($rest)*] }
+    };
+
+    ($assembler:expr, $span:expr => [ASSIGN_INDEX; $($rest:tt)*] ) => {
+        $assembler.assign_index($span);
+        emit_bytecode! { $assembler, $span => [$($rest)*] }
+    };
+
     ($assembler:expr, $span:expr => [STORE_METHOD $method:expr; $($rest:tt)*] ) => {
         $assembler.store_method($method, $span)?;
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
+
     ($assembler:expr, $span:expr => [STORE_GLOBAL $global:expr; $($rest:tt)*] ) => {
         $assembler.store_global($global, $span)?;
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
+
     ($assembler:expr, $span:expr => [LOAD_FIELD_TO_LOCAL $field:expr, $slot:expr; $($rest:tt)*] ) => {
         $assembler.load_field_to_local($field, $slot, $span)?;
         emit_bytecode! { $assembler, $span => [$($rest)*] }

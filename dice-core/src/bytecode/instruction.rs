@@ -63,7 +63,7 @@ define_instructions! {
     pub const DUP;
     pub const SWAP;
     // Compound stack manipulation instructions.
-    pub const CREATE_LIST;
+    pub const CREATE_ARRAY;
     pub const CREATE_OBJECT;
     pub const CREATE_CLOSURE;
     // NOTE: Create class takes a constant reference to its name and a 64-bit operand representing its instance type id.
@@ -75,13 +75,17 @@ define_instructions! {
     pub const STORE_GLOBAL;
     pub const LOAD_LOCAL;
     pub const STORE_LOCAL;
-    pub const LOAD_UPVALUE;
-    pub const STORE_UPVALUE;
-    pub const CLOSE_UPVALUE;
+    pub const ASSIGN_LOCAL;
     pub const LOAD_FIELD;
     pub const STORE_FIELD;
+    pub const ASSIGN_FIELD;
     pub const LOAD_INDEX;
     pub const STORE_INDEX;
+    pub const ASSIGN_INDEX;
+    pub const LOAD_UPVALUE;
+    pub const STORE_UPVALUE;
+    pub const ASSIGN_UPVALUE;
+    pub const CLOSE_UPVALUE;
 
     pub const LOAD_FIELD_TO_LOCAL;
     // NOTE: Stores the method in a class object's method map.

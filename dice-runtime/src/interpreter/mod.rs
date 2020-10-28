@@ -39,7 +39,7 @@ where
                 Instruction::POP => std::mem::drop(self.stack.pop()),
                 Instruction::SWAP => self.stack.swap(),
                 Instruction::DUP => self.dup(&mut cursor),
-                Instruction::CREATE_LIST => self.create_list(&mut cursor),
+                Instruction::CREATE_ARRAY => self.create_list(&mut cursor),
                 Instruction::CREATE_OBJECT => self.create_object(),
                 Instruction::CREATE_CLASS => self.create_class(&bytecode, &mut cursor)?,
                 Instruction::CREATE_CLOSURE => {
@@ -68,15 +68,19 @@ where
                 Instruction::JUMP_IF_TRUE => self.jump_if_true(&mut cursor)?,
                 Instruction::LOAD_LOCAL => self.load_local(call_frame, &mut cursor),
                 Instruction::STORE_LOCAL => self.store_local(call_frame, &mut cursor),
+                Instruction::ASSIGN_LOCAL => self.assign_local(call_frame, &mut cursor),
                 Instruction::LOAD_UPVALUE => self.load_upvalue(parent_upvalues, &mut cursor),
                 Instruction::STORE_UPVALUE => self.store_upvalue(parent_upvalues, &mut cursor),
+                Instruction::ASSIGN_UPVALUE => self.assign_upvalue(parent_upvalues, &mut cursor),
                 Instruction::CLOSE_UPVALUE => self.close_upvalue(call_frame, &mut cursor),
                 Instruction::LOAD_GLOBAL => self.load_global(bytecode, &mut cursor)?,
                 Instruction::STORE_GLOBAL => self.store_global(bytecode, &mut cursor)?,
                 Instruction::LOAD_FIELD => self.load_field(bytecode, &mut cursor)?,
                 Instruction::STORE_FIELD => self.store_field(bytecode, &mut cursor)?,
+                Instruction::ASSIGN_FIELD => self.assign_field(bytecode, &mut cursor)?,
                 Instruction::LOAD_INDEX => self.load_index()?,
                 Instruction::STORE_INDEX => self.store_index()?,
+                Instruction::ASSIGN_INDEX => self.assign_index()?,
                 Instruction::STORE_METHOD => self.store_method(bytecode, &mut cursor)?,
                 Instruction::LOAD_FIELD_TO_LOCAL => self.load_field_to_local(bytecode, call_frame, &mut cursor)?,
                 Instruction::CALL => self.call(&mut cursor)?,
@@ -383,6 +387,14 @@ where
         self.stack.push(value);
     }
 
+    fn assign_local(&mut self, call_frame: CallFrame, cursor: &mut BytecodeCursor) {
+        let value = self.stack.pop();
+        let slot = cursor.read_u8() as usize;
+
+        self.stack[call_frame][slot] = value;
+        self.stack.push(Value::Unit);
+    }
+
     fn load_upvalue(&mut self, parent_upvalues: Option<&[Upvalue]>, cursor: &mut BytecodeCursor) {
         if let Some(parent_upvalues) = parent_upvalues {
             let upvalue_slot = cursor.read_u8() as usize;
@@ -417,6 +429,22 @@ where
             self.stack.push(result)
         } else {
             unreachable!("STORE_UPVALUE used in non-closure context.")
+        }
+    }
+
+    fn assign_upvalue(&mut self, parent_upvalues: Option<&[Upvalue]>, cursor: &mut BytecodeCursor) {
+        if let Some(parent_upvalues) = parent_upvalues {
+            let upvalue_slot = cursor.read_u8() as usize;
+            let upvalue = parent_upvalues[upvalue_slot].clone();
+            let value = self.stack.pop();
+            match &mut *upvalue.state_mut() {
+                UpvalueState::Open(slot) => self.stack[*slot] = value,
+                UpvalueState::Closed(closed_value) => *closed_value = value,
+            };
+
+            self.stack.push(Value::Unit)
+        } else {
+            unreachable!("ASSIGN_UPVALUE used in non-closure context.")
         }
     }
 
@@ -463,6 +491,18 @@ where
         Ok(())
     }
 
+    fn load_field(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
+        let key_index = cursor.read_u8() as usize;
+        let key = bytecode.constants()[key_index].as_symbol()?;
+
+        let value = self.stack.pop();
+        let value = self.get_field(&key, value)?;
+
+        self.stack.push(value);
+
+        Ok(())
+    }
+
     fn store_field(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
         let key_index = cursor.read_u8() as usize;
         let key = bytecode.constants()[key_index].as_symbol()?;
@@ -476,14 +516,34 @@ where
         Ok(())
     }
 
-    fn load_field(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
+    fn assign_field(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
         let key_index = cursor.read_u8() as usize;
         let key = bytecode.constants()[key_index].as_symbol()?;
-
         let value = self.stack.pop();
-        let value = self.get_field(&key, value)?;
+        let object = self.stack.pop();
+        let object = object.as_object()?;
 
-        self.stack.push(value);
+        object.set_field(key, value);
+        self.stack.push(Value::Unit);
+
+        Ok(())
+    }
+
+    fn load_index(&mut self) -> Result<(), RuntimeError> {
+        let index = self.stack.pop();
+        let target = self.stack.peek(0);
+        let result = match target {
+            Value::Array(array) if index.kind() == ValueKind::Int => {
+                let index = index.as_int()?;
+                array.elements().get(index as usize).cloned().unwrap_or(Value::Null)
+            }
+            target => {
+                let field = index.as_symbol()?;
+                self.get_field(&field, target.clone())?
+            }
+        };
+
+        *self.stack.peek_mut(0) = result;
 
         Ok(())
     }
@@ -510,21 +570,24 @@ where
         Ok(())
     }
 
-    fn load_index(&mut self) -> Result<(), RuntimeError> {
+    fn assign_index(&mut self) -> Result<(), RuntimeError> {
+        let value = self.stack.pop();
         let index = self.stack.pop();
-        let target = self.stack.peek(0);
-        let result = match target {
+        let target = self.stack.peek_mut(0);
+
+        match target {
             Value::Array(array) if index.kind() == ValueKind::Int => {
                 let index = index.as_int()?;
-                array.elements().get(index as usize).cloned().unwrap_or(Value::Null)
+                array.elements_mut()[index as usize] = value;
+                *target = Value::Unit;
             }
             target => {
+                let object = target.as_object()?;
                 let field = index.as_symbol()?;
-                self.get_field(&field, target.clone())?
+                object.set_field(field, value);
+                *target = Value::Unit;
             }
         };
-
-        *self.stack.peek_mut(0) = result;
 
         Ok(())
     }
