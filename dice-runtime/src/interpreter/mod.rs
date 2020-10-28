@@ -37,6 +37,7 @@ where
                 Instruction::PUSH_F1 => self.stack.push(Value::Float(1.0)),
                 Instruction::PUSH_CONST => self.push_const(bytecode, &mut cursor),
                 Instruction::POP => std::mem::drop(self.stack.pop()),
+                Instruction::SWAP => self.stack.swap(),
                 Instruction::DUP => self.dup(&mut cursor),
                 Instruction::CREATE_LIST => self.create_list(&mut cursor),
                 Instruction::CREATE_OBJECT => self.create_object(),

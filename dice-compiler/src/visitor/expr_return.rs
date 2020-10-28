@@ -17,7 +17,17 @@ impl NodeVisitor<&Return> for Compiler {
             None => context.assembler().push_unit(expr_return.span),
         }
 
-        self.assembler()?.ret(expr_return.span);
+        // NOTE: Cleanup any temporaries created while calling functions then return.
+        let depth = *self.context()?.call_depth();
+        emit_bytecode! {
+            self.assembler()?, expr_return.span => [
+                for _ in 0..depth => [
+                    SWAP;
+                    POP;
+                ]
+                RET;
+            ]
+        }
 
         Ok(())
     }

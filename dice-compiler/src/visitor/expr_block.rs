@@ -72,8 +72,9 @@ impl<'args, T: AsRef<str>> NodeVisitor<(&Block, BlockKind<'args, T>)> for Compil
         }
 
         if let BlockKind::Function(_) = kind {
-            // NOTE: If in context of a function, implicitly return the top item on the stack.
-            // If the previous instruction was a return, this will never execute.
+            /* NOTE: If in context of a function, implicitly return the top item on the stack.
+             * If the previous instruction was a return, this will never execute.
+             */
             self.assembler()?.ret(block.span)
         } else if let BlockKind::Constructor(_) = kind {
             // NOTE: If in context of a constructor, pop the last value, load self, return.

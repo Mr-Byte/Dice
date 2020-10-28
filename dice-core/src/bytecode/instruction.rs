@@ -61,6 +61,7 @@ define_instructions! {
     // Basic stack manipulation instructions.
     pub const POP;
     pub const DUP;
+    pub const SWAP;
     // Compound stack manipulation instructions.
     pub const CREATE_LIST;
     pub const CREATE_OBJECT;

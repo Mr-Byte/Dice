@@ -85,6 +85,13 @@ impl Stack {
     }
 
     #[inline]
+    pub fn swap(&mut self) {
+        let values = &mut self.values[self.stack_ptr - 2..];
+        let (first, second) = values.split_at_mut(1);
+        std::mem::swap(&mut first[0], &mut second[0])
+    }
+
+    #[inline]
     pub fn len(&self) -> usize {
         self.stack_ptr
     }

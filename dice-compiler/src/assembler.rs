@@ -108,6 +108,11 @@ impl Assembler {
         self.data.put_u8(offset);
     }
 
+    pub fn swap(&mut self, span: Span) {
+        self.source_map.insert(self.data.len() as u64, span);
+        self.data.put_u8(Instruction::SWAP.value());
+    }
+
     pub fn create_list(&mut self, length: u8, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
         self.data.put_u8(Instruction::CREATE_LIST.value());
@@ -492,6 +497,10 @@ macro_rules! emit_bytecode {
         $assembler.pop($span);
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
+    ($assembler:expr, $span:expr => [SWAP; $($rest:tt)*] ) => {
+        $assembler.swap($span);
+        emit_bytecode! { $assembler, $span => [$($rest)*] }
+    };
     ($assembler:expr, $span:expr => [DUP $slot:expr; $($rest:tt)*] ) => {
         $assembler.dup($slot, $span);
         emit_bytecode! { $assembler, $span => [$($rest)*] }
@@ -607,7 +616,7 @@ macro_rules! emit_bytecode {
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
 
-($assembler:expr, $span:expr => [PATCH_JUMP <- $value:expr; $($rest:tt)*] ) => {
+    ($assembler:expr, $span:expr => [PATCH_JUMP <- $value:expr; $($rest:tt)*] ) => {
         $assembler.patch_jump($value);
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
