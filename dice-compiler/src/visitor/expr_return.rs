@@ -18,10 +18,10 @@ impl NodeVisitor<&Return> for Compiler {
         }
 
         // NOTE: Cleanup any temporaries created while calling functions then return.
-        let depth = *self.context()?.call_depth();
+        let temporary_count = *self.context()?.temporary_count();
         emit_bytecode! {
             self.assembler()?, expr_return.span => [
-                for _ in 0..depth => [
+                for _ in 0..temporary_count => [
                     SWAP;
                     POP;
                 ]

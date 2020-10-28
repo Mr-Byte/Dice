@@ -11,7 +11,9 @@ impl NodeVisitor<&Index> for Compiler {
         // any call chains associated with evaluating the index short-circuit only in the index. Once the index is
         // compiled, the original call context is restored, so further chained calls will shirt-circuit correctly.
         let original_call_context = std::mem::take(&mut self.context()?.scope_stack().top_mut()?.call_context);
+        *self.context()?.temporary_count() += 1;
         self.visit(node.index_expression)?;
+        *self.context()?.temporary_count() -= 1;
         self.context()?.scope_stack().top_mut()?.call_context = original_call_context;
         self.assembler()?.load_index(node.span);
 

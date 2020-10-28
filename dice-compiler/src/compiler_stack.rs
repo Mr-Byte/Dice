@@ -19,7 +19,7 @@ pub struct CompilerContext {
     assembler: Assembler,
     upvalues: Vec<UpvalueDescriptor>,
     scope_stack: ScopeStack,
-    call_depth: usize,
+    temporary_count: usize,
 }
 
 impl CompilerContext {
@@ -28,7 +28,7 @@ impl CompilerContext {
             assembler: Assembler::default(),
             scope_stack: ScopeStack::new(ScopeKind::Block),
             upvalues: Vec::new(),
-            call_depth: 0,
+            temporary_count: 0,
             kind,
         }
     }
@@ -61,8 +61,8 @@ impl CompilerContext {
         self.kind
     }
 
-    pub fn call_depth(&mut self) -> &mut usize {
-        &mut self.call_depth
+    pub fn temporary_count(&mut self) -> &mut usize {
+        &mut self.temporary_count
     }
 
     pub fn finish(mut self) -> Bytecode {

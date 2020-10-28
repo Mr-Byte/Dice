@@ -12,14 +12,14 @@ impl NodeVisitor<&ErrorPropagate> for Compiler {
 
         self.visit(*expression)?;
         let error_propagate_jump;
-        let depth = *self.context()?.call_depth();
+        let temporary_count = *self.context()?.temporary_count();
 
         emit_bytecode! {
             self.assembler()?, *span => [
                 DUP 0;
                 LOAD_FIELD &IS_OK;
                 JUMP_IF_TRUE -> error_propagate_jump;
-                for _ in 0..depth => [
+                for _ in 0..temporary_count => [
                     SWAP;
                     POP;
                 ]
