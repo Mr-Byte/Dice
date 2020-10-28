@@ -83,6 +83,8 @@ pub enum TokenKind {
     Dot,
     #[token("?")]
     NullPropagate,
+    #[token("!!")]
+    ErrorPropagate,
     #[token("??")]
     Coalesce,
     #[token("-")]
@@ -127,8 +129,6 @@ pub enum TokenKind {
     Pipeline,
     #[token("::")]
     UniversalMethodAccess,
-    #[token("!!")]
-    PropagateError,
     // Keywords
     #[token("object")]
     Object,

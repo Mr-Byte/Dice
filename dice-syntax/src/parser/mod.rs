@@ -8,7 +8,7 @@ use super::{
 };
 use crate::{
     parser::rules::{ParserRule, RulePrecedence},
-    AbstractFnDecl, ClassDecl, FieldAccess, ForLoop, ImportDecl, Index, Loop, NullPropagate, OpDecl,
+    AbstractFnDecl, ClassDecl, ErrorPropagate, FieldAccess, ForLoop, ImportDecl, Index, Loop, NullPropagate, OpDecl,
     OverloadedOperator, TraitDecl, TraitImpl, UniversalMethodAccess, VarDeclKind,
 };
 use dice_error::{span::Span, syntax_error::SyntaxError};
@@ -667,10 +667,20 @@ impl Parser {
     }
 
     fn null_propagate(&mut self, expression: SyntaxNodeId, _: bool, span_start: Span) -> SyntaxNodeResult {
-        let end = self.lexer.consume(TokenKind::NullPropagate)?.span();
+        let span_end = self.lexer.consume(TokenKind::NullPropagate)?.span();
         let node = SyntaxNode::NullPropagate(NullPropagate {
             expression,
-            span: span_start + end,
+            span: span_start + span_end,
+        });
+
+        Ok(self.arena.alloc(node))
+    }
+
+    fn error_propagate(&mut self, expression: SyntaxNodeId, _: bool, span_start: Span) -> SyntaxNodeResult {
+        let span_end = self.lexer.consume(TokenKind::ErrorPropagate)?.span();
+        let node = SyntaxNode::ErrorPropagate(ErrorPropagate {
+            expression,
+            span: span_start + span_end,
         });
 
         Ok(self.arena.alloc(node))

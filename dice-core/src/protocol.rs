@@ -61,6 +61,15 @@ pub mod object {
     }
 }
 
+pub mod error {
+    use super::*;
+
+    thread_local! {
+        pub static IS_OK: Symbol = "is_ok".into();
+        pub static RESULT: Symbol = "result".into();
+    }
+}
+
 pub trait ProtocolSymbol {
     fn get(&'static self) -> Symbol;
 }

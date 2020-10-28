@@ -75,6 +75,12 @@ pub struct NullPropagate {
 }
 
 #[derive(Debug, Clone)]
+pub struct ErrorPropagate {
+    pub expression: SyntaxNodeId,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone)]
 pub struct FieldAccess {
     pub expression: SyntaxNodeId,
     pub field: String,

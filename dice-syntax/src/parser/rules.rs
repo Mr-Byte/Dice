@@ -139,11 +139,18 @@ impl ParserRule {
             ),
             TokenKind::Not => ParserRule::new(Some(Parser::unary), None, None, RulePrecedence::Unary, None),
 
-            // Postifx operators
+            // Postfix operators
             TokenKind::NullPropagate => ParserRule::new(
                 None,
                 None,
                 Some(Parser::null_propagate),
+                RulePrecedence::None,
+                Some(RulePrecedence::Propagate),
+            ),
+            TokenKind::ErrorPropagate => ParserRule::new(
+                None,
+                None,
+                Some(Parser::error_propagate),
                 RulePrecedence::None,
                 Some(RulePrecedence::Propagate),
             ),

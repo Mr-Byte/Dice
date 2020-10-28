@@ -62,12 +62,16 @@ op d(lhs, rhs) {
     lhs * rhs
 }
 
-export class Test {
-    fn new(self, value) {
-        self.value = value;
+export class Ok {
+    fn new(self, result) {
+        self.is_ok = true;
+        self.result = result;
     }
+}
 
-    op +(self, rhs) {
-        Test(self.value + rhs.value)
+export class Err {
+    fn new(self, result) {
+        self.is_ok = false;
+        self.result = result;
     }
 }

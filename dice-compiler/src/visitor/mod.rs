@@ -9,6 +9,7 @@ mod expr_binary_op;
 mod expr_block;
 mod expr_break;
 mod expr_continue;
+mod expr_error_propagate;
 mod expr_field_access;
 mod expr_fn_call;
 mod expr_for;

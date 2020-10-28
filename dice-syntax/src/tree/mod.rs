@@ -62,6 +62,7 @@ pub enum SyntaxNode {
     Unary(Unary),
     Binary(Binary),
     NullPropagate(NullPropagate),
+    ErrorPropagate(ErrorPropagate),
     Assignment(Assignment),
     TraitImpl(TraitImpl),
 
@@ -105,6 +106,7 @@ impl SyntaxNode {
             SyntaxNode::Unary(Unary { span, .. }) => *span,
             SyntaxNode::Binary(Binary { span, .. }) => *span,
             SyntaxNode::NullPropagate(NullPropagate { span, .. }) => *span,
+            SyntaxNode::ErrorPropagate(ErrorPropagate { span, .. }) => *span,
             SyntaxNode::Assignment(Assignment { span, .. }) => *span,
             SyntaxNode::TraitImpl(TraitImpl { span, .. }) => *span,
             SyntaxNode::VarDecl(VarDecl { span, .. }) => *span,

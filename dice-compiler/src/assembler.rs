@@ -471,6 +471,10 @@ macro_rules! emit_bytecode {
         $assembler.push_i1($span);
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
+    ($assembler:expr, $span:expr => [PUSH_BOOL $value:expr; $($rest:tt)*] ) => {
+        $assembler.push_bool($value, $span);
+        emit_bytecode! { $assembler, $span => [$($rest)*] }
+    };
     ($assembler:expr, $span:expr => [PUSH_CONST $value:expr; $($rest:tt)*] ) => {
         $assembler.push_const($value, $span)?;
         emit_bytecode! { $assembler, $span => [$($rest)*] }

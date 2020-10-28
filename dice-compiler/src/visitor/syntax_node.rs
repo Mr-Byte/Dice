@@ -43,6 +43,11 @@ impl NodeVisitor<SyntaxNodeId> for Compiler {
                 self.visit(null_propagate)?;
                 self.exit_call()?;
             }
+            SyntaxNode::ErrorPropagate(error_propagate) => {
+                self.enter_call()?;
+                self.visit(error_propagate)?;
+                self.exit_call()?;
+            }
             SyntaxNode::FieldAccess(field_access) => {
                 self.enter_call()?;
                 self.visit(field_access)?;
