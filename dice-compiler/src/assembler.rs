@@ -287,6 +287,7 @@ impl Assembler {
         self.data.put_u8(slot);
     }
 
+    #[allow(dead_code)]
     pub fn store_upvalue(&mut self, index: u8, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
         self.data.put_u8(Instruction::STORE_UPVALUE.value());
@@ -394,6 +395,7 @@ impl Assembler {
         self.data.put_u8(Instruction::LOAD_INDEX.value());
     }
 
+    #[allow(dead_code)]
     pub fn store_index(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
         self.data.put_u8(Instruction::STORE_INDEX.value());

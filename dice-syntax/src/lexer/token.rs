@@ -212,64 +212,49 @@ pub enum TokenKind {
 
 fn lex_string(lexer: &mut Lexer<TokenKind>) -> Result<String, StringLexError> {
     let remainder = lexer.remainder();
-    let string_length = string_length(remainder)?;
     let mut result = String::new();
-    let mut chars = remainder[0..string_length].chars();
+    let mut chars = remainder.chars();
+    let mut bump_count = 0;
 
     while let Some(current) = chars.next() {
-        if current == '\\' {
-            let next = chars.next();
+        match current {
+            '\\' => {
+                let next = chars.next();
 
-            match next {
-                Some('"') => result.push('"'),
-                Some('\\') => result.push('\\'),
-                Some('n') => result.push('\n'),
-                Some('r') => result.push('\r'),
-                Some('t') => result.push('\t'),
-                Some(next) => {
-                    let sequence = format!("{}{}", current, next);
-                    return Err(StringLexError::UnrecognizedEscapeSequence(sequence));
+                match next {
+                    Some('"') => result.push('"'),
+                    Some('\\') => result.push('\\'),
+                    Some('n') => result.push('\n'),
+                    Some('r') => result.push('\r'),
+                    Some('t') => result.push('\t'),
+                    Some(next) => {
+                        let sequence = format!("{}{}", current, next);
+                        return Err(StringLexError::UnrecognizedEscapeSequence(sequence));
+                    }
+                    None => return Err(StringLexError::UnexpectedEndOfInput),
                 }
-                None => return Err(StringLexError::UnexpectedEndOfInput),
+
+                bump_count += next.unwrap().len_utf8();
             }
-        } else {
-            result.push(current);
+            '"' => {
+                bump_count += current.len_utf8();
+                break;
+            }
+            _ => {
+                result.push(current);
+            }
         }
+
+        bump_count += current.len_utf8();
     }
 
-    lexer.bump(string_length + 1);
+    if bump_count > remainder.len() {
+        return Err(StringLexError::UnterminatedString);
+    }
+
+    lexer.bump(bump_count);
 
     Ok(result)
-}
-
-// TODO: Can this be made cleaner?
-fn string_length(remainder: &str) -> Result<usize, StringLexError> {
-    let bytes = remainder.as_bytes();
-
-    if bytes[0] == b'"' {
-        return Ok(0);
-    }
-
-    let mut count = 0;
-    loop {
-        if count == bytes.len() {
-            return Err(StringLexError::UnterminatedString);
-        }
-
-        if bytes[count] == b'\\' {
-            count += 1;
-
-            if count == bytes.len() {
-                return Err(StringLexError::UnterminatedString);
-            }
-        } else if bytes[count] == b'"' {
-            break;
-        }
-
-        count += 1;
-    }
-
-    Ok(count)
 }
 
 #[derive(thiserror::Error, Debug)]
