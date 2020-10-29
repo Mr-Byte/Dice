@@ -68,8 +68,6 @@ pub enum TokenKind {
     Comma,
     #[token("|")]
     Pipe,
-    #[token("#")]
-    Hash,
     // Operators
     #[token("..")]
     RangeExclusive,
@@ -130,7 +128,7 @@ pub enum TokenKind {
     #[token("::")]
     UniversalMethodAccess,
     // Keywords
-    #[token("object")]
+    #[token(r"#")]
     Object,
     #[token("false")]
     False,

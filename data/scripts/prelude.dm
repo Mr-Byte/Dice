@@ -6,12 +6,13 @@ export class Range {
 
     fn iter(self) {
         let mut current = self.start;
-        object {
+
+        #{
             next: || {
                 let result = if current < self.end {
-                    object { value: current, is_done: false }
+                    #{ value: current, is_done: false }
                 } else {
-                    object { is_done: true }
+                    #{ is_done: true }
                 };
 
                 current += 1;
@@ -30,12 +31,13 @@ export class RangeInclusive {
 
     fn iter(self) {
         let mut current = self.start;
-        object {
+
+        #{
             next: || {
                 let result = if current <= self.end {
-                    object { value: current, done: false }
+                    #{ value: current, done: false }
                 } else {
-                    object { done: true }
+                    #{ done: true }
                 };
 
                 current += 1;

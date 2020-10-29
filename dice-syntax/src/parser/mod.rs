@@ -1172,7 +1172,7 @@ mod test {
 
     #[test]
     fn test_parse_object_expression() -> Result<(), SyntaxError> {
-        let syntax_tree = Parser::new("object { x: 50, y: 30 }").parse()?;
+        let syntax_tree = Parser::new("#{ x: 50, y: 30 }").parse()?;
         let root = syntax_tree.get(syntax_tree.root());
 
         if let SyntaxNode::Block(Block {
@@ -1192,7 +1192,7 @@ mod test {
 
     #[test]
     fn test_parse_list_expression() -> Result<(), SyntaxError> {
-        let syntax_tree = Parser::new("[x, y, 1, 1*2, object {}]").parse()?;
+        let syntax_tree = Parser::new("[x, y, 1, 1*2, #{}]").parse()?;
         let root = syntax_tree.get(syntax_tree.root());
 
         if let SyntaxNode::Block(Block {
