@@ -56,7 +56,6 @@ pub enum SyntaxNode {
     // Member access
     FieldAccess(FieldAccess),
     Index(Index),
-    UniversalMethodAccess(UniversalMethodAccess),
 
     // Operators
     Unary(Unary),
@@ -85,7 +84,7 @@ pub enum SyntaxNode {
     Break(Break),
     Return(Return),
     Continue(Continue),
-    FunctionCall(FunctionCall),
+    FnCall(FnCall),
 }
 
 impl SyntaxNode {
@@ -125,8 +124,7 @@ impl SyntaxNode {
             SyntaxNode::Break(Break { span, .. }) => *span,
             SyntaxNode::Return(Return { span, .. }) => *span,
             SyntaxNode::Continue(Continue { span, .. }) => *span,
-            SyntaxNode::FunctionCall(FunctionCall { span, .. }) => *span,
-            SyntaxNode::UniversalMethodAccess(UniversalMethodAccess { span, .. }) => *span,
+            SyntaxNode::FnCall(FnCall { span, .. }) => *span,
         }
     }
 }

@@ -36,7 +36,7 @@ impl NodeVisitor<SyntaxNodeId> for Compiler {
             SyntaxNode::ForLoop(for_loop) => self.visit(for_loop)?,
             SyntaxNode::Break(break_node) => self.visit(break_node)?,
             SyntaxNode::Continue(continue_node) => self.visit(continue_node)?,
-            SyntaxNode::Block(block) => self.visit((block, BlockKind::<&str>::Block))?,
+            SyntaxNode::Block(block) => self.visit((block, BlockKind::Block))?,
             SyntaxNode::Return(return_expr) => self.visit(return_expr)?,
             SyntaxNode::NullPropagate(null_propagate) => {
                 self.enter_call()?;
@@ -53,7 +53,7 @@ impl NodeVisitor<SyntaxNodeId> for Compiler {
                 self.visit(field_access)?;
                 self.exit_call()?;
             }
-            SyntaxNode::FunctionCall(fn_call) => {
+            SyntaxNode::FnCall(fn_call) => {
                 self.enter_call()?;
                 self.visit(fn_call)?;
                 self.exit_call()?;

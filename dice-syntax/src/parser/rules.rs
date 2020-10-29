@@ -75,13 +75,6 @@ impl ParserRule {
                 None,
             ),
             TokenKind::Dot => ParserRule::new(None, Some(Parser::field_access), None, RulePrecedence::Call, None),
-            TokenKind::UniversalMethodAccess => ParserRule::new(
-                None,
-                Some(Parser::universal_method_access),
-                None,
-                RulePrecedence::Call,
-                None,
-            ),
 
             // Grouping
             TokenKind::LeftParen => ParserRule::new(
@@ -140,7 +133,7 @@ impl ParserRule {
             TokenKind::Not => ParserRule::new(Some(Parser::unary), None, None, RulePrecedence::Unary, None),
 
             // Postfix operators
-            TokenKind::NullPropagate => ParserRule::new(
+            TokenKind::QuestionMark => ParserRule::new(
                 None,
                 None,
                 Some(Parser::null_propagate),

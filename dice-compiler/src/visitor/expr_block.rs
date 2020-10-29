@@ -5,18 +5,18 @@ use crate::{
 };
 use dice_core::protocol::{class::SELF, ProtocolSymbol};
 use dice_error::compiler_error::CompilerError;
-use dice_syntax::Block;
+use dice_syntax::{Block, FnArg};
 
-pub enum BlockKind<'args, T: AsRef<str>> {
+pub enum BlockKind<'args> {
     Block,
     Loop,
-    Function(&'args [T]),
-    Method(&'args [T]),
-    Constructor(&'args [T]),
+    Function(&'args [FnArg]),
+    Method(&'args [FnArg]),
+    Constructor(&'args [FnArg]),
 }
 
-impl<'args, T: AsRef<str>> NodeVisitor<(&Block, BlockKind<'args, T>)> for Compiler {
-    fn visit(&mut self, (block, kind): (&Block, BlockKind<'args, T>)) -> Result<(), CompilerError> {
+impl<'args> NodeVisitor<(&Block, BlockKind<'args>)> for Compiler {
+    fn visit(&mut self, (block, kind): (&Block, BlockKind<'args>)) -> Result<(), CompilerError> {
         self.context()?.scope_stack().push_scope(ScopeKind::Block, None);
 
         if let BlockKind::Function(args) | BlockKind::Method(args) | BlockKind::Constructor(args) = kind {
@@ -33,7 +33,7 @@ impl<'args, T: AsRef<str>> NodeVisitor<(&Block, BlockKind<'args, T>)> for Compil
 
             for arg in args {
                 self.context()?.scope_stack().add_local(
-                    arg.as_ref().to_owned(),
+                    arg.name.clone(),
                     State::Local {
                         is_mutable: false,
                         is_initialized: true,

@@ -2,14 +2,14 @@ mod rules;
 
 use super::{
     lexer::{Lexer, TokenKind},
-    Assignment, AssignmentOperator, Binary, BinaryOperator, Block, Break, Continue, ExportDecl, FnDecl, FunctionCall,
+    Assignment, AssignmentOperator, Binary, BinaryOperator, Block, Break, Continue, ExportDecl, FnCall, FnDecl,
     IfExpression, LitAnonymousFn, LitBool, LitFloat, LitIdent, LitInt, LitList, LitNull, LitObject, LitString, LitUnit,
     Return, SyntaxNode, SyntaxNodeId, SyntaxTree, Unary, UnaryOperator, VarDecl, WhileLoop,
 };
 use crate::{
     parser::rules::{ParserRule, RulePrecedence},
-    AbstractFnDecl, ClassDecl, ErrorPropagate, FieldAccess, ForLoop, ImportDecl, Index, Loop, NullPropagate, OpDecl,
-    OverloadedOperator, TraitDecl, TraitImpl, UniversalMethodAccess, VarDeclKind,
+    AbstractFnDecl, ClassDecl, ErrorPropagate, FieldAccess, FnArg, FnArgType, ForLoop, ImportDecl, Index, Loop,
+    NullPropagate, OpDecl, OverloadedOperator, TraitDecl, TraitImpl, VarDeclKind,
 };
 use dice_error::{span::Span, syntax_error::SyntaxError};
 use id_arena::Arena;
@@ -261,7 +261,7 @@ impl Parser {
         };
 
         let item_imports = if self.lexer.peek().kind == TokenKind::LeftCurly {
-            self.parse_args(TokenKind::LeftCurly, TokenKind::RightCurly)?
+            self.parse_fields(TokenKind::LeftCurly, TokenKind::RightCurly)?
         } else {
             Vec::new()
         };
@@ -324,7 +324,7 @@ impl Parser {
                 VarDeclKind::Singular(name)
             }
             TokenKind::LeftCurly => {
-                VarDeclKind::Destructured(self.parse_args(TokenKind::LeftCurly, TokenKind::RightCurly)?)
+                VarDeclKind::Destructured(self.parse_fields(TokenKind::LeftCurly, TokenKind::RightCurly)?)
             }
             _ => return Err(next_token.into()),
         };
@@ -475,14 +475,59 @@ impl Parser {
         &mut self,
         open_token_kind: TokenKind,
         close_token_kind: TokenKind,
+    ) -> Result<Vec<FnArg>, SyntaxError> {
+        self.lexer.consume(open_token_kind)?;
+
+        let mut args = Vec::new();
+
+        while self.lexer.peek().kind != close_token_kind {
+            let (token, name) = self.lexer.consume_ident()?;
+            let span = token.span();
+
+            let type_ = if self.lexer.peek().kind == TokenKind::Colon {
+                self.lexer.consume(TokenKind::Colon)?;
+                let (_, name) = self.lexer.consume_ident()?;
+                let is_nullable = if self.lexer.peek().kind == TokenKind::QuestionMark {
+                    self.lexer.consume(TokenKind::QuestionMark)?;
+                    true
+                } else {
+                    false
+                };
+
+                Some(FnArgType { name, is_nullable })
+            } else {
+                None
+            };
+
+            args.push(FnArg {
+                name,
+                type_,
+                span: span + self.lexer.current().span(),
+            });
+
+            if self.lexer.peek().kind == TokenKind::Comma {
+                self.lexer.next();
+            } else if self.lexer.peek().kind != close_token_kind {
+                return Err(self.lexer.next().into());
+            }
+        }
+
+        self.lexer.consume(close_token_kind)?;
+        Ok(args)
+    }
+
+    fn parse_fields(
+        &mut self,
+        open_token_kind: TokenKind,
+        close_token_kind: TokenKind,
     ) -> Result<Vec<String>, SyntaxError> {
         self.lexer.consume(open_token_kind)?;
 
         let mut args = Vec::new();
 
         while self.lexer.peek().kind != close_token_kind {
-            let (_, arg_name) = self.lexer.consume_ident()?;
-            args.push(arg_name);
+            let (_, name) = self.lexer.consume_ident()?;
+            args.push(name);
 
             if self.lexer.peek().kind == TokenKind::Comma {
                 self.lexer.next();
@@ -667,7 +712,7 @@ impl Parser {
     }
 
     fn null_propagate(&mut self, expression: SyntaxNodeId, _: bool, span_start: Span) -> SyntaxNodeResult {
-        let span_end = self.lexer.consume(TokenKind::NullPropagate)?.span();
+        let span_end = self.lexer.consume(TokenKind::QuestionMark)?.span();
         let node = SyntaxNode::NullPropagate(NullPropagate {
             expression,
             span: span_start + span_end,
@@ -717,18 +762,6 @@ impl Parser {
         self.parse_assignment(lhs_expression, can_assign, span_start)
     }
 
-    fn universal_method_access(&mut self, source: SyntaxNodeId, _: bool, span_start: Span) -> SyntaxNodeResult {
-        self.lexer.consume(TokenKind::UniversalMethodAccess)?;
-        let (token, target) = self.lexer.consume_ident()?;
-        let node = SyntaxNode::UniversalMethodAccess(UniversalMethodAccess {
-            source,
-            target,
-            span: span_start + token.span(),
-        });
-
-        Ok(self.arena.alloc(node))
-    }
-
     fn grouping(&mut self, _: bool) -> SyntaxNodeResult {
         let span_start = self.lexer.consume(TokenKind::LeftParen)?.span();
 
@@ -764,7 +797,7 @@ impl Parser {
         }
 
         let span_end = self.lexer.consume(TokenKind::RightParen)?.span();
-        let node = SyntaxNode::FunctionCall(FunctionCall {
+        let node = SyntaxNode::FnCall(FnCall {
             target: lhs,
             args,
             span: span_start + span_end,

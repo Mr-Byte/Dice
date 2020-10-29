@@ -4,7 +4,7 @@ use std::fmt::{Display, Formatter};
 
 #[derive(Debug, Clone)]
 pub struct LitAnonymousFn {
-    pub args: Vec<String>,
+    pub args: Vec<FnArg>,
     pub body: SyntaxNodeId,
     pub span: Span,
 }
@@ -88,16 +88,9 @@ pub struct FieldAccess {
 }
 
 #[derive(Debug, Clone)]
-pub struct FunctionCall {
+pub struct FnCall {
     pub target: SyntaxNodeId,
     pub args: Vec<SyntaxNodeId>,
-    pub span: Span,
-}
-
-#[derive(Debug, Clone)]
-pub struct UniversalMethodAccess {
-    pub source: SyntaxNodeId,
-    pub target: String,
     pub span: Span,
 }
 
@@ -190,7 +183,7 @@ pub enum VarDeclKind {
 #[derive(Debug, Clone)]
 pub struct FnDecl {
     pub name: String,
-    pub args: Vec<String>,
+    pub args: Vec<FnArg>,
     pub body: SyntaxNodeId,
     pub span: Span,
 }
@@ -198,8 +191,29 @@ pub struct FnDecl {
 #[derive(Debug, Clone)]
 pub struct AbstractFnDecl {
     pub name: String,
-    pub args: Vec<String>,
+    pub args: Vec<FnArg>,
     pub span: Span,
+}
+
+#[derive(Debug, Clone)]
+pub struct OpDecl {
+    pub operator: OverloadedOperator,
+    pub args: Vec<FnArg>,
+    pub body: SyntaxNodeId,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone)]
+pub struct FnArg {
+    pub name: String,
+    pub type_: Option<FnArgType>,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone)]
+pub struct FnArgType {
+    pub name: String,
+    pub is_nullable: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -213,14 +227,6 @@ pub struct ImportDecl {
     pub module_import: Option<String>,
     pub item_imports: Vec<String>,
     pub relative_path: String,
-    pub span: Span,
-}
-
-#[derive(Debug, Clone)]
-pub struct OpDecl {
-    pub operator: OverloadedOperator,
-    pub args: Vec<String>,
-    pub body: SyntaxNodeId,
     pub span: Span,
 }
 

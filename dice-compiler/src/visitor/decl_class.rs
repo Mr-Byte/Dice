@@ -66,7 +66,11 @@ impl NodeVisitor<&ClassDecl> for Compiler {
 
 impl Compiler {
     fn visit_fn(&mut self, slot: u8, fn_decl: FnDecl) -> Result<(), CompilerError> {
-        let is_method = fn_decl.args.first().map(|arg| arg == &*SELF.get()).unwrap_or(false);
+        let is_method = fn_decl
+            .args
+            .first()
+            .map(|arg| arg.name == &*SELF.get())
+            .unwrap_or(false);
         let kind = if is_method {
             if fn_decl.name == *NEW.get() {
                 FnKind::Constructor

@@ -82,7 +82,7 @@ pub enum TokenKind {
     #[token(".")]
     Dot,
     #[token("?")]
-    NullPropagate,
+    QuestionMark,
     #[token("!!")]
     ErrorPropagate,
     #[token("??")]
@@ -231,9 +231,10 @@ fn lex_string(lexer: &mut Lexer<TokenKind>) -> Result<String, StringLexError> {
                         let sequence = format!("{}{}", current, next);
                         return Err(StringLexError::UnrecognizedEscapeSequence(sequence));
                     }
-                    None => return Err(StringLexError::UnexpectedEndOfInput),
+                    None => return Err(StringLexError::UnterminatedString),
                 }
 
+                bump_count += current.len_utf8();
                 bump_count += next.unwrap().len_utf8();
             }
             '"' => {
@@ -241,11 +242,10 @@ fn lex_string(lexer: &mut Lexer<TokenKind>) -> Result<String, StringLexError> {
                 break;
             }
             _ => {
+                bump_count += current.len_utf8();
                 result.push(current);
             }
         }
-
-        bump_count += current.len_utf8();
     }
 
     if bump_count > remainder.len() {
@@ -263,6 +263,4 @@ pub enum StringLexError {
     UnterminatedString,
     #[error("Unrecognized escape sequence {0} found.")]
     UnrecognizedEscapeSequence(String),
-    #[error("Unexpected end of input reached.")]
-    UnexpectedEndOfInput,
 }

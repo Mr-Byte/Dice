@@ -16,7 +16,7 @@ impl NodeVisitor<&WhileLoop> for Compiler {
 
             let loop_end = self.assembler()?.jump_if_false(*span);
 
-            self.visit((&block, BlockKind::<&str>::Loop))?;
+            self.visit((&block, BlockKind::Loop))?;
             self.assembler()?.jump_back(loop_start, *span);
             self.assembler()?.patch_jump(loop_end);
 

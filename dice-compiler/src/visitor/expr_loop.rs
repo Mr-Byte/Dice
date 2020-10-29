@@ -13,7 +13,7 @@ impl NodeVisitor<&Loop> for Compiler {
                 .scope_stack()
                 .push_scope(ScopeKind::Loop, Some(loop_start as usize));
 
-            self.visit((&block, BlockKind::<&str>::Loop))?;
+            self.visit((&block, BlockKind::Loop))?;
             self.assembler()?.jump_back(loop_start, *span);
 
             let scope_close = self.context()?.scope_stack().pop_scope()?;

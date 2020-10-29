@@ -1,10 +1,10 @@
 use super::NodeVisitor;
 use crate::compiler::Compiler;
 use dice_error::compiler_error::CompilerError;
-use dice_syntax::FunctionCall;
+use dice_syntax::FnCall;
 
-impl NodeVisitor<&FunctionCall> for Compiler {
-    fn visit(&mut self, node: &FunctionCall) -> Result<(), CompilerError> {
+impl NodeVisitor<&FnCall> for Compiler {
+    fn visit(&mut self, node: &FnCall) -> Result<(), CompilerError> {
         self.visit(node.target)?;
 
         // NOTE: Store the temporaryc at the time the function call was started, to be restored later.
