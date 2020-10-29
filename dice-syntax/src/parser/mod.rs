@@ -781,7 +781,7 @@ impl Parser {
 
         while self.lexer.peek().kind != TokenKind::RightCurly {
             let key = match self.lexer.next().kind {
-                TokenKind::String(value) => value.trim_matches('"').to_owned(),
+                TokenKind::String(value) => value,
                 TokenKind::Integer(value) => value.to_string(),
                 TokenKind::Identifier(value) => value,
                 _ => return Err(self.lexer.current().clone().into()),
@@ -842,10 +842,7 @@ impl Parser {
         let literal = match token.kind {
             TokenKind::Integer(value) => SyntaxNode::LitInt(LitInt { value, span }),
             TokenKind::Float(value) => SyntaxNode::LitFloat(LitFloat { value, span }),
-            TokenKind::String(value) => SyntaxNode::LitString(LitString {
-                value: value.trim_matches('"').to_owned(),
-                span,
-            }),
+            TokenKind::String(value) => SyntaxNode::LitString(LitString { value, span }),
             TokenKind::False => SyntaxNode::LitBool(LitBool { value: false, span }),
             TokenKind::True => SyntaxNode::LitBool(LitBool { value: true, span }),
             TokenKind::Null => SyntaxNode::LitNull(LitNull { span }),
