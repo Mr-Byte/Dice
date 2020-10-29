@@ -437,9 +437,16 @@ impl Assembler {
         self.data.put_u8(Instruction::ASSERT_BOOL.value());
     }
 
-    pub fn assert_type(&mut self, span: Span) {
+    pub fn assert_type_for_local(&mut self, slot: u8, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::ASSERT_TYPE.value());
+        self.data.put_u8(Instruction::ASSERT_TYPE_FOR_LOCAL.value());
+        self.data.put_u8(slot);
+    }
+
+    pub fn assert_type_or_null_for_local(&mut self, slot: u8, span: Span) {
+        self.source_map.insert(self.data.len() as u64, span);
+        self.data.put_u8(Instruction::ASSERT_TYPE_OR_NULL_FOR_LOCAL.value());
+        self.data.put_u8(slot);
     }
 
     fn make_constant(&mut self, value: Value) -> Result<u8, CompilerError> {
@@ -702,8 +709,13 @@ macro_rules! emit_bytecode {
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
 
-    ($assembler:expr, $span:expr => [ASSERT_TYPE; $($rest:tt)*] ) => {
-        $assembler.assert_type($span);
+    ($assembler:expr, $span:expr => [ASSERT_TYPE_FOR_LOCAL $slot:expr; $($rest:tt)*] ) => {
+        $assembler.assert_type_for_local($slot, $span);
+        emit_bytecode! { $assembler, $span => [$($rest)*] }
+    };
+
+    ($assembler:expr, $span:expr => [ASSERT_TYPE_OR_NULL_FOR_LOCAL $slot:expr; $($rest:tt)*] ) => {
+        $assembler.assert_type_or_null_for_local($slot, $span);
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
 

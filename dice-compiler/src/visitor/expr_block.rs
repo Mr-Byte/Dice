@@ -41,29 +41,15 @@ impl<'args> NodeVisitor<(&Block, BlockKind<'args>)> for Compiler {
                 )? as u8;
 
                 if let Some(type_) = &arg.type_ {
-                    if type_.is_nullable {
-                        let null_jump;
-                        emit_bytecode! {
-                            // TODO: Add ASSERT_TYPE_OR_NULL
-                            self.assembler()?, arg.span => [
-                                LOAD_LOCAL slot;
-                                PUSH_NULL;
-                                EQ;
-                                JUMP_IF_TRUE -> null_jump;
-                                LOAD_LOCAL slot;
-                                {self.visit(&LitIdent { name: type_.name.clone(), span: arg.span })?};
-                                ASSERT_TYPE;
-                                PATCH_JUMP <- null_jump;
+                    emit_bytecode! {
+                        self.assembler()?, arg.span => [
+                            {self.visit(&LitIdent { name: type_.name.clone(), span: arg.span })?};
+                            if type_.is_nullable => [
+                                ASSERT_TYPE_OR_NULL_FOR_LOCAL slot;
+                            ] else [
+                                ASSERT_TYPE_FOR_LOCAL slot;
                             ]
-                        }
-                    } else {
-                        emit_bytecode! {
-                            self.assembler()?, arg.span => [
-                                LOAD_LOCAL slot;
-                                {self.visit(&LitIdent { name: type_.name.clone(), span: arg.span })?};
-                                ASSERT_TYPE;
-                            ]
-                        }
+                        ]
                     }
                 }
             }
