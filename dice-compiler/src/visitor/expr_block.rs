@@ -5,7 +5,7 @@ use crate::{
 };
 use dice_core::protocol::{class::SELF, ProtocolSymbol};
 use dice_error::compiler_error::CompilerError;
-use dice_syntax::{Block, FnArg};
+use dice_syntax::{Block, FnArg, LitIdent};
 
 pub enum BlockKind<'args> {
     Block,
@@ -32,13 +32,40 @@ impl<'args> NodeVisitor<(&Block, BlockKind<'args>)> for Compiler {
             }
 
             for arg in args {
-                self.context()?.scope_stack().add_local(
+                let slot = self.context()?.scope_stack().add_local(
                     arg.name.clone(),
                     State::Local {
                         is_mutable: false,
                         is_initialized: true,
                     },
-                )?;
+                )? as u8;
+
+                if let Some(type_) = &arg.type_ {
+                    if type_.is_nullable {
+                        let null_jump;
+                        emit_bytecode! {
+                            // TODO: Add ASSERT_TYPE_OR_NULL
+                            self.assembler()?, arg.span => [
+                                LOAD_LOCAL slot;
+                                PUSH_NULL;
+                                EQ;
+                                JUMP_IF_TRUE -> null_jump;
+                                LOAD_LOCAL slot;
+                                {self.visit(&LitIdent { name: type_.name.clone(), span: arg.span })?};
+                                ASSERT_TYPE;
+                                PATCH_JUMP <- null_jump;
+                            ]
+                        }
+                    } else {
+                        emit_bytecode! {
+                            self.assembler()?, arg.span => [
+                                LOAD_LOCAL slot;
+                                {self.visit(&LitIdent { name: type_.name.clone(), span: arg.span })?};
+                                ASSERT_TYPE;
+                            ]
+                        }
+                    }
+                }
             }
         }
 

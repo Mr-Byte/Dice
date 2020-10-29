@@ -85,6 +85,7 @@ where
                 Instruction::LOAD_FIELD_TO_LOCAL => self.load_field_to_local(bytecode, call_frame, &mut cursor)?,
                 Instruction::CALL => self.call(&mut cursor)?,
                 Instruction::ASSERT_BOOL => self.assert_bool()?,
+                Instruction::ASSERT_TYPE => self.assert_type()?,
                 Instruction::LOAD_MODULE => self.load_module(&bytecode, &mut cursor)?,
                 Instruction::RETURN => break,
                 unknown => return Err(RuntimeError::UnknownInstruction(unknown.value())),
@@ -119,6 +120,26 @@ where
         }
 
         Ok(())
+    }
+
+    fn assert_type(&mut self) -> Result<(), RuntimeError> {
+        let class = self.stack.pop();
+        let class = class.as_class()?;
+        let instance_type_id = class.instance_type_id();
+        let value = self.stack.pop();
+        let is_type = value
+            .as_object()
+            .ok()
+            .and_then(|object| object.class())
+            .or_else(|| self.value_class_mapping.get(&value.kind()).cloned())
+            .map_or(false, |class| class.contains_type_id(instance_type_id));
+
+        if is_type {
+            Ok(())
+        } else {
+            // TODO: Create a more contextual error.
+            Err(RuntimeError::Aborted(String::from("Types did not match.")))
+        }
     }
 
     fn not(&mut self) -> Result<(), RuntimeError> {

@@ -87,6 +87,8 @@ define_instructions! {
     pub const ASSIGN_UPVALUE;
     pub const CLOSE_UPVALUE;
 
+    // NOTE: Fused operation to load a field into a local variable.
+    // TODO: Figure out if a ASSIGN_FIELD_TO_LOCAL variant could be used to optimize assigning from a field.
     pub const LOAD_FIELD_TO_LOCAL;
     // NOTE: Stores the method in a class object's method map.
     // Static functions and the like are stored as fields on the class object itself.
@@ -120,5 +122,5 @@ define_instructions! {
     pub const RETURN;
     // Type assertion instructions
     pub const ASSERT_BOOL;
-    // NOTE: Dice will support a full suite of type assertions, for now only bool is supported.
+    pub const ASSERT_TYPE;
 }

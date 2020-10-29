@@ -437,6 +437,11 @@ impl Assembler {
         self.data.put_u8(Instruction::ASSERT_BOOL.value());
     }
 
+    pub fn assert_type(&mut self, span: Span) {
+        self.source_map.insert(self.data.len() as u64, span);
+        self.data.put_u8(Instruction::ASSERT_TYPE.value());
+    }
+
     fn make_constant(&mut self, value: Value) -> Result<u8, CompilerError> {
         let position = if let Some(position) = self.constants.iter().position(|current| *current == value) {
             position
@@ -694,6 +699,11 @@ macro_rules! emit_bytecode {
 
     ($assembler:expr, $span:expr => [ASSERT_BOOL; $($rest:tt)*] ) => {
         $assembler.assert_bool($span);
+        emit_bytecode! { $assembler, $span => [$($rest)*] }
+    };
+
+    ($assembler:expr, $span:expr => [ASSERT_TYPE; $($rest:tt)*] ) => {
+        $assembler.assert_type($span);
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
 
