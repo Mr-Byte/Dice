@@ -8,6 +8,24 @@ use dice_core::protocol::{class::SELF, ProtocolSymbol};
 use dice_error::{compiler_error::CompilerError, span::Span};
 use dice_syntax::{Block, FnArg};
 
+impl NodeVisitor<&Block> for Compiler {
+    fn visit(&mut self, block: &Block) -> Result<(), CompilerError> {
+        for expression in block.expressions.iter() {
+            self.visit(*expression)?;
+            self.assembler()?.pop(block.span);
+        }
+
+        match block.trailing_expression {
+            Some(trailing_expression) => {
+                self.visit(trailing_expression)?;
+            }
+            None => self.assembler()?.push_unit(block.span),
+        }
+
+        Ok(())
+    }
+}
+
 pub enum BlockKind {
     Block,
     Loop,
@@ -17,7 +35,7 @@ impl NodeVisitor<(&Block, BlockKind)> for Compiler {
     fn visit(&mut self, (block, kind): (&Block, BlockKind)) -> Result<(), CompilerError> {
         self.context()?.scope_stack().push_scope(ScopeKind::Block, None);
         self.scan_item_decls(block)?;
-        self.visit_expressions(block)?;
+        self.visit(block)?;
 
         // NOTE: If in context of a loop, pop the last value off the stack.
         if let BlockKind::Loop = kind {
@@ -52,7 +70,7 @@ impl<'args> NodeVisitor<(&Block, FunctionBlockKind<'args>)> for Compiler {
         self.context()?.scope_stack().push_scope(ScopeKind::Block, None);
         self.visit_args(&kind, kind.args())?;
         self.scan_item_decls(block)?;
-        self.visit_expressions(block)?;
+        self.visit(block)?;
         self.visit_close_upvalues(block)?;
 
         if let FunctionBlockKind::Function(_) | FunctionBlockKind::Method(_) = kind {
@@ -62,7 +80,7 @@ impl<'args> NodeVisitor<(&Block, FunctionBlockKind<'args>)> for Compiler {
             let local_slot = self
                 .context()?
                 .scope_stack()
-                .local(&*SELF.get())
+                .local(SELF.get())
                 .expect("Methods should always have a self.")
                 .slot as u8;
 
@@ -134,24 +152,6 @@ impl Compiler {
         Ok(())
     }
 
-    fn visit_expressions(&mut self, block: &Block) -> Result<(), CompilerError> {
-        for expression in block.expressions.iter() {
-            self.visit(*expression)?;
-            self.assembler()?.pop(block.span);
-        }
-
-        match block.trailing_expression {
-            Some(trailing_expression) => {
-                self.visit(trailing_expression)?;
-            }
-            None => self.assembler()?.push_unit(block.span),
-        }
-
-        Ok(())
-    }
-}
-
-impl Compiler {
     pub(super) fn visit_return(&mut self, span: Span) -> Result<(), CompilerError> {
         if let CompilerKind::Function {
             return_type: Some(return_type),
@@ -168,9 +168,6 @@ impl Compiler {
                 ]
             }
         } else {
-            /* NOTE: If in context of a function or method, implicitly return the top item on the stack.
-             * If the previous instruction was a return, this will never execute.
-             */
             self.assembler()?.ret(span)
         }
 

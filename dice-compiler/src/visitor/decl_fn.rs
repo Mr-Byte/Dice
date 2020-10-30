@@ -2,10 +2,14 @@ use super::NodeVisitor;
 use crate::{compiler::Compiler, scope_stack::State, upvalue::UpvalueDescriptor, visitor::FnKind};
 use dice_core::value::{FnScript, Symbol, Value};
 use dice_error::compiler_error::CompilerError;
-use dice_syntax::FnDecl;
+use dice_error::span::Span;
+use dice_syntax::{FnArg, FnDecl};
+use std::collections::HashSet;
 
 impl NodeVisitor<(&FnDecl, FnKind)> for Compiler {
     fn visit(&mut self, (fn_decl, fn_kind): (&FnDecl, FnKind)) -> Result<(), CompilerError> {
+        Self::assert_unique_params(&fn_decl.args, fn_decl.span)?;
+
         let body = self.syntax_tree.child(fn_decl.body);
         let mut fn_context = self.compile_fn(body, &fn_decl.args, fn_decl.return_.clone(), fn_kind)?;
         let upvalues = fn_context.upvalues().clone();
@@ -23,6 +27,18 @@ impl NodeVisitor<(&FnDecl, FnKind)> for Compiler {
 }
 
 impl Compiler {
+    pub(super) fn assert_unique_params(args: &[FnArg], span: Span) -> Result<(), CompilerError> {
+        // NOTE: Assert that all arguments are uniquely named.
+        let mut items = HashSet::with_capacity(args.len());
+        let has_unique_args = args.iter().all(|arg| items.insert(&arg.name));
+
+        if !has_unique_args {
+            return Err(CompilerError::DuplicateArgumentNames(span));
+        }
+
+        return Ok(());
+    }
+
     fn emit_fn(
         &mut self,
         fn_decl: &FnDecl,

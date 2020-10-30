@@ -66,12 +66,13 @@ impl NodeVisitor<&ClassDecl> for Compiler {
 
 impl Compiler {
     fn visit_fn(&mut self, slot: u8, fn_decl: FnDecl) -> Result<(), CompilerError> {
-        let is_method = fn_decl
-            .args
-            .first()
-            .map(|arg| arg.name == &*SELF.get())
-            .unwrap_or(false);
-        let kind = if is_method {
+        let self_param = fn_decl.args.first().filter(|arg| arg.name == &*SELF.get());
+        let kind = if let Some(self_param) = self_param {
+            // NOTE: If the self parameter has a type annotation, return an error.
+            if self_param.type_.is_some() {
+                return Err(CompilerError::SelfParameterHasType(self_param.span));
+            }
+
             if fn_decl.name == *NEW.get() {
                 FnKind::Constructor
             } else {
@@ -89,7 +90,7 @@ impl Compiler {
 
         emit_bytecode! {
             self.assembler()?, fn_decl.span => [
-                if is_method => [
+                if matches!(kind, FnKind::Constructor | FnKind::Method) => [
                     STORE_METHOD &*fn_decl.name;
                     LOAD_LOCAL slot;
                 ] else [
@@ -104,6 +105,16 @@ impl Compiler {
     }
 
     fn visit_op(&mut self, slot: u8, op_decl: OpDecl) -> Result<(), CompilerError> {
+        let self_param = op_decl.args.first().filter(|arg| arg.name == &*SELF.get());
+
+        if let Some(self_param) = self_param {
+            if self_param.type_.is_some() {
+                return Err(CompilerError::SelfParameterHasType(self_param.span));
+            }
+        } else {
+            return Err(CompilerError::OperatorMethodHasNoSelf(op_decl.span));
+        }
+
         self.visit((&op_decl, OpKind::Method))?;
 
         emit_bytecode! {

@@ -7,7 +7,7 @@ use dice_core::{bytecode::Bytecode, value::Symbol};
 use dice_error::compiler_error::CompilerError;
 use dice_syntax::TypeAnnotation;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum CompilerKind {
     Script,
     Module,

@@ -2,8 +2,16 @@ use crate::{span::Span, syntax_error::SyntaxError};
 
 #[derive(thiserror::Error, Debug)]
 pub enum CompilerError {
+    #[error("The new method on classes is not allowed to have a return type.")]
+    NewHasReturnType(Span),
     #[error("The new method on classes must have a self receiver as the first parameter.")]
     NewMustHaveSelfReceiver(Span),
+    #[error("The self parameter of methods cannot have a type annotation.")]
+    SelfParameterHasType(Span),
+    #[error("Function cannot have duplicate argument names.")]
+    DuplicateArgumentNames(Span),
+    #[error("Operator methods must have a self parameter.")]
+    OperatorMethodHasNoSelf(Span),
     #[error("The item {0} has already been declared in this scope.")]
     ItemAlreadyDeclared(String),
     #[error("Encountered undeclared variable {0}.")]

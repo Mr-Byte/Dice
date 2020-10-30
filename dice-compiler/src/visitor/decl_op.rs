@@ -21,6 +21,8 @@ pub enum OpKind {
 impl NodeVisitor<(&OpDecl, OpKind)> for Compiler {
     // TODO: Only allow operators to compile in the context of a prelude?
     fn visit(&mut self, (node, kind): (&OpDecl, OpKind)) -> Result<(), CompilerError> {
+        Self::assert_unique_params(&node.args, node.span)?;
+
         let body = self.syntax_tree.child(node.body);
         let fn_kind = match kind {
             OpKind::Global => FnKind::Function,

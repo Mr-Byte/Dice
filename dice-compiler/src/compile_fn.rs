@@ -14,6 +14,11 @@ impl Compiler {
         return_type: Option<TypeAnnotation>,
         kind: FnKind,
     ) -> Result<CompilerContext, CompilerError> {
+        // NOTE: Constructors cannot have a return type annotation.
+        if kind == FnKind::Constructor && return_type.is_some() {
+            return Err(CompilerError::NewHasReturnType(return_type.unwrap().name.span));
+        }
+
         let compiler_kind = match kind {
             FnKind::Constructor => CompilerKind::Constructor,
             _ => CompilerKind::Function { return_type },
