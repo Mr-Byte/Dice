@@ -5,6 +5,7 @@ use std::fmt::{Display, Formatter};
 #[derive(Debug, Clone)]
 pub struct LitAnonymousFn {
     pub args: Vec<FnArg>,
+    pub return_: Option<TypeAnnotation>,
     pub body: SyntaxNodeId,
     pub span: Span,
 }
@@ -184,6 +185,7 @@ pub enum VarDeclKind {
 pub struct FnDecl {
     pub name: String,
     pub args: Vec<FnArg>,
+    pub return_: Option<TypeAnnotation>,
     pub body: SyntaxNodeId,
     pub span: Span,
 }
@@ -192,6 +194,7 @@ pub struct FnDecl {
 pub struct AbstractFnDecl {
     pub name: String,
     pub args: Vec<FnArg>,
+    pub return_: Option<TypeAnnotation>,
     pub span: Span,
 }
 
@@ -199,6 +202,7 @@ pub struct AbstractFnDecl {
 pub struct OpDecl {
     pub operator: OverloadedOperator,
     pub args: Vec<FnArg>,
+    pub return_: Option<TypeAnnotation>,
     pub body: SyntaxNodeId,
     pub span: Span,
 }
@@ -206,12 +210,12 @@ pub struct OpDecl {
 #[derive(Debug, Clone)]
 pub struct FnArg {
     pub name: String,
-    pub type_: Option<FnArgType>,
+    pub type_: Option<TypeAnnotation>,
     pub span: Span,
 }
 
 #[derive(Debug, Clone)]
-pub struct FnArgType {
+pub struct TypeAnnotation {
     pub name: String,
     pub is_nullable: bool,
 }

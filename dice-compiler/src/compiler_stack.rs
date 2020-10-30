@@ -5,12 +5,13 @@ use super::{
 };
 use dice_core::{bytecode::Bytecode, value::Symbol};
 use dice_error::compiler_error::CompilerError;
+use dice_syntax::TypeAnnotation;
 
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Clone)]
 pub enum CompilerKind {
     Script,
     Module,
-    Function,
+    Function { return_type: Option<TypeAnnotation> },
     Constructor,
 }
 
@@ -58,7 +59,7 @@ impl CompilerContext {
     }
 
     pub fn kind(&self) -> CompilerKind {
-        self.kind
+        self.kind.clone()
     }
 
     pub fn temporary_count(&mut self) -> &mut usize {

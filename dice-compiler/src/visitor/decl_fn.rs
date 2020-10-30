@@ -7,7 +7,7 @@ use dice_syntax::FnDecl;
 impl NodeVisitor<(&FnDecl, FnKind)> for Compiler {
     fn visit(&mut self, (fn_decl, fn_kind): (&FnDecl, FnKind)) -> Result<(), CompilerError> {
         let body = self.syntax_tree.child(fn_decl.body);
-        let mut fn_context = self.compile_fn(body, &fn_decl.args, fn_kind)?;
+        let mut fn_context = self.compile_fn(body, &fn_decl.args, fn_decl.return_.clone(), fn_kind)?;
         let upvalues = fn_context.upvalues().clone();
         let bytecode = fn_context.finish();
         let compiled_fn = Value::FnScript(FnScript::new(&*fn_decl.name, bytecode, uuid::Uuid::new_v4()));

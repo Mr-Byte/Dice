@@ -5,7 +5,7 @@ use dice_syntax::{ExportDecl, SyntaxNode, VarDecl, VarDeclKind};
 
 impl NodeVisitor<&ExportDecl> for Compiler {
     fn visit(&mut self, node: &ExportDecl) -> Result<(), CompilerError> {
-        if self.context()?.kind() != CompilerKind::Module {
+        if !matches!(self.context()?.kind(), CompilerKind::Module) {
             todo!("Error about how exports can only be used in modules.");
         }
 

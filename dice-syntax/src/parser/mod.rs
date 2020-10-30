@@ -8,8 +8,8 @@ use super::{
 };
 use crate::{
     parser::rules::{ParserRule, RulePrecedence},
-    AbstractFnDecl, ClassDecl, ErrorPropagate, FieldAccess, FnArg, FnArgType, ForLoop, ImportDecl, Index, Loop,
-    NullPropagate, OpDecl, OverloadedOperator, TraitDecl, TraitImpl, VarDeclKind,
+    AbstractFnDecl, ClassDecl, ErrorPropagate, FieldAccess, FnArg, ForLoop, ImportDecl, Index, Loop, NullPropagate,
+    OpDecl, OverloadedOperator, TraitDecl, TraitImpl, TypeAnnotation, VarDeclKind,
 };
 use dice_error::{span::Span, syntax_error::SyntaxError};
 use id_arena::Arena;
@@ -357,6 +357,8 @@ impl Parser {
         let node = SyntaxNode::LitAnonymousFn(LitAnonymousFn {
             args,
             body,
+            // TODO: Parse return type annotations for anonymous functions.
+            return_: None,
             span: span_start + span_end,
         });
 
@@ -376,12 +378,14 @@ impl Parser {
             return Err(SyntaxError::FnTooManyArguments(name, name_token.span()));
         }
 
+        let return_ = self.parse_return()?;
         let body = self.block_expression(false)?;
         let span_end = self.lexer.current().span();
         let node = SyntaxNode::FnDecl(FnDecl {
             name,
             args,
             body,
+            return_,
             span: span_start + span_end,
         });
 
@@ -401,6 +405,7 @@ impl Parser {
             return Err(SyntaxError::FnTooManyArguments(name, name_token.span()));
         }
 
+        let return_ = self.parse_return()?;
         let next_token = self.lexer.peek();
 
         let node = if next_token.kind == TokenKind::LeftCurly {
@@ -410,6 +415,7 @@ impl Parser {
                 name,
                 args,
                 body,
+                return_,
                 span: span_start + span_end,
             })
         } else {
@@ -418,6 +424,7 @@ impl Parser {
             SyntaxNode::AbstractFnDecl(AbstractFnDecl {
                 name,
                 args,
+                return_,
                 span: span_start + span_end,
             })
         };
@@ -459,16 +466,35 @@ impl Parser {
             ));
         }
 
+        let return_ = self.parse_return()?;
         let body = self.block_expression(false)?;
         let span_end = self.lexer.current().span();
         let node = SyntaxNode::OpDecl(OpDecl {
             operator,
             args,
             body,
+            return_,
             span: span_start + span_end,
         });
 
         Ok(self.arena.alloc(node))
+    }
+
+    fn parse_return(&mut self) -> Result<Option<TypeAnnotation>, SyntaxError> {
+        if self.lexer.peek().kind == TokenKind::Arrow {
+            self.lexer.consume(TokenKind::Arrow)?;
+            let (_, name) = self.lexer.consume_ident()?;
+            let is_nullable = if self.lexer.peek().kind == TokenKind::QuestionMark {
+                self.lexer.consume(TokenKind::QuestionMark)?;
+                true
+            } else {
+                false
+            };
+
+            Ok(Some(TypeAnnotation { name, is_nullable }))
+        } else {
+            Ok(None)
+        }
     }
 
     fn parse_args(
@@ -494,7 +520,7 @@ impl Parser {
                     false
                 };
 
-                Some(FnArgType { name, is_nullable })
+                Some(TypeAnnotation { name, is_nullable })
             } else {
                 None
             };

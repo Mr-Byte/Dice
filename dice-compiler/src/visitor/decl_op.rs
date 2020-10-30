@@ -26,7 +26,7 @@ impl NodeVisitor<(&OpDecl, OpKind)> for Compiler {
             OpKind::Global => FnKind::Function,
             OpKind::Method => FnKind::Method,
         };
-        let mut op_context = self.compile_fn(body, &node.args, fn_kind)?;
+        let mut op_context = self.compile_fn(body, &node.args, node.return_.clone(), fn_kind)?;
         let name = Compiler::op_name(node);
 
         let upvalues = op_context.upvalues().clone();
