@@ -1,8 +1,8 @@
 use crate::value::{Object, Value};
-use std::ops::Deref;
 use std::{
     cell::{Ref, RefCell, RefMut},
     fmt::Display,
+    ops::Deref,
     rc::Rc,
 };
 

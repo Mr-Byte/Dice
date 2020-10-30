@@ -35,8 +35,7 @@ mod syntax_node;
 
 use dice_error::compiler_error::CompilerError;
 
-pub use expr_block::BlockKind;
-pub use expr_block::FunctionBlockKind;
+pub use expr_block::{BlockKind, FunctionBlockKind};
 
 pub(super) trait NodeVisitor<T> {
     fn visit(&mut self, node: T) -> Result<(), CompilerError>;

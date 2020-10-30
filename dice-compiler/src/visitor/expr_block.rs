@@ -1,33 +1,16 @@
 use super::NodeVisitor;
-use crate::compiler_stack::CompilerKind;
 use crate::{
     compiler::Compiler,
+    compiler_stack::CompilerKind,
     scope_stack::{ScopeKind, State},
 };
 use dice_core::protocol::{class::SELF, ProtocolSymbol};
-use dice_error::compiler_error::CompilerError;
-use dice_error::span::Span;
+use dice_error::{compiler_error::CompilerError, span::Span};
 use dice_syntax::{Block, FnArg};
 
 pub enum BlockKind {
     Block,
     Loop,
-}
-
-pub enum FunctionBlockKind<'args> {
-    Function(&'args [FnArg]),
-    Method(&'args [FnArg]),
-    Constructor(&'args [FnArg]),
-}
-
-impl<'args> FunctionBlockKind<'args> {
-    fn args(&self) -> &'args [FnArg] {
-        match self {
-            FunctionBlockKind::Function(args)
-            | FunctionBlockKind::Method(args)
-            | FunctionBlockKind::Constructor(args) => *args,
-        }
-    }
 }
 
 impl NodeVisitor<(&Block, BlockKind)> for Compiler {
@@ -45,6 +28,22 @@ impl NodeVisitor<(&Block, BlockKind)> for Compiler {
         self.context()?.scope_stack().pop_scope()?;
 
         Ok(())
+    }
+}
+
+pub enum FunctionBlockKind<'args> {
+    Function(&'args [FnArg]),
+    Method(&'args [FnArg]),
+    Constructor(&'args [FnArg]),
+}
+
+impl<'args> FunctionBlockKind<'args> {
+    fn args(&self) -> &'args [FnArg] {
+        match self {
+            FunctionBlockKind::Function(args)
+            | FunctionBlockKind::Method(args)
+            | FunctionBlockKind::Constructor(args) => *args,
+        }
     }
 }
 
