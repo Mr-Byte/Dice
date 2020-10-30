@@ -1,11 +1,13 @@
 use super::NodeVisitor;
+use crate::compiler_stack::CompilerKind;
 use crate::{
     compiler::Compiler,
     scope_stack::{ScopeKind, State},
 };
 use dice_core::protocol::{class::SELF, ProtocolSymbol};
 use dice_error::compiler_error::CompilerError;
-use dice_syntax::{Block, FnArg, LitIdent};
+use dice_error::span::Span;
+use dice_syntax::{Block, FnArg};
 
 pub enum BlockKind {
     Block,
@@ -52,12 +54,10 @@ impl<'args> NodeVisitor<(&Block, FunctionBlockKind<'args>)> for Compiler {
         self.visit_args(&kind, kind.args())?;
         self.scan_item_decls(block)?;
         self.visit_expressions(block)?;
+        self.visit_close_upvalues(block)?;
 
-        if let FunctionBlockKind::Function(_) = kind {
-            /* NOTE: If in context of a function, implicitly return the top item on the stack.
-             * If the previous instruction was a return, this will never execute.
-             */
-            self.assembler()?.ret(block.span)
+        if let FunctionBlockKind::Function(_) | FunctionBlockKind::Method(_) = kind {
+            self.visit_return(block.span)?
         } else if let FunctionBlockKind::Constructor(_) = kind {
             // NOTE: If in context of a constructor, pop the last value, load self, return.
             let local_slot = self
@@ -107,7 +107,7 @@ impl Compiler {
             if let Some(type_) = &arg.type_ {
                 emit_bytecode! {
                     self.assembler()?, arg.span => [
-                        {self.visit(&LitIdent { name: type_.name.clone(), span: arg.span })?};
+                        {self.visit(&type_.name)?};
                         if type_.is_nullable => [
                             ASSERT_TYPE_OR_NULL_FOR_LOCAL slot;
                         ] else [
@@ -146,6 +146,33 @@ impl Compiler {
                 self.visit(trailing_expression)?;
             }
             None => self.assembler()?.push_unit(block.span),
+        }
+
+        Ok(())
+    }
+}
+
+impl Compiler {
+    pub(super) fn visit_return(&mut self, span: Span) -> Result<(), CompilerError> {
+        if let CompilerKind::Function {
+            return_type: Some(return_type),
+        } = self.context()?.kind()
+        {
+            emit_bytecode! {
+                self.assembler()?, span => [
+                    {self.visit(&return_type.name)?};
+                    if return_type.is_nullable => [
+                        ASSERT_TYPE_OR_NULL_AND_RETURN;
+                    ] else [
+                        ASSERT_TYPE_AND_RETURN;
+                    ]
+                ]
+            }
+        } else {
+            /* NOTE: If in context of a function or method, implicitly return the top item on the stack.
+             * If the previous instruction was a return, this will never execute.
+             */
+            self.assembler()?.ret(span)
         }
 
         Ok(())

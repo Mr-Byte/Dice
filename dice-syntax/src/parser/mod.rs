@@ -483,12 +483,16 @@ impl Parser {
     fn parse_return(&mut self) -> Result<Option<TypeAnnotation>, SyntaxError> {
         if self.lexer.peek().kind == TokenKind::Arrow {
             self.lexer.consume(TokenKind::Arrow)?;
-            let (_, name) = self.lexer.consume_ident()?;
+            let (token, name) = self.lexer.consume_ident()?;
             let is_nullable = if self.lexer.peek().kind == TokenKind::QuestionMark {
                 self.lexer.consume(TokenKind::QuestionMark)?;
                 true
             } else {
                 false
+            };
+            let name = LitIdent {
+                name,
+                span: token.span(),
             };
 
             Ok(Some(TypeAnnotation { name, is_nullable }))
@@ -518,6 +522,10 @@ impl Parser {
                     true
                 } else {
                     false
+                };
+                let name = LitIdent {
+                    name,
+                    span: token.span(),
                 };
 
                 Some(TypeAnnotation { name, is_nullable })

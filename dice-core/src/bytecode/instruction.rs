@@ -124,4 +124,6 @@ define_instructions! {
     pub const ASSERT_BOOL;
     pub const ASSERT_TYPE_FOR_LOCAL;
     pub const ASSERT_TYPE_OR_NULL_FOR_LOCAL;
+    pub const ASSERT_TYPE_AND_RETURN;
+    pub const ASSERT_TYPE_OR_NULL_AND_RETURN;
 }

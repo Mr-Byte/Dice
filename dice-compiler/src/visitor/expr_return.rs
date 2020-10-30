@@ -26,7 +26,7 @@ impl NodeVisitor<&Return> for Compiler {
                     SWAP;
                     POP;
                 ]
-                RET;
+                {self.visit_return(expr_return.span)?};
             ]
         }
 

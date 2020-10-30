@@ -216,7 +216,7 @@ pub struct FnArg {
 
 #[derive(Debug, Clone)]
 pub struct TypeAnnotation {
-    pub name: String,
+    pub name: LitIdent,
     pub is_nullable: bool,
 }
 

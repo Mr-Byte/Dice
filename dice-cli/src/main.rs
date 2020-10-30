@@ -1,11 +1,15 @@
-use dice::{Dice, Runtime};
+use dice::value::{NativeFn, Value};
+use dice::{Dice, Runtime, RuntimeError};
 use std::io::Write;
+use std::rc::Rc;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     std::env::set_current_dir(std::fs::canonicalize("data/scripts")?)?;
 
     let mut dice = Dice::default();
     dice.runtime().load_prelude("prelude.dm")?;
+    dice.runtime()
+        .add_global("print", Value::with_native_fn(Rc::new(print_value) as NativeFn))?;
 
     loop {
         print!("Input: ");
@@ -34,4 +38,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             Err(err) => eprintln!("{}", err),
         };
     }
+}
+
+fn print_value(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
+    if let [_, arg, ..] = args {
+        println!("{}", arg);
+    }
+
+    Ok(Value::Unit)
 }

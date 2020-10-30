@@ -449,6 +449,16 @@ impl Assembler {
         self.data.put_u8(slot);
     }
 
+    pub fn assert_type_and_return(&mut self, span: Span) {
+        self.source_map.insert(self.data.len() as u64, span);
+        self.data.put_u8(Instruction::ASSERT_TYPE_AND_RETURN.value());
+    }
+
+    pub fn assert_type_or_null_and_return(&mut self, span: Span) {
+        self.source_map.insert(self.data.len() as u64, span);
+        self.data.put_u8(Instruction::ASSERT_TYPE_OR_NULL_AND_RETURN.value());
+    }
+
     fn make_constant(&mut self, value: Value) -> Result<u8, CompilerError> {
         let position = if let Some(position) = self.constants.iter().position(|current| *current == value) {
             position
@@ -716,6 +726,16 @@ macro_rules! emit_bytecode {
 
     ($assembler:expr, $span:expr => [ASSERT_TYPE_OR_NULL_FOR_LOCAL $slot:expr; $($rest:tt)*] ) => {
         $assembler.assert_type_or_null_for_local($slot, $span);
+        emit_bytecode! { $assembler, $span => [$($rest)*] }
+    };
+
+    ($assembler:expr, $span:expr => [ASSERT_TYPE_AND_RETURN; $($rest:tt)*] ) => {
+        $assembler.assert_type_and_return($span);
+        emit_bytecode! { $assembler, $span => [$($rest)*] }
+    };
+
+    ($assembler:expr, $span:expr => [ASSERT_TYPE_OR_NULL_AND_RETURN; $($rest:tt)*] ) => {
+        $assembler.assert_type_or_null_and_return($span);
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
 

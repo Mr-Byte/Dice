@@ -23,7 +23,7 @@ impl NodeVisitor<&ErrorPropagate> for Compiler {
                     SWAP;
                     POP;
                 ]
-                RET;
+                {self.visit_return(*span)?};
                 PATCH_JUMP <- error_propagate_jump;
                 LOAD_FIELD &RESULT;
             ]
