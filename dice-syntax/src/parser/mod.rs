@@ -38,7 +38,7 @@ impl Parser {
 
     fn expression_sequence(&mut self) -> SyntaxNodeResult {
         let mut expressions = Vec::new();
-        let mut next_token = self.lexer.peek();
+        let mut next_token = self.lexer.peek()?;
         let span_start = next_token.span();
         let mut trailing_expression = None;
 
@@ -60,7 +60,7 @@ impl Parser {
                 _ => self.expression()?,
             };
 
-            next_token = self.lexer.peek();
+            next_token = self.lexer.peek()?;
 
             if matches!(next_token.kind, TokenKind::EndOfInput | TokenKind::RightCurly) {
                 trailing_expression = Some(expression);
@@ -69,7 +69,7 @@ impl Parser {
 
             if next_token.kind == TokenKind::Semicolon {
                 self.lexer.consume(TokenKind::Semicolon)?;
-                next_token = self.lexer.peek();
+                next_token = self.lexer.peek()?;
             }
 
             expressions.push(expression);
@@ -90,7 +90,7 @@ impl Parser {
     }
 
     fn parse_precedence(&mut self, precedence: RulePrecedence) -> SyntaxNodeResult {
-        let next_token = self.lexer.peek();
+        let next_token = self.lexer.peek()?;
         let rule = ParserRule::for_token(&next_token)?;
         let mut node = rule
             .prefix
@@ -99,7 +99,7 @@ impl Parser {
 
         loop {
             let span_start = next_token.span();
-            let next_token = self.lexer.peek();
+            let next_token = self.lexer.peek()?;
             let rule = ParserRule::for_token(&next_token)?;
 
             if let Some(postfix_precedence) = rule.postfix_precedence {
@@ -132,10 +132,10 @@ impl Parser {
         let span_start = self.lexer.consume(TokenKind::If)?.span();
         let condition = self.expression()?;
         let primary = self.block_expression(false)?;
-        let secondary = if self.lexer.peek().kind == TokenKind::Else {
+        let secondary = if self.lexer.peek()?.kind == TokenKind::Else {
             self.lexer.consume(TokenKind::Else)?;
 
-            match self.lexer.peek().kind {
+            match self.lexer.peek()?.kind {
                 TokenKind::If => Some(self.if_expression(false)?),
                 TokenKind::LeftCurly => Some(self.block_expression(false)?),
                 _ => None,
@@ -198,13 +198,13 @@ impl Parser {
     }
 
     fn control_flow(&mut self) -> SyntaxNodeResult {
-        let token = self.lexer.next();
+        let token = self.lexer.next()?;
 
         let node = match token.kind {
             TokenKind::Break => SyntaxNode::Break(Break { span: token.span() }),
             TokenKind::Continue => SyntaxNode::Continue(Continue { span: token.span() }),
             TokenKind::Return => {
-                let result = if self.lexer.peek().kind != TokenKind::Semicolon {
+                let result = if self.lexer.peek()?.kind != TokenKind::Semicolon {
                     Some(self.expression()?)
                 } else {
                     None
@@ -231,7 +231,7 @@ impl Parser {
     }
 
     fn variable(&mut self, can_assign: bool) -> SyntaxNodeResult {
-        let next_token = self.lexer.next();
+        let next_token = self.lexer.next()?;
         let span_start = next_token.span();
         let lhs_expression = match next_token.kind {
             TokenKind::Identifier(name) => self
@@ -245,13 +245,13 @@ impl Parser {
 
     fn import_decl(&mut self) -> SyntaxNodeResult {
         let span_start = self.lexer.consume(TokenKind::Import)?.span();
-        let next_token = self.lexer.peek();
+        let next_token = self.lexer.peek()?;
         let module_import = if next_token.kind == TokenKind::Star {
             self.lexer.consume(TokenKind::Star)?;
             self.lexer.consume(TokenKind::As)?;
             let (_, module_import) = self.lexer.consume_ident()?;
 
-            if self.lexer.peek().kind == TokenKind::Comma {
+            if self.lexer.peek()?.kind == TokenKind::Comma {
                 self.lexer.consume(TokenKind::Comma)?;
             }
 
@@ -260,7 +260,7 @@ impl Parser {
             None
         };
 
-        let item_imports = if self.lexer.peek().kind == TokenKind::LeftCurly {
+        let item_imports = if self.lexer.peek()?.kind == TokenKind::LeftCurly {
             self.parse_fields(TokenKind::LeftCurly, TokenKind::RightCurly)?
         } else {
             Vec::new()
@@ -287,13 +287,13 @@ impl Parser {
     fn export_decl(&mut self) -> SyntaxNodeResult {
         let span_start = self.lexer.consume(TokenKind::Export)?.span();
 
-        let node = match self.lexer.peek().kind {
+        let node = match self.lexer.peek()?.kind {
             TokenKind::Let => self.var_decl()?,
             TokenKind::Function => self.fn_decl()?,
             TokenKind::Class => self.class_decl()?,
             TokenKind::Identifier(name) => self.arena.alloc(SyntaxNode::LitIdent(LitIdent {
                 name,
-                span: self.lexer.peek().span(),
+                span: self.lexer.peek()?.span(),
             })),
             _ => unreachable!("Unsupported export type encountered."),
         };
@@ -310,17 +310,17 @@ impl Parser {
     fn var_decl(&mut self) -> SyntaxNodeResult {
         let span_start = self.lexer.consume(TokenKind::Let)?.span();
 
-        let is_mutable = if self.lexer.peek().kind == TokenKind::Mut {
+        let is_mutable = if self.lexer.peek()?.kind == TokenKind::Mut {
             self.lexer.consume(TokenKind::Mut)?;
             true
         } else {
             false
         };
 
-        let next_token = self.lexer.peek();
+        let next_token = self.lexer.peek()?;
         let kind = match next_token.kind {
             TokenKind::Identifier(name) => {
-                self.lexer.next();
+                self.lexer.next()?;
                 VarDeclKind::Singular(name)
             }
             TokenKind::LeftCurly => {
@@ -343,7 +343,7 @@ impl Parser {
     }
 
     fn anonymous_fn(&mut self, _: bool) -> SyntaxNodeResult {
-        let span_start = self.lexer.peek().span();
+        let span_start = self.lexer.peek()?.span();
         let args = self.parse_args(TokenKind::Pipe, TokenKind::Pipe)?;
 
         if args.len() > (u8::MAX as usize) {
@@ -367,7 +367,7 @@ impl Parser {
 
     fn fn_decl(&mut self) -> SyntaxNodeResult {
         let span_start = self.lexer.consume(TokenKind::Function)?.span();
-        let name_token = self.lexer.next();
+        let name_token = self.lexer.next()?;
         let name = match name_token.kind {
             TokenKind::Identifier(ref name) => name.clone(),
             _ => return Err(name_token.into()),
@@ -394,7 +394,7 @@ impl Parser {
 
     fn trait_fn_decl(&mut self) -> SyntaxNodeResult {
         let span_start = self.lexer.consume(TokenKind::Function)?.span();
-        let name_token = self.lexer.next();
+        let name_token = self.lexer.next()?;
         let name = match name_token.kind {
             TokenKind::Identifier(ref name) => name.clone(),
             _ => return Err(name_token.into()),
@@ -406,7 +406,7 @@ impl Parser {
         }
 
         let return_ = self.parse_return()?;
-        let next_token = self.lexer.peek();
+        let next_token = self.lexer.peek()?;
 
         let node = if next_token.kind == TokenKind::LeftCurly {
             let body = self.block_expression(false)?;
@@ -434,7 +434,7 @@ impl Parser {
 
     fn op_decl(&mut self) -> SyntaxNodeResult {
         let span_start = self.lexer.consume(TokenKind::Operator)?.span();
-        let operator_token = self.lexer.next();
+        let operator_token = self.lexer.next()?;
         let mut operator = match operator_token.kind {
             TokenKind::DiceRoll => OverloadedOperator::DiceRoll,
             TokenKind::Star => OverloadedOperator::Multiply,
@@ -481,10 +481,10 @@ impl Parser {
     }
 
     fn parse_return(&mut self) -> Result<Option<TypeAnnotation>, SyntaxError> {
-        if self.lexer.peek().kind == TokenKind::Arrow {
+        if self.lexer.peek()?.kind == TokenKind::Arrow {
             self.lexer.consume(TokenKind::Arrow)?;
             let (token, name) = self.lexer.consume_ident()?;
-            let is_nullable = if self.lexer.peek().kind == TokenKind::QuestionMark {
+            let is_nullable = if self.lexer.peek()?.kind == TokenKind::QuestionMark {
                 self.lexer.consume(TokenKind::QuestionMark)?;
                 true
             } else {
@@ -510,14 +510,14 @@ impl Parser {
 
         let mut args = Vec::new();
 
-        while self.lexer.peek().kind != close_token_kind {
+        while self.lexer.peek()?.kind != close_token_kind {
             let (token, name) = self.lexer.consume_ident()?;
             let span = token.span();
 
-            let type_ = if self.lexer.peek().kind == TokenKind::Colon {
+            let type_ = if self.lexer.peek()?.kind == TokenKind::Colon {
                 self.lexer.consume(TokenKind::Colon)?;
                 let (_, name) = self.lexer.consume_ident()?;
-                let is_nullable = if self.lexer.peek().kind == TokenKind::QuestionMark {
+                let is_nullable = if self.lexer.peek()?.kind == TokenKind::QuestionMark {
                     self.lexer.consume(TokenKind::QuestionMark)?;
                     true
                 } else {
@@ -539,10 +539,10 @@ impl Parser {
                 span: span + self.lexer.current().span(),
             });
 
-            if self.lexer.peek().kind == TokenKind::Comma {
-                self.lexer.next();
-            } else if self.lexer.peek().kind != close_token_kind {
-                return Err(self.lexer.next().into());
+            if self.lexer.peek()?.kind == TokenKind::Comma {
+                self.lexer.next()?;
+            } else if self.lexer.peek()?.kind != close_token_kind {
+                return Err(self.lexer.next()?.into());
             }
         }
 
@@ -559,14 +559,14 @@ impl Parser {
 
         let mut args = Vec::new();
 
-        while self.lexer.peek().kind != close_token_kind {
+        while self.lexer.peek()?.kind != close_token_kind {
             let (_, name) = self.lexer.consume_ident()?;
             args.push(name);
 
-            if self.lexer.peek().kind == TokenKind::Comma {
-                self.lexer.next();
-            } else if self.lexer.peek().kind != close_token_kind {
-                return Err(self.lexer.next().into());
+            if self.lexer.peek()?.kind == TokenKind::Comma {
+                self.lexer.next()?;
+            } else if self.lexer.peek()?.kind != close_token_kind {
+                return Err(self.lexer.next()?.into());
             }
         }
 
@@ -579,7 +579,7 @@ impl Parser {
         let (_, name) = self.lexer.consume_ident()?;
         self.lexer.consume(TokenKind::LeftCurly)?;
 
-        let mut next_token = self.lexer.peek();
+        let mut next_token = self.lexer.peek()?;
         let mut associated_items = Vec::new();
 
         while !matches!(next_token.kind, TokenKind::RightCurly) {
@@ -591,7 +591,7 @@ impl Parser {
 
             associated_items.push(expression);
 
-            next_token = self.lexer.peek();
+            next_token = self.lexer.peek()?;
 
             if matches!(next_token.kind, TokenKind::RightCurly) {
                 break;
@@ -615,7 +615,7 @@ impl Parser {
         let (_, name) = self.lexer.consume_ident()?;
         self.lexer.consume(TokenKind::LeftCurly)?;
 
-        let mut next_token = self.lexer.peek();
+        let mut next_token = self.lexer.peek()?;
         let mut associated_items = Vec::new();
 
         while !matches!(next_token.kind, TokenKind::RightCurly) {
@@ -626,7 +626,7 @@ impl Parser {
 
             associated_items.push(expression);
 
-            next_token = self.lexer.peek();
+            next_token = self.lexer.peek()?;
 
             if matches!(next_token.kind, TokenKind::RightCurly) {
                 break;
@@ -650,7 +650,7 @@ impl Parser {
         let (_, trait_) = self.lexer.consume_ident()?;
         self.lexer.consume(TokenKind::For)?;
         let (_, target) = self.lexer.consume_ident()?;
-        let name = if self.lexer.peek().kind == TokenKind::As {
+        let name = if self.lexer.peek()?.kind == TokenKind::As {
             self.lexer.consume(TokenKind::As)?;
             let (_, name) = self.lexer.consume_ident()?;
             Some(name)
@@ -659,7 +659,7 @@ impl Parser {
         };
         self.lexer.consume(TokenKind::LeftCurly)?;
 
-        let mut next_token = self.lexer.peek();
+        let mut next_token = self.lexer.peek()?;
         let mut associated_items = Vec::new();
 
         while !matches!(next_token.kind, TokenKind::RightCurly) {
@@ -669,7 +669,7 @@ impl Parser {
             };
 
             associated_items.push(expression);
-            next_token = self.lexer.peek();
+            next_token = self.lexer.peek()?;
 
             if matches!(next_token.kind, TokenKind::RightCurly) {
                 break;
@@ -689,7 +689,7 @@ impl Parser {
     }
 
     fn binary(&mut self, lhs: SyntaxNodeId, _: bool, span_start: Span) -> SyntaxNodeResult {
-        let token = self.lexer.next();
+        let token = self.lexer.next()?;
         let rule = ParserRule::for_token(&token)?;
         let operator = match token.kind {
             TokenKind::Is => BinaryOperator::Is,
@@ -728,7 +728,7 @@ impl Parser {
     }
 
     fn unary(&mut self, _: bool) -> SyntaxNodeResult {
-        let token = self.lexer.next();
+        let token = self.lexer.next()?;
         let child_node_id = self.parse_precedence(RulePrecedence::Unary)?;
         let operator = match token.kind {
             TokenKind::Minus => UnaryOperator::Negate,
@@ -799,7 +799,7 @@ impl Parser {
     fn grouping(&mut self, _: bool) -> SyntaxNodeResult {
         let span_start = self.lexer.consume(TokenKind::LeftParen)?.span();
 
-        if self.lexer.peek().kind == TokenKind::RightParen {
+        if self.lexer.peek()?.kind == TokenKind::RightParen {
             let span_end = self.lexer.consume(TokenKind::RightParen)?.span();
 
             let node = SyntaxNode::LitUnit(LitUnit {
@@ -819,14 +819,14 @@ impl Parser {
 
         let mut args = Vec::new();
 
-        while self.lexer.peek().kind != TokenKind::RightParen {
+        while self.lexer.peek()?.kind != TokenKind::RightParen {
             let value = self.parse_precedence(RulePrecedence::Assignment)?;
             args.push(value);
 
-            if self.lexer.peek().kind == TokenKind::Comma {
-                self.lexer.next();
-            } else if self.lexer.peek().kind != TokenKind::RightParen {
-                return Err(self.lexer.next().into());
+            if self.lexer.peek()?.kind == TokenKind::Comma {
+                self.lexer.next()?;
+            } else if self.lexer.peek()?.kind != TokenKind::RightParen {
+                return Err(self.lexer.next()?.into());
             }
         }
 
@@ -846,8 +846,8 @@ impl Parser {
 
         let mut properties = Vec::new();
 
-        while self.lexer.peek().kind != TokenKind::RightCurly {
-            let key = match self.lexer.next().kind {
+        while self.lexer.peek()?.kind != TokenKind::RightCurly {
+            let key = match self.lexer.next()?.kind {
                 TokenKind::String(value) => value,
                 TokenKind::Integer(value) => value.to_string(),
                 TokenKind::Identifier(value) => value,
@@ -857,10 +857,10 @@ impl Parser {
             self.lexer.consume(TokenKind::Colon)?;
             let value = self.parse_precedence(RulePrecedence::Assignment)?;
 
-            if self.lexer.peek().kind == TokenKind::Comma {
-                self.lexer.next();
-            } else if self.lexer.peek().kind != TokenKind::RightCurly {
-                return Err(self.lexer.next().into());
+            if self.lexer.peek()?.kind == TokenKind::Comma {
+                self.lexer.next()?;
+            } else if self.lexer.peek()?.kind != TokenKind::RightCurly {
+                return Err(self.lexer.next()?.into());
             }
 
             properties.push((key, value));
@@ -881,13 +881,13 @@ impl Parser {
 
         let mut values = Vec::new();
 
-        while self.lexer.peek().kind != TokenKind::RightSquare {
+        while self.lexer.peek()?.kind != TokenKind::RightSquare {
             let value = self.parse_precedence(RulePrecedence::Assignment)?;
 
-            if self.lexer.peek().kind == TokenKind::Comma {
-                self.lexer.next();
-            } else if self.lexer.peek().kind != TokenKind::RightSquare {
-                return Err(self.lexer.next().into());
+            if self.lexer.peek()?.kind == TokenKind::Comma {
+                self.lexer.next()?;
+            } else if self.lexer.peek()?.kind != TokenKind::RightSquare {
+                return Err(self.lexer.next()?.into());
             }
 
             values.push(value);
@@ -904,7 +904,7 @@ impl Parser {
     }
 
     fn literal(&mut self, _: bool) -> SyntaxNodeResult {
-        let token = self.lexer.next();
+        let token = self.lexer.next()?;
         let span = token.span();
         let literal = match token.kind {
             TokenKind::Integer(value) => SyntaxNode::LitInt(LitInt { value, span }),
@@ -925,7 +925,7 @@ impl Parser {
         can_assign: bool,
         span_start: Span,
     ) -> SyntaxNodeResult {
-        let next_token_kind = self.lexer.peek().kind;
+        let next_token_kind = self.lexer.peek()?.kind;
         let is_assignment = matches!(
             next_token_kind,
             TokenKind::Assign

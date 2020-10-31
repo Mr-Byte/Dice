@@ -1,18 +1,19 @@
 mod token;
 
 use dice_error::syntax_error::SyntaxError;
+use std::collections::VecDeque;
 
 pub use token::{Token, TokenKind};
 
 pub struct Lexer {
     current: Token,
-    tokens: Vec<Token>,
+    tokens: VecDeque<Result<Token, SyntaxError>>,
 }
 
 impl Lexer {
     pub fn from_str(input: &str) -> Lexer {
-        let mut tokens = Token::tokenize(input).collect::<Vec<_>>();
-        tokens.reverse();
+        let tokens = Token::tokenize(input).collect::<VecDeque<_>>();
+
         Lexer {
             tokens,
             current: Token::end_of_input(),
@@ -23,17 +24,22 @@ impl Lexer {
         &self.current
     }
 
-    pub fn next(&mut self) -> Token {
-        self.current = self.tokens.pop().unwrap_or_else(Token::end_of_input);
-        self.current.clone()
+    pub fn next(&mut self) -> Result<Token, SyntaxError> {
+        self.current = self.tokens.pop_front().transpose()?.unwrap_or_else(Token::end_of_input);
+        Ok(self.current.clone())
     }
 
-    pub fn peek(&self) -> Token {
-        self.tokens.last().cloned().unwrap_or_else(Token::end_of_input)
+    pub fn peek(&self) -> Result<Token, SyntaxError> {
+        Ok(self
+            .tokens
+            .front()
+            .cloned()
+            .transpose()?
+            .unwrap_or_else(Token::end_of_input))
     }
 
     pub fn consume(&mut self, kind: TokenKind) -> Result<Token, SyntaxError> {
-        let next = self.next();
+        let next = self.next()?;
         if next.kind == kind {
             Ok(next)
         } else {
@@ -42,7 +48,7 @@ impl Lexer {
     }
 
     pub fn consume_ident(&mut self) -> Result<(Token, String), SyntaxError> {
-        let next = self.next();
+        let next = self.next()?;
         if let TokenKind::Identifier(ref ident) = next.kind {
             let ident = ident.clone();
             Ok((next, ident))
@@ -52,7 +58,7 @@ impl Lexer {
     }
 
     pub fn consume_string(&mut self) -> Result<(Token, String), SyntaxError> {
-        let next = self.next();
+        let next = self.next()?;
         if let TokenKind::String(ref string) = next.kind {
             let string = string.to_owned();
             Ok((next, string))
@@ -62,7 +68,7 @@ impl Lexer {
     }
 
     pub fn consume_one_of(&mut self, kinds: &[TokenKind]) -> Result<Token, SyntaxError> {
-        let next = self.next();
+        let next = self.next()?;
         if kinds.contains(&next.kind) {
             Ok(next)
         } else {
@@ -77,7 +83,7 @@ pub mod test {
 
     macro_rules! assert_next_token {
         ($tokens:expr, $token:pat) => {
-            matches!($tokens.next(), Some($crate::lexer::Token { kind: $token, .. }))
+            matches!($tokens.next(), Some(Ok($crate::lexer::Token { kind: $token, .. })))
         };
     }
 

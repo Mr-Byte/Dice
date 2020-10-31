@@ -1,5 +1,8 @@
+use dice_error::syntax_error::LexerError;
 use dice_error::{span::Span, syntax_error::SyntaxError};
 use logos::{Lexer, Logos};
+use std::cell::RefCell;
+use std::rc::Rc;
 use std::{
     fmt::{Display, Formatter},
     iter::Iterator,
@@ -12,10 +15,16 @@ pub struct Token {
 }
 
 impl Token {
-    pub fn tokenize(input: &str) -> impl Iterator<Item = Token> + '_ {
-        TokenKind::lexer(input).spanned().map(move |(kind, span)| Token {
-            kind,
-            span: span.into(),
+    pub fn tokenize(input: &str) -> impl Iterator<Item = Result<Token, SyntaxError>> + '_ {
+        let lexer = TokenKind::lexer(input);
+        let error = lexer.extras.clone();
+
+        lexer.spanned().map(move |(kind, span)| {
+            let span: Span = span.into();
+            error.error().map_or_else(
+                || Ok(Token { kind, span }),
+                |err| Err(SyntaxError::LexerError(err, span)),
+            )
         })
     }
 
@@ -44,6 +53,7 @@ impl Into<SyntaxError> for Token {
 }
 
 #[derive(Logos, Clone, Debug, PartialEq)]
+#[logos(extras = LexerResult)]
 pub enum TokenKind {
     // End of input.
     EndOfInput,
@@ -196,9 +206,9 @@ pub enum TokenKind {
     // Literals,
     #[regex("(d[_a-zA-Z][_a-zA-Z0-9]*)|([_a-ce-zA-Z][_a-zA-Z0-9]*)", |lex| lex.slice().to_owned())]
     Identifier(String),
-    #[regex("[0-9]+", |lex| lex.slice().parse())]
+    #[regex("[0-9]+", parse_int)]
     Integer(i64),
-    #[regex(r"[0-9]+\.[0-9]+", |lex| lex.slice().parse())]
+    #[regex(r"[0-9]+\.[0-9]+", parse_float)]
     Float(f64),
     #[regex(r#"""#, lex_string)]
     String(String),
@@ -208,7 +218,36 @@ pub enum TokenKind {
     Error,
 }
 
-fn lex_string(lexer: &mut Lexer<TokenKind>) -> Result<String, LexerError> {
+#[derive(Debug, Default, Clone)]
+pub struct LexerResult(Rc<RefCell<Option<LexerError>>>);
+
+impl LexerResult {
+    fn error(&self) -> Option<LexerError> {
+        self.0.borrow().clone()
+    }
+}
+
+fn parse_int(lexer: &mut Lexer<TokenKind>) -> Option<i64> {
+    match lexer.slice().parse() {
+        Ok(int) => Some(int),
+        Err(err) => {
+            *lexer.extras.0.borrow_mut() = Some(LexerError::from(err));
+            None
+        }
+    }
+}
+
+fn parse_float(lexer: &mut Lexer<TokenKind>) -> Option<f64> {
+    match lexer.slice().parse() {
+        Ok(float) => Some(float),
+        Err(err) => {
+            *lexer.extras.0.borrow_mut() = Some(LexerError::from(err));
+            None
+        }
+    }
+}
+
+fn lex_string(lexer: &mut Lexer<TokenKind>) -> Option<String> {
     let remainder = lexer.remainder();
     let mut result = String::new();
     let mut chars = remainder.chars();
@@ -227,9 +266,13 @@ fn lex_string(lexer: &mut Lexer<TokenKind>) -> Result<String, LexerError> {
                     Some('t') => result.push('\t'),
                     Some(next) => {
                         let sequence = format!("{}{}", current, next);
-                        return Err(LexerError::UnrecognizedEscapeSequence(sequence));
+                        *lexer.extras.0.borrow_mut() = Some(LexerError::UnrecognizedEscapeSequence(sequence));
+                        return None;
                     }
-                    None => return Err(LexerError::UnterminatedString),
+                    None => {
+                        *lexer.extras.0.borrow_mut() = Some(LexerError::UnterminatedString);
+                        return None;
+                    }
                 }
 
                 bump_count += current.len_utf8();
@@ -247,18 +290,11 @@ fn lex_string(lexer: &mut Lexer<TokenKind>) -> Result<String, LexerError> {
     }
 
     if bump_count >= remainder.len() {
-        return Err(LexerError::UnterminatedString);
+        *lexer.extras.0.borrow_mut() = Some(LexerError::UnterminatedString);
+        return None;
     }
 
     lexer.bump(bump_count);
 
-    Ok(result)
-}
-
-#[derive(thiserror::Error, Debug)]
-pub enum LexerError {
-    #[error("String is not terminated with a double quote.")]
-    UnterminatedString,
-    #[error("Unrecognized escape sequence {0} found.")]
-    UnrecognizedEscapeSequence(String),
+    Some(result)
 }
