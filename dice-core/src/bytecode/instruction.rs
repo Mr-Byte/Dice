@@ -68,6 +68,7 @@ define_instructions! {
     pub const CREATE_CLOSURE;
     // NOTE: Create class takes a constant reference to its name and a 64-bit operand representing its instance type id.
     pub const CREATE_CLASS;
+    pub const CREATE_TRAIT;
     // NOTE: There's no concept of "storing" a module.
     pub const LOAD_MODULE;
     pub const LOAD_GLOBAL;
@@ -88,7 +89,6 @@ define_instructions! {
     pub const CLOSE_UPVALUE;
 
     // NOTE: Fused operation to load a field into a local variable.
-    // TODO: Figure out if a ASSIGN_FIELD_TO_LOCAL variant could be used to optimize assigning from a field.
     pub const LOAD_FIELD_TO_LOCAL;
     // NOTE: Stores the method in a class object's method map.
     // Static functions and the like are stored as fields on the class object itself.

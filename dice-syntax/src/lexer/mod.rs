@@ -177,13 +177,8 @@ pub mod test {
             class
             struct
             type
-            typeof
             is
             enum
-            virtual
-            override
-            abstract
-            final
             where
             impl
             import
@@ -197,24 +192,23 @@ pub mod test {
         assert_next_token!(tokens, TokenKind::If);
         assert_next_token!(tokens, TokenKind::Else);
         assert_next_token!(tokens, TokenKind::While);
-        assert_next_token!(tokens, TokenKind::Do);
+        assert_next_token!(tokens, TokenKind::Reserved);
         assert_next_token!(tokens, TokenKind::Loop);
         assert_next_token!(tokens, TokenKind::For);
         assert_next_token!(tokens, TokenKind::Break);
         assert_next_token!(tokens, TokenKind::Return);
-        assert_next_token!(tokens, TokenKind::Yield);
+        assert_next_token!(tokens, TokenKind::Reserved);
         assert_next_token!(tokens, TokenKind::Continue);
         assert_next_token!(tokens, TokenKind::Let);
-        assert_next_token!(tokens, TokenKind::Const);
-        assert_next_token!(tokens, TokenKind::Match);
+        assert_next_token!(tokens, TokenKind::Reserved);
+        assert_next_token!(tokens, TokenKind::Reserved);
         assert_next_token!(tokens, TokenKind::Trait);
         assert_next_token!(tokens, TokenKind::In);
         assert_next_token!(tokens, TokenKind::Operator);
         assert_next_token!(tokens, TokenKind::Class);
-        assert_next_token!(tokens, TokenKind::Type);
-        assert_next_token!(tokens, TokenKind::TypeOf);
+        assert_next_token!(tokens, TokenKind::Reserved);
         assert_next_token!(tokens, TokenKind::Is);
-        assert_next_token!(tokens, TokenKind::Enum);
+        assert_next_token!(tokens, TokenKind::Reserved);
         assert_next_token!(tokens, TokenKind::Impl);
         assert_next_token!(tokens, TokenKind::Import);
         assert_next_token!(tokens, TokenKind::From);

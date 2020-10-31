@@ -135,8 +135,6 @@ pub enum TokenKind {
     LazyAnd,
     #[token("|>")]
     Pipeline,
-    #[token("::")]
-    UniversalMethodAccess,
     // Keywords
     #[token(r"#")]
     Object,
@@ -152,8 +150,6 @@ pub enum TokenKind {
     Else,
     #[token("while")]
     While,
-    #[token("do")]
-    Do,
     #[token("loop")]
     Loop,
     #[token("for")]
@@ -164,18 +160,12 @@ pub enum TokenKind {
     Continue,
     #[token("return")]
     Return,
-    #[token("yield")]
-    Yield,
     #[token("fn")]
     Function,
     #[token("let")]
     Let,
     #[token("mut")]
     Mut,
-    #[token("const")]
-    Const,
-    #[token("match")]
-    Match,
     #[token("trait")]
     Trait,
     #[token("in")]
@@ -184,14 +174,8 @@ pub enum TokenKind {
     Operator,
     #[token("class")]
     Class,
-    #[token("type")]
-    Type,
-    #[token("typeof")]
-    TypeOf,
     #[token("is")]
     Is,
-    #[token("enum")]
-    Enum,
     #[token("impl")]
     Impl,
     #[token("import")]
@@ -202,6 +186,8 @@ pub enum TokenKind {
     From,
     #[token("export")]
     Export,
+    #[regex("await|async|yield|do|const|match|enum|type")]
+    Reserved,
 
     // Literals,
     #[regex("(d[_a-zA-Z][_a-zA-Z0-9]*)|([_a-ce-zA-Z][_a-zA-Z0-9]*)", |lex| lex.slice().to_owned())]
@@ -213,6 +199,7 @@ pub enum TokenKind {
     #[regex(r#"""#, lex_string)]
     String(String),
 
+    // TODO: Propagate error for unexpected tokens.
     #[error]
     #[regex(r"[ \t\r\n\f]+|//[^\r\n]+", logos::skip)]
     Error,
