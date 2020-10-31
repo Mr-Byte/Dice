@@ -208,7 +208,7 @@ pub enum TokenKind {
     Error,
 }
 
-fn lex_string(lexer: &mut Lexer<TokenKind>) -> Result<String, StringLexError> {
+fn lex_string(lexer: &mut Lexer<TokenKind>) -> Result<String, LexerError> {
     let remainder = lexer.remainder();
     let mut result = String::new();
     let mut chars = remainder.chars();
@@ -227,9 +227,9 @@ fn lex_string(lexer: &mut Lexer<TokenKind>) -> Result<String, StringLexError> {
                     Some('t') => result.push('\t'),
                     Some(next) => {
                         let sequence = format!("{}{}", current, next);
-                        return Err(StringLexError::UnrecognizedEscapeSequence(sequence));
+                        return Err(LexerError::UnrecognizedEscapeSequence(sequence));
                     }
-                    None => return Err(StringLexError::UnterminatedString),
+                    None => return Err(LexerError::UnterminatedString),
                 }
 
                 bump_count += current.len_utf8();
@@ -246,8 +246,8 @@ fn lex_string(lexer: &mut Lexer<TokenKind>) -> Result<String, StringLexError> {
         }
     }
 
-    if bump_count > remainder.len() {
-        return Err(StringLexError::UnterminatedString);
+    if bump_count >= remainder.len() {
+        return Err(LexerError::UnterminatedString);
     }
 
     lexer.bump(bump_count);
@@ -256,7 +256,7 @@ fn lex_string(lexer: &mut Lexer<TokenKind>) -> Result<String, StringLexError> {
 }
 
 #[derive(thiserror::Error, Debug)]
-pub enum StringLexError {
+pub enum LexerError {
     #[error("String is not terminated with a double quote.")]
     UnterminatedString,
     #[error("Unrecognized escape sequence {0} found.")]
