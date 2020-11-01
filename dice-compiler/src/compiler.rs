@@ -38,7 +38,6 @@ impl Compiler {
         }
     }
 
-    // TODO: Should this be made an instance function and more logic pushed into the new function?
     pub fn compile(source: Source) -> Result<Bytecode, CompilerError> {
         let syntax_tree = Parser::new(source.source()).parse()?;
         let kind = match source.kind() {

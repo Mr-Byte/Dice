@@ -22,8 +22,6 @@ where
         class.set_method("min", bind_i64_i64_ret_i64(i64::min));
         class.set_method("max", bind_i64_i64_ret_i64(i64::max));
 
-        // TODO: Decide if the wrapping/overflowing/saturating operators need included.
-
         class.set_field("MAX", Value::Int(i64::MAX));
         class.set_field("MIN", Value::Int(i64::MIN));
         class.set_field("I32_MAX", Value::Int(i32::MAX as i64));

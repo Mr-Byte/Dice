@@ -456,7 +456,6 @@ impl Parser {
 
         // NOTE: If the operator is a dice roll and only has one argument, reassign to DieRoll operator.
         // Otherwise enforce that the operator has two arguments.
-        // TODO: Include other unary prefix and postfix operators.
         if operator == OverloadedOperator::DiceRoll && args.len() == 1 {
             operator = OverloadedOperator::DieRoll
         } else if args.len() != 2 {

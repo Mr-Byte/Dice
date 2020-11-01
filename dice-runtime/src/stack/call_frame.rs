@@ -21,8 +21,12 @@ impl CallFrame {
 
     pub fn prepend(self, count: usize) -> Self {
         Self {
-            start: self.start - count,
+            start: self.start.wrapping_sub(count),
             end: self.end,
         }
+    }
+
+    pub fn length(self) -> usize {
+        self.end.wrapping_sub(self.start)
     }
 }

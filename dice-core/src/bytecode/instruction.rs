@@ -66,6 +66,8 @@ define_instructions! {
     pub const CREATE_ARRAY;
     pub const CREATE_OBJECT;
     pub const CREATE_CLOSURE;
+    // NOTE: Abstract methods are an object type that carry special, ordered information on signature of a method.
+    pub const CREATE_METHOD_TAG;
     // NOTE: Create class takes a constant reference to its name and a 64-bit operand representing its instance type id.
     pub const CREATE_CLASS;
     pub const CREATE_TRAIT;

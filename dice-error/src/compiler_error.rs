@@ -32,6 +32,8 @@ pub enum CompilerError {
     InvalidLoopEnding,
     #[error("The return keyword can only be used inside functions.")]
     InvalidReturn,
+    #[error("The return keyword cannot have an expression when used in constructors.")]
+    InvalidConstructorReturn,
     #[error("The error propagate operator !! can only be used inside functions.")]
     InvalidErrorPropagate,
     #[error("Compilation unit has too many constants.")]

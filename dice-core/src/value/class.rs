@@ -1,3 +1,4 @@
+use crate::value::ValueKind;
 use crate::{
     type_id::TypeId,
     value::{symbol::Symbol, Object, Value, ValueMap},
@@ -87,9 +88,13 @@ impl ClassInner {
     }
 
     pub fn set_method(&self, name: impl Into<Symbol>, method: impl Into<Value>) {
-        // TODO: Assert method.is_function()
+        let method = method.into();
 
-        self.methods.borrow_mut().insert(name.into(), method.into());
+        if method.kind() != ValueKind::Function {
+            // TODO: Return error.
+        }
+
+        self.methods.borrow_mut().insert(name.into(), method);
     }
 
     pub fn methods(&self) -> Vec<(Symbol, Value)> {

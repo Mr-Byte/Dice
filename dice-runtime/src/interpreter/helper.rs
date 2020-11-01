@@ -153,7 +153,7 @@ impl<L: ModuleLoader> Runtime<L> {
         }
 
         // NOTE: Regardless of whether or not there was a constructor, clean up the stack.
-        self.stack.release_slots(1);
+        self.stack.pop();
 
         Ok(object)
     }
@@ -185,10 +185,10 @@ impl<L: ModuleLoader> Runtime<L> {
         let slots = fn_script.bytecode.slot_count();
         let reserved = slots - arg_count;
         // NOTE: Reserve only the slots needed to cover locals beyond the arguments already on the stack.
-        let stack_frame = self.stack.reserve_slots(reserved);
+        let call_frame = self.stack.reserve_slots(reserved);
         // NOTE: Calling convention includes an extra parameter. This parameter is the function itself for bare functions
         // and the receiver for methods.
-        let stack_frame = stack_frame.prepend(arg_count + 1);
+        let stack_frame = call_frame.prepend(arg_count + 1);
 
         if let Some(receiver) = receiver {
             self.stack[stack_frame][0] = receiver;
@@ -197,7 +197,7 @@ impl<L: ModuleLoader> Runtime<L> {
         let result = self.execute_bytecode(&fn_script.bytecode, stack_frame, parent_upvalues)?;
 
         // NOTE: Release the number of reserved slots plus the number of arguments plus a slot for the function itself.
-        self.stack.release_slots(reserved + arg_count + 1);
+        self.stack.release_call_frame(stack_frame);
 
         Ok(result)
     }

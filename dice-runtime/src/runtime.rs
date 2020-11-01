@@ -60,18 +60,18 @@ where
     L: ModuleLoader + Default,
 {
     pub fn run_bytecode(&mut self, bytecode: Bytecode) -> Result<Value, RuntimeError> {
-        let stack_frame = self.stack.reserve_slots(bytecode.slot_count());
-        let result = self.execute_bytecode(&bytecode, stack_frame, None);
-        self.stack.release_slots(bytecode.slot_count());
+        let call_frame = self.stack.reserve_slots(bytecode.slot_count());
+        let result = self.execute_bytecode(&bytecode, call_frame, None);
+        self.stack.release_call_frame(call_frame);
 
         Ok(result?)
     }
 
     pub(super) fn run_module(&mut self, bytecode: Bytecode, export: Value) -> Result<Value, RuntimeError> {
-        let stack_frame = self.stack.reserve_slots(bytecode.slot_count());
-        self.stack[stack_frame.start()] = export;
-        let result = self.execute_bytecode(&bytecode, stack_frame, None);
-        self.stack.release_slots(bytecode.slot_count());
+        let call_frame = self.stack.reserve_slots(bytecode.slot_count());
+        self.stack[call_frame.start()] = export;
+        let result = self.execute_bytecode(&bytecode, call_frame, None);
+        self.stack.release_call_frame(call_frame);
 
         Ok(result?)
     }
@@ -138,9 +138,10 @@ where
     }
 
     fn call_function(&mut self, target: Value, args: &[Value]) -> Result<Value, RuntimeError> {
+        let arg_count = args.len();
         self.stack.push(target);
-        self.stack.push_slice(args);
-        self.call_fn(args.len())?;
+        self.stack.push_multiple(args);
+        self.call_fn(arg_count)?;
 
         Ok(self.stack.pop())
     }

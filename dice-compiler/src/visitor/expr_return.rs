@@ -1,5 +1,6 @@
 use super::NodeVisitor;
 use crate::{compiler::Compiler, compiler_stack::CompilerKind};
+use dice_core::protocol::class::SELF;
 use dice_error::compiler_error::CompilerError;
 use dice_syntax::Return;
 
@@ -7,14 +8,23 @@ impl NodeVisitor<&Return> for Compiler {
     fn visit(&mut self, expr_return: &Return) -> Result<(), CompilerError> {
         let context = self.context()?;
 
-        if !matches!(context.kind(), CompilerKind::Function { .. }) {
-            return Err(CompilerError::InvalidReturn);
-        }
-
-        // TODO: Allow expressionless return inside of constructors.
-        match expr_return.result {
-            Some(expr) => self.visit(expr)?,
-            None => context.assembler().push_unit(expr_return.span),
+        match context.kind() {
+            CompilerKind::Function { .. } => match expr_return.result {
+                Some(expr) => self.visit(expr)?,
+                None => context.assembler().push_unit(expr_return.span),
+            },
+            CompilerKind::Constructor if expr_return.result.is_none() => {
+                let self_slot = context
+                    .scope_stack()
+                    .local(&SELF)
+                    .expect("The self parameter should always be declared in constructors.")
+                    .slot;
+                self.assembler()?.load_local(self_slot as u8, expr_return.span);
+            }
+            CompilerKind::Constructor if expr_return.result.is_some() => {
+                return Err(CompilerError::InvalidConstructorReturn)
+            }
+            _ => return Err(CompilerError::InvalidReturn),
         }
 
         // NOTE: Cleanup any temporaries created while calling functions then return.

@@ -17,7 +17,6 @@ pub struct Stack {
     stack_ptr: usize,
 }
 
-// TODO: Enforce stack overflows and underflows.
 impl Stack {
     #[inline]
     pub fn push(&mut self, value: Value) {
@@ -25,10 +24,13 @@ impl Stack {
         self.stack_ptr = self.stack_ptr.wrapping_add(1);
     }
 
-    pub fn push_slice(&mut self, values: &[Value]) {
-        // TODO: Replace this with a more efficient multi-push.
-        for value in values {
-            self.push(value.clone());
+    pub fn push_multiple(&mut self, values: &[Value]) {
+        let stack_ptr_start = self.stack_ptr;
+        self.stack_ptr += values.len();
+        let splice_range = (stack_ptr_start..self.stack_ptr).zip(values).rev();
+
+        for (index, value) in splice_range {
+            self.values[index] = value.clone();
         }
     }
 
@@ -60,10 +62,9 @@ impl Stack {
         CallFrame::new(start, new_stack_ptr)
     }
 
-    // TODO: Should this be a release call frame?
-    pub fn release_slots(&mut self, count: usize) {
-        let new_stack_ptr = self.stack_ptr.wrapping_sub(count);
-        for value in &mut self.values[new_stack_ptr..self.stack_ptr] {
+    pub fn release_call_frame(&mut self, frame: CallFrame) {
+        let new_stack_ptr = self.stack_ptr.wrapping_sub(frame.length());
+        for value in &mut self.values[frame.range()] {
             *value = Value::Null;
         }
 

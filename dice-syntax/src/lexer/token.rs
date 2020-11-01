@@ -240,9 +240,9 @@ fn lex_string(lexer: &mut Lexer<TokenKind>) -> Option<String> {
     let mut chars = remainder.chars();
     let mut bump_count = 0;
 
-    while let Some(current) = chars.next() {
-        match current {
-            '\\' => {
+    loop {
+        match chars.next() {
+            Some('\\') => {
                 let next = chars.next();
 
                 match next {
@@ -252,7 +252,7 @@ fn lex_string(lexer: &mut Lexer<TokenKind>) -> Option<String> {
                     Some('r') => result.push('\r'),
                     Some('t') => result.push('\t'),
                     Some(next) => {
-                        let sequence = format!("{}{}", current, next);
+                        let sequence = format!("\\{}", next);
                         *lexer.extras.0.borrow_mut() = Some(LexerError::UnrecognizedEscapeSequence(sequence));
                         return None;
                     }
@@ -262,23 +262,22 @@ fn lex_string(lexer: &mut Lexer<TokenKind>) -> Option<String> {
                     }
                 }
 
-                bump_count += current.len_utf8();
+                bump_count += '\\'.len_utf8();
                 bump_count += next.unwrap().len_utf8();
             }
-            '"' => {
-                bump_count += current.len_utf8();
+            Some('"') => {
+                bump_count += '"'.len_utf8();
                 break;
             }
-            _ => {
+            Some(current) => {
                 bump_count += current.len_utf8();
                 result.push(current);
             }
+            None => {
+                *lexer.extras.0.borrow_mut() = Some(LexerError::UnterminatedString);
+                return None;
+            }
         }
-    }
-
-    if bump_count >= remainder.len() {
-        *lexer.extras.0.borrow_mut() = Some(LexerError::UnterminatedString);
-        return None;
     }
 
     lexer.bump(bump_count);
