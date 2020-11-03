@@ -5,7 +5,6 @@ use crate::{
 use std::{
     cell::{Ref, RefCell},
     fmt::{Display, Formatter},
-    ops::Deref,
     rc::Rc,
 };
 
@@ -26,13 +25,39 @@ impl Object {
             }),
         }
     }
-}
 
-impl Deref for Object {
-    type Target = ObjectInner;
+    pub fn type_id(&self) -> TypeId {
+        self.inner
+            .class
+            .as_ref()
+            .map_or_else(TypeId::default, |class| class.instance_type_id())
+    }
 
-    fn deref(&self) -> &Self::Target {
-        &*self.inner
+    pub fn is_instance_of(&self, class: &Class) -> bool {
+        self.inner
+            .class
+            .as_ref()
+            .map_or_else(|| false, |self_class| self_class.is_class(class))
+    }
+
+    pub fn name(&self) -> Option<Symbol> {
+        self.inner.class.as_ref().map(Class::name)
+    }
+
+    pub fn class(&self) -> Option<Class> {
+        self.inner.class.clone()
+    }
+
+    pub fn set_field(&self, field_name: impl Into<Symbol>, value: impl Into<Value>) {
+        self.inner.fields.borrow_mut().insert(field_name.into(), value.into());
+    }
+
+    pub fn field(&self, field_name: Symbol) -> Option<Value> {
+        self.inner.fields.borrow().get(&field_name).cloned()
+    }
+
+    pub fn fields(&self) -> Ref<'_, ValueMap> {
+        self.inner.fields.borrow()
     }
 }
 
@@ -49,12 +74,12 @@ impl Display for Object {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "Object")?;
 
-        if let Some(ref class) = self.class {
+        if let Some(ref class) = self.inner.class {
             write!(f, "<{}>", class.name())?;
         }
 
         write!(f, " {{ ")?;
-        for (name, field) in self.fields.borrow().iter() {
+        for (name, field) in self.inner.fields.borrow().iter() {
             write!(f, "{}: {}, ", name, field)?;
         }
         write!(f, "}}")?;
@@ -64,41 +89,7 @@ impl Display for Object {
 }
 
 #[derive(Default, Debug)]
-pub struct ObjectInner {
+struct ObjectInner {
     class: Option<Class>,
     fields: RefCell<ValueMap>,
-}
-
-impl ObjectInner {
-    pub fn type_id(&self) -> TypeId {
-        self.class
-            .as_ref()
-            .map_or_else(TypeId::default, |class| class.instance_type_id())
-    }
-
-    pub fn is_instance_of(&self, class: &Class) -> bool {
-        self.class
-            .as_ref()
-            .map_or_else(|| false, |self_class| self_class.is_class(class))
-    }
-
-    pub fn name(&self) -> Option<Symbol> {
-        self.class.as_ref().map(Class::name)
-    }
-
-    pub fn class(&self) -> Option<Class> {
-        self.class.clone()
-    }
-
-    pub fn set_field(&self, field_name: impl Into<Symbol>, value: impl Into<Value>) {
-        self.fields.borrow_mut().insert(field_name.into(), value.into());
-    }
-
-    pub fn field(&self, field_name: Symbol) -> Option<Value> {
-        self.fields.borrow().get(&field_name).cloned()
-    }
-
-    pub fn fields(&self) -> Ref<'_, ValueMap> {
-        self.fields.borrow()
-    }
 }

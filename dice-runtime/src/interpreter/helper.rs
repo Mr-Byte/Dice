@@ -114,13 +114,13 @@ impl<L: ModuleLoader> Runtime<L> {
     // TODO: Replace this mutually recursive call with an execution stack to prevent the thread's stack from overflowing.
     pub(crate) fn call_fn(&mut self, arg_count: usize) -> Result<(), RuntimeError> {
         let (function, receiver) = match self.stack.peek(arg_count) {
-            Value::FnBound(fn_bound) => (fn_bound.function.clone(), Some(fn_bound.receiver.clone())),
+            Value::FnBound(fn_bound) => (fn_bound.function(), Some(fn_bound.receiver())),
             value => (value.clone(), None),
         };
 
         let value = match &function {
             Value::FnClosure(closure) => {
-                self.call_fn_script(arg_count, receiver, &closure.fn_script, Some(closure.upvalues.as_ref()))?
+                self.call_fn_script(arg_count, receiver, &closure.fn_script(), Some(closure.upvalues()))?
             }
             Value::FnScript(fn_script) => self.call_fn_script(arg_count, receiver, &fn_script, None)?,
             Value::Class(class) => self.call_class_constructor(arg_count, class)?,
@@ -182,7 +182,7 @@ impl<L: ModuleLoader> Runtime<L> {
         fn_script: &FnScript,
         parent_upvalues: Option<&[Upvalue]>,
     ) -> Result<Value, RuntimeError> {
-        let slots = fn_script.bytecode.slot_count();
+        let slots = fn_script.bytecode().slot_count();
         let reserved = slots - arg_count;
         // NOTE: Reserve only the slots needed to cover locals beyond the arguments already on the stack.
         let call_frame = self.stack.reserve_slots(reserved);
@@ -194,7 +194,7 @@ impl<L: ModuleLoader> Runtime<L> {
             self.stack[stack_frame][0] = receiver;
         }
 
-        let result = self.execute_bytecode(&fn_script.bytecode, stack_frame, parent_upvalues)?;
+        let result = self.execute_bytecode(fn_script.bytecode(), stack_frame, parent_upvalues)?;
 
         // NOTE: Release the number of reserved slots plus the number of arguments plus a slot for the function itself.
         self.stack.release_call_frame(stack_frame);

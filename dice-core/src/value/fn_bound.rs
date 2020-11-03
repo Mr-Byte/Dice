@@ -1,14 +1,8 @@
 use crate::value::Value;
 use std::{
     fmt::{Debug, Display, Formatter},
-    ops::Deref,
     rc::Rc,
 };
-
-pub struct FnBoundInner {
-    pub receiver: Value,
-    pub function: Value,
-}
 
 #[derive(Clone, Debug)]
 pub struct FnBound {
@@ -21,26 +15,31 @@ impl FnBound {
             inner: Rc::new(FnBoundInner { receiver, function }),
         }
     }
-}
 
-impl Deref for FnBound {
-    type Target = FnBoundInner;
+    pub fn receiver(&self) -> Value {
+        self.inner.receiver.clone()
+    }
 
-    fn deref(&self) -> &Self::Target {
-        &*self.inner
+    pub fn function(&self) -> Value {
+        self.inner.function.clone()
     }
 }
 
 impl PartialEq for FnBound {
     fn eq(&self, other: &Self) -> bool {
-        self.receiver == other.receiver && self.function == other.function
+        self.inner.receiver == other.inner.receiver && self.inner.function == other.inner.function
     }
 }
 
 impl Display for FnBound {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "FnBound{{{}}}", self.function)
+        write!(f, "FnBound{{{}}}", self.inner.function)
     }
+}
+
+struct FnBoundInner {
+    receiver: Value,
+    function: Value,
 }
 
 impl Debug for FnBoundInner {

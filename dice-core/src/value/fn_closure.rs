@@ -1,16 +1,8 @@
-use std::{
-    fmt::{Debug, Display},
-    ops::Deref,
-};
+use std::fmt::{Debug, Display};
 
 use super::FnScript;
 use crate::upvalue::Upvalue;
 use std::rc::Rc;
-
-pub struct FnClosureInner {
-    pub fn_script: FnScript,
-    pub upvalues: Box<[Upvalue]>,
-}
 
 impl Debug for FnClosureInner {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -29,13 +21,13 @@ impl FnClosure {
             inner: Rc::new(FnClosureInner { fn_script, upvalues }),
         }
     }
-}
 
-impl Deref for FnClosure {
-    type Target = FnClosureInner;
+    pub fn fn_script(&self) -> &FnScript {
+        &self.inner.fn_script
+    }
 
-    fn deref(&self) -> &Self::Target {
-        &self.inner
+    pub fn upvalues(&self) -> &[Upvalue] {
+        &*self.inner.upvalues
     }
 }
 
@@ -47,16 +39,18 @@ impl Debug for FnClosure {
 
 impl PartialEq for FnClosure {
     fn eq(&self, other: &Self) -> bool {
-        self.fn_script == other.fn_script
-            && std::ptr::eq(
-                &*self.upvalues as *const [Upvalue] as *const u8,
-                &*other.upvalues as *const [Upvalue] as *const u8,
-            )
+        self.inner.fn_script == other.inner.fn_script
+            && std::ptr::eq(self.inner.upvalues.as_ptr(), other.inner.upvalues.as_ptr())
     }
 }
 
 impl Display for FnClosure {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "closure{{{}}}", self.fn_script)
+        write!(f, "closure{{{}}}", self.inner.fn_script)
     }
+}
+
+struct FnClosureInner {
+    fn_script: FnScript,
+    upvalues: Box<[Upvalue]>,
 }

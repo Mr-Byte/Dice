@@ -748,7 +748,7 @@ where
 
         match bytecode.constants()[const_pos] {
             Value::FnScript(ref fn_script) => {
-                let upvalue_count = fn_script.bytecode.upvalue_count();
+                let upvalue_count = fn_script.bytecode().upvalue_count();
                 let mut upvalues = Vec::with_capacity(upvalue_count);
 
                 for _ in 0..upvalue_count {

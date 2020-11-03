@@ -1,8 +1,7 @@
 use super::NodeVisitor;
 use crate::{compiler::Compiler, scope_stack::State, upvalue::UpvalueDescriptor, visitor::FnKind};
 use dice_core::value::{FnScript, Symbol, Value};
-use dice_error::compiler_error::CompilerError;
-use dice_error::span::Span;
+use dice_error::{compiler_error::CompilerError, span::Span};
 use dice_syntax::{FnArg, FnDecl};
 use std::collections::HashSet;
 
@@ -36,7 +35,7 @@ impl Compiler {
             return Err(CompilerError::DuplicateArgumentNames(span));
         }
 
-        return Ok(());
+        Ok(())
     }
 
     fn emit_fn(

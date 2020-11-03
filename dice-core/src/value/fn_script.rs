@@ -1,12 +1,5 @@
 use crate::{bytecode::Bytecode, value::Symbol};
-use std::{fmt::Display, ops::Deref, rc::Rc};
-
-#[derive(Debug)]
-pub struct FnScriptInner {
-    pub name: Symbol,
-    pub bytecode: Bytecode,
-    id: uuid::Uuid,
-}
+use std::{fmt::Display, rc::Rc};
 
 #[derive(Clone, Debug)]
 pub struct FnScript {
@@ -23,24 +16,31 @@ impl FnScript {
             }),
         }
     }
-}
 
-impl Deref for FnScript {
-    type Target = FnScriptInner;
+    pub fn bytecode(&self) -> &Bytecode {
+        &self.inner.bytecode
+    }
 
-    fn deref(&self) -> &Self::Target {
-        &*self.inner
+    pub fn name(&self) -> Symbol {
+        self.inner.name.clone()
     }
 }
 
 impl PartialEq for FnScript {
     fn eq(&self, other: &Self) -> bool {
-        self.id == other.id
+        self.inner.id == other.inner.id
     }
 }
 
 impl Display for FnScript {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.name)
+        write!(f, "{}", self.inner.name)
     }
+}
+
+#[derive(Debug)]
+struct FnScriptInner {
+    name: Symbol,
+    bytecode: Bytecode,
+    id: uuid::Uuid,
 }

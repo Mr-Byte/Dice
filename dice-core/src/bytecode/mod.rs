@@ -107,7 +107,7 @@ impl Display for Bytecode {
                         Value::FnScript(fn_script) => {
                             write!(f, "{:<8} |", const_index)?;
 
-                            for _ in 0..fn_script.bytecode.upvalue_count() {
+                            for _ in 0..fn_script.bytecode().upvalue_count() {
                                 let kind = match cursor.read_u8() {
                                     1 => "parent_local",
                                     _ => "upvalue",
@@ -132,9 +132,9 @@ impl Display for Bytecode {
 
         for const_value in self.constants() {
             if let Value::FnScript(fn_script) = const_value {
-                writeln!(f, "Function: {:?}", fn_script.name)?;
+                writeln!(f, "Function: {:?}", fn_script.name())?;
                 writeln!(f, "--------")?;
-                fn_script.bytecode.fmt(f)?;
+                fn_script.bytecode().fmt(f)?;
             }
         }
 

@@ -66,7 +66,7 @@ impl NodeVisitor<&ClassDecl> for Compiler {
 
 impl Compiler {
     fn visit_fn(&mut self, slot: u8, fn_decl: FnDecl) -> Result<(), CompilerError> {
-        let self_param = fn_decl.args.first().filter(|arg| arg.name == &*SELF.get());
+        let self_param = fn_decl.args.first().filter(|arg| arg.name == *SELF.get());
         let kind = if let Some(self_param) = self_param {
             // NOTE: If the self parameter has a type annotation, return an error.
             if self_param.type_.is_some() {
@@ -105,7 +105,7 @@ impl Compiler {
     }
 
     fn visit_op(&mut self, slot: u8, op_decl: OpDecl) -> Result<(), CompilerError> {
-        let self_param = op_decl.args.first().filter(|arg| arg.name == &*SELF.get());
+        let self_param = op_decl.args.first().filter(|arg| arg.name == *SELF.get());
 
         if let Some(self_param) = self_param {
             if self_param.type_.is_some() {

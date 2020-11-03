@@ -1,11 +1,13 @@
-use dice_error::syntax_error::LexerError;
-use dice_error::{span::Span, syntax_error::SyntaxError};
+use dice_error::{
+    span::Span,
+    syntax_error::{LexerError, SyntaxError},
+};
 use logos::{Lexer, Logos};
-use std::cell::RefCell;
-use std::rc::Rc;
 use std::{
+    cell::RefCell,
     fmt::{Display, Formatter},
     iter::Iterator,
+    rc::Rc,
 };
 
 #[derive(Clone, Debug)]

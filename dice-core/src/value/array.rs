@@ -13,25 +13,26 @@ pub struct Array {
 
 impl Array {
     pub fn elements(&self) -> Ref<'_, [Value]> {
-        Ref::map(self.array.borrow(), |array| array.as_slice())
+        Ref::map(self.inner.array.borrow(), |array| array.as_slice())
     }
 
     pub fn elements_mut(&self) -> RefMut<'_, [Value]> {
-        RefMut::map(self.array.borrow_mut(), |array| array.as_mut_slice())
+        RefMut::map(self.inner.array.borrow_mut(), |array| array.as_mut_slice())
     }
 
     pub fn push(&self, value: Value) {
-        self.array.borrow_mut().push(value)
+        self.inner.array.borrow_mut().push(value)
     }
 
     pub fn pop(&self) -> Option<Value> {
-        self.array.borrow_mut().pop()
+        self.inner.array.borrow_mut().pop()
     }
 }
 
 impl Display for Array {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let items = self
+            .inner
             .array
             .borrow()
             .iter()
@@ -55,23 +56,15 @@ impl From<Vec<Value>> for Array {
 }
 
 impl Deref for Array {
-    type Target = ArrayInner;
+    type Target = Object;
 
     fn deref(&self) -> &Self::Target {
-        &self.inner
+        &self.inner.object
     }
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct ArrayInner {
+struct ArrayInner {
     array: RefCell<Vec<Value>>,
     object: Object,
-}
-
-impl Deref for ArrayInner {
-    type Target = Object;
-
-    fn deref(&self) -> &Self::Target {
-        &self.object
-    }
 }

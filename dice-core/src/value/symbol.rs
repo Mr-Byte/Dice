@@ -9,7 +9,6 @@ use std::{
 use wyhash::WyHash;
 
 // NOTE: Use a naive string interning system for now.
-
 thread_local! {
     static INTERNED_SYMBOLS: RefCell<HashSet<Rc<str>, BuildHasherDefault<WyHash>>> = Default::default();
 }

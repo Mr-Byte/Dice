@@ -1,10 +1,9 @@
-use crate::value::ValueKind;
 use crate::{
     type_id::TypeId,
-    value::{symbol::Symbol, Object, Value, ValueMap},
+    value::{symbol::Symbol, Object, Value, ValueKind, ValueMap},
 };
-use std::any::Any;
 use std::{
+    any::Any,
     cell::RefCell,
     fmt::{Display, Formatter},
     ops::Deref,
@@ -107,7 +106,7 @@ impl Display for Class {
 }
 
 #[derive(Debug)]
-pub struct ClassInner {
+struct ClassInner {
     name: Symbol,
     base: Option<Class>,
     methods: RefCell<ValueMap>,
