@@ -43,39 +43,31 @@ impl Class {
     pub fn derive(&self, name: impl Into<Symbol>) -> Self {
         Self::with_base(name.into(), self.clone())
     }
-}
 
-impl Display for Class {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Class{{{}}}", self.name)
+    pub fn is_class(&self, class: &Class) -> bool {
+        let type_id = class.instance_type_id();
+
+        self.instance_type_id() == type_id || self.base.as_ref().map_or_else(|| false, |base| base.is_class(class))
     }
-}
 
-#[derive(Debug)]
-pub struct ClassInner {
-    name: Symbol,
-    base: Option<Class>,
-    methods: RefCell<ValueMap>,
-    object: Object,
-    instance_type_id: TypeId,
-}
+    pub fn relates_to_class_as(&self, other: &Class) -> ClassOrder {
+        if self.instance_type_id() == other.instance_type_id() {
+            ClassOrder::Same
+        } else if self.is_class(other) {
+            ClassOrder::Derived
+        } else if other.is_class(self) {
+            ClassOrder::Base
+        } else {
+            ClassOrder::None
+        }
+    }
 
-impl ClassInner {
     pub fn name(&self) -> Symbol {
         self.name.clone()
     }
 
     pub fn instance_type_id(&self) -> TypeId {
         self.instance_type_id
-    }
-
-    pub fn contains_type_id(&self, type_id: TypeId) -> bool {
-        // TODO: Expand this to check trait_type_ids when traits are added.
-        self.instance_type_id == type_id
-            || self
-                .base
-                .as_ref()
-                .map_or_else(|| false, |base| base.contains_type_id(type_id))
     }
 
     pub fn method(&self, name: impl Into<Symbol>) -> Option<Value> {
@@ -112,6 +104,29 @@ impl ClassInner {
     }
 }
 
+impl Display for Class {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Class{{{}}}", self.name)
+    }
+}
+
+#[derive(Debug)]
+pub struct ClassInner {
+    name: Symbol,
+    base: Option<Class>,
+    methods: RefCell<ValueMap>,
+    object: Object,
+    instance_type_id: TypeId,
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum ClassOrder {
+    None,
+    Derived,
+    Same,
+    Base,
+}
+
 impl Deref for Class {
     type Target = ClassInner;
 
@@ -135,3 +150,17 @@ impl PartialEq for ClassInner {
 }
 
 impl Eq for ClassInner {}
+
+#[test]
+fn test_class_ordering() {
+    let base = Class::new("base".into());
+    let derived = Class::with_base("derived".into(), base.clone());
+    let unrelated = Class::with_base("unrelated".into(), base.clone());
+
+    assert_eq!(base.relates_to_class_as(&derived), ClassOrder::Base);
+    assert_eq!(derived.relates_to_class_as(&base), ClassOrder::Derived);
+    assert_eq!(base.relates_to_class_as(&base), ClassOrder::Same);
+    assert_eq!(derived.relates_to_class_as(&derived), ClassOrder::Same);
+    assert_eq!(unrelated.relates_to_class_as(&derived), ClassOrder::None);
+    assert_eq!(derived.relates_to_class_as(&unrelated), ClassOrder::None);
+}

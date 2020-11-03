@@ -140,7 +140,6 @@ where
     ) -> Result<(), RuntimeError> {
         let class = self.stack.pop();
         let class = class.as_class()?;
-        let instance_type_id = class.instance_type_id();
         let value = &self.stack[call_frame][cursor.read_u8() as usize];
 
         if *value == Value::Null {
@@ -152,7 +151,7 @@ where
             .ok()
             .and_then(|object| object.class())
             .or_else(|| self.value_class_mapping.get(&value.kind()).cloned())
-            .map_or(false, |class| class.contains_type_id(instance_type_id));
+            .map_or(false, |local_class| local_class.is_class(&class));
 
         if is_type {
             Ok(())
@@ -169,7 +168,6 @@ where
     ) -> Result<(), RuntimeError> {
         let class = self.stack.pop();
         let class = class.as_class()?;
-        let instance_type_id = class.instance_type_id();
         let value = &self.stack[call_frame][cursor.read_u8() as usize];
 
         if *value == Value::Null {
@@ -181,7 +179,7 @@ where
             .ok()
             .and_then(|object| object.class())
             .or_else(|| self.value_class_mapping.get(&value.kind()).cloned())
-            .map_or(false, |class| class.contains_type_id(instance_type_id));
+            .map_or(false, |local_class| local_class.is_class(&class));
 
         if is_type {
             Ok(())
@@ -194,7 +192,6 @@ where
     fn assert_type_and_return(&mut self) -> Result<(), RuntimeError> {
         let class = self.stack.pop();
         let class = class.as_class()?;
-        let instance_type_id = class.instance_type_id();
         let value = self.stack.peek(0);
 
         if *value == Value::Null {
@@ -206,7 +203,7 @@ where
             .ok()
             .and_then(|object| object.class())
             .or_else(|| self.value_class_mapping.get(&value.kind()).cloned())
-            .map_or(false, |class| class.contains_type_id(instance_type_id));
+            .map_or(false, |return_class| return_class.is_class(&class));
 
         if is_type {
             Ok(())
@@ -219,7 +216,6 @@ where
     fn assert_type_or_null_and_return(&mut self) -> Result<(), RuntimeError> {
         let class = self.stack.pop();
         let class = class.as_class()?;
-        let instance_type_id = class.instance_type_id();
         let value = self.stack.peek(0);
 
         if *value == Value::Null {
@@ -231,7 +227,7 @@ where
             .ok()
             .and_then(|object| object.class())
             .or_else(|| self.value_class_mapping.get(&value.kind()).cloned())
-            .map_or(false, |class| class.contains_type_id(instance_type_id));
+            .map_or(false, |return_class| return_class.is_class(&class));
 
         if is_type {
             Ok(())
@@ -424,16 +420,15 @@ where
     }
 
     fn is(&mut self) -> Result<(), RuntimeError> {
-        let rhs = self.stack.pop();
-        let rhs = rhs.as_class()?;
-        let lhs = self.stack.peek(0);
-        let instance_type_id = rhs.instance_type_id();
-        let is_type = lhs
+        let class = self.stack.pop();
+        let class = class.as_class()?;
+        let instance = self.stack.peek(0);
+        let is_type = instance
             .as_object()
             .ok()
             .and_then(|object| object.class())
-            .or_else(|| self.value_class_mapping.get(&lhs.kind()).cloned())
-            .map_or(false, |class| class.contains_type_id(instance_type_id));
+            .or_else(|| self.value_class_mapping.get(&instance.kind()).cloned())
+            .map_or(false, |instance_class| instance_class.is_class(&class));
 
         *self.stack.peek_mut(0) = Value::Bool(is_type);
 

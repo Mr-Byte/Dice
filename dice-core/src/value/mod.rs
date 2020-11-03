@@ -4,6 +4,7 @@ mod fn_bound;
 mod fn_closure;
 mod fn_native;
 mod fn_script;
+mod method_pattern;
 mod object;
 mod string;
 mod symbol;
@@ -18,6 +19,7 @@ pub use fn_bound::*;
 pub use fn_closure::*;
 pub use fn_native::*;
 pub use fn_script::*;
+pub use method_pattern::*;
 pub use object::*;
 pub use string::*;
 pub use symbol::*;
@@ -36,6 +38,7 @@ pub enum Value {
     FnScript(FnScript),
     FnNative(FnNative),
     FnBound(FnBound),
+    MethodPattern(MethodPattern),
     Array(Array),
     String(String),
     Symbol(Symbol),
@@ -130,6 +133,7 @@ impl Value {
             Value::FnScript(_) => ValueKind::Function,
             Value::FnNative(_) => ValueKind::Function,
             Value::FnBound(_) => ValueKind::Function,
+            Value::MethodPattern(_) => ValueKind::MethodPattern,
             Value::Array(_) => ValueKind::Array,
             Value::String(_) => ValueKind::String,
             Value::Symbol(_) => ValueKind::Symbol,
@@ -184,6 +188,7 @@ impl Display for Value {
             Value::FnScript(func) => func.fmt(fmt),
             Value::FnNative(func) => func.fmt(fmt),
             Value::FnBound(func) => func.fmt(fmt),
+            Value::MethodPattern(_) => todo!("Display method patterns."),
             Value::Array(list) => list.fmt(fmt),
             Value::String(string) => string.fmt(fmt),
             Value::Symbol(string) => string.fmt(fmt),
@@ -202,6 +207,7 @@ pub enum ValueKind {
     Int,
     Float,
     Function,
+    MethodPattern,
     Array,
     String,
     Symbol,

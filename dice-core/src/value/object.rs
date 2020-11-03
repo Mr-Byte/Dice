@@ -76,16 +76,14 @@ impl ObjectInner {
             .map_or_else(TypeId::default, |class| class.instance_type_id())
     }
 
-    pub fn has_type_id(&self, type_id: TypeId) -> bool {
-        dbg!(&type_id);
-        dbg!(self
-            .class
+    pub fn is_instance_of(&self, class: &Class) -> bool {
+        self.class
             .as_ref()
-            .map_or_else(|| false, |class| class.contains_type_id(type_id)))
+            .map_or_else(|| false, |self_class| self_class.is_class(class))
     }
 
     pub fn name(&self) -> Option<Symbol> {
-        self.class.as_deref().map(ClassInner::name)
+        self.class.as_ref().map(Class::name)
     }
 
     pub fn class(&self) -> Option<Class> {
