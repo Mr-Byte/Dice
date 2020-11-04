@@ -2,7 +2,6 @@ use crate::{
     type_id::TypeId,
     value::{symbol::Symbol, Object, Value, ValueKind, ValueMap},
 };
-use std::hash::{Hash, Hasher};
 use std::{
     any::Any,
     cell::RefCell,
@@ -11,7 +10,7 @@ use std::{
     rc::Rc,
 };
 
-#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Class {
     inner: Rc<ClassInner>,
 }
@@ -43,11 +42,6 @@ impl Class {
 
     pub fn derive(&self, name: impl Into<Symbol>) -> Self {
         Self::with_base(name.into(), self.clone())
-    }
-
-    pub fn is_derived_from(&self, other: &Class) -> bool {
-        self.instance_type_id() == other.instance_type_id()
-            || self.base().map_or(false, |base| base.is_derived_from(other))
     }
 
     pub fn is_class(&self, class: &Class) -> bool {
@@ -135,20 +129,3 @@ impl PartialEq for ClassInner {
 }
 
 impl Eq for ClassInner {}
-
-impl Hash for ClassInner {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.name.hash(state);
-        self.instance_type_id.hash(state);
-    }
-}
-
-#[test]
-fn test_is_derived_from() {
-    let base = Class::new("Base".into());
-    let derived = Class::with_base("Derived".into(), base.clone());
-
-    assert!(derived.is_derived_from(&base));
-    assert!(derived.is_derived_from(&derived));
-    assert_eq!(base.is_derived_from(&derived), false);
-}
