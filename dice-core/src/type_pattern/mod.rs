@@ -1,5 +1,6 @@
 use crate::value::Class;
 use std::collections::HashMap;
+use std::fmt::Debug;
 use std::rc::Rc;
 
 pub enum TypeOrdering {
@@ -13,32 +14,57 @@ pub trait TypeOrd<Rhs: ?Sized = Self> {
     fn compare(&self, other: &Rhs) -> TypeOrdering;
 }
 
-#[derive(Clone, Eq, PartialEq, Hash)]
-pub enum PatternPart {
-    Receiver,
+impl TypeOrd for Class {
+    fn compare(&self, other: &Self) -> TypeOrdering {
+        if self.instance_type_id() == other.instance_type_id() {
+            TypeOrdering::Self_
+        } else if self.is_derived_from(other) {
+            TypeOrdering::Sub
+        } else if other.is_derived_from(self) {
+            TypeOrdering::Super
+        } else {
+            TypeOrdering::None
+        }
+    }
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub enum ParameterType {
     Null,
     Class { class: Class, is_nullable: bool },
 }
 
-pub struct TypePattern {
-    parts: Rc<[PatternPart]>,
+pub struct MultimethodSignature {
+    parts: Rc<[ParameterType]>,
 }
 
-#[derive(Default)]
-pub struct TypePatternTree<T> {
-    root: TypePatternNode<T>,
+impl From<Vec<ParameterType>> for MultimethodSignature {
+    fn from(signature: Vec<ParameterType>) -> Self {
+        Self {
+            parts: signature.into(),
+        }
+    }
 }
 
-impl<T> TypePatternTree<T> {
-    pub fn insert(&mut self, pattern: TypePattern, value: T) {
+#[derive(Default, Debug)]
+pub struct MultimethodTree<T>
+where
+    T: Debug,
+{
+    root: MultimethodNode<T>,
+}
+
+impl<T> MultimethodTree<T>
+where
+    T: Debug,
+{
+    pub fn insert(&mut self, pattern: MultimethodSignature, value: T) {
         if pattern.parts.len() > 0 {
             let mut current_node = &mut self.root;
 
             for part in &*pattern.parts {
                 if !current_node.children.contains_key(part) {
-                    let new_node = Default::default();
-                    current_node.children.insert(part.clone(), new_node);
-                    current_node = current_node
+                    current_node.children.insert(part.clone(), Default::default());
                 }
 
                 current_node = current_node.children.get_mut(part).unwrap();
@@ -54,18 +80,25 @@ impl<T> TypePatternTree<T> {
         }
     }
 
-    pub fn find_candidates(&mut self, pattern: TypePattern) -> Vec<&T> {
+    pub fn find_candidates(&mut self, pattern: MultimethodSignature) -> Vec<&T> {
         // TODO: Find a list of best possible candidates, sorted by most likely match.
         todo!()
     }
 }
 
-pub struct TypePatternNode<T> {
-    children: HashMap<PatternPart, TypePatternNode<T>>,
+#[derive(Debug)]
+pub struct MultimethodNode<T>
+where
+    T: Debug,
+{
+    children: HashMap<ParameterType, MultimethodNode<T>>,
     value: Option<Box<T>>,
 }
 
-impl<T> Default for TypePatternNode<T> {
+impl<T> Default for MultimethodNode<T>
+where
+    T: Debug,
+{
     fn default() -> Self {
         Self {
             children: Default::default(),
@@ -74,16 +107,45 @@ impl<T> Default for TypePatternNode<T> {
     }
 }
 
-impl TypeOrd for Class {
-    fn compare(&self, other: &Self) -> TypeOrdering {
-        if self.instance_type_id() == other.instance_type_id() {
-            TypeOrdering::Self_
-        } else if self.is_derived_from(other) {
-            TypeOrdering::Sub
-        } else if other.is_derived_from(self) {
-            TypeOrdering::Super
-        } else {
-            TypeOrdering::None
-        }
-    }
+#[test]
+fn test() {
+    let class1 = Class::new("Class1".into());
+    let class2 = Class::new("Class2".into());
+    let class3 = Class::new("Class3".into());
+
+    let mut tree = MultimethodTree::<()>::default();
+    let sig1 = vec![ParameterType::Class {
+        class: class1.clone(),
+        is_nullable: false,
+    }];
+
+    tree.insert(sig1.into(), ());
+
+    let sig2 = vec![
+        ParameterType::Class {
+            class: class1.clone(),
+            is_nullable: false,
+        },
+        ParameterType::Class {
+            class: class2.clone(),
+            is_nullable: false,
+        },
+    ];
+
+    tree.insert(sig2.into(), ());
+
+    let sig3 = vec![
+        ParameterType::Class {
+            class: class1.clone(),
+            is_nullable: false,
+        },
+        ParameterType::Class {
+            class: class3.clone(),
+            is_nullable: false,
+        },
+    ];
+
+    tree.insert(sig3.into(), ());
+
+    dbg!(tree);
 }
