@@ -26,6 +26,15 @@ impl Object {
         }
     }
 
+    pub fn deep_clone(&self) -> Self {
+        Self {
+            inner: Rc::new(ObjectInner {
+                class: self.inner.class.clone(),
+                fields: self.inner.fields.clone(),
+            }),
+        }
+    }
+
     pub fn type_id(&self) -> TypeId {
         self.inner
             .class

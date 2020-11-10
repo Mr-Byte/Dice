@@ -31,8 +31,8 @@ impl Class {
     pub fn with_base(name: Symbol, base: Class) -> Self {
         let inner = ClassInner {
             instance_type_id: TypeId::new(),
-            methods: Default::default(),
-            object: Object::new(None),
+            methods: base.inner.methods.clone(),
+            object: base.inner.object.deep_clone(),
             base: Some(base),
             name,
         };

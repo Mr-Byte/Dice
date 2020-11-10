@@ -170,7 +170,6 @@ pub mod test {
             let
             const
             match
-            trait
             in
             operator
             static
@@ -180,7 +179,6 @@ pub mod test {
             is
             enum
             where
-            impl
             import
             from
         ";
@@ -202,14 +200,12 @@ pub mod test {
         assert_next_token!(tokens, TokenKind::Let);
         assert_next_token!(tokens, TokenKind::Reserved);
         assert_next_token!(tokens, TokenKind::Reserved);
-        assert_next_token!(tokens, TokenKind::Trait);
         assert_next_token!(tokens, TokenKind::In);
         assert_next_token!(tokens, TokenKind::Operator);
         assert_next_token!(tokens, TokenKind::Class);
         assert_next_token!(tokens, TokenKind::Reserved);
         assert_next_token!(tokens, TokenKind::Is);
         assert_next_token!(tokens, TokenKind::Reserved);
-        assert_next_token!(tokens, TokenKind::Impl);
         assert_next_token!(tokens, TokenKind::Import);
         assert_next_token!(tokens, TokenKind::From);
     }

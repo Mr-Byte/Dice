@@ -8,8 +8,8 @@ use super::{
 };
 use crate::{
     parser::rules::{ParserRule, RulePrecedence},
-    AbstractFnDecl, ClassDecl, ErrorPropagate, FieldAccess, FnArg, ForLoop, ImportDecl, Index, Loop, NullPropagate,
-    OpDecl, OverloadedOperator, TraitDecl, TraitImpl, TypeAnnotation, VarDeclKind,
+    ClassDecl, ErrorPropagate, FieldAccess, FnArg, ForLoop, ImportDecl, Index, Loop, NullPropagate, OpDecl,
+    OverloadedOperator, TypeAnnotation, VarDeclKind,
 };
 use dice_error::{span::Span, syntax_error::SyntaxError};
 use id_arena::Arena;
@@ -52,8 +52,6 @@ impl Parser {
                 TokenKind::Function => self.fn_decl()?,
                 TokenKind::Operator => self.op_decl()?,
                 TokenKind::Class => self.class_decl()?,
-                TokenKind::Trait => self.trait_decl()?,
-                TokenKind::Impl => self.trait_impl()?,
                 TokenKind::Import => self.import_decl()?,
                 TokenKind::Export => self.export_decl()?,
                 TokenKind::Return | TokenKind::Break | TokenKind::Continue => self.control_flow()?,
@@ -392,46 +390,6 @@ impl Parser {
         Ok(self.arena.alloc(node))
     }
 
-    fn trait_fn_decl(&mut self) -> SyntaxNodeResult {
-        let span_start = self.lexer.consume(TokenKind::Function)?.span();
-        let name_token = self.lexer.next()?;
-        let name = match name_token.kind {
-            TokenKind::Identifier(ref name) => name.clone(),
-            _ => return Err(name_token.into()),
-        };
-        let args = self.parse_args(TokenKind::LeftParen, TokenKind::RightParen)?;
-
-        if args.len() > (u8::MAX as usize) {
-            return Err(SyntaxError::FnTooManyArguments(name, name_token.span()));
-        }
-
-        let return_ = self.parse_return()?;
-        let next_token = self.lexer.peek()?;
-
-        let node = if next_token.kind == TokenKind::LeftCurly {
-            let body = self.block_expression(false)?;
-            let span_end = self.lexer.current().span();
-            SyntaxNode::FnDecl(FnDecl {
-                name,
-                args,
-                body,
-                return_,
-                span: span_start + span_end,
-            })
-        } else {
-            self.lexer.consume(TokenKind::Semicolon)?;
-            let span_end = self.lexer.current().span();
-            SyntaxNode::AbstractFnDecl(AbstractFnDecl {
-                name,
-                args,
-                return_,
-                span: span_start + span_end,
-            })
-        };
-
-        Ok(self.arena.alloc(node))
-    }
-
     fn op_decl(&mut self) -> SyntaxNodeResult {
         let span_start = self.lexer.consume(TokenKind::Operator)?.span();
         let operator_token = self.lexer.next()?;
@@ -607,84 +565,6 @@ impl Parser {
         let node = self.arena.alloc(SyntaxNode::ClassDecl(class_decl));
 
         Ok(node)
-    }
-
-    fn trait_decl(&mut self) -> SyntaxNodeResult {
-        let span_start = self.lexer.consume(TokenKind::Trait)?.span();
-        let (_, name) = self.lexer.consume_ident()?;
-        self.lexer.consume(TokenKind::LeftCurly)?;
-
-        let mut next_token = self.lexer.peek()?;
-        let mut associated_items = Vec::new();
-
-        while !matches!(next_token.kind, TokenKind::RightCurly) {
-            let expression = match next_token.kind {
-                TokenKind::Function => self.trait_fn_decl()?,
-                _ => return Err(SyntaxError::UnexpectedToken(next_token.to_string(), next_token.span())),
-            };
-
-            associated_items.push(expression);
-
-            next_token = self.lexer.peek()?;
-
-            if matches!(next_token.kind, TokenKind::RightCurly) {
-                break;
-            }
-        }
-
-        let span_end = self.lexer.consume(TokenKind::RightCurly)?.span();
-        let trait_decl = TraitDecl {
-            name,
-            associated_items,
-            span: span_start + span_end,
-        };
-
-        let node = self.arena.alloc(SyntaxNode::TraitDecl(trait_decl));
-
-        Ok(node)
-    }
-
-    fn trait_impl(&mut self) -> SyntaxNodeResult {
-        let span_start = self.lexer.consume(TokenKind::Impl)?.span();
-        let (_, trait_) = self.lexer.consume_ident()?;
-        self.lexer.consume(TokenKind::For)?;
-        let (_, target) = self.lexer.consume_ident()?;
-        let name = if self.lexer.peek()?.kind == TokenKind::As {
-            self.lexer.consume(TokenKind::As)?;
-            let (_, name) = self.lexer.consume_ident()?;
-            Some(name)
-        } else {
-            None
-        };
-        self.lexer.consume(TokenKind::LeftCurly)?;
-
-        let mut next_token = self.lexer.peek()?;
-        let mut associated_items = Vec::new();
-
-        while !matches!(next_token.kind, TokenKind::RightCurly) {
-            let expression = match next_token.kind {
-                TokenKind::Function => self.fn_decl()?,
-                _ => return Err(SyntaxError::UnexpectedToken(next_token.to_string(), next_token.span())),
-            };
-
-            associated_items.push(expression);
-            next_token = self.lexer.peek()?;
-
-            if matches!(next_token.kind, TokenKind::RightCurly) {
-                break;
-            }
-        }
-
-        let span_end = self.lexer.consume(TokenKind::RightCurly)?.span();
-        let trait_impl = TraitImpl {
-            trait_,
-            target,
-            name,
-            associated_items,
-            span: span_start + span_end,
-        };
-
-        Ok(self.arena.alloc(SyntaxNode::TraitImpl(trait_impl)))
     }
 
     fn binary(&mut self, lhs: SyntaxNodeId, _: bool, span_start: Span) -> SyntaxNodeResult {

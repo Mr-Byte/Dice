@@ -63,7 +63,6 @@ impl NodeVisitor<SyntaxNodeId> for Compiler {
                 self.visit(index)?;
                 self.exit_call()?;
             }
-            _ => unreachable!("Unexpected node type."),
         }
 
         Ok(())

@@ -168,8 +168,6 @@ pub enum TokenKind {
     Let,
     #[token("mut")]
     Mut,
-    #[token("trait")]
-    Trait,
     #[token("in")]
     In,
     #[token("op")]
@@ -178,8 +176,6 @@ pub enum TokenKind {
     Class,
     #[token("is")]
     Is,
-    #[token("impl")]
-    Impl,
     #[token("import")]
     Import,
     #[token("as")]
@@ -188,7 +184,7 @@ pub enum TokenKind {
     From,
     #[token("export")]
     Export,
-    #[regex("await|async|yield|do|const|match|enum|type")]
+    #[regex("await|async|yield|do|const|match|enum|trait|type")]
     Reserved,
 
     // Literals,
