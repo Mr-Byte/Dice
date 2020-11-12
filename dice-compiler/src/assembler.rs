@@ -719,6 +719,11 @@ macro_rules! emit_bytecode {
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
 
+    ($assembler:expr, $span:expr => [IS; $($rest:tt)*] ) => {
+        $assembler.is($span);
+        emit_bytecode! { $assembler, $span => [$($rest)*] }
+    };
+
     ($assembler:expr, $span:expr => [ASSERT_TYPE_FOR_LOCAL $slot:expr; $($rest:tt)*] ) => {
         $assembler.assert_type_for_local($slot, $span);
         emit_bytecode! { $assembler, $span => [$($rest)*] }

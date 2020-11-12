@@ -103,6 +103,13 @@ pub struct Index {
 }
 
 #[derive(Debug, Clone)]
+pub struct Is {
+    pub value: SyntaxNodeId,
+    pub type_: TypeAnnotation,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone)]
 pub struct Unary {
     pub operator: UnaryOperator,
     pub expression: SyntaxNodeId,
@@ -137,7 +144,6 @@ pub enum BinaryOperator {
     RangeExclusive,
     Coalesce,
     Pipeline,
-    Is,
 }
 
 #[derive(Debug, Clone)]

@@ -24,6 +24,7 @@ impl NodeVisitor<SyntaxNodeId> for Compiler {
             SyntaxNode::Assignment(assignment) => self.visit(assignment)?,
             SyntaxNode::Unary(unary) => self.visit(unary)?,
             SyntaxNode::Binary(binary) => self.visit(binary)?,
+            SyntaxNode::Is(is) => self.visit(is)?,
             SyntaxNode::VarDecl(variable) => self.visit(variable)?,
             SyntaxNode::FnDecl(func) => self.visit((func, FnKind::Function))?,
             SyntaxNode::OpDecl(op) => self.visit((op, OpKind::Global))?,

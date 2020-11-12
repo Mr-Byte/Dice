@@ -60,6 +60,7 @@ pub enum SyntaxNode {
     // Operators
     Unary(Unary),
     Binary(Binary),
+    Is(Is),
     NullPropagate(NullPropagate),
     ErrorPropagate(ErrorPropagate),
     Assignment(Assignment),
@@ -101,6 +102,7 @@ impl SyntaxNode {
             SyntaxNode::Index(Index { span, .. }) => *span,
             SyntaxNode::Unary(Unary { span, .. }) => *span,
             SyntaxNode::Binary(Binary { span, .. }) => *span,
+            SyntaxNode::Is(Is { span, .. }) => *span,
             SyntaxNode::NullPropagate(NullPropagate { span, .. }) => *span,
             SyntaxNode::ErrorPropagate(ErrorPropagate { span, .. }) => *span,
             SyntaxNode::Assignment(Assignment { span, .. }) => *span,

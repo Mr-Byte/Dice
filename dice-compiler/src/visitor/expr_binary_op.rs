@@ -143,7 +143,7 @@ impl Compiler {
             BinaryOperator::LessThanEquals => self.assembler()?.lte(span),
             BinaryOperator::Equals => self.assembler()?.eq(span),
             BinaryOperator::NotEquals => self.assembler()?.neq(span),
-            BinaryOperator::Is => self.assembler()?.is(span),
+            // BinaryOperator::Is => self.assembler()?.is(span),
             BinaryOperator::DiceRoll => self.assembler()?.dice_roll(span),
             BinaryOperator::RangeInclusive => self.assembler()?.range_inclusive(span),
             BinaryOperator::RangeExclusive => self.assembler()?.range_exclusive(span),

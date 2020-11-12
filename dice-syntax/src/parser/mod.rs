@@ -8,7 +8,7 @@ use super::{
 };
 use crate::{
     parser::rules::{ParserRule, RulePrecedence},
-    ClassDecl, ErrorPropagate, FieldAccess, FnArg, ForLoop, ImportDecl, Index, Loop, NullPropagate, OpDecl,
+    ClassDecl, ErrorPropagate, FieldAccess, FnArg, ForLoop, ImportDecl, Index, Is, Loop, NullPropagate, OpDecl,
     OverloadedOperator, TypeAnnotation, VarDeclKind,
 };
 use dice_error::{span::Span, syntax_error::SyntaxError};
@@ -440,19 +440,7 @@ impl Parser {
     fn parse_return(&mut self) -> Result<Option<TypeAnnotation>, SyntaxError> {
         if self.lexer.peek()?.kind == TokenKind::Arrow {
             self.lexer.consume(TokenKind::Arrow)?;
-            let (token, name) = self.lexer.consume_ident()?;
-            let is_nullable = if self.lexer.peek()?.kind == TokenKind::QuestionMark {
-                self.lexer.consume(TokenKind::QuestionMark)?;
-                true
-            } else {
-                false
-            };
-            let name = LitIdent {
-                name,
-                span: token.span(),
-            };
-
-            Ok(Some(TypeAnnotation { name, is_nullable }))
+            self.parse_type_annotation().map(Some)
         } else {
             Ok(None)
         }
@@ -473,19 +461,7 @@ impl Parser {
 
             let type_ = if self.lexer.peek()?.kind == TokenKind::Colon {
                 self.lexer.consume(TokenKind::Colon)?;
-                let (_, name) = self.lexer.consume_ident()?;
-                let is_nullable = if self.lexer.peek()?.kind == TokenKind::QuestionMark {
-                    self.lexer.consume(TokenKind::QuestionMark)?;
-                    true
-                } else {
-                    false
-                };
-                let name = LitIdent {
-                    name,
-                    span: token.span(),
-                };
-
-                Some(TypeAnnotation { name, is_nullable })
+                Some(self.parse_type_annotation()?)
             } else {
                 None
             };
@@ -505,6 +481,20 @@ impl Parser {
 
         self.lexer.consume(close_token_kind)?;
         Ok(args)
+    }
+
+    fn parse_type_annotation(&mut self) -> Result<TypeAnnotation, SyntaxError> {
+        let (name_token, name) = self.lexer.consume_ident()?;
+        let mut span = name_token.span();
+        let is_nullable = if self.lexer.peek()?.kind == TokenKind::QuestionMark {
+            span = span + self.lexer.consume(TokenKind::QuestionMark)?.span();
+            true
+        } else {
+            false
+        };
+        let name = LitIdent { name, span };
+
+        Ok(TypeAnnotation { name, is_nullable })
     }
 
     fn parse_fields(
@@ -567,11 +557,10 @@ impl Parser {
         Ok(node)
     }
 
-    fn binary(&mut self, lhs: SyntaxNodeId, _: bool, span_start: Span) -> SyntaxNodeResult {
+    fn binary_operator(&mut self, lhs: SyntaxNodeId, _: bool, span_start: Span) -> SyntaxNodeResult {
         let token = self.lexer.next()?;
         let rule = ParserRule::for_token(&token)?;
         let operator = match token.kind {
-            TokenKind::Is => BinaryOperator::Is,
             TokenKind::Pipeline => BinaryOperator::Pipeline,
             TokenKind::Coalesce => BinaryOperator::Coalesce,
             TokenKind::RangeExclusive => BinaryOperator::RangeExclusive,
@@ -606,7 +595,19 @@ impl Parser {
         Ok(self.arena.alloc(node))
     }
 
-    fn unary(&mut self, _: bool) -> SyntaxNodeResult {
+    fn parse_is_operator(&mut self, lhs: SyntaxNodeId, _: bool, span_start: Span) -> SyntaxNodeResult {
+        self.lexer.consume(TokenKind::Is)?;
+        let type_annotation = self.parse_type_annotation()?;
+        let node = SyntaxNode::Is(Is {
+            value: lhs,
+            type_: type_annotation,
+            span: span_start + self.lexer.current().span(),
+        });
+
+        Ok(self.arena.alloc(node))
+    }
+
+    fn unary_operator(&mut self, _: bool) -> SyntaxNodeResult {
         let token = self.lexer.next()?;
         let child_node_id = self.parse_precedence(RulePrecedence::Unary)?;
         let operator = match token.kind {

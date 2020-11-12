@@ -91,46 +91,106 @@ impl ParserRule {
             }
 
             // Operators
-            TokenKind::Pipeline => ParserRule::new(None, Some(Parser::binary), None, RulePrecedence::Pipeline, None),
-            TokenKind::Coalesce => ParserRule::new(None, Some(Parser::binary), None, RulePrecedence::Coalesce, None),
-            TokenKind::RangeExclusive => ParserRule::new(None, Some(Parser::binary), None, RulePrecedence::Range, None),
-            TokenKind::RangeInclusive => ParserRule::new(None, Some(Parser::binary), None, RulePrecedence::Range, None),
-            TokenKind::LazyAnd => ParserRule::new(None, Some(Parser::binary), None, RulePrecedence::And, None),
+            TokenKind::Pipeline => ParserRule::new(
+                None,
+                Some(Parser::binary_operator),
+                None,
+                RulePrecedence::Pipeline,
+                None,
+            ),
+            TokenKind::Coalesce => ParserRule::new(
+                None,
+                Some(Parser::binary_operator),
+                None,
+                RulePrecedence::Coalesce,
+                None,
+            ),
+            TokenKind::RangeExclusive => {
+                ParserRule::new(None, Some(Parser::binary_operator), None, RulePrecedence::Range, None)
+            }
+            TokenKind::RangeInclusive => {
+                ParserRule::new(None, Some(Parser::binary_operator), None, RulePrecedence::Range, None)
+            }
+            TokenKind::LazyAnd => ParserRule::new(None, Some(Parser::binary_operator), None, RulePrecedence::And, None),
             TokenKind::Pipe => ParserRule::new(
                 Some(Parser::anonymous_fn),
-                Some(Parser::binary),
+                Some(Parser::binary_operator),
                 None,
                 RulePrecedence::Or,
                 None,
             ),
-            TokenKind::Equal => ParserRule::new(None, Some(Parser::binary), None, RulePrecedence::Comparison, None),
-            TokenKind::NotEqual => ParserRule::new(None, Some(Parser::binary), None, RulePrecedence::Comparison, None),
-            TokenKind::Greater => ParserRule::new(None, Some(Parser::binary), None, RulePrecedence::Comparison, None),
-            TokenKind::GreaterEqual => {
-                ParserRule::new(None, Some(Parser::binary), None, RulePrecedence::Comparison, None)
+            TokenKind::Equal => ParserRule::new(
+                None,
+                Some(Parser::binary_operator),
+                None,
+                RulePrecedence::Comparison,
+                None,
+            ),
+            TokenKind::NotEqual => ParserRule::new(
+                None,
+                Some(Parser::binary_operator),
+                None,
+                RulePrecedence::Comparison,
+                None,
+            ),
+            TokenKind::Greater => ParserRule::new(
+                None,
+                Some(Parser::binary_operator),
+                None,
+                RulePrecedence::Comparison,
+                None,
+            ),
+            TokenKind::GreaterEqual => ParserRule::new(
+                None,
+                Some(Parser::binary_operator),
+                None,
+                RulePrecedence::Comparison,
+                None,
+            ),
+            TokenKind::Less => ParserRule::new(
+                None,
+                Some(Parser::binary_operator),
+                None,
+                RulePrecedence::Comparison,
+                None,
+            ),
+            TokenKind::LessEqual => ParserRule::new(
+                None,
+                Some(Parser::binary_operator),
+                None,
+                RulePrecedence::Comparison,
+                None,
+            ),
+            TokenKind::Is => ParserRule::new(
+                None,
+                Some(Parser::parse_is_operator),
+                None,
+                RulePrecedence::Comparison,
+                None,
+            ),
+            TokenKind::Star => ParserRule::new(None, Some(Parser::binary_operator), None, RulePrecedence::Factor, None),
+            TokenKind::Slash => {
+                ParserRule::new(None, Some(Parser::binary_operator), None, RulePrecedence::Factor, None)
             }
-            TokenKind::Less => ParserRule::new(None, Some(Parser::binary), None, RulePrecedence::Comparison, None),
-            TokenKind::LessEqual => ParserRule::new(None, Some(Parser::binary), None, RulePrecedence::Comparison, None),
-            TokenKind::Is => ParserRule::new(None, Some(Parser::binary), None, RulePrecedence::Comparison, None),
-            TokenKind::Star => ParserRule::new(None, Some(Parser::binary), None, RulePrecedence::Factor, None),
-            TokenKind::Slash => ParserRule::new(None, Some(Parser::binary), None, RulePrecedence::Factor, None),
-            TokenKind::Remainder => ParserRule::new(None, Some(Parser::binary), None, RulePrecedence::Factor, None),
-            TokenKind::Plus => ParserRule::new(None, Some(Parser::binary), None, RulePrecedence::Term, None),
+            TokenKind::Remainder => {
+                ParserRule::new(None, Some(Parser::binary_operator), None, RulePrecedence::Factor, None)
+            }
+            TokenKind::Plus => ParserRule::new(None, Some(Parser::binary_operator), None, RulePrecedence::Term, None),
             TokenKind::Minus => ParserRule::new(
-                Some(Parser::unary),
-                Some(Parser::binary),
+                Some(Parser::unary_operator),
+                Some(Parser::binary_operator),
                 None,
                 RulePrecedence::Term,
                 None,
             ),
             TokenKind::DiceRoll => ParserRule::new(
-                Some(Parser::unary),
-                Some(Parser::binary),
+                Some(Parser::unary_operator),
+                Some(Parser::binary_operator),
                 None,
                 RulePrecedence::DiceRoll,
                 None,
             ),
-            TokenKind::Not => ParserRule::new(Some(Parser::unary), None, None, RulePrecedence::Unary, None),
+            TokenKind::Not => ParserRule::new(Some(Parser::unary_operator), None, None, RulePrecedence::Unary, None),
 
             // Postfix operators
             TokenKind::QuestionMark => ParserRule::new(

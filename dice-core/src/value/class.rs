@@ -2,6 +2,8 @@ use crate::{
     type_id::TypeId,
     value::{symbol::Symbol, Object, Value, ValueKind, ValueMap},
 };
+use std::collections::HashSet;
+use std::hash::BuildHasherDefault;
 use std::{
     any::Any,
     cell::RefCell,
@@ -9,6 +11,7 @@ use std::{
     ops::Deref,
     rc::Rc,
 };
+use wyhash::WyHash;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Class {
@@ -17,8 +20,13 @@ pub struct Class {
 
 impl Class {
     pub fn new(name: Symbol) -> Self {
+        let instance_type_id = TypeId::new();
+        let mut type_ids: HashSet<_, _> = Default::default();
+        type_ids.insert(instance_type_id);
+
         let inner = ClassInner {
-            instance_type_id: TypeId::new(),
+            instance_type_id,
+            type_ids,
             base: Default::default(),
             methods: Default::default(),
             object: Object::new(None),
@@ -29,8 +37,13 @@ impl Class {
     }
 
     pub fn with_base(name: Symbol, base: Class) -> Self {
+        let instance_type_id = TypeId::new();
+        let mut type_ids: HashSet<_, _> = base.inner.type_ids.clone();
+        type_ids.insert(instance_type_id);
+
         let inner = ClassInner {
-            instance_type_id: TypeId::new(),
+            instance_type_id,
+            type_ids,
             methods: base.inner.methods.clone(),
             object: base.inner.object.deep_clone(),
             base: Some(base),
@@ -47,12 +60,7 @@ impl Class {
     pub fn is_class(&self, class: &Class) -> bool {
         let type_id = class.instance_type_id();
 
-        self.instance_type_id() == type_id
-            || self
-                .inner
-                .base
-                .as_ref()
-                .map_or_else(|| false, |base| base.is_class(class))
+        self.inner.type_ids.contains(&type_id)
     }
 
     pub fn name(&self) -> Symbol {
@@ -112,6 +120,7 @@ struct ClassInner {
     methods: RefCell<ValueMap>,
     object: Object,
     instance_type_id: TypeId,
+    type_ids: HashSet<TypeId, BuildHasherDefault<WyHash>>,
 }
 
 impl Deref for Class {
