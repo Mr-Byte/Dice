@@ -42,6 +42,7 @@ where
                 Instruction::CREATE_ARRAY => self.create_list(&mut cursor),
                 Instruction::CREATE_OBJECT => self.create_object(),
                 Instruction::CREATE_CLASS => self.create_class(&bytecode, &mut cursor)?,
+                Instruction::INHERIT_CLASS => self.inherit_class(&bytecode, &mut cursor)?,
                 Instruction::CREATE_CLOSURE => {
                     self.create_closure(bytecode, call_frame, parent_upvalues, &mut cursor)?
                 }
@@ -452,6 +453,16 @@ where
         let name_slot = cursor.read_u8() as usize;
         let name = bytecode.constants()[name_slot].as_symbol()?;
         let class = Class::with_base(name, self.any_class.clone());
+
+        self.stack.push(Value::Class(class));
+
+        Ok(())
+    }
+
+    fn inherit_class(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
+        let name_slot = cursor.read_u8() as usize;
+        let name = bytecode.constants()[name_slot].as_symbol()?;
+        let class = Class::with_base(name, self.stack.pop().as_class()?);
 
         self.stack.push(Value::Class(class));
 

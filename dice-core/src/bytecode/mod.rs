@@ -96,6 +96,7 @@ impl Display for Bytecode {
                 | Instruction::CALL
                 | Instruction::CREATE_ARRAY
                 | Instruction::CREATE_CLASS
+                | Instruction::INHERIT_CLASS
                 | Instruction::ASSERT_TYPE_FOR_LOCAL
                 | Instruction::ASSERT_TYPE_OR_NULL_FOR_LOCAL => write!(f, "const={}", cursor.read_u8())?,
                 Instruction::LOAD_FIELD_TO_LOCAL => write!(f, "const={} slot={}", cursor.read_u8(), cursor.read_u8())?,

@@ -66,14 +66,9 @@ define_instructions! {
     pub const CREATE_ARRAY;
     pub const CREATE_OBJECT;
     pub const CREATE_CLOSURE;
-    // NOTE: Method patterns are an object type that carry special, ordered information on the signature of a method.
-    // They're passed to STORE_METHOD to indicate which variant of a method is being stored.  When a method is called
-    // all the parameters are type checked to reify the method pattern and used to select which variant of a method to call.
-    // If no matching patterns are found or there's an ambiguity between multiple methods a runtime error is produced.
-    pub const CREATE_METHOD_PATTERN;
     // NOTE: Create class takes a constant reference to its name and a 64-bit operand representing its instance type id.
     pub const CREATE_CLASS;
-    pub const CREATE_TRAIT;
+    pub const INHERIT_CLASS;
     // NOTE: There's no concept of "storing" a module.
     pub const LOAD_MODULE;
     pub const LOAD_GLOBAL;

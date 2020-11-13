@@ -35,11 +35,21 @@ impl NodeVisitor<&ClassDecl> for Compiler {
             local.slot as u8
         };
 
-        emit_bytecode! {
-            self.assembler()?, node.span => [
-                CREATE_CLASS &node.name;
-                STORE_LOCAL slot;
-            ]
+        if let Some(base) = node.base {
+            emit_bytecode! {
+                self.assembler()?, node.span => [
+                    {self.visit(base)?};
+                    INHERIT_CLASS &node.name;
+                    STORE_LOCAL slot;
+                ]
+            }
+        } else {
+            emit_bytecode! {
+                self.assembler()?, node.span => [
+                    CREATE_CLASS &node.name;
+                    STORE_LOCAL slot;
+                ]
+            }
         }
 
         for associated_item in node.associated_items.iter().copied() {

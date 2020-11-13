@@ -133,6 +133,15 @@ impl Assembler {
         Ok(())
     }
 
+    pub fn inherit_class(&mut self, name: &str, span: Span) -> Result<(), CompilerError> {
+        self.source_map.insert(self.data.len() as u64, span);
+        self.data.put_u8(Instruction::INHERIT_CLASS.value());
+        let name_slot = self.make_constant(Value::with_symbol(name))? as u8;
+        self.data.put_u8(name_slot);
+
+        Ok(())
+    }
+
     pub fn mul(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
         self.data.put_u8(Instruction::MUL.value());
@@ -545,6 +554,11 @@ macro_rules! emit_bytecode {
 
     ($assembler:expr, $span:expr => [CREATE_CLASS $name:expr; $($rest:tt)*] ) => {
         $assembler.create_class($name, $span)?;
+        emit_bytecode! { $assembler, $span => [$($rest)*] }
+    };
+
+    ($assembler:expr, $span:expr => [INHERIT_CLASS $name:expr; $($rest:tt)*] ) => {
+        $assembler.inherit_class($name, $span)?;
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
 

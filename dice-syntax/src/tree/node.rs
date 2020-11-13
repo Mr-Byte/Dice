@@ -268,6 +268,7 @@ pub struct ClassDecl {
     pub name: String,
     pub span: Span,
     pub associated_items: Vec<SyntaxNodeId>,
+    pub base: Option<SyntaxNodeId>,
 }
 
 #[derive(Debug, Clone)]

@@ -524,6 +524,13 @@ impl Parser {
     fn class_decl(&mut self) -> SyntaxNodeResult {
         let span_start = self.lexer.consume(TokenKind::Class)?.span();
         let (_, name) = self.lexer.consume_ident()?;
+        let base = if self.lexer.peek()?.kind == TokenKind::Colon {
+            self.lexer.consume(TokenKind::Colon)?;
+            Some(self.expression()?)
+        } else {
+            None
+        };
+
         self.lexer.consume(TokenKind::LeftCurly)?;
 
         let mut next_token = self.lexer.peek()?;
@@ -549,6 +556,7 @@ impl Parser {
         let class_decl = ClassDecl {
             name,
             associated_items,
+            base,
             span: span_start + span_end,
         };
 
