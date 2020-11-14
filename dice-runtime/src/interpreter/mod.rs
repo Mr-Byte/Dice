@@ -26,81 +26,80 @@ where
         let mut cursor = bytecode.cursor();
 
         while let Some(instruction) = cursor.read_instruction() {
+            let instruction: Instruction = instruction.into();
+
             match instruction {
-                Instruction::PUSH_NULL => self.stack.push(Value::Null),
-                Instruction::PUSH_UNIT => self.stack.push(Value::Unit),
-                Instruction::PUSH_FALSE => self.stack.push(Value::Bool(false)),
-                Instruction::PUSH_TRUE => self.stack.push(Value::Bool(true)),
-                Instruction::PUSH_I0 => self.stack.push(Value::Int(0)),
-                Instruction::PUSH_I1 => self.stack.push(Value::Int(1)),
-                Instruction::PUSH_F0 => self.stack.push(Value::Float(0.0)),
-                Instruction::PUSH_F1 => self.stack.push(Value::Float(1.0)),
-                Instruction::PUSH_CONST => self.push_const(bytecode, &mut cursor),
-                Instruction::POP => std::mem::drop(self.stack.pop()),
-                Instruction::SWAP => self.stack.swap(),
-                Instruction::DUP => self.dup(&mut cursor),
-                Instruction::CREATE_ARRAY => self.create_list(&mut cursor),
-                Instruction::CREATE_OBJECT => self.create_object(),
-                Instruction::CREATE_CLASS => self.create_class(&bytecode, &mut cursor)?,
-                Instruction::INHERIT_CLASS => self.inherit_class(&bytecode, &mut cursor)?,
-                Instruction::CREATE_CLOSURE => {
+                Instruction::PushNull => self.stack.push(Value::Null),
+                Instruction::PushUnit => self.stack.push(Value::Unit),
+                Instruction::PushFalse => self.stack.push(Value::Bool(false)),
+                Instruction::PushTrue => self.stack.push(Value::Bool(true)),
+                Instruction::PushI0 => self.stack.push(Value::Int(0)),
+                Instruction::PushI1 => self.stack.push(Value::Int(1)),
+                Instruction::PushF0 => self.stack.push(Value::Float(0.0)),
+                Instruction::PushF1 => self.stack.push(Value::Float(1.0)),
+                Instruction::PushConst => self.push_const(bytecode, &mut cursor),
+                Instruction::Pop => std::mem::drop(self.stack.pop()),
+                Instruction::Swap => self.stack.swap(),
+                Instruction::Dup => self.dup(&mut cursor),
+                Instruction::CreateArray => self.create_list(&mut cursor),
+                Instruction::CreateObject => self.create_object(),
+                Instruction::CreateClass => self.create_class(&bytecode, &mut cursor)?,
+                Instruction::InheritClass => self.inherit_class(&bytecode, &mut cursor)?,
+                Instruction::CreateClosure => {
                     self.create_closure(bytecode, call_frame, parent_upvalues, &mut cursor)?
                 }
-                Instruction::NEG => self.neg()?,
-                Instruction::NOT => self.not()?,
-                Instruction::DIE_ROLL => self.die_roll()?,
-                Instruction::MUL => self.mul()?,
-                Instruction::DIV => self.div()?,
-                Instruction::REM => self.rem()?,
-                Instruction::ADD => self.add()?,
-                Instruction::SUB => self.sub()?,
-                Instruction::GT => self.gt()?,
-                Instruction::GTE => self.gte()?,
-                Instruction::LT => self.lt()?,
-                Instruction::LTE => self.lte()?,
-                Instruction::EQ => self.eq()?,
-                Instruction::NEQ => self.neq()?,
-                Instruction::IS => self.is()?,
-                Instruction::DICE_ROLL => self.dice_roll()?,
-                Instruction::RANGE_EXCLUSIVE => self.range_exclusive()?,
-                Instruction::RANGE_INCLUSIVE => self.range_inclusive()?,
-                Instruction::JUMP => self.jump(&mut cursor),
-                Instruction::JUMP_IF_FALSE => self.jump_if_false(&mut cursor)?,
-                Instruction::JUMP_IF_TRUE => self.jump_if_true(&mut cursor)?,
-                Instruction::LOAD_LOCAL => self.load_local(call_frame, &mut cursor),
-                Instruction::STORE_LOCAL => self.store_local(call_frame, &mut cursor),
-                Instruction::ASSIGN_LOCAL => self.assign_local(call_frame, &mut cursor),
-                Instruction::LOAD_UPVALUE => self.load_upvalue(parent_upvalues, &mut cursor),
-                Instruction::STORE_UPVALUE => self.store_upvalue(parent_upvalues, &mut cursor),
-                Instruction::ASSIGN_UPVALUE => self.assign_upvalue(parent_upvalues, &mut cursor),
-                Instruction::CLOSE_UPVALUE => self.close_upvalue(call_frame, &mut cursor),
-                Instruction::LOAD_GLOBAL => self.load_global(bytecode, &mut cursor)?,
-                Instruction::STORE_GLOBAL => self.store_global(bytecode, &mut cursor)?,
-                Instruction::LOAD_FIELD => self.load_field(bytecode, &mut cursor)?,
-                Instruction::STORE_FIELD => self.store_field(bytecode, &mut cursor)?,
-                Instruction::ASSIGN_FIELD => self.assign_field(bytecode, &mut cursor)?,
-                Instruction::LOAD_INDEX => self.load_index()?,
-                Instruction::STORE_INDEX => self.store_index()?,
-                Instruction::ASSIGN_INDEX => self.assign_index()?,
-                Instruction::STORE_METHOD => self.store_method(bytecode, &mut cursor)?,
-                Instruction::LOAD_FIELD_TO_LOCAL => self.load_field_to_local(bytecode, call_frame, &mut cursor)?,
-                Instruction::CALL => self.call(&mut cursor)?,
-                Instruction::ASSERT_BOOL => self.assert_bool()?,
-                Instruction::ASSERT_TYPE_FOR_LOCAL => self.assert_type_for_local(call_frame, &mut cursor)?,
-                Instruction::ASSERT_TYPE_OR_NULL_FOR_LOCAL => {
-                    self.assert_type_or_null_for_local(call_frame, &mut cursor)?
-                }
-                Instruction::ASSERT_TYPE_AND_RETURN => {
+                Instruction::Negate => self.neg()?,
+                Instruction::Not => self.not()?,
+                Instruction::DieRoll => self.die_roll()?,
+                Instruction::Multiply => self.mul()?,
+                Instruction::Divide => self.div()?,
+                Instruction::Remainder => self.rem()?,
+                Instruction::Add => self.add()?,
+                Instruction::Subtract => self.sub()?,
+                Instruction::GreaterThan => self.gt()?,
+                Instruction::GreaterThanOrEqual => self.gte()?,
+                Instruction::LessThan => self.lt()?,
+                Instruction::LessThanOrEqual => self.lte()?,
+                Instruction::Equal => self.eq()?,
+                Instruction::NotEqual => self.neq()?,
+                Instruction::Is => self.is()?,
+                Instruction::DiceRoll => self.dice_roll()?,
+                Instruction::RangeExclusive => self.range_exclusive()?,
+                Instruction::RangeInclusive => self.range_inclusive()?,
+                Instruction::Jump => self.jump(&mut cursor),
+                Instruction::JumpIfFalse => self.jump_if_false(&mut cursor)?,
+                Instruction::JumpIfTrue => self.jump_if_true(&mut cursor)?,
+                Instruction::LoadLocal => self.load_local(call_frame, &mut cursor),
+                Instruction::StoreLocal => self.store_local(call_frame, &mut cursor),
+                Instruction::AssignLocal => self.assign_local(call_frame, &mut cursor),
+                Instruction::LoadUpvalue => self.load_upvalue(parent_upvalues, &mut cursor),
+                Instruction::StoreUpvalue => self.store_upvalue(parent_upvalues, &mut cursor),
+                Instruction::AssignUpvalue => self.assign_upvalue(parent_upvalues, &mut cursor),
+                Instruction::CloseUpvalue => self.close_upvalue(call_frame, &mut cursor),
+                Instruction::LoadGlobal => self.load_global(bytecode, &mut cursor)?,
+                Instruction::StoreGlobal => self.store_global(bytecode, &mut cursor)?,
+                Instruction::LoadField => self.load_field(bytecode, &mut cursor)?,
+                Instruction::StoreField => self.store_field(bytecode, &mut cursor)?,
+                Instruction::AssignField => self.assign_field(bytecode, &mut cursor)?,
+                Instruction::LoadIndex => self.load_index()?,
+                Instruction::StoreIndex => self.store_index()?,
+                Instruction::AssignIndex => self.assign_index()?,
+                Instruction::StoreMethod => self.store_method(bytecode, &mut cursor)?,
+                Instruction::LoadFieldToLocal => self.load_field_to_local(bytecode, call_frame, &mut cursor)?,
+                Instruction::Call => self.call(&mut cursor)?,
+                Instruction::AssertBool => self.assert_bool()?,
+                Instruction::AssertTypeForLocal => self.assert_type_for_local(call_frame, &mut cursor)?,
+                Instruction::AssertTypeOrNullForLocal => self.assert_type_or_null_for_local(call_frame, &mut cursor)?,
+                Instruction::AssertTypeAndReturn => {
                     self.assert_type_and_return()?;
                     break;
                 }
-                Instruction::ASSERT_TYPE_OR_NULL_AND_RETURN => {
+                Instruction::AssertTypeOrNullAndReturn => {
                     self.assert_type_or_null_and_return()?;
                     break;
                 }
-                Instruction::LOAD_MODULE => self.load_module(&bytecode, &mut cursor)?,
-                Instruction::RETURN => break,
-                unknown => return Err(RuntimeError::UnknownInstruction(unknown.value())),
+                Instruction::LoadModule => self.load_module(&bytecode, &mut cursor)?,
+                Instruction::Return => break,
             }
         }
 
@@ -532,7 +531,7 @@ where
 
             self.stack.push(value);
         } else {
-            unreachable!("LOAD_UPVALUE used in non-closure context.")
+            unreachable!("LoadUpvalue used in non-closure context.")
         }
     }
 
@@ -554,7 +553,7 @@ where
 
             self.stack.push(result)
         } else {
-            unreachable!("STORE_UPVALUE used in non-closure context.")
+            unreachable!("StoreUpvalue used in non-closure context.")
         }
     }
 
@@ -570,7 +569,7 @@ where
 
             self.stack.push(Value::Unit)
         } else {
-            unreachable!("ASSIGN_UPVALUE used in non-closure context.")
+            unreachable!("AssignUpvalue used in non-closure context.")
         }
     }
 

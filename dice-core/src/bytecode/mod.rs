@@ -74,33 +74,33 @@ impl Display for Bytecode {
             write!(f, "{:6} | {:<24} | ", position, format!("{}", instruction))?;
 
             match instruction {
-                Instruction::JUMP | Instruction::JUMP_IF_FALSE | Instruction::JUMP_IF_TRUE => {
+                Instruction::Jump | Instruction::JumpIfFalse | Instruction::JumpIfTrue => {
                     write!(f, "offset={}", cursor.read_offset())?
                 }
-                Instruction::PUSH_CONST
-                | Instruction::DUP
-                | Instruction::LOAD_MODULE
-                | Instruction::LOAD_GLOBAL
-                | Instruction::LOAD_LOCAL
-                | Instruction::LOAD_FIELD
-                | Instruction::LOAD_UPVALUE
-                | Instruction::STORE_GLOBAL
-                | Instruction::STORE_LOCAL
-                | Instruction::STORE_FIELD
-                | Instruction::STORE_METHOD
-                | Instruction::STORE_UPVALUE
-                | Instruction::ASSIGN_LOCAL
-                | Instruction::ASSIGN_FIELD
-                | Instruction::ASSIGN_UPVALUE
-                | Instruction::CLOSE_UPVALUE
-                | Instruction::CALL
-                | Instruction::CREATE_ARRAY
-                | Instruction::CREATE_CLASS
-                | Instruction::INHERIT_CLASS
-                | Instruction::ASSERT_TYPE_FOR_LOCAL
-                | Instruction::ASSERT_TYPE_OR_NULL_FOR_LOCAL => write!(f, "const={}", cursor.read_u8())?,
-                Instruction::LOAD_FIELD_TO_LOCAL => write!(f, "const={} slot={}", cursor.read_u8(), cursor.read_u8())?,
-                Instruction::CREATE_CLOSURE => {
+                Instruction::PushConst
+                | Instruction::Dup
+                | Instruction::LoadModule
+                | Instruction::LoadGlobal
+                | Instruction::LoadLocal
+                | Instruction::LoadField
+                | Instruction::LoadUpvalue
+                | Instruction::StoreGlobal
+                | Instruction::StoreLocal
+                | Instruction::StoreField
+                | Instruction::StoreMethod
+                | Instruction::StoreUpvalue
+                | Instruction::AssignLocal
+                | Instruction::AssignField
+                | Instruction::AssignUpvalue
+                | Instruction::CloseUpvalue
+                | Instruction::Call
+                | Instruction::CreateArray
+                | Instruction::CreateClass
+                | Instruction::InheritClass
+                | Instruction::AssertTypeForLocal
+                | Instruction::AssertTypeOrNullForLocal => write!(f, "const={}", cursor.read_u8())?,
+                Instruction::LoadFieldToLocal => write!(f, "const={} slot={}", cursor.read_u8(), cursor.read_u8())?,
+                Instruction::CreateClosure => {
                     let const_index = cursor.read_u8() as usize;
                     let function = &self.constants()[const_index];
 

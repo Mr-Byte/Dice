@@ -27,60 +27,60 @@ impl Assembler {
 
     pub fn push_null(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::PUSH_NULL.value());
+        self.data.put_u8(Instruction::PushNull.into());
     }
 
     pub fn push_unit(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::PUSH_UNIT.value());
+        self.data.put_u8(Instruction::PushUnit.into());
     }
 
-    pub fn push_bool(&mut self, value: bool, span: Span) {
-        let instruction = if value {
-            Instruction::PUSH_TRUE
+    pub fn push_bool(&mut self, into: bool, span: Span) {
+        let instruction = if into {
+            Instruction::PushTrue
         } else {
-            Instruction::PUSH_FALSE
+            Instruction::PushFalse
         };
 
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(instruction.value());
+        self.data.put_u8(instruction.into());
     }
 
     pub fn push_i0(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::PUSH_I0.value());
+        self.data.put_u8(Instruction::PushI0.into());
     }
 
     pub fn push_i1(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::PUSH_I1.value());
+        self.data.put_u8(Instruction::PushI1.into());
     }
 
     pub fn push_f0(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::PUSH_F0.value());
+        self.data.put_u8(Instruction::PushF0.into());
     }
 
     pub fn push_f1(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::PUSH_F1.value());
+        self.data.put_u8(Instruction::PushF1.into());
     }
 
-    pub fn push_const(&mut self, value: Value, span: Span) -> Result<(), CompilerError> {
+    pub fn push_const(&mut self, into: Value, span: Span) -> Result<(), CompilerError> {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::PUSH_CONST.value());
+        self.data.put_u8(Instruction::PushConst.into());
 
         self.source_map.insert(self.data.len() as u64, span);
-        let const_pos = self.make_constant(value)?;
+        let const_pos = self.make_constant(into)?;
         self.data.put_u8(const_pos);
 
         Ok(())
     }
 
-    pub fn closure(&mut self, value: Value, upvalues: &[UpvalueDescriptor], span: Span) -> Result<(), CompilerError> {
+    pub fn closure(&mut self, into: Value, upvalues: &[UpvalueDescriptor], span: Span) -> Result<(), CompilerError> {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::CREATE_CLOSURE.value());
-        let fn_pos = self.make_constant(value)?;
+        self.data.put_u8(Instruction::CreateClosure.into());
+        let fn_pos = self.make_constant(into)?;
         self.data.put_u8(fn_pos);
 
         if upvalues.len() > 255 {
@@ -99,34 +99,34 @@ impl Assembler {
 
     pub fn pop(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::POP.value());
+        self.data.put_u8(Instruction::Pop.into());
     }
 
     pub fn dup(&mut self, offset: u8, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::DUP.value());
+        self.data.put_u8(Instruction::Dup.into());
         self.data.put_u8(offset);
     }
 
     pub fn swap(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::SWAP.value());
+        self.data.put_u8(Instruction::Swap.into());
     }
 
     pub fn create_list(&mut self, length: u8, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::CREATE_ARRAY.value());
+        self.data.put_u8(Instruction::CreateArray.into());
         self.data.put_u8(length);
     }
 
     pub fn create_object(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::CREATE_OBJECT.value());
+        self.data.put_u8(Instruction::CreateObject.into());
     }
 
     pub fn create_class(&mut self, name: &str, span: Span) -> Result<(), CompilerError> {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::CREATE_CLASS.value());
+        self.data.put_u8(Instruction::CreateClass.into());
         let name_slot = self.make_constant(Value::with_symbol(name))? as u8;
         self.data.put_u8(name_slot);
 
@@ -135,7 +135,7 @@ impl Assembler {
 
     pub fn inherit_class(&mut self, name: &str, span: Span) -> Result<(), CompilerError> {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::INHERIT_CLASS.value());
+        self.data.put_u8(Instruction::InheritClass.into());
         let name_slot = self.make_constant(Value::with_symbol(name))? as u8;
         self.data.put_u8(name_slot);
 
@@ -144,98 +144,98 @@ impl Assembler {
 
     pub fn mul(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::MUL.value());
+        self.data.put_u8(Instruction::Multiply.into());
     }
 
     pub fn div(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::DIV.value());
+        self.data.put_u8(Instruction::Divide.into());
     }
 
     pub fn rem(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::REM.value());
+        self.data.put_u8(Instruction::Remainder.into());
     }
 
     pub fn add(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::ADD.value());
+        self.data.put_u8(Instruction::Add.into());
     }
 
     pub fn sub(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::SUB.value());
+        self.data.put_u8(Instruction::Subtract.into());
     }
 
     pub fn eq(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::EQ.value());
+        self.data.put_u8(Instruction::Equal.into());
     }
 
     pub fn neq(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::NEQ.value());
+        self.data.put_u8(Instruction::NotEqual.into());
     }
 
     pub fn is(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::IS.value());
+        self.data.put_u8(Instruction::Is.into());
     }
 
     pub fn gt(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::GT.value());
+        self.data.put_u8(Instruction::GreaterThan.into());
     }
 
     pub fn gte(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::GTE.value());
+        self.data.put_u8(Instruction::GreaterThanOrEqual.into());
     }
 
     pub fn lt(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::LT.value());
+        self.data.put_u8(Instruction::LessThan.into());
     }
 
     pub fn lte(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::LTE.value());
+        self.data.put_u8(Instruction::LessThanOrEqual.into());
     }
 
     pub fn dice_roll(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::DICE_ROLL.value());
+        self.data.put_u8(Instruction::DiceRoll.into());
     }
 
     pub fn range_inclusive(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::RANGE_INCLUSIVE.value());
+        self.data.put_u8(Instruction::RangeInclusive.into());
     }
 
     pub fn range_exclusive(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::RANGE_EXCLUSIVE.value());
+        self.data.put_u8(Instruction::RangeExclusive.into());
     }
 
     pub fn die_roll(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::DIE_ROLL.value());
+        self.data.put_u8(Instruction::DieRoll.into());
     }
 
     pub fn neg(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::NEG.value());
+        self.data.put_u8(Instruction::Negate.into());
     }
 
     pub fn not(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::NOT.value());
+        self.data.put_u8(Instruction::Not.into());
     }
 
     #[must_use = "Jumps must be patched."]
     pub fn jump(&mut self, span: Span) -> u64 {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::JUMP.value());
+        self.data.put_u8(Instruction::Jump.into());
         let patch_pos = self.data.len() as u64;
         self.data.put_i16(0);
 
@@ -245,7 +245,7 @@ impl Assembler {
     #[must_use = "Jumps must be patched."]
     pub fn jump_if_false(&mut self, span: Span) -> u64 {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::JUMP_IF_FALSE.value());
+        self.data.put_u8(Instruction::JumpIfFalse.into());
         let patch_pos = self.data.len() as u64;
         self.data.put_i16(0);
 
@@ -255,7 +255,7 @@ impl Assembler {
     #[must_use = "Jumps must be patched."]
     pub fn jump_if_true(&mut self, span: Span) -> u64 {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::JUMP_IF_TRUE.value());
+        self.data.put_u8(Instruction::JumpIfTrue.into());
         let patch_pos = self.data.len() as u64;
         self.data.put_i16(0);
 
@@ -269,7 +269,7 @@ impl Assembler {
 
     pub fn jump_back(&mut self, position: u64, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::JUMP.value());
+        self.data.put_u8(Instruction::Jump.into());
         let offset = -((self.current_position() - position + 2) as i16);
         self.data.put_i16(offset);
     }
@@ -280,51 +280,51 @@ impl Assembler {
 
     pub fn store_local(&mut self, slot: u8, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::STORE_LOCAL.value());
+        self.data.put_u8(Instruction::StoreLocal.into());
         self.data.put_u8(slot);
     }
 
     pub fn assign_local(&mut self, slot: u8, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::ASSIGN_LOCAL.value());
+        self.data.put_u8(Instruction::AssignLocal.into());
         self.data.put_u8(slot);
     }
 
     pub fn load_local(&mut self, slot: u8, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::LOAD_LOCAL.value());
+        self.data.put_u8(Instruction::LoadLocal.into());
         self.data.put_u8(slot);
     }
 
     #[allow(dead_code)]
     pub fn store_upvalue(&mut self, index: u8, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::STORE_UPVALUE.value());
+        self.data.put_u8(Instruction::StoreUpvalue.into());
         self.data.put_u8(index);
     }
 
     pub fn assign_upvalue(&mut self, index: u8, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::ASSIGN_UPVALUE.value());
+        self.data.put_u8(Instruction::AssignUpvalue.into());
         self.data.put_u8(index);
     }
 
     pub fn load_upvalue(&mut self, index: u8, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::LOAD_UPVALUE.value());
+        self.data.put_u8(Instruction::LoadUpvalue.into());
         self.data.put_u8(index);
     }
 
     pub fn close_upvalue(&mut self, index: u8, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::CLOSE_UPVALUE.value());
+        self.data.put_u8(Instruction::CloseUpvalue.into());
         self.data.put_u8(index);
     }
 
     pub fn store_field(&mut self, field: impl Into<Symbol>, span: Span) -> Result<(), CompilerError> {
         self.source_map.insert(self.data.len() as u64, span);
         let const_slot = self.make_constant(Value::Symbol(field.into()))?;
-        self.data.put_u8(Instruction::STORE_FIELD.value());
+        self.data.put_u8(Instruction::StoreField.into());
         self.data.put_u8(const_slot);
 
         Ok(())
@@ -333,7 +333,7 @@ impl Assembler {
     pub fn assign_field(&mut self, field: impl Into<Symbol>, span: Span) -> Result<(), CompilerError> {
         self.source_map.insert(self.data.len() as u64, span);
         let const_slot = self.make_constant(Value::Symbol(field.into()))?;
-        self.data.put_u8(Instruction::ASSIGN_FIELD.value());
+        self.data.put_u8(Instruction::AssignField.into());
         self.data.put_u8(const_slot);
 
         Ok(())
@@ -342,7 +342,7 @@ impl Assembler {
     pub fn store_method(&mut self, method: impl Into<Symbol>, span: Span) -> Result<(), CompilerError> {
         self.source_map.insert(self.data.len() as u64, span);
         let const_slot = self.make_constant(Value::Symbol(method.into()))?;
-        self.data.put_u8(Instruction::STORE_METHOD.value());
+        self.data.put_u8(Instruction::StoreMethod.into());
         self.data.put_u8(const_slot);
 
         Ok(())
@@ -351,7 +351,7 @@ impl Assembler {
     pub fn load_field(&mut self, field: impl Into<Symbol>, span: Span) -> Result<(), CompilerError> {
         self.source_map.insert(self.data.len() as u64, span);
         let const_slot = self.make_constant(Value::Symbol(field.into()))?;
-        self.data.put_u8(Instruction::LOAD_FIELD.value());
+        self.data.put_u8(Instruction::LoadField.into());
         self.data.put_u8(const_slot);
 
         Ok(())
@@ -362,7 +362,7 @@ impl Assembler {
             let const_slot = assembler.make_constant(Value::with_symbol(global))?;
 
             assembler.source_map.insert(assembler.data.len() as u64, span);
-            assembler.data.put_u8(Instruction::STORE_GLOBAL.value());
+            assembler.data.put_u8(Instruction::StoreGlobal.into());
             assembler.data.put_u8(const_slot);
 
             Ok(())
@@ -376,7 +376,7 @@ impl Assembler {
             let const_slot = assembler.make_constant(Value::with_symbol(global))?;
 
             assembler.source_map.insert(assembler.data.len() as u64, span);
-            assembler.data.put_u8(Instruction::LOAD_GLOBAL.value());
+            assembler.data.put_u8(Instruction::LoadGlobal.into());
             assembler.data.put_u8(const_slot);
 
             Ok(())
@@ -390,7 +390,7 @@ impl Assembler {
             let const_slot = assembler.make_constant(Value::with_symbol(path))?;
 
             assembler.source_map.insert(assembler.data.len() as u64, span);
-            assembler.data.put_u8(Instruction::LOAD_MODULE.value());
+            assembler.data.put_u8(Instruction::LoadModule.into());
             assembler.data.put_u8(const_slot);
 
             Ok(())
@@ -401,18 +401,18 @@ impl Assembler {
 
     pub fn load_index(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::LOAD_INDEX.value());
+        self.data.put_u8(Instruction::LoadIndex.into());
     }
 
     #[allow(dead_code)]
     pub fn store_index(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::STORE_INDEX.value());
+        self.data.put_u8(Instruction::StoreIndex.into());
     }
 
     pub fn assign_index(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::ASSIGN_INDEX.value());
+        self.data.put_u8(Instruction::AssignIndex.into());
     }
 
     pub fn load_field_to_local(
@@ -423,7 +423,7 @@ impl Assembler {
     ) -> Result<(), CompilerError> {
         self.source_map.insert(self.data.len() as u64, span);
         let const_slot = self.make_constant(Value::Symbol(field.into()))?;
-        self.data.put_u8(Instruction::LOAD_FIELD_TO_LOCAL.value());
+        self.data.put_u8(Instruction::LoadFieldToLocal.into());
         self.data.put_u8(const_slot);
         self.data.put_u8(local_slot);
 
@@ -432,51 +432,51 @@ impl Assembler {
 
     pub fn call(&mut self, arg_count: u8, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::CALL.value());
+        self.data.put_u8(Instruction::Call.into());
         self.data.put_u8(arg_count);
     }
 
     pub fn ret(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::RETURN.value());
+        self.data.put_u8(Instruction::Return.into());
     }
 
     pub fn assert_bool(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::ASSERT_BOOL.value());
+        self.data.put_u8(Instruction::AssertBool.into());
     }
 
     pub fn assert_type_for_local(&mut self, slot: u8, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::ASSERT_TYPE_FOR_LOCAL.value());
+        self.data.put_u8(Instruction::AssertTypeForLocal.into());
         self.data.put_u8(slot);
     }
 
     pub fn assert_type_or_null_for_local(&mut self, slot: u8, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::ASSERT_TYPE_OR_NULL_FOR_LOCAL.value());
+        self.data.put_u8(Instruction::AssertTypeOrNullForLocal.into());
         self.data.put_u8(slot);
     }
 
     pub fn assert_type_and_return(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::ASSERT_TYPE_AND_RETURN.value());
+        self.data.put_u8(Instruction::AssertTypeAndReturn.into());
     }
 
     pub fn assert_type_or_null_and_return(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::ASSERT_TYPE_OR_NULL_AND_RETURN.value());
+        self.data.put_u8(Instruction::AssertTypeOrNullAndReturn.into());
     }
 
-    fn make_constant(&mut self, value: Value) -> Result<u8, CompilerError> {
-        let position = if let Some(position) = self.constants.iter().position(|current| *current == value) {
+    fn make_constant(&mut self, into: Value) -> Result<u8, CompilerError> {
+        let position = if let Some(position) = self.constants.iter().position(|current| *current == into) {
             position
         } else {
-            self.constants.push(value);
+            self.constants.push(into);
             self.constants.len() - 1
         };
 
-        // NOTE: This could be alleviated by offering a long-form PUSH_CONST.
+        // NOTE: This could be alleviated by offering a long-form PushConst.
         if position > 255 {
             return Err(CompilerError::TooManyConstants);
         }
@@ -537,18 +537,18 @@ macro_rules! emit_bytecode {
         $assembler.push_i1($span);
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
-    ($assembler:expr, $span:expr => [PUSH_BOOL $value:expr; $($rest:tt)*] ) => {
-        $assembler.push_bool($value, $span);
+    ($assembler:expr, $span:expr => [PUSH_BOOL $into:expr; $($rest:tt)*] ) => {
+        $assembler.push_bool($into, $span);
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
 
-    ($assembler:expr, $span:expr => [PUSH_CONST $value:expr; $($rest:tt)*] ) => {
-        $assembler.push_const($value, $span)?;
+    ($assembler:expr, $span:expr => [PUSH_CONST $into:expr; $($rest:tt)*] ) => {
+        $assembler.push_const($into, $span)?;
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
 
-    ($assembler:expr, $span:expr => [CREATE_CLOSURE $value:expr, $upvalues:expr; $($rest:tt)*] ) => {
-        $assembler.closure($value, $upvalues, $span)?;
+    ($assembler:expr, $span:expr => [CREATE_CLOSURE $into:expr, $upvalues:expr; $($rest:tt)*] ) => {
+        $assembler.closure($into, $upvalues, $span)?;
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
 
@@ -763,8 +763,8 @@ macro_rules! emit_bytecode {
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
 
-    ($assembler:expr, $span:expr => [PATCH_JUMP <- $value:expr; $($rest:tt)*] ) => {
-        $assembler.patch_jump($value);
+    ($assembler:expr, $span:expr => [PATCH_JUMP <- $into:expr; $($rest:tt)*] ) => {
+        $assembler.patch_jump($into);
         emit_bytecode! { $assembler, $span => [$($rest)*] }
     };
 

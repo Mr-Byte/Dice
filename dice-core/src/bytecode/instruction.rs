@@ -1,129 +1,170 @@
+use num_derive::{FromPrimitive, ToPrimitive};
+use num_traits::{FromPrimitive, ToPrimitive};
 use std::fmt::{Debug, Display};
 
-macro_rules! define_instructions {
-    (prev=$prev:ident @) => {};
-    (prev=$prev:ident @ $vis:vis $next:ident $($sub_vis:vis $name:ident)*) => {
-        $vis const $next: Self = Self(Self::$prev.0 + 1);
-        define_instructions! {
-            prev=$next @
-            $($sub_vis $name)*
-        }
-    };
-
-    ($vis:vis const $first:ident; $($sub_vis:vis const $name:ident;)*) => {
-        #[derive(Debug, Copy, Clone, Eq, PartialEq)]
-        #[repr(transparent)]
-        pub struct Instruction(u8);
-
-        impl Instruction {
-            $vis const $first: Self = Self(0);
-            define_instructions! {
-                prev=$first @
-                $($sub_vis $name)*
-            }
-
-            pub const fn value(self) -> u8 {
-                self.0
-            }
-        }
-
-        impl From<u8> for Instruction {
-            fn from(value: u8) -> Self {
-                Instruction(value)
-            }
-        }
-
-        impl Display for Instruction {
-            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                write!(f, "{:02X} | ", self.0)?;
-
-                match *self {
-                    Self::$first => write!(f, stringify!($first)),
-                    $(Self::$name => write!(f, stringify!($name)),)*
-                    _ => unreachable!()
-                }
-            }
-        }
-    };
-}
-
-define_instructions! {
-    // Instructions to push data onto the stack.
-    pub const PUSH_NULL;
-    pub const PUSH_UNIT;
-    pub const PUSH_FALSE;
-    pub const PUSH_TRUE;
-    pub const PUSH_I0;
-    pub const PUSH_I1;
-    pub const PUSH_F0;
-    pub const PUSH_F1;
-    pub const PUSH_CONST;
+#[derive(Clone, Copy, Debug, ToPrimitive, FromPrimitive)]
+pub enum Instruction {
+    PushNull,
+    PushUnit,
+    PushFalse,
+    PushTrue,
+    PushI0,
+    PushI1,
+    PushF0,
+    PushF1,
+    PushConst,
     // Basic stack manipulation instructions.
-    pub const POP;
-    pub const DUP;
-    pub const SWAP;
+    Pop,
+    Dup,
+    Swap,
     // Compound stack manipulation instructions.
-    pub const CREATE_ARRAY;
-    pub const CREATE_OBJECT;
-    pub const CREATE_CLOSURE;
+    CreateArray,
+    CreateObject,
+    CreateClosure,
     // NOTE: Create class takes a constant reference to its name and a 64-bit operand representing its instance type id.
-    pub const CREATE_CLASS;
-    pub const INHERIT_CLASS;
+    CreateClass,
+    InheritClass,
     // NOTE: There's no concept of "storing" a module.
-    pub const LOAD_MODULE;
-    pub const LOAD_GLOBAL;
+    LoadModule,
+    LoadGlobal,
     // NOTE: Globals are write-once, if they don't already exist.
-    pub const STORE_GLOBAL;
-    pub const LOAD_LOCAL;
-    pub const STORE_LOCAL;
-    pub const ASSIGN_LOCAL;
-    pub const LOAD_FIELD;
-    pub const STORE_FIELD;
-    pub const ASSIGN_FIELD;
-    pub const LOAD_INDEX;
-    pub const STORE_INDEX;
-    pub const ASSIGN_INDEX;
-    pub const LOAD_UPVALUE;
-    pub const STORE_UPVALUE;
-    pub const ASSIGN_UPVALUE;
-    pub const CLOSE_UPVALUE;
+    StoreGlobal,
+    LoadLocal,
+    StoreLocal,
+    AssignLocal,
+    LoadField,
+    StoreField,
+    AssignField,
+    LoadIndex,
+    StoreIndex,
+    AssignIndex,
+    LoadUpvalue,
+    StoreUpvalue,
+    AssignUpvalue,
+    CloseUpvalue,
 
     // NOTE: Fused operation to load a field into a local variable.
-    pub const LOAD_FIELD_TO_LOCAL;
+    LoadFieldToLocal,
     // NOTE: Stores the method in a class object's method map.
     // Static functions and the like are stored as fields on the class object itself.
-    pub const STORE_METHOD;
+    StoreMethod,
     // Operator instructions
-    pub const NEG;
-    pub const NOT;
-    pub const MUL;
-    pub const DIV;
-    pub const REM;
-    pub const ADD;
-    pub const SUB;
-    pub const GT;
-    pub const GTE;
-    pub const LT;
-    pub const LTE;
-    pub const EQ;
-    pub const NEQ;
-    pub const IS;
-    pub const LOGICAL_AND;
-    pub const LOGICAL_OR;
-    pub const DIE_ROLL;
-    pub const DICE_ROLL;
-    pub const RANGE_INCLUSIVE;
-    pub const RANGE_EXCLUSIVE;
+    Negate,
+    Not,
+    Multiply,
+    Divide,
+    Remainder,
+    Add,
+    Subtract,
+    GreaterThan,
+    GreaterThanOrEqual,
+    LessThan,
+    LessThanOrEqual,
+    Equal,
+    NotEqual,
+    Is,
+    DieRoll,
+    DiceRoll,
+    RangeInclusive,
+    RangeExclusive,
     // Control flow instructions
-    pub const JUMP;
-    pub const JUMP_IF_FALSE;
-    pub const JUMP_IF_TRUE;
-    pub const CALL;
-    pub const RETURN;
+    Jump,
+    JumpIfFalse,
+    JumpIfTrue,
+    Call,
+    Return,
     // Type assertion instructions
-    pub const ASSERT_BOOL;
-    pub const ASSERT_TYPE_FOR_LOCAL;
-    pub const ASSERT_TYPE_OR_NULL_FOR_LOCAL;
-    pub const ASSERT_TYPE_AND_RETURN;
-    pub const ASSERT_TYPE_OR_NULL_AND_RETURN;
+    AssertBool,
+    AssertTypeForLocal,
+    AssertTypeOrNullForLocal,
+    AssertTypeAndReturn,
+    AssertTypeOrNullAndReturn,
+}
+
+impl From<u8> for Instruction {
+    fn from(value: u8) -> Self {
+        Self::from_u8(value).expect("Invalid instruction encountered in conversion.")
+    }
+}
+
+impl Into<u8> for Instruction {
+    fn into(self) -> u8 {
+        self.to_u8().expect("Invalid instruction encountered in conversion.")
+    }
+}
+
+impl Display for Instruction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let value: u8 = (*self).into();
+
+        write!(f, "{:02X} | ", value)?;
+
+        let name = match self {
+            Instruction::PushNull => "PUSH_NULL",
+            Instruction::PushUnit => "PUSH_UNIT",
+            Instruction::PushFalse => "PUSH_FALSE",
+            Instruction::PushTrue => "PUSH_TRUE",
+            Instruction::PushI0 => "PUSH_I0",
+            Instruction::PushI1 => "PUSH_I1",
+            Instruction::PushF0 => "PUSH_F0",
+            Instruction::PushF1 => "PUSH_F1",
+            Instruction::PushConst => "PUSH_CONST",
+            Instruction::Pop => "POP",
+            Instruction::Dup => "DUP",
+            Instruction::Swap => "SWAP",
+            Instruction::CreateArray => "CREATE_ARRAY",
+            Instruction::CreateObject => "CREATE_OBJECT",
+            Instruction::CreateClosure => "CREATE_CLOSURE",
+            Instruction::CreateClass => "CREATE_CLASS",
+            Instruction::InheritClass => "INHERIT_CLASS",
+            Instruction::LoadModule => "LOAD_MODULE",
+            Instruction::LoadGlobal => "LOAD_GLOBAL",
+            Instruction::StoreGlobal => "STORE_GLOBAL",
+            Instruction::LoadLocal => "LOAD_LOCAL",
+            Instruction::StoreLocal => "STORE_LOCAL",
+            Instruction::AssignLocal => "ASSIGN_LOCAL",
+            Instruction::LoadField => "LOAD_FIELD",
+            Instruction::StoreField => "STORE_FIELD",
+            Instruction::AssignField => "ASSIGN_FIELD",
+            Instruction::LoadIndex => "LOAD_INDEX",
+            Instruction::StoreIndex => "STORE_INDEX",
+            Instruction::AssignIndex => "ASSIGN_INDEX",
+            Instruction::LoadUpvalue => "LOAD_UPVALUE",
+            Instruction::StoreUpvalue => "STORE_UPVALUE",
+            Instruction::AssignUpvalue => "ASSIGN_UPVALUE",
+            Instruction::CloseUpvalue => "CLOSE_UPVALUE",
+            Instruction::LoadFieldToLocal => "LOAD_FIELD_TO_LOCAL",
+            Instruction::StoreMethod => "STORE_METHOD",
+            Instruction::Negate => "NEG",
+            Instruction::Not => "NOT",
+            Instruction::Multiply => "MUL",
+            Instruction::Divide => "DIV",
+            Instruction::Remainder => "REM",
+            Instruction::Add => "ADD",
+            Instruction::Subtract => "SUB",
+            Instruction::GreaterThan => "GT",
+            Instruction::GreaterThanOrEqual => "GTE",
+            Instruction::LessThan => "LT",
+            Instruction::LessThanOrEqual => "LTE",
+            Instruction::Equal => "EQ",
+            Instruction::NotEqual => "NEQ",
+            Instruction::Is => "IS",
+            Instruction::DieRoll => "DIE_ROLL",
+            Instruction::DiceRoll => "DICE_ROLL",
+            Instruction::RangeInclusive => "RANGE_INCLUSIVE",
+            Instruction::RangeExclusive => "RANGE_EXCLUSIVE",
+            Instruction::Jump => "JUMP",
+            Instruction::JumpIfFalse => "JUMP_IF_FALSE",
+            Instruction::JumpIfTrue => "JUMP_IF_TRUE",
+            Instruction::Call => "CALL",
+            Instruction::Return => "RETURN",
+            Instruction::AssertBool => "ASSERT_BOOL",
+            Instruction::AssertTypeForLocal => "ASSERT_TYPE_FOR_LOCAL",
+            Instruction::AssertTypeOrNullForLocal => "ASSERT_TYPE_OR_NULL_FOR_LOCAL",
+            Instruction::AssertTypeAndReturn => "ASSERT_TYPE_AND_RETURN",
+            Instruction::AssertTypeOrNullAndReturn => "ASSERT_TYPE_OR_NULL_AND_RETURN",
+        };
+
+        write!(f, "{}", name)
+    }
 }
