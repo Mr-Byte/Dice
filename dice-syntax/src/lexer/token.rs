@@ -184,6 +184,11 @@ pub enum TokenKind {
     From,
     #[token("export")]
     Export,
+    // TODO: Switch the parser and compiler over to use this keyword in favor of inferring the usage at compile time.
+    // #[token("self")]
+    // Self_,
+    #[token("super")]
+    Super,
     #[regex("await|async|yield|do|const|match|enum|trait|type")]
     Reserved,
 

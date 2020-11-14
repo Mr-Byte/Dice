@@ -44,10 +44,10 @@ impl Class {
         let inner = ClassInner {
             instance_type_id,
             type_ids,
+            name,
             methods: base.inner.methods.clone(),
             object: base.inner.object.deep_clone(),
             base: Some(base),
-            name,
         };
 
         Self { inner: inner.into() }
