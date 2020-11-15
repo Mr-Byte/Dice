@@ -36,6 +36,7 @@ pub mod class {
 
     thread_local! {
         pub static SELF: Symbol = "self".into();
+        pub static SUPER: Symbol = "super".into();
         pub static NEW: Symbol = "new".into();
     }
 }

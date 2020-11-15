@@ -3,6 +3,7 @@ use crate::{
     scope_stack::{ScopeKind, State},
     visitor::{decl_op::OpKind, FnKind, NodeVisitor},
 };
+use dice_core::protocol::class::SUPER;
 use dice_core::{
     protocol::{
         class::{NEW, SELF},
@@ -16,6 +17,20 @@ use dice_syntax::{ClassDecl, FnDecl, OpDecl, SyntaxNode};
 impl NodeVisitor<&ClassDecl> for Compiler {
     fn visit(&mut self, node: &ClassDecl) -> Result<(), CompilerError> {
         self.context()?.scope_stack().push_scope(ScopeKind::Block, None);
+
+        if let Some(base) = node.base {
+            let super_slot = self
+                .context()?
+                .scope_stack()
+                .add_local(SUPER.get(), State::initialized(false))? as u8;
+
+            emit_bytecode! {
+                self.assembler()?, node.span => [
+                     {self.visit(base)?};
+                     STORE_LOCAL super_slot;
+                ]
+            }
+        }
 
         let slot = {
             let class_name: Symbol = (&*node.name).into();
@@ -35,10 +50,10 @@ impl NodeVisitor<&ClassDecl> for Compiler {
             local.slot as u8
         };
 
-        if let Some(base) = node.base {
+        if node.base.is_some() {
+            // NOTE: The base class is already on top of the stack from being stored in the super local.
             emit_bytecode! {
                 self.assembler()?, node.span => [
-                    {self.visit(base)?};
                     INHERIT_CLASS &node.name;
                     STORE_LOCAL slot;
                 ]
