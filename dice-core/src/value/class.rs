@@ -2,12 +2,12 @@ use crate::{
     type_id::TypeId,
     value::{symbol::Symbol, Object, Value, ValueKind, ValueMap},
 };
-use std::collections::HashSet;
-use std::hash::BuildHasherDefault;
 use std::{
     any::Any,
     cell::RefCell,
+    collections::HashSet,
     fmt::{Display, Formatter},
+    hash::BuildHasherDefault,
     ops::Deref,
     rc::Rc,
 };

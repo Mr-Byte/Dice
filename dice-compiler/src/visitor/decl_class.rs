@@ -3,10 +3,9 @@ use crate::{
     scope_stack::{ScopeKind, State},
     visitor::{decl_op::OpKind, FnKind, NodeVisitor},
 };
-use dice_core::protocol::class::SUPER;
 use dice_core::{
     protocol::{
-        class::{NEW, SELF},
+        class::{NEW, SELF, SUPER},
         ProtocolSymbol,
     },
     value::Symbol,
@@ -18,6 +17,7 @@ impl NodeVisitor<&ClassDecl> for Compiler {
     fn visit(&mut self, node: &ClassDecl) -> Result<(), CompilerError> {
         self.context()?.scope_stack().push_scope(ScopeKind::Block, None);
 
+        // TODO: If no base is defined, load Any as the super.
         if let Some(base) = node.base {
             let super_slot = self
                 .context()?
