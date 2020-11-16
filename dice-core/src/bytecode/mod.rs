@@ -107,7 +107,7 @@ impl Display for Bytecode {
 
                     match function {
                         Value::FnScript(fn_script) => {
-                            write!(f, "{:<8} |", const_index)?;
+                            write!(f, "const={:<8} |", const_index)?;
 
                             for _ in 0..fn_script.bytecode().upvalue_count() {
                                 let kind = match cursor.read_u8() {

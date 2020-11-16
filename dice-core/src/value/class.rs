@@ -27,10 +27,10 @@ impl Class {
         let inner = ClassInner {
             instance_type_id,
             type_ids,
-            base: Default::default(),
             methods: Default::default(),
             object: Object::new(None),
             name,
+            base: None,
         };
 
         Self { inner: inner.into() }
@@ -73,12 +73,7 @@ impl Class {
 
     pub fn method(&self, name: impl Into<Symbol>) -> Option<Value> {
         let name = name.into();
-        self.inner
-            .methods
-            .borrow()
-            .get(&name)
-            .cloned()
-            .or_else(|| self.inner.base.as_ref().and_then(|base| base.method(name)))
+        self.inner.methods.borrow().get(&name).cloned()
     }
 
     pub fn set_method(&self, name: impl Into<Symbol>, method: impl Into<Value>) {
@@ -98,7 +93,6 @@ impl Class {
             .borrow()
             .iter()
             .map(|(key, value)| (key.clone(), value.clone()))
-            .chain(self.inner.base.iter().flat_map(|base| base.methods()))
             .collect::<Vec<_>>()
     }
 
@@ -116,11 +110,11 @@ impl Display for Class {
 #[derive(Debug)]
 struct ClassInner {
     name: Symbol,
-    base: Option<Class>,
     methods: RefCell<ValueMap>,
     object: Object,
     instance_type_id: TypeId,
     type_ids: HashSet<TypeId, BuildHasherDefault<WyHash>>,
+    base: Option<Class>,
 }
 
 impl Deref for Class {

@@ -26,8 +26,6 @@ where
         let mut cursor = bytecode.cursor();
 
         while let Some(instruction) = cursor.read_instruction() {
-            let instruction: Instruction = instruction.into();
-
             match instruction {
                 Instruction::PushNull => self.stack.push(Value::Null),
                 Instruction::PushUnit => self.stack.push(Value::Unit),

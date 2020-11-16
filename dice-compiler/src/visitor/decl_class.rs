@@ -22,7 +22,7 @@ impl NodeVisitor<&ClassDecl> for Compiler {
             let super_slot = self
                 .context()?
                 .scope_stack()
-                .add_local(SUPER.get(), State::initialized(false))? as u8;
+                .add_local(SUPER.get(), State::initialized(true))? as u8;
 
             emit_bytecode! {
                 self.assembler()?, node.span => [
@@ -83,6 +83,7 @@ impl NodeVisitor<&ClassDecl> for Compiler {
             }
         }
 
+        self.close_upvalues(node)?;
         self.context()?.scope_stack().pop_scope()?;
 
         Ok(())
@@ -147,6 +148,20 @@ impl Compiler {
                 STORE_METHOD Self::op_name(&op_decl);
                 LOAD_LOCAL slot;
             ]
+        }
+
+        Ok(())
+    }
+
+    pub fn close_upvalues(&mut self, class: &ClassDecl) -> Result<(), CompilerError> {
+        let scope = self.context()?.scope_stack().top_mut()?;
+
+        for variable in scope.variables.clone() {
+            if variable.is_captured {
+                self.context()?
+                    .assembler()
+                    .close_upvalue(variable.slot as u8, class.span);
+            }
         }
 
         Ok(())
