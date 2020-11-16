@@ -83,6 +83,7 @@ impl Display for Bytecode {
                 | Instruction::LoadGlobal
                 | Instruction::LoadLocal
                 | Instruction::LoadField
+                | Instruction::LoadMethod
                 | Instruction::LoadUpvalue
                 | Instruction::StoreGlobal
                 | Instruction::StoreLocal

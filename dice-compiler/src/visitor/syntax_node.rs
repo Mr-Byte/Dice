@@ -54,6 +54,11 @@ impl NodeVisitor<SyntaxNodeId> for Compiler {
                 self.visit(field_access)?;
                 self.exit_call()?;
             }
+            SyntaxNode::SuperAccess(super_access) => {
+                self.enter_call()?;
+                self.visit(super_access)?;
+                self.exit_call()?;
+            }
             SyntaxNode::FnCall(fn_call) => {
                 self.enter_call()?;
                 self.visit(fn_call)?;

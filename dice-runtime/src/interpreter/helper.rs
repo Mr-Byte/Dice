@@ -100,15 +100,21 @@ impl<L: ModuleLoader> Runtime<L> {
             .and_then(|object| object.class())
             .or_else(|| self.value_class_mapping.get(&value.kind()).cloned());
 
+        let value = self.get_method(class.as_ref(), key, &value);
+
+        Ok(value)
+    }
+
+    pub(super) fn get_method(&self, class: Option<&Class>, key: &Symbol, receiver: &Value) -> Value {
         let value = match class {
             Some(class) => match class.method(&**key) {
-                Some(method) => Value::FnBound(FnBound::new(value, method)),
+                Some(method) => Value::FnBound(FnBound::new(receiver.clone(), method)),
                 None => Value::Null,
             },
             None => Value::Null,
         };
 
-        Ok(value)
+        value
     }
 
     // TODO: Replace this mutually recursive call with an execution stack to prevent the thread's stack from overflowing.

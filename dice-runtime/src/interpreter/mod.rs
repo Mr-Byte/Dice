@@ -84,6 +84,7 @@ where
                 Instruction::LoadIndex => self.load_index()?,
                 Instruction::StoreIndex => self.store_index()?,
                 Instruction::AssignIndex => self.assign_index()?,
+                Instruction::LoadMethod => self.load_method(bytecode, &mut cursor)?,
                 Instruction::StoreMethod => self.store_method(bytecode, &mut cursor)?,
                 Instruction::LoadFieldToLocal => self.load_field_to_local(bytecode, call_frame, &mut cursor)?,
                 Instruction::Call => self.call(&mut cursor)?,
@@ -713,6 +714,17 @@ where
                 *target = Value::Unit;
             }
         };
+
+        Ok(())
+    }
+
+    fn load_method(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
+        let key_index = cursor.read_u8() as usize;
+        let key = bytecode.constants()[key_index].as_symbol()?;
+        let receiver = self.stack.pop();
+        let class = self.stack.pop().as_class()?;
+        let method = self.get_method(Some(&class), &key, &receiver);
+        self.stack.push(method);
 
         Ok(())
     }

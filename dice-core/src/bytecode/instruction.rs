@@ -42,12 +42,13 @@ pub enum Instruction {
     StoreUpvalue,
     AssignUpvalue,
     CloseUpvalue,
-
     // NOTE: Fused operation to load a field into a local variable.
     LoadFieldToLocal,
+    LoadMethod,
     // NOTE: Stores the method in a class object's method map.
     // Static functions and the like are stored as fields on the class object itself.
     StoreMethod,
+
     // Operator instructions
     Negate,
     Not,
@@ -135,6 +136,7 @@ impl Display for Instruction {
             Instruction::CloseUpvalue => "CLOSE_UPVALUE",
             Instruction::LoadFieldToLocal => "LOAD_FIELD_TO_LOCAL",
             Instruction::StoreMethod => "STORE_METHOD",
+            Instruction::LoadMethod => "LOAD_METHOD",
             Instruction::Negate => "NEG",
             Instruction::Not => "NOT",
             Instruction::Multiply => "MUL",

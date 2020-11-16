@@ -9,7 +9,7 @@ use super::{
 use crate::{
     parser::rules::{ParserRule, RulePrecedence},
     ClassDecl, ErrorPropagate, FieldAccess, FnArg, ForLoop, ImportDecl, Index, Is, Loop, NullPropagate, OpDecl,
-    OverloadedOperator, TypeAnnotation, VarDeclKind,
+    OverloadedOperator, SuperAccess, TypeAnnotation, VarDeclKind,
 };
 use dice_error::{span::Span, syntax_error::SyntaxError};
 use id_arena::Arena;
@@ -676,6 +676,21 @@ impl Parser {
         let span_end = self.lexer.current().span();
         let node = SyntaxNode::FieldAccess(FieldAccess {
             expression: lhs,
+            field,
+            span: span_start + span_end,
+        });
+        let lhs_expression = self.arena.alloc(node);
+
+        self.parse_assignment(lhs_expression, can_assign, span_start)
+    }
+
+    fn super_access(&mut self, can_assign: bool) -> SyntaxNodeResult {
+        let span_start = self.lexer.consume(TokenKind::Super)?.span();
+        self.lexer.consume(TokenKind::Dot)?;
+
+        let (_, field) = self.lexer.consume_ident()?;
+        let span_end = self.lexer.current().span();
+        let node = SyntaxNode::SuperAccess(SuperAccess {
             field,
             span: span_start + span_end,
         });

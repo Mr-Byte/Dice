@@ -339,6 +339,15 @@ impl Assembler {
         Ok(())
     }
 
+    pub fn load_method(&mut self, method: impl Into<Symbol>, span: Span) -> Result<(), CompilerError> {
+        self.source_map.insert(self.data.len() as u64, span);
+        let const_slot = self.make_constant(Value::Symbol(method.into()))?;
+        self.data.put_u8(Instruction::LoadMethod.into());
+        self.data.put_u8(const_slot);
+
+        Ok(())
+    }
+
     pub fn store_method(&mut self, method: impl Into<Symbol>, span: Span) -> Result<(), CompilerError> {
         self.source_map.insert(self.data.len() as u64, span);
         let const_slot = self.make_constant(Value::Symbol(method.into()))?;

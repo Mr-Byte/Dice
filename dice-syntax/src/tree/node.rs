@@ -89,6 +89,12 @@ pub struct FieldAccess {
 }
 
 #[derive(Debug, Clone)]
+pub struct SuperAccess {
+    pub field: String,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone)]
 pub struct FnCall {
     pub target: SyntaxNodeId,
     pub args: Vec<SyntaxNodeId>,

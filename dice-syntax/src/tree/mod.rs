@@ -55,6 +55,7 @@ pub enum SyntaxNode {
 
     // Member access
     FieldAccess(FieldAccess),
+    SuperAccess(SuperAccess),
     Index(Index),
 
     // Operators
@@ -99,6 +100,7 @@ impl SyntaxNode {
             SyntaxNode::LitObject(LitObject { span, .. }) => *span,
             SyntaxNode::LitAnonymousFn(LitAnonymousFn { span, .. }) => *span,
             SyntaxNode::FieldAccess(FieldAccess { span, .. }) => *span,
+            SyntaxNode::SuperAccess(SuperAccess { span, .. }) => *span,
             SyntaxNode::Index(Index { span, .. }) => *span,
             SyntaxNode::Unary(Unary { span, .. }) => *span,
             SyntaxNode::Binary(Binary { span, .. }) => *span,

@@ -75,6 +75,7 @@ impl ParserRule {
                 None,
             ),
             TokenKind::Dot => ParserRule::new(None, Some(Parser::field_access), None, RulePrecedence::Call, None),
+            TokenKind::Super => ParserRule::new(Some(Parser::super_access), None, None, RulePrecedence::Call, None),
 
             // Grouping
             TokenKind::LeftParen => ParserRule::new(
