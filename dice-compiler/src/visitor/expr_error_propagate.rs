@@ -6,7 +6,7 @@ use dice_syntax::ErrorPropagate;
 
 impl NodeVisitor<&ErrorPropagate> for Compiler {
     fn visit(&mut self, ErrorPropagate { expression, span }: &ErrorPropagate) -> Result<(), CompilerError> {
-        if !matches!(self.context()?.kind(), CompilerKind::Function { .. }) {
+        if !matches!(self.context()?.kind(), CompilerKind::Function { .. } | CompilerKind::Method { .. }) {
             return Err(CompilerError::InvalidErrorPropagate);
         }
 

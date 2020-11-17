@@ -12,6 +12,7 @@ pub enum CompilerKind {
     Script,
     Module,
     Function { return_type: Option<TypeAnnotation> },
+    Method { return_type: Option<TypeAnnotation> },
     Constructor,
 }
 

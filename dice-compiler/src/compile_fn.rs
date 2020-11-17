@@ -21,6 +21,7 @@ impl Compiler {
 
         let compiler_kind = match kind {
             FnKind::Constructor => CompilerKind::Constructor,
+            FnKind::Method => CompilerKind::Method { return_type },
             _ => CompilerKind::Function { return_type },
         };
 

@@ -9,7 +9,7 @@ impl NodeVisitor<&Return> for Compiler {
         let context = self.context()?;
 
         match context.kind() {
-            CompilerKind::Function { .. } => match expr_return.result {
+            CompilerKind::Function { .. } | CompilerKind::Method { .. } => match expr_return.result {
                 Some(expr) => self.visit(expr)?,
                 None => context.assembler().push_unit(expr_return.span),
             },

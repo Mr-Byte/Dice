@@ -155,6 +155,9 @@ impl Compiler {
     pub(super) fn visit_return(&mut self, span: Span) -> Result<(), CompilerError> {
         if let CompilerKind::Function {
             return_type: Some(return_type),
+        }
+        | CompilerKind::Method {
+            return_type: Some(return_type),
         } = self.context()?.kind()
         {
             emit_bytecode! {
