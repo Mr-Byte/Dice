@@ -96,7 +96,6 @@ impl Display for Bytecode {
                 | Instruction::CloseUpvalue
                 | Instruction::Call
                 | Instruction::CreateArray
-                | Instruction::CreateClass
                 | Instruction::InheritClass
                 | Instruction::AssertTypeForLocal
                 | Instruction::AssertTypeOrNullForLocal => write!(f, "const={}", cursor.read_u8())?,

@@ -41,7 +41,6 @@ where
                 Instruction::Dup => self.dup(&mut cursor),
                 Instruction::CreateArray => self.create_list(&mut cursor),
                 Instruction::CreateObject => self.create_object(),
-                Instruction::CreateClass => self.create_class(&bytecode, &mut cursor)?,
                 Instruction::InheritClass => self.inherit_class(&bytecode, &mut cursor)?,
                 Instruction::CreateClosure => {
                     self.create_closure(bytecode, call_frame, parent_upvalues, &mut cursor)?
@@ -445,16 +444,6 @@ where
         let object = Object::new(self.any_class.clone());
 
         self.stack.push(Value::Object(object));
-    }
-
-    fn create_class(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
-        let name_slot = cursor.read_u8() as usize;
-        let name = bytecode.constants()[name_slot].as_symbol()?;
-        let class = Class::with_base(name, self.any_class.clone());
-
-        self.stack.push(Value::Class(class));
-
-        Ok(())
     }
 
     fn inherit_class(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {

@@ -124,15 +124,6 @@ impl Assembler {
         self.data.put_u8(Instruction::CreateObject.into());
     }
 
-    pub fn create_class(&mut self, name: &str, span: Span) -> Result<(), CompilerError> {
-        self.source_map.insert(self.data.len() as u64, span);
-        self.data.put_u8(Instruction::CreateClass.into());
-        let name_slot = self.make_constant(Value::with_symbol(name))? as u8;
-        self.data.put_u8(name_slot);
-
-        Ok(())
-    }
-
     pub fn inherit_class(&mut self, name: &str, span: Span) -> Result<(), CompilerError> {
         self.source_map.insert(self.data.len() as u64, span);
         self.data.put_u8(Instruction::InheritClass.into());

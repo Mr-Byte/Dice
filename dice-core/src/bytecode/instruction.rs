@@ -21,8 +21,6 @@ pub enum Instruction {
     CreateArray,
     CreateObject,
     CreateClosure,
-    // NOTE: Create class takes a constant reference to its name and a 64-bit operand representing its instance type id.
-    CreateClass,
     InheritClass,
     // NOTE: There's no concept of "storing" a module.
     LoadModule,
@@ -116,7 +114,6 @@ impl Display for Instruction {
             Instruction::CreateArray => "CREATE_ARRAY",
             Instruction::CreateObject => "CREATE_OBJECT",
             Instruction::CreateClosure => "CREATE_CLOSURE",
-            Instruction::CreateClass => "CREATE_CLASS",
             Instruction::InheritClass => "INHERIT_CLASS",
             Instruction::LoadModule => "LOAD_MODULE",
             Instruction::LoadGlobal => "LOAD_GLOBAL",

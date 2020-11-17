@@ -3,6 +3,7 @@ use crate::{
     scope_stack::{ScopeKind, State},
     visitor::{decl_op::OpKind, FnKind, NodeVisitor},
 };
+use dice_core::protocol::object::ANY_CLASS;
 use dice_core::{
     protocol::{
         class::{NEW, SELF, SUPER},
@@ -11,7 +12,7 @@ use dice_core::{
     value::Symbol,
 };
 use dice_error::compiler_error::CompilerError;
-use dice_syntax::{ClassDecl, FnDecl, OpDecl, SyntaxNode};
+use dice_syntax::{ClassDecl, FnDecl, LitIdent, OpDecl, SyntaxNode};
 
 impl NodeVisitor<&ClassDecl> for Compiler {
     fn visit(&mut self, node: &ClassDecl) -> Result<(), CompilerError> {
@@ -19,17 +20,23 @@ impl NodeVisitor<&ClassDecl> for Compiler {
 
         // TODO: If no base is defined, load Any as the super.
         if let Some(base) = node.base {
-            let super_slot = self
-                .context()?
-                .scope_stack()
-                .add_local(SUPER.get(), State::initialized(true))? as u8;
+            self.visit(base)?;
+        } else {
+            self.visit(&LitIdent {
+                name: ANY_CLASS.get().to_string(),
+                span: node.span,
+            })?;
+        }
 
-            emit_bytecode! {
-                self.assembler()?, node.span => [
-                     {self.visit(base)?};
-                     STORE_LOCAL super_slot;
-                ]
-            }
+        let super_slot = self
+            .context()?
+            .scope_stack()
+            .add_local(SUPER.get(), State::initialized(true))? as u8;
+
+        emit_bytecode! {
+            self.assembler()?, node.span => [
+                 STORE_LOCAL super_slot;
+            ]
         }
 
         let slot = {
@@ -50,21 +57,12 @@ impl NodeVisitor<&ClassDecl> for Compiler {
             local.slot as u8
         };
 
-        if node.base.is_some() {
-            // NOTE: The base class is already on top of the stack from being stored in the super local.
-            emit_bytecode! {
-                self.assembler()?, node.span => [
-                    INHERIT_CLASS &node.name;
-                    STORE_LOCAL slot;
-                ]
-            }
-        } else {
-            emit_bytecode! {
-                self.assembler()?, node.span => [
-                    CREATE_CLASS &node.name;
-                    STORE_LOCAL slot;
-                ]
-            }
+        // NOTE: The base class is already on top of the stack from being stored in the super local.
+        emit_bytecode! {
+            self.assembler()?, node.span => [
+                INHERIT_CLASS &node.name;
+                STORE_LOCAL slot;
+            ]
         }
 
         for associated_item in node.associated_items.iter().copied() {
