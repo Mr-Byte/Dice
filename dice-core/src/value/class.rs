@@ -1,7 +1,10 @@
+use crate::protocol::class::NEW;
+use crate::protocol::ProtocolSymbol;
 use crate::{
     type_id::TypeId,
     value::{symbol::Symbol, Object, Value, ValueKind, ValueMap},
 };
+use std::collections::HashMap;
 use std::{
     any::Any,
     cell::RefCell,
@@ -37,6 +40,14 @@ impl Class {
     }
 
     pub fn with_base(name: Symbol, base: Class) -> Self {
+        let methods = base
+            .inner
+            .methods
+            .borrow()
+            .iter()
+            .filter(|(name, _)| *name != &NEW.get())
+            .map(|(name, value)| (name.clone(), value.clone()))
+            .collect::<HashMap<_, _, _>>();
         let instance_type_id = TypeId::new();
         let mut type_ids: HashSet<_, _> = base.inner.type_ids.clone();
         type_ids.insert(instance_type_id);
@@ -45,7 +56,7 @@ impl Class {
             instance_type_id,
             type_ids,
             name,
-            methods: base.inner.methods.clone(),
+            methods: RefCell::new(methods),
             object: base.inner.object.deep_clone(),
             base: Some(base),
         };

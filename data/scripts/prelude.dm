@@ -64,16 +64,29 @@ op d(lhs, rhs) {
     lhs * rhs
 }
 
-export class Ok {
-    fn new(self, result) {
-        self.is_ok = true;
+export class Result {
+    fn new(self, is_ok: Bool, result: Any?) {
+        self.is_ok = is_ok;
         self.result = result;
+    }
+
+    fn map(self, map_fn: Function) -> Result {
+        if self.is_ok {
+            Ok(map_fn(self.result))
+        } else {
+            Err(self.result)
+        }
     }
 }
 
-export class Err {
+export class Ok : Result {
     fn new(self, result) {
-        self.is_ok = false;
-        self.result = result;
+        super.new(true, result);
+    }
+}
+
+export class Err : Result {
+    fn new(self, result) {
+        super.new(false, result);
     }
 }
