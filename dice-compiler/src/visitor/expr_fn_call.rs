@@ -7,7 +7,7 @@ impl NodeVisitor<&FnCall> for Compiler {
     fn visit(&mut self, node: &FnCall) -> Result<(), CompilerError> {
         self.visit(node.target)?;
 
-        // NOTE: Store the temporaryc at the time the function call was started, to be restored later.
+        // NOTE: Store the temporary at the time the function call was started, to be restored later.
         let original_temporary_count = *self.context()?.temporary_count();
         for arg in &node.args {
             /* NOTE: Take the current call context and temporarily store it on the stack, replacing it with a new one, so that

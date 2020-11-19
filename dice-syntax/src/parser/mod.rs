@@ -9,7 +9,7 @@ use super::{
 use crate::{
     parser::rules::{ParserRule, RulePrecedence},
     ClassDecl, ErrorPropagate, FieldAccess, FnArg, ForLoop, ImportDecl, Index, Is, Loop, NullPropagate, OpDecl,
-    OverloadedOperator, SuperAccess, TypeAnnotation, VarDeclKind,
+    OverloadedOperator, SuperAccess, SuperCall, TypeAnnotation, VarDeclKind,
 };
 use dice_error::{span::Span, syntax_error::SyntaxError};
 use id_arena::Arena;
@@ -686,17 +686,13 @@ impl Parser {
 
     fn super_access(&mut self, can_assign: bool) -> SyntaxNodeResult {
         let span_start = self.lexer.consume(TokenKind::Super)?.span();
-        self.lexer.consume(TokenKind::Dot)?;
+        let next_token = self.lexer.peek()?;
 
-        let (_, field) = self.lexer.consume_ident()?;
-        let span_end = self.lexer.current().span();
-        let node = SyntaxNode::SuperAccess(SuperAccess {
-            field,
-            span: span_start + span_end,
-        });
-        let lhs_expression = self.arena.alloc(node);
-
-        self.parse_assignment(lhs_expression, can_assign, span_start)
+        match next_token.kind {
+            TokenKind::Dot => self.super_method_access(can_assign, span_start),
+            TokenKind::LeftParen => self.super_call(span_start),
+            _ => Err(SyntaxError::UnexpectedToken(next_token.to_string(), next_token.span())),
+        }
     }
 
     fn grouping(&mut self, _: bool) -> SyntaxNodeResult {
@@ -741,6 +737,45 @@ impl Parser {
         });
 
         Ok(self.arena.alloc(node))
+    }
+
+    fn super_call(&mut self, span_start: Span) -> SyntaxNodeResult {
+        self.lexer.consume(TokenKind::LeftParen)?;
+
+        let mut args = Vec::new();
+
+        while self.lexer.peek()?.kind != TokenKind::RightParen {
+            let value = self.parse_precedence(RulePrecedence::Assignment)?;
+            args.push(value);
+
+            if self.lexer.peek()?.kind == TokenKind::Comma {
+                self.lexer.next()?;
+            } else if self.lexer.peek()?.kind != TokenKind::RightParen {
+                return Err(self.lexer.next()?.into());
+            }
+        }
+
+        let span_end = self.lexer.consume(TokenKind::RightParen)?.span();
+        let node = SyntaxNode::SuperCall(SuperCall {
+            args,
+            span: span_start + span_end,
+        });
+
+        Ok(self.arena.alloc(node))
+    }
+
+    fn super_method_access(&mut self, can_assign: bool, span_start: Span) -> Result<SyntaxNodeId, SyntaxError> {
+        self.lexer.consume(TokenKind::Dot)?;
+
+        let (_, field) = self.lexer.consume_ident()?;
+        let span_end = self.lexer.current().span();
+        let node = SyntaxNode::SuperAccess(SuperAccess {
+            field,
+            span: span_start + span_end,
+        });
+        let lhs_expression = self.arena.alloc(node);
+
+        self.parse_assignment(lhs_expression, can_assign, span_start)
     }
 
     fn object(&mut self, _: bool) -> SyntaxNodeResult {

@@ -21,6 +21,7 @@ mod expr_null_propagate;
 mod expr_range_loop;
 mod expr_return;
 mod expr_super_access;
+mod expr_super_call;
 mod expr_unary_op;
 mod expr_while;
 mod literal_anonymous_fn;

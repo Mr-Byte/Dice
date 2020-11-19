@@ -64,6 +64,11 @@ impl NodeVisitor<SyntaxNodeId> for Compiler {
                 self.visit(fn_call)?;
                 self.exit_call()?;
             }
+            SyntaxNode::SuperCall(super_call) => {
+                self.enter_call()?;
+                self.visit(super_call)?;
+                self.exit_call()?;
+            }
             SyntaxNode::Index(index) => {
                 self.enter_call()?;
                 self.visit(index)?;

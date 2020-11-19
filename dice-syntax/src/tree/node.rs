@@ -102,6 +102,12 @@ pub struct FnCall {
 }
 
 #[derive(Debug, Clone)]
+pub struct SuperCall {
+    pub args: Vec<SyntaxNodeId>,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone)]
 pub struct Index {
     pub expression: SyntaxNodeId,
     pub index_expression: SyntaxNodeId,

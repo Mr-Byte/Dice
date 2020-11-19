@@ -84,6 +84,7 @@ pub enum SyntaxNode {
     Return(Return),
     Continue(Continue),
     FnCall(FnCall),
+    SuperCall(SuperCall),
 }
 
 impl SyntaxNode {
@@ -123,6 +124,7 @@ impl SyntaxNode {
             SyntaxNode::Return(Return { span, .. }) => *span,
             SyntaxNode::Continue(Continue { span, .. }) => *span,
             SyntaxNode::FnCall(FnCall { span, .. }) => *span,
+            SyntaxNode::SuperCall(SuperCall { span, .. }) => *span,
         }
     }
 }
