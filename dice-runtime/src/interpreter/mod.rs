@@ -803,12 +803,11 @@ where
 
     pub fn call_super(&mut self, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
         let arg_count = cursor.read_u8() as usize;
+        let super_ = self.stack.pop().as_class()?;
         let receiver = self.stack.peek(arg_count).clone();
+        let result = self.call_class_constructor(arg_count, &super_, receiver.clone())?;
 
-        if let Some(base) = self.class_of(&receiver)?.base() {
-            let result = self.call_class_constructor(arg_count, &base, receiver.clone())?;
-            self.stack.push(result)
-        }
+        self.stack.push(result);
 
         Ok(())
     }

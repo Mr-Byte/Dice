@@ -11,6 +11,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     dice.runtime().load_prelude("prelude.dm")?;
     dice.runtime()
         .add_global("print", Value::with_native_fn(Rc::new(print_value) as NativeFn))?;
+    dice.runtime()
+        .add_global("panic", Value::with_native_fn(Rc::new(err_panic) as NativeFn))?;
 
     loop {
         print!("Input: ");
@@ -47,4 +49,12 @@ fn print_value(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeErro
     }
 
     Ok(Value::Unit)
+}
+
+fn err_panic(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
+    if let [_, Value::String(str), ..] = args {
+        Err(RuntimeError::Aborted(str.to_string()))
+    } else {
+        Err(RuntimeError::Aborted(String::from("Panic occurred.")))
+    }
 }

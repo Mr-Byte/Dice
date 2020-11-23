@@ -1,9 +1,9 @@
 use super::NodeVisitor;
 use crate::compiler::Compiler;
-use dice_core::protocol::class::SELF;
+use dice_core::protocol::class::{SELF, SUPER};
 use dice_core::protocol::ProtocolSymbol;
 use dice_error::compiler_error::CompilerError;
-use dice_syntax::SuperCall;
+use dice_syntax::{LitIdent, SuperCall};
 
 impl NodeVisitor<&SuperCall> for Compiler {
     fn visit(&mut self, node: &SuperCall) -> Result<(), CompilerError> {
@@ -31,6 +31,10 @@ impl NodeVisitor<&SuperCall> for Compiler {
 
         *self.context()?.temporary_count() = original_temporary_count;
 
+        self.visit(&LitIdent {
+            name: SUPER.get().to_string(),
+            span: node.span,
+        })?;
         self.assembler()?.call_super(node.args.len() as u8, node.span);
 
         Ok(())

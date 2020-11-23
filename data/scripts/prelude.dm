@@ -65,7 +65,7 @@ op d(lhs, rhs) {
 }
 
 export class Result {
-    fn new(self, is_ok, result) {
+    fn new(self, is_ok: Bool, result: Any?) {
         self.is_ok = is_ok;
         self.result = result;
     }
