@@ -14,6 +14,8 @@ pub enum CompilerError {
     OperatorMethodHasNoSelf(Span),
     #[error("Only methods and constructors can access super.")]
     InvalidSuperAccess(Span),
+    #[error("Constructors of derived classes must call their super constructor first.")]
+    DerivedMustCallSuper(Span),
     #[error("The item {0} has already been declared in this scope.")]
     ItemAlreadyDeclared(String),
     #[error("Encountered undeclared variable {0}.")]

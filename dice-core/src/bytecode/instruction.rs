@@ -71,6 +71,8 @@ pub enum Instruction {
     JumpIfFalse,
     JumpIfTrue,
     Call,
+    // NOTE: This instruction is used to call the super class constructor of a class.
+    CallSuper,
     Return,
     // Type assertion instructions
     AssertBool,
@@ -156,6 +158,7 @@ impl Display for Instruction {
             Instruction::JumpIfFalse => "JUMP_IF_FALSE",
             Instruction::JumpIfTrue => "JUMP_IF_TRUE",
             Instruction::Call => "CALL",
+            Instruction::CallSuper => "CALL_SUPER",
             Instruction::Return => "RETURN",
             Instruction::AssertBool => "ASSERT_BOOL",
             Instruction::AssertTypeForLocal => "ASSERT_TYPE_FOR_LOCAL",

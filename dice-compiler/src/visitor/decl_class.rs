@@ -1,3 +1,4 @@
+use crate::visitor::ClassKind;
 use crate::{
     compiler::Compiler,
     scope_stack::{ScopeKind, State},
@@ -18,15 +19,16 @@ impl NodeVisitor<&ClassDecl> for Compiler {
     fn visit(&mut self, node: &ClassDecl) -> Result<(), CompilerError> {
         self.context()?.scope_stack().push_scope(ScopeKind::Block, None);
 
-        // TODO: If no base is defined, load Any as the super.
-        if let Some(base) = node.base {
+        let class_kind = if let Some(base) = node.base {
             self.visit(base)?;
+            ClassKind::Derived
         } else {
             self.visit(&LitIdent {
                 name: ANY_CLASS.get().to_string(),
                 span: node.span,
             })?;
-        }
+            ClassKind::Base
+        };
 
         let super_slot = self
             .context()?
@@ -71,7 +73,7 @@ impl NodeVisitor<&ClassDecl> for Compiler {
             match node {
                 SyntaxNode::FnDecl(fn_decl) => {
                     let fn_decl = fn_decl.clone();
-                    self.visit_fn(slot, fn_decl)?;
+                    self.visit_fn(slot, fn_decl, class_kind)?;
                 }
                 SyntaxNode::OpDecl(op_decl) => {
                     let op_decl = op_decl.clone();
@@ -89,7 +91,7 @@ impl NodeVisitor<&ClassDecl> for Compiler {
 }
 
 impl Compiler {
-    fn visit_fn(&mut self, slot: u8, fn_decl: FnDecl) -> Result<(), CompilerError> {
+    fn visit_fn(&mut self, slot: u8, fn_decl: FnDecl, class_kind: ClassKind) -> Result<(), CompilerError> {
         let self_param = fn_decl.args.first().filter(|arg| arg.name == *SELF.get());
         let kind = if let Some(self_param) = self_param {
             // NOTE: If the self parameter has a type annotation, return an error.
@@ -98,7 +100,7 @@ impl Compiler {
             }
 
             if fn_decl.name == *NEW.get() {
-                FnKind::Constructor
+                FnKind::Constructor(class_kind)
             } else {
                 FnKind::Method
             }
@@ -114,7 +116,7 @@ impl Compiler {
 
         emit_bytecode! {
             self.assembler()?, fn_decl.span => [
-                if matches!(kind, FnKind::Constructor | FnKind::Method) => [
+                if matches!(kind, FnKind::Constructor(_) | FnKind::Method) => [
                     STORE_METHOD &*fn_decl.name;
                     LOAD_LOCAL slot;
                 ] else [

@@ -436,6 +436,12 @@ impl Assembler {
         self.data.put_u8(arg_count);
     }
 
+    pub fn call_super(&mut self, arg_count: u8, span: Span) {
+        self.source_map.insert(self.data.len() as u64, span);
+        self.data.put_u8(Instruction::CallSuper.into());
+        self.data.put_u8(arg_count);
+    }
+
     pub fn ret(&mut self, span: Span) {
         self.source_map.insert(self.data.len() as u64, span);
         self.data.put_u8(Instruction::Return.into());

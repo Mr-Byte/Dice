@@ -45,9 +45,15 @@ pub(super) trait NodeVisitor<T> {
 }
 
 #[derive(Clone, Copy, Eq, PartialEq)]
+pub enum ClassKind {
+    Base,
+    Derived,
+}
+
+#[derive(Clone, Copy, Eq, PartialEq)]
 pub enum FnKind {
     Function,
     Method,
     StaticMethod,
-    Constructor,
+    Constructor(ClassKind),
 }

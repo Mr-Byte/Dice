@@ -129,7 +129,9 @@ impl<L: ModuleLoader> Runtime<L> {
                 self.call_fn_script(arg_count, receiver, &closure.fn_script(), Some(closure.upvalues()))?
             }
             Value::FnScript(fn_script) => self.call_fn_script(arg_count, receiver, &fn_script, None)?,
-            Value::Class(class) => self.call_class_constructor(arg_count, class)?,
+            Value::Class(class) => {
+                self.call_class_constructor(arg_count, class, Value::Object(Object::new(class.clone())))?
+            }
             Value::FnNative(fn_native) => self.call_fn_native(arg_count, receiver, fn_native)?,
             _ => return Err(RuntimeError::NotAFunction),
         };
@@ -139,12 +141,17 @@ impl<L: ModuleLoader> Runtime<L> {
         Ok(())
     }
 
-    fn call_class_constructor(&mut self, arg_count: usize, class: &Class) -> Result<Value, RuntimeError> {
+    pub(crate) fn call_class_constructor(
+        &mut self,
+        arg_count: usize,
+        class: &Class,
+        mut object: Value,
+    ) -> Result<Value, RuntimeError> {
         let class = class.clone();
-        let mut object = Value::Object(Object::new(class.clone()));
 
         if let Some(new) = class.method(&NEW) {
             let bound = Value::FnBound(FnBound::new(object.clone(), new));
+
             *self.stack.peek_mut(arg_count) = bound;
             self.call_fn(arg_count)?;
 
@@ -191,10 +198,10 @@ impl<L: ModuleLoader> Runtime<L> {
         let slots = fn_script.bytecode().slot_count();
         let reserved = slots - arg_count;
         // NOTE: Reserve only the slots needed to cover locals beyond the arguments already on the stack.
-        let call_frame = self.stack.reserve_slots(reserved);
+        let stack_frame = self.stack.reserve_slots(reserved);
         // NOTE: Calling convention includes an extra parameter. This parameter is the function itself for bare functions
         // and the receiver for methods.
-        let stack_frame = call_frame.prepend(arg_count + 1);
+        let stack_frame = stack_frame.prepend(arg_count + 1);
 
         if let Some(receiver) = receiver {
             self.stack[stack_frame][0] = receiver;

@@ -65,7 +65,7 @@ op d(lhs, rhs) {
 }
 
 export class Result {
-    fn new(self, is_ok: Bool, result: Any?) {
+    fn new(self, is_ok, result) {
         self.is_ok = is_ok;
         self.result = result;
     }
@@ -81,12 +81,12 @@ export class Result {
 
 export class Ok : Result {
     fn new(self, result) {
-        super.new(true, result);
+        super(true, result);
     }
 }
 
 export class Err : Result {
     fn new(self, result) {
-        super.new(false, result);
+        super(false, result);
     }
 }

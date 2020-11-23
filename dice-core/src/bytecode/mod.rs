@@ -95,6 +95,7 @@ impl Display for Bytecode {
                 | Instruction::AssignUpvalue
                 | Instruction::CloseUpvalue
                 | Instruction::Call
+                | Instruction::CallSuper
                 | Instruction::CreateArray
                 | Instruction::InheritClass
                 | Instruction::AssertTypeForLocal

@@ -1,6 +1,7 @@
 mod helper;
 
 use crate::{module::ModuleLoader, runtime::Runtime, stack::CallFrame};
+use dice_core::runtime::Runtime as _;
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
     protocol::operator::{
@@ -11,6 +12,8 @@ use dice_core::{
 };
 use dice_error::runtime_error::RuntimeError;
 use std::collections::hash_map::Entry;
+
+// TODO: Restrict the sub-classing of primitives. <-- This is a runtime error.
 
 impl<L> Runtime<L>
 where
@@ -85,6 +88,7 @@ where
                 Instruction::StoreMethod => self.store_method(bytecode, &mut cursor)?,
                 Instruction::LoadFieldToLocal => self.load_field_to_local(bytecode, call_frame, &mut cursor)?,
                 Instruction::Call => self.call(&mut cursor)?,
+                Instruction::CallSuper => self.call_super(&mut cursor)?,
                 Instruction::AssertBool => self.assert_bool()?,
                 Instruction::AssertTypeForLocal => self.assert_type_for_local(call_frame, &mut cursor)?,
                 Instruction::AssertTypeOrNullForLocal => self.assert_type_or_null_for_local(call_frame, &mut cursor)?,
@@ -795,6 +799,18 @@ where
     pub fn call(&mut self, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
         let arg_count = cursor.read_u8() as usize;
         self.call_fn(arg_count)
+    }
+
+    pub fn call_super(&mut self, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
+        let arg_count = cursor.read_u8() as usize;
+        let receiver = self.stack.peek(arg_count).clone();
+
+        if let Some(base) = self.class_of(&receiver)?.base() {
+            let result = self.call_class_constructor(arg_count, &base, receiver.clone())?;
+            self.stack.push(result)
+        }
+
+        Ok(())
     }
 
     fn load_module(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {

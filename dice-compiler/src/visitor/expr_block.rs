@@ -1,4 +1,5 @@
 use super::NodeVisitor;
+use crate::visitor::ClassKind;
 use crate::{
     compiler::Compiler,
     compiler_stack::CompilerKind,
@@ -6,7 +7,7 @@ use crate::{
 };
 use dice_core::protocol::{class::SELF, ProtocolSymbol};
 use dice_error::{compiler_error::CompilerError, span::Span};
-use dice_syntax::{Block, FnArg};
+use dice_syntax::{Block, FnArg, SyntaxNode};
 
 impl NodeVisitor<&Block> for Compiler {
     fn visit(&mut self, block: &Block) -> Result<(), CompilerError> {
@@ -52,7 +53,7 @@ impl NodeVisitor<(&Block, BlockKind)> for Compiler {
 pub enum FunctionBlockKind<'args> {
     Function(&'args [FnArg]),
     Method(&'args [FnArg]),
-    Constructor(&'args [FnArg]),
+    Constructor(&'args [FnArg], ClassKind),
 }
 
 impl<'args> FunctionBlockKind<'args> {
@@ -60,13 +61,17 @@ impl<'args> FunctionBlockKind<'args> {
         match self {
             FunctionBlockKind::Function(args)
             | FunctionBlockKind::Method(args)
-            | FunctionBlockKind::Constructor(args) => *args,
+            | FunctionBlockKind::Constructor(args, ..) => *args,
         }
     }
 }
 
 impl<'args> NodeVisitor<(&Block, FunctionBlockKind<'args>)> for Compiler {
     fn visit(&mut self, (block, kind): (&Block, FunctionBlockKind<'args>)) -> Result<(), CompilerError> {
+        if let FunctionBlockKind::Constructor(_, ClassKind::Derived) = kind {
+            self.assert_super_call(block)?;
+        }
+
         self.context()?.scope_stack().push_scope(ScopeKind::Block, None);
         self.visit_args(&kind, kind.args())?;
         self.scan_item_decls(block)?;
@@ -75,7 +80,7 @@ impl<'args> NodeVisitor<(&Block, FunctionBlockKind<'args>)> for Compiler {
 
         if let FunctionBlockKind::Function(_) | FunctionBlockKind::Method(_) = kind {
             self.visit_return(block.span)?
-        } else if let FunctionBlockKind::Constructor(_) = kind {
+        } else if let FunctionBlockKind::Constructor(..) = kind {
             // NOTE: If in context of a constructor, pop the last value, load self, return.
             let local_slot = self
                 .context()?
@@ -100,6 +105,16 @@ impl<'args> NodeVisitor<(&Block, FunctionBlockKind<'args>)> for Compiler {
 }
 
 impl Compiler {
+    fn assert_super_call(&self, block: &Block) -> Result<(), CompilerError> {
+        if let Some(expr) = block.expressions.iter().chain(block.trailing_expression.iter()).next() {
+            if let SyntaxNode::SuperCall(_) = self.syntax_tree.get(*expr) {
+                return Ok(());
+            }
+        }
+
+        Err(CompilerError::DerivedMustCallSuper(block.span))
+    }
+
     fn visit_args(&mut self, kind: &FunctionBlockKind, args: &[FnArg]) -> Result<(), CompilerError> {
         // NOTE: The calling convention uses the first parameter as self in methods, but for functions it's inaccessible.
         if let FunctionBlockKind::Function(_) = kind {

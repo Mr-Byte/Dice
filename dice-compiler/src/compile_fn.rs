@@ -15,12 +15,12 @@ impl Compiler {
         kind: FnKind,
     ) -> Result<CompilerContext, CompilerError> {
         // NOTE: Constructors cannot have a return type annotation.
-        if kind == FnKind::Constructor && return_type.is_some() {
+        if matches!(kind, FnKind::Constructor(_)) && return_type.is_some() {
             return Err(CompilerError::NewHasReturnType(return_type.unwrap().name.span));
         }
 
         let compiler_kind = match kind {
-            FnKind::Constructor => CompilerKind::Constructor,
+            FnKind::Constructor(_) => CompilerKind::Constructor,
             FnKind::Method => CompilerKind::Method { return_type },
             _ => CompilerKind::Function { return_type },
         };
@@ -39,7 +39,7 @@ impl Compiler {
         let block_kind = match kind {
             FnKind::Function | FnKind::StaticMethod => FunctionBlockKind::Function(args),
             FnKind::Method => FunctionBlockKind::Method(args),
-            FnKind::Constructor => FunctionBlockKind::Constructor(args),
+            FnKind::Constructor(class_kind) => FunctionBlockKind::Constructor(args, class_kind),
         };
 
         self.visit((&body, block_kind))?;

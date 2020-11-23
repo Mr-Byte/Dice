@@ -9,7 +9,7 @@ use std::{
 };
 
 // NOTE: Allocate 1MB of stack space, this is 65,536 values when sizeof(Value) == 16
-const MAX_STACK_SIZE: usize = (1024 * 1024) / std::mem::size_of::<Value>();
+const MAX_STACK_SIZE: usize = 16; //(1024 * 1024) / std::mem::size_of::<Value>();
 
 #[derive(Debug)]
 pub struct Stack {
