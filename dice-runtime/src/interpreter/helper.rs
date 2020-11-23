@@ -210,7 +210,7 @@ impl<L: ModuleLoader> Runtime<L> {
         let result = self.execute_bytecode(fn_script.bytecode(), stack_frame, parent_upvalues)?;
 
         // NOTE: Release the number of reserved slots plus the number of arguments plus a slot for the function itself.
-        self.stack.release_call_frame(stack_frame);
+        self.stack.release_stack_frame(stack_frame);
 
         Ok(result)
     }

@@ -1,12 +1,12 @@
 use std::ops::Range;
 
 #[derive(Copy, Clone, Debug)]
-pub struct CallFrame {
+pub struct StackFrame {
     start: usize,
     end: usize,
 }
 
-impl CallFrame {
+impl StackFrame {
     pub fn new(start: usize, end: usize) -> Self {
         Self { start, end }
     }

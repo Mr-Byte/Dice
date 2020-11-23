@@ -28,6 +28,15 @@ pub struct LitIdent {
     pub span: Span,
 }
 
+impl LitIdent {
+    pub fn synthesize(name: impl Into<String>, span: Span) -> Self {
+        Self {
+            name: name.into(),
+            span,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct LitUnit {
     pub span: Span,
@@ -91,6 +100,7 @@ pub struct FieldAccess {
 #[derive(Debug, Clone)]
 pub struct SuperAccess {
     pub field: String,
+    pub super_class: Option<String>,
     pub span: Span,
 }
 

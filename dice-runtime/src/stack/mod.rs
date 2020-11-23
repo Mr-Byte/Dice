@@ -1,6 +1,6 @@
-mod call_frame;
+mod frame;
 
-pub use call_frame::*;
+pub use frame::*;
 
 use dice_core::value::Value;
 use std::{
@@ -52,17 +52,17 @@ impl Stack {
         result
     }
 
-    pub fn reserve_slots(&mut self, count: usize) -> CallFrame {
+    pub fn reserve_slots(&mut self, count: usize) -> StackFrame {
         let start = self.stack_ptr;
         let new_stack_ptr = self.stack_ptr.wrapping_add(count);
 
         self.stack_ptr = new_stack_ptr;
         debug_assert!(self.stack_ptr < MAX_STACK_SIZE, "Stack Overflowed");
 
-        CallFrame::new(start, new_stack_ptr)
+        StackFrame::new(start, new_stack_ptr)
     }
 
-    pub fn release_call_frame(&mut self, frame: CallFrame) {
+    pub fn release_stack_frame(&mut self, frame: StackFrame) {
         let new_stack_ptr = self.stack_ptr.wrapping_sub(frame.length());
         for value in &mut self.values[frame.range()] {
             *value = Value::Null;
@@ -112,16 +112,16 @@ impl IndexMut<usize> for Stack {
     }
 }
 
-impl Index<CallFrame> for Stack {
+impl Index<StackFrame> for Stack {
     type Output = [Value];
 
-    fn index(&self, index: CallFrame) -> &Self::Output {
+    fn index(&self, index: StackFrame) -> &Self::Output {
         &self.values[index.range()]
     }
 }
 
-impl IndexMut<CallFrame> for Stack {
-    fn index_mut(&mut self, index: CallFrame) -> &mut Self::Output {
+impl IndexMut<StackFrame> for Stack {
+    fn index_mut(&mut self, index: StackFrame) -> &mut Self::Output {
         &mut self.values[index.range()]
     }
 }

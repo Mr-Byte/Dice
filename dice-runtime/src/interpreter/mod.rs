@@ -1,6 +1,6 @@
 mod helper;
 
-use crate::{module::ModuleLoader, runtime::Runtime, stack::CallFrame};
+use crate::{module::ModuleLoader, runtime::Runtime, stack::StackFrame};
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
     protocol::operator::{
@@ -21,7 +21,7 @@ where
     pub(super) fn execute_bytecode(
         &mut self,
         bytecode: &Bytecode,
-        call_frame: CallFrame,
+        stack_frame: StackFrame,
         parent_upvalues: Option<&[Upvalue]>,
     ) -> Result<Value, RuntimeError> {
         let initial_stack_depth = self.stack.len();
@@ -45,7 +45,7 @@ where
                 Instruction::CreateObject => self.create_object(),
                 Instruction::InheritClass => self.inherit_class(&bytecode, &mut cursor)?,
                 Instruction::CreateClosure => {
-                    self.create_closure(bytecode, call_frame, parent_upvalues, &mut cursor)?
+                    self.create_closure(bytecode, stack_frame, parent_upvalues, &mut cursor)?
                 }
                 Instruction::Negate => self.neg()?,
                 Instruction::Not => self.not()?,
@@ -68,13 +68,13 @@ where
                 Instruction::Jump => self.jump(&mut cursor),
                 Instruction::JumpIfFalse => self.jump_if_false(&mut cursor)?,
                 Instruction::JumpIfTrue => self.jump_if_true(&mut cursor)?,
-                Instruction::LoadLocal => self.load_local(call_frame, &mut cursor),
-                Instruction::StoreLocal => self.store_local(call_frame, &mut cursor),
-                Instruction::AssignLocal => self.assign_local(call_frame, &mut cursor),
+                Instruction::LoadLocal => self.load_local(stack_frame, &mut cursor),
+                Instruction::StoreLocal => self.store_local(stack_frame, &mut cursor),
+                Instruction::AssignLocal => self.assign_local(stack_frame, &mut cursor),
                 Instruction::LoadUpvalue => self.load_upvalue(parent_upvalues, &mut cursor),
                 Instruction::StoreUpvalue => self.store_upvalue(parent_upvalues, &mut cursor),
                 Instruction::AssignUpvalue => self.assign_upvalue(parent_upvalues, &mut cursor),
-                Instruction::CloseUpvalue => self.close_upvalue(call_frame, &mut cursor),
+                Instruction::CloseUpvalue => self.close_upvalue(stack_frame, &mut cursor),
                 Instruction::LoadGlobal => self.load_global(bytecode, &mut cursor)?,
                 Instruction::StoreGlobal => self.store_global(bytecode, &mut cursor)?,
                 Instruction::LoadField => self.load_field(bytecode, &mut cursor)?,
@@ -85,12 +85,14 @@ where
                 Instruction::AssignIndex => self.assign_index()?,
                 Instruction::LoadMethod => self.load_method(bytecode, &mut cursor)?,
                 Instruction::StoreMethod => self.store_method(bytecode, &mut cursor)?,
-                Instruction::LoadFieldToLocal => self.load_field_to_local(bytecode, call_frame, &mut cursor)?,
+                Instruction::LoadFieldToLocal => self.load_field_to_local(bytecode, stack_frame, &mut cursor)?,
                 Instruction::Call => self.call(&mut cursor)?,
                 Instruction::CallSuper => self.call_super(&mut cursor)?,
                 Instruction::AssertBool => self.assert_bool()?,
-                Instruction::AssertTypeForLocal => self.assert_type_for_local(call_frame, &mut cursor)?,
-                Instruction::AssertTypeOrNullForLocal => self.assert_type_or_null_for_local(call_frame, &mut cursor)?,
+                Instruction::AssertTypeForLocal => self.assert_type_for_local(stack_frame, &mut cursor)?,
+                Instruction::AssertTypeOrNullForLocal => {
+                    self.assert_type_or_null_for_local(stack_frame, &mut cursor)?
+                }
                 Instruction::AssertTypeAndReturn => {
                     self.assert_type_and_return()?;
                     break;
@@ -136,12 +138,12 @@ where
 
     fn assert_type_for_local(
         &mut self,
-        call_frame: CallFrame,
+        stack_frame: StackFrame,
         cursor: &mut BytecodeCursor,
     ) -> Result<(), RuntimeError> {
         let class = self.stack.pop();
         let class = class.as_class()?;
-        let value = &self.stack[call_frame][cursor.read_u8() as usize];
+        let value = &self.stack[stack_frame][cursor.read_u8() as usize];
 
         if *value == Value::Null {
             return Err(RuntimeError::Aborted(String::from("Value cannot be null.")));
@@ -164,12 +166,12 @@ where
 
     fn assert_type_or_null_for_local(
         &mut self,
-        call_frame: CallFrame,
+        stack_frame: StackFrame,
         cursor: &mut BytecodeCursor,
     ) -> Result<(), RuntimeError> {
         let class = self.stack.pop();
         let class = class.as_class()?;
-        let value = &self.stack[call_frame][cursor.read_u8() as usize];
+        let value = &self.stack[stack_frame][cursor.read_u8() as usize];
 
         if *value == Value::Null {
             return Ok(());
@@ -487,27 +489,27 @@ where
         Ok(())
     }
 
-    fn load_local(&mut self, call_frame: CallFrame, cursor: &mut BytecodeCursor) {
+    fn load_local(&mut self, stack_frame: StackFrame, cursor: &mut BytecodeCursor) {
         // TODO Bounds check the slot?
         let slot = cursor.read_u8() as usize;
-        let frame = &self.stack[call_frame];
+        let frame = &self.stack[stack_frame];
         let value = frame[slot].clone();
         self.stack.push(value);
     }
 
-    fn store_local(&mut self, call_frame: CallFrame, cursor: &mut BytecodeCursor) {
+    fn store_local(&mut self, stack_frame: StackFrame, cursor: &mut BytecodeCursor) {
         let value = self.stack.pop();
         let slot = cursor.read_u8() as usize;
 
-        self.stack[call_frame][slot] = value.clone();
+        self.stack[stack_frame][slot] = value.clone();
         self.stack.push(value);
     }
 
-    fn assign_local(&mut self, call_frame: CallFrame, cursor: &mut BytecodeCursor) {
+    fn assign_local(&mut self, stack_frame: StackFrame, cursor: &mut BytecodeCursor) {
         let value = self.stack.pop();
         let slot = cursor.read_u8() as usize;
 
-        self.stack[call_frame][slot] = value;
+        self.stack[stack_frame][slot] = value;
         self.stack.push(Value::Unit);
     }
 
@@ -564,10 +566,10 @@ where
         }
     }
 
-    fn close_upvalue(&mut self, call_frame: CallFrame, cursor: &mut BytecodeCursor) {
+    fn close_upvalue(&mut self, stack_frame: StackFrame, cursor: &mut BytecodeCursor) {
         let offset = cursor.read_u8() as usize;
-        let value = std::mem::replace(&mut self.stack[call_frame][offset], Value::Null);
-        let offset = call_frame.start() + offset;
+        let value = std::mem::replace(&mut self.stack[stack_frame][offset], Value::Null);
+        let offset = stack_frame.start() + offset;
         let found_upvalue = self.find_open_upvalue(offset);
 
         if let Some((index, _)) = found_upvalue {
@@ -734,7 +736,7 @@ where
     fn load_field_to_local(
         &mut self,
         bytecode: &Bytecode,
-        call_frame: CallFrame,
+        stack_frame: StackFrame,
         cursor: &mut BytecodeCursor,
     ) -> Result<(), RuntimeError> {
         let key_index = cursor.read_u8() as usize;
@@ -743,7 +745,7 @@ where
         let value = self.stack.pop();
         let value = self.get_field(&key, value)?;
 
-        self.stack[call_frame][local_slot] = value.clone();
+        self.stack[stack_frame][local_slot] = value.clone();
         self.stack.push(value);
 
         Ok(())
@@ -752,7 +754,7 @@ where
     fn create_closure(
         &mut self,
         bytecode: &Bytecode,
-        call_frame: CallFrame,
+        stack_frame: StackFrame,
         parent_upvalues: Option<&[Upvalue]>,
         cursor: &mut BytecodeCursor,
     ) -> Result<(), RuntimeError> {
@@ -768,10 +770,10 @@ where
                     let index = cursor.read_u8() as usize;
 
                     if is_parent_local {
-                        let offset = call_frame.start() + index;
+                        let offset = stack_frame.start() + index;
                         match self.find_open_upvalue(offset) {
                             None => {
-                                let upvalue = Upvalue::new_open(call_frame.start() + index);
+                                let upvalue = Upvalue::new_open(stack_frame.start() + index);
                                 self.open_upvalues.push_back(upvalue.clone());
                                 upvalues.push(upvalue);
                             }

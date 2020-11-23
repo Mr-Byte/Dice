@@ -689,7 +689,7 @@ impl Parser {
         let next_token = self.lexer.peek()?;
 
         match next_token.kind {
-            TokenKind::Dot => self.super_method_access(can_assign, span_start),
+            TokenKind::Dot | TokenKind::LeftSquare => self.super_method_access(can_assign, span_start),
             TokenKind::LeftParen => self.super_call(span_start),
             _ => Err(SyntaxError::UnexpectedToken(next_token.to_string(), next_token.span())),
         }
@@ -764,18 +764,30 @@ impl Parser {
         Ok(self.arena.alloc(node))
     }
 
-    fn super_method_access(&mut self, can_assign: bool, span_start: Span) -> Result<SyntaxNodeId, SyntaxError> {
+    fn super_method_access(&mut self, _: bool, span_start: Span) -> Result<SyntaxNodeId, SyntaxError> {
+        let super_class = if self.lexer.peek()?.kind == TokenKind::LeftSquare {
+            self.lexer.consume(TokenKind::LeftSquare)?;
+            let (_, ident) = self.lexer.consume_ident()?;
+            self.lexer.consume(TokenKind::RightSquare)?;
+
+            Some(ident)
+        } else {
+            None
+        };
+
         self.lexer.consume(TokenKind::Dot)?;
 
         let (_, field) = self.lexer.consume_ident()?;
         let span_end = self.lexer.current().span();
         let node = SyntaxNode::SuperAccess(SuperAccess {
             field,
+            super_class,
             span: span_start + span_end,
         });
-        let lhs_expression = self.arena.alloc(node);
 
-        self.parse_assignment(lhs_expression, can_assign, span_start)
+        let super_call = self.arena.alloc(node);
+
+        Ok(super_call)
     }
 
     fn object(&mut self, _: bool) -> SyntaxNodeResult {

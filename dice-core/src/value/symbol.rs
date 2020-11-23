@@ -36,6 +36,12 @@ impl From<String> for Symbol {
     }
 }
 
+impl Into<String> for Symbol {
+    fn into(self) -> String {
+        self.to_string()
+    }
+}
+
 impl<'a> From<&'a str> for Symbol {
     fn from(value: &'a str) -> Self {
         INTERNED_SYMBOLS.with(|strings| {
