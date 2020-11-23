@@ -21,21 +21,11 @@ impl NodeVisitor<&SuperAccess> for Compiler {
         }
 
         match super_class {
-            Some(super_class) => {
-                emit_bytecode! {
-                    self.assembler()?, *span => [
-                         {self.visit(&LitIdent::synthesize(super_class, *span))?};
-                         {self.visit(&LitIdent::synthesize(SELF.get(), *span))?};
-                         // TODO: Assert self is a subtype of super_class
-                    ]
-                }
-            }
-            None => {
-                self.visit(&LitIdent::synthesize(SUPER.get(), *span))?;
-                self.visit(&LitIdent::synthesize(SELF.get(), *span))?;
-            }
+            Some(super_class) => self.visit(&LitIdent::synthesize(super_class, *span))?,
+            None => self.visit(&LitIdent::synthesize(SUPER.get(), *span))?,
         }
 
+        self.visit(&LitIdent::synthesize(SELF.get(), *span))?;
         self.assembler()?.load_method(&**field, *span)?;
 
         Ok(())
