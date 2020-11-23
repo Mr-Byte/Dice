@@ -1,13 +1,12 @@
-use crate::visitor::ClassKind;
 use crate::{
     compiler::Compiler,
     scope_stack::{ScopeKind, State},
-    visitor::{decl_op::OpKind, FnKind, NodeVisitor},
+    visitor::{decl_op::OpKind, ClassKind, FnKind, NodeVisitor},
 };
-use dice_core::protocol::object::ANY_CLASS;
 use dice_core::{
     protocol::{
         class::{NEW, SELF, SUPER},
+        object::ANY_CLASS,
         ProtocolSymbol,
     },
     value::Symbol,

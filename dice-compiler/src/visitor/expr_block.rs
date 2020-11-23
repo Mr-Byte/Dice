@@ -1,9 +1,9 @@
 use super::NodeVisitor;
-use crate::visitor::ClassKind;
 use crate::{
     compiler::Compiler,
     compiler_stack::CompilerKind,
     scope_stack::{ScopeKind, State},
+    visitor::ClassKind,
 };
 use dice_core::protocol::{class::SELF, ProtocolSymbol};
 use dice_error::{compiler_error::CompilerError, span::Span};

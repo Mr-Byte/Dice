@@ -1,14 +1,12 @@
-use crate::protocol::class::NEW;
-use crate::protocol::ProtocolSymbol;
 use crate::{
+    protocol::{class::NEW, ProtocolSymbol},
     type_id::TypeId,
     value::{symbol::Symbol, Object, Value, ValueKind, ValueMap},
 };
-use std::collections::HashMap;
 use std::{
     any::Any,
     cell::RefCell,
-    collections::HashSet,
+    collections::{HashMap, HashSet},
     fmt::{Display, Formatter},
     hash::BuildHasherDefault,
     ops::Deref,

@@ -1,7 +1,9 @@
 use super::NodeVisitor;
 use crate::compiler::Compiler;
-use dice_core::protocol::class::{SELF, SUPER};
-use dice_core::protocol::ProtocolSymbol;
+use dice_core::protocol::{
+    class::{SELF, SUPER},
+    ProtocolSymbol,
+};
 use dice_error::compiler_error::CompilerError;
 use dice_syntax::{LitIdent, SuperCall};
 

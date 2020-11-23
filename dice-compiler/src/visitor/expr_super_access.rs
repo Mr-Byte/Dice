@@ -1,6 +1,5 @@
 use super::NodeVisitor;
-use crate::compiler::Compiler;
-use crate::compiler_stack::CompilerKind;
+use crate::{compiler::Compiler, compiler_stack::CompilerKind};
 use dice_core::protocol::{
     class::{SELF, SUPER},
     ProtocolSymbol,

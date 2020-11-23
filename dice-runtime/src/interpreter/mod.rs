@@ -1,7 +1,6 @@
 mod helper;
 
 use crate::{module::ModuleLoader, runtime::Runtime, stack::CallFrame};
-use dice_core::runtime::Runtime as _;
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
     protocol::operator::{
@@ -805,7 +804,7 @@ where
         let arg_count = cursor.read_u8() as usize;
         let super_ = self.stack.pop().as_class()?;
         let receiver = self.stack.peek(arg_count).clone();
-        let result = self.call_class_constructor(arg_count, &super_, receiver.clone())?;
+        let result = self.call_class_constructor(arg_count, &super_, receiver)?;
 
         self.stack.push(result);
 
