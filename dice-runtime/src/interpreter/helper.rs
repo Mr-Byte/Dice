@@ -163,6 +163,10 @@ impl<L: ModuleLoader> Runtime<L> {
             return Err(RuntimeError::Aborted(String::from(
                 "TODO: Constructor has too many parameters error.",
             )));
+        } else if class.base().filter(|base| base.method(&NEW).is_some()).is_some() {
+            return Err(RuntimeError::Aborted(String::from(
+                "TODO: Class must have constructor if super has constructor.",
+            )));
         }
 
         // NOTE: Regardless of whether or not there was a constructor, clean up the stack.
