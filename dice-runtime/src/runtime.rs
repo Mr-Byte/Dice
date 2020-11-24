@@ -146,11 +146,11 @@ where
         Ok(self.stack.pop())
     }
 
-    fn any_class(&mut self) -> Result<Class, RuntimeError> {
+    fn any_class(&self) -> Result<Class, RuntimeError> {
         Ok(self.any_class.clone())
     }
 
-    fn class_of(&mut self, value: &Value) -> Result<Class, RuntimeError> {
+    fn class_of(&self, value: &Value) -> Result<Class, RuntimeError> {
         let result = value
             .as_object()
             .ok()
@@ -159,5 +159,14 @@ where
             .unwrap_or_else(|| self.any_class.clone());
 
         Ok(result)
+    }
+
+    fn is_value_of_type(&self, value: &Value, class: &Class) -> Result<bool, RuntimeError> {
+        value
+            .as_object()
+            .ok()
+            .and_then(|object| object.class())
+            .or_else(|| self.value_class_mapping.get(&value.kind()).cloned())
+            .map_or(Ok(false), |instance_class| Ok(instance_class.is_class(&class)))
     }
 }

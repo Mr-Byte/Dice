@@ -11,6 +11,7 @@ pub trait Runtime {
 
     fn call_function(&mut self, target: Value, args: &[Value]) -> Result<Value, RuntimeError>;
 
-    fn any_class(&mut self) -> Result<Class, RuntimeError>;
-    fn class_of(&mut self, value: &Value) -> Result<Class, RuntimeError>;
+    fn any_class(&self) -> Result<Class, RuntimeError>;
+    fn class_of(&self, value: &Value) -> Result<Class, RuntimeError>;
+    fn is_value_of_type(&self, value: &Value, class: &Class) -> Result<bool, RuntimeError>;
 }

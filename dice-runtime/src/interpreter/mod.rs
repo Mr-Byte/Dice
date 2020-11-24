@@ -1,6 +1,7 @@
 mod helper;
 
 use crate::{module::ModuleLoader, runtime::Runtime, stack::StackFrame};
+use dice_core::runtime::Runtime as _;
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
     protocol::operator::{
@@ -426,20 +427,11 @@ where
         let class = self.stack.pop();
         let class = class.as_class()?;
         let instance = self.stack.peek(0);
-        let is_type = self.is_type(&instance, &class);
+        let is_type = self.is_value_of_type(&instance, &class)?;
 
         *self.stack.peek_mut(0) = Value::Bool(is_type);
 
         Ok(())
-    }
-
-    fn is_type(&self, value: &Value, class: &Class) -> bool {
-        value
-            .as_object()
-            .ok()
-            .and_then(|object| object.class())
-            .or_else(|| self.value_class_mapping.get(&value.kind()).cloned())
-            .map_or(false, |instance_class| instance_class.is_class(&class))
     }
 
     fn create_list(&mut self, cursor: &mut BytecodeCursor) {
@@ -720,7 +712,7 @@ where
         let receiver = self.stack.pop();
         let class = self.stack.pop().as_class()?;
 
-        if !self.is_type(&receiver, &class) {
+        if !self.is_value_of_type(&receiver, &class)? {
             return Err(RuntimeError::Aborted(String::from("TODO: Invalid super type error.")));
         }
 
