@@ -1,5 +1,5 @@
 [package]
-name = "dice-syntax"
+name = "dice-syntax2"
 version = "0.1.0"
 authors = ["Josh Rodgers <bytemr@gmail.com>"]
 edition = "2018"
@@ -8,5 +8,10 @@ edition = "2018"
 
 [dependencies]
 logos = "0.11"
-id-arena = "2.2"
-dice-error = {path = "../dice-error"}
+num-derive = "0.3"
+num-traits = "0.2"
+rowan = "0.10"
+wyhash = "0.4"
+
+[dev-dependencies]
+expect-test = "1.0"

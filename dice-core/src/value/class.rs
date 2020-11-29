@@ -89,6 +89,7 @@ impl Class {
         let method = method.into();
 
         if method.kind() != ValueKind::Function {
+            todo!("Return error")
             // TODO: Return error.
         }
 
