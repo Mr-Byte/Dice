@@ -1,37 +1,64 @@
-use crate::parser::rules::Precedence;
 use crate::syntax::SyntaxKind;
 use crate::Parser;
 
 impl<'a> Parser<'a> {
-    pub(super) fn parse_expr(&mut self, precedence: Precedence) {
+    pub(super) fn parse_expr(&mut self, minimum_binding: u8) {
         self.skip_trivia();
-
         let checkpoint = self.checkpoint();
 
-        // NOTE: Parse either a prefix operator or literal.
-        match self.peek_prefix_rule() {
-            Some((parser, _)) => parser(self, false),
-            None => return, // TODO: Handle errors.
+        let next = self.peek();
+
+        if next.map_or(false, is_literal) {
+            self.bump();
+        } else {
+            // TODO: Handle prefix operators here.
         }
 
         self.skip_trivia();
 
         loop {
-            match self.peek_infix_rule() {
-                Some((parser, infix_precedence)) => {
-                    if precedence > *infix_precedence {
-                        return;
-                    }
-
-                    parser(self, false);
-                    self.start_node_at(checkpoint, SyntaxKind::InfixExpr);
-                    self.parse_expr(precedence.next());
-                    self.finish_node();
+            if let Some(precedence) = self.peek().and_then(InfixPrecedence::try_from_kind) {
+                if precedence.left_binding < minimum_binding {
+                    return;
                 }
-                None => return,
-            }
 
-            self.skip_trivia();
+                self.bump();
+                self.start_node_at(checkpoint, SyntaxKind::InfixExpr);
+                self.parse_expr(precedence.right_binding);
+                self.finish_node();
+            } else {
+                return;
+                // TODO: This is an error.
+            }
+        }
+    }
+}
+
+fn is_literal(kind: SyntaxKind) -> bool {
+    kind == SyntaxKind::Integer
+        || kind == SyntaxKind::Float
+        || kind == SyntaxKind::Identifier
+        || kind == SyntaxKind::String
+}
+
+struct InfixPrecedence {
+    left_binding: u8,
+    right_binding: u8,
+}
+
+impl InfixPrecedence {
+    const fn try_from_kind(kind: SyntaxKind) -> Option<Self> {
+        match kind {
+            SyntaxKind::Plus | SyntaxKind::Minus => Some(Self::new(1, 2)),
+            SyntaxKind::Star | SyntaxKind::Slash | SyntaxKind::Remainder => Some(Self::new(3, 4)),
+            _ => None,
+        }
+    }
+
+    const fn new(left: u8, right: u8) -> Self {
+        Self {
+            left_binding: left,
+            right_binding: right,
         }
     }
 }

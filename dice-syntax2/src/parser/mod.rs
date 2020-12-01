@@ -1,43 +1,29 @@
-mod parse_bin_op;
 mod parse_expr;
-mod parse_literal;
-mod rules;
 
 use crate::lexer::Lexer;
-use crate::parser::rules::{ParserFn, Precedence, Rule};
 use crate::syntax::{Lang, SyntaxKind, SyntaxNode};
 use rowan::{GreenNode, GreenNodeBuilder, Language};
-use std::collections::HashMap;
-use std::hash::BuildHasherDefault;
 
 pub struct Parser<'a> {
     lexer: Lexer<'a>,
-    rules: HashMap<SyntaxKind, Rule<'a>, BuildHasherDefault<wyhash::WyHash>>,
     builder: GreenNodeBuilder<'static>,
 }
 
 impl<'a> Parser<'a> {
     pub fn new(input: &'a str) -> Self {
-        Parser::initialize_rules(Self {
+        Self {
             lexer: Lexer::new(input),
-            rules: Default::default(),
             builder: GreenNodeBuilder::new(),
-        })
+        }
     }
 
     pub fn parse(mut self) -> ParseResult {
         self.start_node(SyntaxKind::Root);
-        self.parse_expr(Precedence::None);
+        self.parse_expr(0);
         self.finish_node();
 
         ParseResult {
             green_node: self.builder.finish(),
-        }
-    }
-
-    fn skip_trivia(&mut self) {
-        while let Some(SyntaxKind::Whitespace) | Some(SyntaxKind::Comment) = self.peek() {
-            self.bump()
         }
     }
 
@@ -49,18 +35,6 @@ impl<'a> Parser<'a> {
 
     fn peek(&mut self) -> Option<SyntaxKind> {
         self.lexer.peek()
-    }
-
-    fn peek_prefix_rule(&mut self) -> Option<&(ParserFn<'a>, Precedence)> {
-        self.peek()
-            .and_then(move |kind| self.rules.get(&kind))
-            .and_then(|rule| rule.prefix())
-    }
-
-    fn peek_infix_rule(&mut self) -> Option<&(ParserFn<'a>, Precedence)> {
-        self.peek()
-            .and_then(move |kind| self.rules.get(&kind))
-            .and_then(|rule| rule.infix())
     }
 
     fn start_node(&mut self, kind: SyntaxKind) {
@@ -77,6 +51,12 @@ impl<'a> Parser<'a> {
 
     fn checkpoint(&mut self) -> rowan::Checkpoint {
         self.builder.checkpoint()
+    }
+
+    fn skip_trivia(&mut self) {
+        while let Some(SyntaxKind::Whitespace) | Some(SyntaxKind::Comment) = self.peek() {
+            self.bump()
+        }
     }
 }
 
