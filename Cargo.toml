@@ -6,8 +6,7 @@ members = [
     "dice-core",
     "dice-error",
     "dice-runtime",
-    "dice-syntax",
-    "dice-syntax2"
+    "dice-syntax"
 ]
 
 default-members = [

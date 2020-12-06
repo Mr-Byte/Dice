@@ -2,7 +2,6 @@ use dice::{
     value::{NativeFn, Value},
     Dice, Runtime, RuntimeError,
 };
-use dice_syntax2::Parser;
 use std::{io::Write, rc::Rc};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -31,19 +30,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
 
-        let input = std::str::from_utf8(&input)?;
-        let parse_result = Parser::new(input).parse();
-        println!("{}", parse_result.format_tree());
+        let start = std::time::Instant::now();
+        let input = std::str::from_utf8(input.as_slice())?;
 
-        // let start = std::time::Instant::now();
-        //
-        // match dice.run_script(input) {
-        //     Ok(result) => {
-        //         let elapsed = start.elapsed();
-        //         println!("Result (time={} ms): {}", (elapsed.as_micros() as f64 / 1000.0), result,);
-        //     }
-        //     Err(err) => eprintln!("{}", err),
-        // };
+        match dice.run_script(input) {
+            Ok(result) => {
+                let elapsed = start.elapsed();
+                println!("Result (time={} ms): {}", (elapsed.as_micros() as f64 / 1000.0), result,);
+            }
+            Err(err) => eprintln!("{}", err),
+        };
     }
 }
 
