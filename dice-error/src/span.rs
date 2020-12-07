@@ -1,12 +1,9 @@
-use std::{
-    fmt::{Debug, Display},
-    ops::{Add, Range},
-};
+use std::ops::{Add, Range};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct Span {
-    start: usize,
-    end: usize,
+    pub start: usize,
+    pub end: usize,
 }
 
 impl Span {
@@ -15,6 +12,18 @@ impl Span {
             start: range.start,
             end: range.end,
         }
+    }
+
+    pub const fn len(&self) -> usize {
+        self.end - self.start
+    }
+
+    pub const fn is_empty(&self) -> bool {
+        self.start == self.end
+    }
+
+    pub const fn range(&self) -> Range<usize> {
+        self.start..self.end
     }
 }
 
@@ -67,8 +76,4 @@ impl Add for &Span {
 
         Self::Output { start, end }
     }
-}
-
-pub trait SpannedError: Display + Debug {
-    fn span(&self) -> Span;
 }

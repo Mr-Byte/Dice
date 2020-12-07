@@ -1,4 +1,4 @@
-use crate::span::{Span, SpannedError};
+use crate::span::Span;
 use std::num::{ParseFloatError, ParseIntError};
 
 #[derive(thiserror::Error, Debug, Clone)]
@@ -32,16 +32,4 @@ pub enum SyntaxError {
 
     #[error("{0}")]
     LexerError(#[source] LexerError, Span),
-}
-
-impl SpannedError for SyntaxError {
-    fn span(&self) -> Span {
-        match self {
-            SyntaxError::UnexpectedToken(_, span) => *span,
-            SyntaxError::FnTooManyArguments(_, span) => *span,
-            SyntaxError::ConstructorTooManyArguments(span) => *span,
-            SyntaxError::AnonymousFnTooManyArguments(span) => *span,
-            SyntaxError::LexerError(_, span) => *span,
-        }
-    }
 }
