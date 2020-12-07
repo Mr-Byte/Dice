@@ -1,12 +1,12 @@
 mod helper;
 
 use crate::{module::ModuleLoader, runtime::Runtime, stack::StackFrame};
-use dice_core::runtime::Runtime as _;
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
     protocol::operator::{
         ADD, DICE_ROLL, DIE_ROLL, DIV, EQ, GT, GTE, LT, LTE, MUL, NEQ, RANGE_EXCLUSIVE, RANGE_INCLUSIVE, REM, SUB,
     },
+    runtime::Runtime as _,
     upvalue::{Upvalue, UpvalueState},
     value::{Class, FnClosure, Object, Value, ValueKind},
 };

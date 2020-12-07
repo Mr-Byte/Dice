@@ -1,6 +1,5 @@
 use super::{BlockKind, NodeVisitor};
-use crate::compiler_error::CompilerError;
-use crate::{compiler::Compiler, scope_stack::ScopeKind};
+use crate::{compiler::Compiler, compiler_error::CompilerError, scope_stack::ScopeKind};
 use dice_core::span::Span;
 use dice_syntax::{SyntaxNode, WhileLoop};
 

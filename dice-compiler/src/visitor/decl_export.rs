@@ -1,5 +1,4 @@
-use crate::compiler_error::CompilerError;
-use crate::{compiler::Compiler, compiler_stack::CompilerKind, visitor::NodeVisitor};
+use crate::{compiler::Compiler, compiler_error::CompilerError, compiler_stack::CompilerKind, visitor::NodeVisitor};
 use dice_core::protocol::{module::EXPORT, ProtocolSymbol};
 use dice_syntax::{ExportDecl, SyntaxNode, VarDecl, VarDeclKind};
 

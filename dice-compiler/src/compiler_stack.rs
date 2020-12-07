@@ -4,8 +4,7 @@ use super::{
     upvalue::UpvalueDescriptor,
 };
 use crate::compiler_error::CompilerError;
-use dice_core::span::Span;
-use dice_core::{bytecode::Bytecode, value::Symbol};
+use dice_core::{bytecode::Bytecode, span::Span, value::Symbol};
 use dice_syntax::TypeAnnotation;
 
 #[derive(Debug, Clone)]

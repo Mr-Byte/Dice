@@ -1,6 +1,5 @@
 use super::NodeVisitor;
-use crate::compiler_error::CompilerError;
-use crate::{compiler::Compiler, compiler_stack::CompilerKind};
+use crate::{compiler::Compiler, compiler_error::CompilerError, compiler_stack::CompilerKind};
 use dice_core::protocol::class::SELF;
 use dice_syntax::Return;
 

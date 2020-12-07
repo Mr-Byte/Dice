@@ -1,8 +1,6 @@
 use super::NodeVisitor;
-use crate::compiler_error::CompilerError;
-use crate::{compiler::Compiler, scope_stack::ScopeVariable};
-use dice_core::span::Span;
-use dice_core::value::Symbol;
+use crate::{compiler::Compiler, compiler_error::CompilerError, scope_stack::ScopeVariable};
+use dice_core::{span::Span, value::Symbol};
 use dice_syntax::{Assignment, AssignmentOperator, FieldAccess, Index, SyntaxNode, SyntaxNodeId};
 
 impl NodeVisitor<&Assignment> for Compiler {

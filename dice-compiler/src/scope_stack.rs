@@ -1,6 +1,5 @@
 use crate::compiler_error::CompilerError;
-use dice_core::span::Span;
-use dice_core::value::Symbol;
+use dice_core::{span::Span, value::Symbol};
 
 #[derive(Clone)]
 pub struct ScopeVariable {

@@ -1,6 +1,5 @@
 use super::NodeVisitor;
-use crate::compiler_error::CompilerError;
-use crate::{compiler::Compiler, visitor::FnKind};
+use crate::{compiler::Compiler, compiler_error::CompilerError, visitor::FnKind};
 use dice_core::value::{FnScript, Value};
 use dice_syntax::LitAnonymousFn;
 

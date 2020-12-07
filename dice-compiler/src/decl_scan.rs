@@ -1,5 +1,4 @@
-use crate::compiler_error::CompilerError;
-use crate::{compiler::Compiler, scope_stack::State};
+use crate::{compiler::Compiler, compiler_error::CompilerError, scope_stack::State};
 use dice_syntax::{Block, ClassDecl, FnDecl, SyntaxNode, SyntaxNodeId};
 
 impl Compiler {

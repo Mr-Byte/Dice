@@ -1,7 +1,7 @@
 use super::NodeVisitor;
-use crate::compiler_error::CompilerError;
 use crate::{
     compiler::Compiler,
+    compiler_error::CompilerError,
     scope_stack::{ScopeKind, State},
 };
 use dice_core::protocol::iterator::{DONE, ITER, NEXT, VALUE};

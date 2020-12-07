@@ -1,6 +1,6 @@
-use crate::compiler_error::CompilerError;
 use crate::{
     compiler::Compiler,
+    compiler_error::CompilerError,
     scope_stack::{ScopeKind, State},
     visitor::NodeVisitor,
 };

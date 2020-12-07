@@ -1,5 +1,4 @@
-use dice_core::span::Span;
-use dice_core::spanned_error::SpannedError;
+use dice_core::{span::Span, spanned_error::SpannedError};
 
 #[derive(Clone, Debug, thiserror::Error)]
 #[error("{0}")]

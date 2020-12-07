@@ -1,13 +1,15 @@
 use super::NodeVisitor;
-use crate::compiler_error::CompilerError;
 use crate::{
     compiler::Compiler,
+    compiler_error::CompilerError,
     compiler_stack::CompilerKind,
     scope_stack::{ScopeKind, State},
     visitor::ClassKind,
 };
-use dice_core::protocol::{class::SELF, ProtocolSymbol};
-use dice_core::span::Span;
+use dice_core::{
+    protocol::{class::SELF, ProtocolSymbol},
+    span::Span,
+};
 use dice_syntax::{Block, FnArg, SyntaxNode};
 
 impl NodeVisitor<&Block> for Compiler {

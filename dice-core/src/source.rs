@@ -1,9 +1,5 @@
-use crate::span::Span;
-use crate::spanned_error::SpannedError;
-use std::collections::HashMap;
-use std::hash::BuildHasherDefault;
-use std::iter;
-use std::rc::Rc;
+use crate::{span::Span, spanned_error::SpannedError};
+use std::{collections::HashMap, hash::BuildHasherDefault, iter, rc::Rc};
 use wyhash::WyHash;
 
 pub struct LineColumn {
@@ -210,12 +206,12 @@ impl LineIndex {
     }
 
     fn convert_to_utf16_column(&self, line: usize, col: usize) -> usize {
-        let mut result: usize = col.into();
+        let mut result: usize = col;
 
         if let Some(utf16_chars) = self.utf16_lines.get(&line) {
             for character in utf16_chars {
                 if character.end() <= col {
-                    result -= usize::from(character.len()) - character.len_utf16();
+                    result -= character.len() - character.len_utf16();
                 } else {
                     break;
                 }
@@ -239,9 +235,11 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::source::{LineIndex, Source, SourceKind};
-    use crate::span::Span;
-    use crate::spanned_error::SpannedError;
+    use crate::{
+        source::{LineIndex, Source, SourceKind},
+        span::Span,
+        spanned_error::SpannedError,
+    };
 
     struct TestError(String, Span);
 

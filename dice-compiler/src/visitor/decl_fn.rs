@@ -1,8 +1,11 @@
 use super::NodeVisitor;
-use crate::compiler_error::CompilerError;
-use crate::{compiler::Compiler, scope_stack::State, upvalue::UpvalueDescriptor, visitor::FnKind};
-use dice_core::span::Span;
-use dice_core::value::{FnScript, Symbol, Value};
+use crate::{
+    compiler::Compiler, compiler_error::CompilerError, scope_stack::State, upvalue::UpvalueDescriptor, visitor::FnKind,
+};
+use dice_core::{
+    span::Span,
+    value::{FnScript, Symbol, Value},
+};
 use dice_syntax::{FnArg, FnDecl};
 use std::collections::HashSet;
 

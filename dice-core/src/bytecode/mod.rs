@@ -1,5 +1,4 @@
-use crate::span::Span;
-use crate::value::Value;
+use crate::{span::Span, value::Value};
 pub use cursor::BytecodeCursor;
 use instruction::Instruction;
 use std::{collections::HashMap, fmt::Display, rc::Rc};

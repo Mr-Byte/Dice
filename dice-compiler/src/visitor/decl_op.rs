@@ -1,6 +1,5 @@
 use super::NodeVisitor;
-use crate::compiler_error::CompilerError;
-use crate::{compiler::Compiler, upvalue::UpvalueDescriptor, visitor::FnKind};
+use crate::{compiler::Compiler, compiler_error::CompilerError, upvalue::UpvalueDescriptor, visitor::FnKind};
 use dice_core::{
     protocol::{
         operator::{

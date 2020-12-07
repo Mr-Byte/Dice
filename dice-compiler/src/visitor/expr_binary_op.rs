@@ -1,6 +1,5 @@
 use super::NodeVisitor;
-use crate::compiler::Compiler;
-use crate::compiler_error::CompilerError;
+use crate::{compiler::Compiler, compiler_error::CompilerError};
 use dice_core::span::Span;
 use dice_syntax::{Binary, BinaryOperator, SyntaxNodeId};
 

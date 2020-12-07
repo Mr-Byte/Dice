@@ -1,16 +1,16 @@
-use crate::compiler_error::CompilerError;
 use crate::{
     compiler::Compiler,
+    compiler_error::CompilerError,
     scope_stack::{ScopeKind, State},
     visitor::{decl_op::OpKind, ClassKind, FnKind, NodeVisitor},
 };
-use dice_core::span::Span;
 use dice_core::{
     protocol::{
         class::{NEW, SELF, SUPER},
         object::ANY_CLASS,
         ProtocolSymbol,
     },
+    span::Span,
     value::Symbol,
 };
 use dice_syntax::{ClassDecl, FnDecl, LitIdent, OpDecl, SyntaxNode};
