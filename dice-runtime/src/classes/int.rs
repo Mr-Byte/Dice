@@ -4,7 +4,6 @@ use dice_core::{
     runtime::Runtime,
     value::{NativeFn, Value, ValueKind},
 };
-use dice_error::runtime_error::RuntimeError;
 use std::rc::Rc;
 
 impl<L> crate::Runtime<L>
@@ -41,7 +40,7 @@ where
     }
 }
 
-fn construct_int(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
+fn construct_int(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
     match args {
         [_, param, ..] => match param {
             value @ Value::Int(_) => Ok(value.clone()),
@@ -74,7 +73,7 @@ fn bind_i64_i64_ret_i64(function: impl Fn(i64, i64) -> i64 + 'static) -> NativeF
     })
 }
 
-fn pow(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
+fn pow(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
     if let [Value::Int(this), Value::Int(exp), ..] = args {
         Ok(Value::Int(this.pow(*exp as u32)))
     } else {

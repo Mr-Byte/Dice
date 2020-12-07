@@ -1,6 +1,6 @@
 mod token;
 
-use dice_error::syntax_error::SyntaxError;
+use crate::SyntaxError;
 use std::collections::VecDeque;
 
 pub use token::{Token, TokenKind};
@@ -43,7 +43,7 @@ impl Lexer {
         if next.kind == kind {
             Ok(next)
         } else {
-            Err(SyntaxError::UnexpectedToken(next.to_string(), next.span()))
+            todo!("Unexpected token.")
         }
     }
 
@@ -53,7 +53,7 @@ impl Lexer {
             let ident = ident.clone();
             Ok((next, ident))
         } else {
-            Err(SyntaxError::UnexpectedToken(next.to_string(), next.span()))
+            todo!("Unexpected token.")
         }
     }
 
@@ -63,7 +63,7 @@ impl Lexer {
             let string = string.to_owned();
             Ok((next, string))
         } else {
-            Err(SyntaxError::UnexpectedToken(next.to_string(), next.span()))
+            todo!("Unexpected token.")
         }
     }
 
@@ -72,7 +72,7 @@ impl Lexer {
         if kinds.contains(&next.kind) {
             Ok(next)
         } else {
-            Err(SyntaxError::UnexpectedToken(next.to_string(), next.span()))
+            todo!("Unexpected token.")
         }
     }
 }

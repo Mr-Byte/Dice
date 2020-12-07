@@ -1,5 +1,5 @@
 use crate::SyntaxNodeId;
-use dice_error::span::Span;
+use dice_core::span::Span;
 use std::fmt::{Display, Formatter};
 
 #[derive(Debug, Clone)]

@@ -8,7 +8,6 @@ mod object;
 mod string;
 mod symbol;
 
-use dice_error::type_error::TypeError;
 use std::{collections::HashMap, fmt::Display, hash::BuildHasherDefault};
 use wyhash::WyHash;
 
@@ -60,62 +59,62 @@ impl Value {
         Value::Array(vec.into())
     }
 
-    pub fn as_bool(&self) -> Result<bool, TypeError> {
+    pub fn as_bool(&self) -> Result<bool, ()> {
         match self {
             Value::Bool(bool) => Ok(*bool),
-            _ => Err(TypeError::NotABool),
+            _ => Err(()),
         }
     }
 
-    pub fn as_int(&self) -> Result<i64, TypeError> {
+    pub fn as_int(&self) -> Result<i64, ()> {
         match self {
             Value::Int(int) => Ok(*int),
-            _ => Err(TypeError::NotAFunction),
+            _ => Err(()),
         }
     }
 
-    pub fn as_float(&self) -> Result<f64, TypeError> {
+    pub fn as_float(&self) -> Result<f64, ()> {
         match self {
             Value::Float(float) => Ok(*float),
-            _ => Err(TypeError::NotAFloat),
+            _ => Err(()),
         }
     }
 
-    pub fn as_array(&self) -> Result<&Array, TypeError> {
+    pub fn as_array(&self) -> Result<&Array, ()> {
         match self {
             Value::Array(list) => Ok(list),
-            _ => Err(TypeError::NotAList),
+            _ => Err(()),
         }
     }
 
-    pub fn as_string(&self) -> Result<&String, TypeError> {
+    pub fn as_string(&self) -> Result<&String, ()> {
         match self {
             Value::String(string) => Ok(string),
-            _ => Err(TypeError::NotAList),
+            _ => Err(()),
         }
     }
 
-    pub fn as_symbol(&self) -> Result<Symbol, TypeError> {
+    pub fn as_symbol(&self) -> Result<Symbol, ()> {
         match self {
             Value::Symbol(symbol) => Ok(symbol.clone()),
             Value::String(string) => Ok(string.into()),
-            _ => Err(TypeError::NotAString),
+            _ => Err(()),
         }
     }
 
-    pub fn as_object(&self) -> Result<&Object, TypeError> {
+    pub fn as_object(&self) -> Result<&Object, ()> {
         match self {
             Value::Object(object) => Ok(object),
             Value::Class(class) => Ok(&(**class)),
             Value::Array(array) => Ok(&(**array)),
-            _ => Err(TypeError::NotAnObject),
+            _ => Err(()),
         }
     }
 
-    pub fn as_class(&self) -> Result<Class, TypeError> {
+    pub fn as_class(&self) -> Result<Class, ()> {
         match self {
             Value::Class(class) => Ok(class.clone()),
-            _ => Err(TypeError::NotAClass),
+            _ => Err(()),
         }
     }
 

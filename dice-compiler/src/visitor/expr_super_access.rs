@@ -17,7 +17,7 @@ impl NodeVisitor<&SuperAccess> for Compiler {
         }: &SuperAccess,
     ) -> Result<(), CompilerError> {
         if !matches!(self.context()?.kind(), CompilerKind::Method { .. } | CompilerKind::Constructor) {
-            return Err(CompilerError::InvalidSuperAccess(*span));
+            return Err(CompilerError::InvalidSuperAccess());
         }
 
         match super_class {

@@ -1,7 +1,5 @@
-use dice_error::{
-    span::Span,
-    syntax_error::{LexerError, SyntaxError},
-};
+use crate::SyntaxError;
+use dice_core::span::Span;
 use logos::{Lexer, Logos};
 use std::{
     cell::RefCell,
@@ -23,10 +21,7 @@ impl Token {
 
         lexer.spanned().map(move |(kind, span)| {
             let span: Span = span.into();
-            error.error().map_or_else(
-                || Ok(Token { kind, span }),
-                |err| Err(SyntaxError::LexerError(err, span)),
-            )
+            error.error().map_or_else(|| Ok(Token { kind, span }), |err| todo!())
         })
     }
 
@@ -45,12 +40,6 @@ impl Token {
 impl Display for Token {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.kind)
-    }
-}
-
-impl Into<SyntaxError> for Token {
-    fn into(self) -> SyntaxError {
-        SyntaxError::UnexpectedToken(self.to_string(), self.span)
     }
 }
 
@@ -206,10 +195,10 @@ pub enum TokenKind {
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct LexerResult(Rc<RefCell<Option<LexerError>>>);
+pub struct LexerResult(Rc<RefCell<Option<()>>>);
 
 impl LexerResult {
-    fn error(&self) -> Option<LexerError> {
+    fn error(&self) -> Option<()> {
         self.0.borrow().clone()
     }
 }
@@ -218,7 +207,7 @@ fn parse_int(lexer: &mut Lexer<TokenKind>) -> Option<i64> {
     match lexer.slice().parse() {
         Ok(int) => Some(int),
         Err(err) => {
-            *lexer.extras.0.borrow_mut() = Some(LexerError::from(err));
+            *lexer.extras.0.borrow_mut() = Some(());
             None
         }
     }
@@ -228,7 +217,7 @@ fn parse_float(lexer: &mut Lexer<TokenKind>) -> Option<f64> {
     match lexer.slice().parse() {
         Ok(float) => Some(float),
         Err(err) => {
-            *lexer.extras.0.borrow_mut() = Some(LexerError::from(err));
+            *lexer.extras.0.borrow_mut() = Some(());
             None
         }
     }
@@ -253,11 +242,13 @@ fn lex_string(lexer: &mut Lexer<TokenKind>) -> Option<String> {
                     Some('t') => result.push('\t'),
                     Some(next) => {
                         let sequence = format!("\\{}", next);
-                        *lexer.extras.0.borrow_mut() = Some(LexerError::UnrecognizedEscapeSequence(sequence));
+                        // Unknown escape sequence
+                        *lexer.extras.0.borrow_mut() = Some(());
                         return None;
                     }
                     None => {
-                        *lexer.extras.0.borrow_mut() = Some(LexerError::UnterminatedString);
+                        // Unterminated string
+                        *lexer.extras.0.borrow_mut() = Some(());
                         return None;
                     }
                 }
@@ -274,7 +265,8 @@ fn lex_string(lexer: &mut Lexer<TokenKind>) -> Option<String> {
                 result.push(current);
             }
             None => {
-                *lexer.extras.0.borrow_mut() = Some(LexerError::UnterminatedString);
+                // Unterminated string
+                *lexer.extras.0.borrow_mut() = Some(());
                 return None;
             }
         }

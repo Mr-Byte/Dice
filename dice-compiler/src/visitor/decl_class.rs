@@ -95,7 +95,7 @@ impl Compiler {
         let kind = if let Some(self_param) = self_param {
             // NOTE: If the self parameter has a type annotation, return an error.
             if self_param.type_.is_some() {
-                return Err(CompilerError::SelfParameterHasType(self_param.span));
+                return Err(CompilerError::SelfParameterHasType());
             }
 
             if fn_decl.name == *NEW.get() {
@@ -105,7 +105,7 @@ impl Compiler {
             }
         } else {
             if fn_decl.name == *NEW.get() {
-                return Err(CompilerError::NewMustHaveSelfReceiver(fn_decl.span));
+                return Err(CompilerError::NewMustHaveSelfReceiver());
             }
 
             FnKind::StaticMethod
@@ -134,10 +134,10 @@ impl Compiler {
 
         if let Some(self_param) = self_param {
             if self_param.type_.is_some() {
-                return Err(CompilerError::SelfParameterHasType(self_param.span));
+                return Err(CompilerError::SelfParameterHasType());
             }
         } else {
-            return Err(CompilerError::OperatorMethodHasNoSelf(op_decl.span));
+            return Err(CompilerError::OperatorMethodHasNoSelf());
         }
 
         self.visit((&op_decl, OpKind::Method))?;

@@ -8,8 +8,9 @@ use dice_core::{
     bytecode::Bytecode,
     protocol::{module::EXPORT, ProtocolSymbol},
     source::{Source, SourceKind},
+    span::Span,
 };
-use dice_error::{compiler_error::CompilerError, span::Span};
+use dice_error::compiler_error::CompilerError;
 use dice_syntax::{Parser, SyntaxTree};
 
 #[allow(dead_code)]
@@ -39,7 +40,7 @@ impl Compiler {
     }
 
     pub fn compile(source: Source) -> Result<Bytecode, CompilerError> {
-        let syntax_tree = Parser::new(source.source()).parse()?;
+        let syntax_tree = Parser::new(source.source()).parse().expect("FIX ME rooSlam");
         let kind = match source.kind() {
             SourceKind::Module => CompilationKind::Module,
             SourceKind::Script => CompilationKind::Script,

@@ -1,8 +1,8 @@
 use crate::{
     lexer::{Token, TokenKind},
-    Parser, SyntaxNodeId,
+    Parser, SyntaxError, SyntaxNodeId,
 };
-use dice_error::{span::Span, syntax_error::SyntaxError};
+use dice_core::span::Span;
 
 pub type PrefixParser = fn(&mut Parser, can_assign: bool) -> Result<SyntaxNodeId, SyntaxError>;
 pub type InfixParser =
@@ -213,7 +213,7 @@ impl ParserRule {
 
             // End of input
             TokenKind::EndOfInput => ParserRule::new(None, None, None, RulePrecedence::None, None),
-            _ => return Err(token.clone().into()),
+            _ => todo!("Unexpected token"),
         };
 
         Ok(rule)

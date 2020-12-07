@@ -4,7 +4,6 @@ use dice_core::{
     runtime::Runtime,
     value::{NativeFn, Value, ValueKind},
 };
-use dice_error::runtime_error::RuntimeError;
 use std::rc::Rc;
 
 impl<L> crate::Runtime<L>
@@ -23,13 +22,13 @@ where
     }
 }
 
-fn construct_string(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
+fn construct_string(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
     match args {
         [_, param, ..] => Ok(Value::with_string(param.to_string())),
         _ => Ok(Value::Null),
     }
 }
-fn concat(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
+fn concat(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
     match args {
         [Value::String(this), Value::String(other), ..] => Ok(Value::with_string(format!("{}{}", &*this, &*other))),
         _ => Ok(Value::Null),

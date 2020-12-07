@@ -7,7 +7,6 @@ use dice_core::{
     runtime::Runtime,
     value::{Class, NativeFn, Value},
 };
-use dice_error::runtime_error::RuntimeError;
 use std::rc::Rc;
 
 impl<L> crate::Runtime<L>
@@ -25,14 +24,14 @@ where
     }
 }
 
-fn to_string(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
+fn to_string(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
     match args {
         [value, ..] => Ok(Value::with_string(format!("{}", value))),
         _ => Ok(Value::Null),
     }
 }
 
-fn fields(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
+fn fields(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
     let result = args
         .first()
         .and_then(|value| value.as_object().ok())
@@ -45,7 +44,7 @@ fn fields(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
     Ok(result)
 }
 
-fn methods(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
+fn methods(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
     match args {
         [this, ..] => {
             let class = runtime.class_of(this)?;
@@ -61,7 +60,7 @@ fn methods(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeEr
     }
 }
 
-fn class_of(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
+fn class_of(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
     match args {
         [this, ..] => Ok(Value::Class(runtime.class_of(this)?)),
         _ => Ok(Value::Null),

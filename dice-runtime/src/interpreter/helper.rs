@@ -4,7 +4,6 @@ use dice_core::{
     upvalue::{Upvalue, UpvalueState},
     value::{Class, FnBound, FnNative, FnScript, Object, Symbol, Value, ValueKind},
 };
-use dice_error::runtime_error::RuntimeError;
 
 impl<L: ModuleLoader> Runtime<L> {
     pub(super) fn find_open_upvalue(&self, offset: usize) -> Option<(usize, Upvalue)> {
@@ -21,12 +20,8 @@ impl<L: ModuleLoader> Runtime<L> {
         found_upvalue
     }
 
-    pub(super) fn call_binary_op(&mut self, operator: impl Into<Symbol>, rhs: Value) -> Result<(), RuntimeError> {
-        fn call_binary_op<L: ModuleLoader>(
-            runtime: &mut Runtime<L>,
-            operator: Symbol,
-            rhs: Value,
-        ) -> Result<(), RuntimeError> {
+    pub(super) fn call_binary_op(&mut self, operator: impl Into<Symbol>, rhs: Value) -> Result<(), ()> {
+        fn call_binary_op<L: ModuleLoader>(runtime: &mut Runtime<L>, operator: Symbol, rhs: Value) -> Result<(), ()> {
             let lhs = runtime.stack.pop();
             let method = runtime.get_field(&operator, lhs.clone())?;
 
@@ -38,7 +33,7 @@ impl<L: ModuleLoader> Runtime<L> {
                 let value = runtime
                     .globals
                     .get(&operator)
-                    .ok_or_else(|| RuntimeError::Aborted("No global operator defined.".to_owned()))?;
+                    .ok_or_else(|| todo!("No global operator defined."))?;
 
                 runtime.stack.push(value.clone());
                 runtime.stack.push(lhs);
@@ -52,8 +47,8 @@ impl<L: ModuleLoader> Runtime<L> {
         call_binary_op(self, operator.into(), rhs)
     }
 
-    pub(super) fn call_unary_op(&mut self, operator: impl Into<Symbol>) -> Result<(), RuntimeError> {
-        fn call_unary_op<L: ModuleLoader>(runtime: &mut Runtime<L>, operator: Symbol) -> Result<(), RuntimeError> {
+    pub(super) fn call_unary_op(&mut self, operator: impl Into<Symbol>) -> Result<(), ()> {
+        fn call_unary_op<L: ModuleLoader>(runtime: &mut Runtime<L>, operator: Symbol) -> Result<(), ()> {
             let operand = runtime.stack.pop();
             let method = runtime.get_field(&operator, operand.clone())?;
 
@@ -64,7 +59,7 @@ impl<L: ModuleLoader> Runtime<L> {
                 let value = runtime
                     .globals
                     .get(&operator)
-                    .ok_or_else(|| RuntimeError::Aborted("No global operator defined.".to_owned()))?;
+                    .ok_or_else(|| todo!("No global operator defined."))?;
 
                 runtime.stack.push(value.clone());
                 runtime.stack.push(operand);
@@ -77,7 +72,7 @@ impl<L: ModuleLoader> Runtime<L> {
         call_unary_op(self, operator.into())
     }
 
-    pub(super) fn get_field(&self, key: &Symbol, value: Value) -> Result<Value, RuntimeError> {
+    pub(super) fn get_field(&self, key: &Symbol, value: Value) -> Result<Value, ()> {
         if value.kind() == ValueKind::Object || value.kind() == ValueKind::Class || value.kind() == ValueKind::Array {
             let object = value.as_object()?;
             let fields = object.fields();
@@ -87,9 +82,7 @@ impl<L: ModuleLoader> Runtime<L> {
         }
 
         if *key == NEW.get() {
-            return Err(RuntimeError::Aborted(String::from(
-                "TODO: the new function cannot be accessed directly.",
-            )));
+            todo!("TODO: the new function cannot be accessed directly.")
         }
 
         // NOTE: If the type is an object, try to resolve its class.  It it's not an object or has
@@ -118,7 +111,7 @@ impl<L: ModuleLoader> Runtime<L> {
     }
 
     // TODO: Replace this mutually recursive call with an execution stack to prevent the thread's stack from overflowing.
-    pub(crate) fn call_fn(&mut self, arg_count: usize) -> Result<(), RuntimeError> {
+    pub(crate) fn call_fn(&mut self, arg_count: usize) -> Result<(), ()> {
         let (function, receiver) = match self.stack.peek(arg_count) {
             Value::FnBound(fn_bound) => (fn_bound.function(), Some(fn_bound.receiver())),
             value => (value.clone(), None),
@@ -133,7 +126,7 @@ impl<L: ModuleLoader> Runtime<L> {
                 self.call_class_constructor(arg_count, class, Value::Object(Object::new(class.clone())))?
             }
             Value::FnNative(fn_native) => self.call_fn_native(arg_count, receiver, fn_native)?,
-            _ => return Err(RuntimeError::NotAFunction),
+            _ => todo!("Not a function"),
         };
 
         self.stack.push(value);
@@ -146,7 +139,7 @@ impl<L: ModuleLoader> Runtime<L> {
         arg_count: usize,
         class: &Class,
         mut object: Value,
-    ) -> Result<Value, RuntimeError> {
+    ) -> Result<Value, ()> {
         let class = class.clone();
 
         if let Some(new) = class.method(&NEW) {
@@ -160,13 +153,9 @@ impl<L: ModuleLoader> Runtime<L> {
             // to override the result.
             object = self.stack.peek(0).clone();
         } else if arg_count > 0 {
-            return Err(RuntimeError::Aborted(String::from(
-                "TODO: Constructor has too many parameters error.",
-            )));
+            todo!("TODO: Constructor has too many parameters error.",);
         } else if class.base().filter(|base| base.method(&NEW).is_some()).is_some() {
-            return Err(RuntimeError::Aborted(String::from(
-                "TODO: Class must have constructor if super has constructor.",
-            )));
+            todo!("TODO: Class must have constructor if super has constructor.",);
         }
 
         // NOTE: Regardless of whether or not there was a constructor, clean up the stack.
@@ -175,12 +164,7 @@ impl<L: ModuleLoader> Runtime<L> {
         Ok(object)
     }
 
-    fn call_fn_native(
-        &mut self,
-        arg_count: usize,
-        receiver: Option<Value>,
-        fn_native: &FnNative,
-    ) -> Result<Value, RuntimeError> {
+    fn call_fn_native(&mut self, arg_count: usize, receiver: Option<Value>, fn_native: &FnNative) -> Result<Value, ()> {
         let fn_native = fn_native.clone();
         // NOTE: Include the function/receiver slot as the first parameter to the native function call.
         let mut args = self.stack.pop_count(arg_count + 1);
@@ -198,7 +182,7 @@ impl<L: ModuleLoader> Runtime<L> {
         receiver: Option<Value>,
         fn_script: &FnScript,
         parent_upvalues: Option<&[Upvalue]>,
-    ) -> Result<Value, RuntimeError> {
+    ) -> Result<Value, ()> {
         let slots = fn_script.bytecode().slot_count();
         let reserved = slots - arg_count;
         // NOTE: Reserve only the slots needed to cover locals beyond the arguments already on the stack.

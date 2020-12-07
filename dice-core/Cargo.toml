@@ -11,5 +11,3 @@ uuid = { version = "0.8", features = ["v4"] }
 wyhash = "0.4"
 num-derive = "0.3"
 num-traits = "0.2"
-
-dice-error = {path = "../dice-error"}

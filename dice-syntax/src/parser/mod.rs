@@ -9,9 +9,9 @@ use super::{
 use crate::{
     parser::rules::{ParserRule, RulePrecedence},
     ClassDecl, ErrorPropagate, FieldAccess, FnArg, ForLoop, ImportDecl, Index, Is, Loop, NullPropagate, OpDecl,
-    OverloadedOperator, SuperAccess, SuperCall, TypeAnnotation, VarDeclKind,
+    OverloadedOperator, SuperAccess, SuperCall, SyntaxError, TypeAnnotation, VarDeclKind,
 };
-use dice_error::{span::Span, syntax_error::SyntaxError};
+use dice_core::span::Span;
 use id_arena::Arena;
 
 pub type SyntaxNodeResult = Result<SyntaxNodeId, SyntaxError>;
@@ -93,7 +93,7 @@ impl Parser {
         let mut node = rule
             .prefix
             .map(|prefix| prefix(self, precedence <= RulePrecedence::Assignment))
-            .unwrap_or_else(|| Err(next_token.clone().into()))?;
+            .unwrap_or_else(|| todo!("Unexpected token."))?;
 
         loop {
             let span_start = next_token.span();
@@ -108,7 +108,7 @@ impl Parser {
                 node = rule
                     .postfix
                     .map(|postfix| postfix(self, node, precedence <= RulePrecedence::Assignment, span_start))
-                    .unwrap_or_else(|| Err(next_token.into()))?;
+                    .unwrap_or_else(|| todo!("Unexpected token."))?;
 
                 continue;
             }
@@ -120,7 +120,7 @@ impl Parser {
             node = rule
                 .infix
                 .map(|infix| infix(self, node, precedence <= RulePrecedence::Assignment, span_start))
-                .unwrap_or_else(|| Err(next_token.into()))?;
+                .unwrap_or_else(|| todo!("Unexpected token."))?;
         }
 
         Ok(node)
@@ -214,7 +214,7 @@ impl Parser {
                     span: token.span() + span_end,
                 })
             }
-            _ => return Err(token.into()),
+            _ => return todo!("Unexpected token."),
         };
 
         Ok(self.arena.alloc(node))
@@ -235,7 +235,7 @@ impl Parser {
             TokenKind::Identifier(name) => self
                 .arena
                 .alloc(SyntaxNode::LitIdent(LitIdent { name, span: span_start })),
-            _ => return Err(next_token.into()),
+            _ => return todo!("Unexpected token."),
         };
 
         self.parse_assignment(lhs_expression, can_assign, span_start)
@@ -324,7 +324,7 @@ impl Parser {
             TokenKind::LeftCurly => {
                 VarDeclKind::Destructured(self.parse_fields(TokenKind::LeftCurly, TokenKind::RightCurly)?)
             }
-            _ => return Err(next_token.into()),
+            _ => return todo!("Unexpected token."),
         };
 
         self.lexer.consume(TokenKind::Assign)?;
@@ -345,9 +345,7 @@ impl Parser {
         let args = self.parse_args(TokenKind::Pipe, TokenKind::Pipe)?;
 
         if args.len() > (u8::MAX as usize) {
-            return Err(SyntaxError::AnonymousFnTooManyArguments(
-                span_start + self.lexer.current().span(),
-            ));
+            todo!("Too many arguments in anonymous function.")
         }
 
         let body = self.expression()?;
@@ -368,12 +366,12 @@ impl Parser {
         let name_token = self.lexer.next()?;
         let name = match name_token.kind {
             TokenKind::Identifier(ref name) => name.clone(),
-            _ => return Err(name_token.into()),
+            _ => return todo!("Unexpected token."),
         };
         let args = self.parse_args(TokenKind::LeftParen, TokenKind::RightParen)?;
 
         if args.len() > (u8::MAX as usize) {
-            return Err(SyntaxError::FnTooManyArguments(name, name_token.span()));
+            todo!("Too many arguments in function.")
         }
 
         let return_ = self.parse_return()?;
@@ -408,7 +406,7 @@ impl Parser {
             TokenKind::NotEqual => OverloadedOperator::NotEquals,
             TokenKind::RangeExclusive => OverloadedOperator::RangeExclusive,
             TokenKind::RangeInclusive => OverloadedOperator::RangeInclusive,
-            _ => return Err(operator_token.into()),
+            _ => return todo!("Unexpected token."),
         };
         let args = self.parse_args(TokenKind::LeftParen, TokenKind::RightParen)?;
 
@@ -417,10 +415,7 @@ impl Parser {
         if operator == OverloadedOperator::DiceRoll && args.len() == 1 {
             operator = OverloadedOperator::DieRoll
         } else if args.len() != 2 {
-            return Err(SyntaxError::FnTooManyArguments(
-                operator.to_string(),
-                operator_token.span(),
-            ));
+            todo!("Too many arguments")
         }
 
         let return_ = self.parse_return()?;
@@ -475,7 +470,7 @@ impl Parser {
             if self.lexer.peek()?.kind == TokenKind::Comma {
                 self.lexer.next()?;
             } else if self.lexer.peek()?.kind != close_token_kind {
-                return Err(self.lexer.next()?.into());
+                return todo!("Unexpected token.");
             }
         }
 
@@ -513,7 +508,7 @@ impl Parser {
             if self.lexer.peek()?.kind == TokenKind::Comma {
                 self.lexer.next()?;
             } else if self.lexer.peek()?.kind != close_token_kind {
-                return Err(self.lexer.next()?.into());
+                return todo!("Unexpected token.");
             }
         }
 
@@ -540,7 +535,7 @@ impl Parser {
             let expression = match next_token.kind {
                 TokenKind::Function => self.fn_decl()?,
                 TokenKind::Operator => self.op_decl()?,
-                _ => return Err(SyntaxError::UnexpectedToken(next_token.to_string(), next_token.span())),
+                _ => return todo!("Unexpected token."),
             };
 
             associated_items.push(expression);
@@ -691,7 +686,7 @@ impl Parser {
         match next_token.kind {
             TokenKind::Dot | TokenKind::LeftSquare => self.super_method_access(can_assign, span_start),
             TokenKind::LeftParen => self.super_call(span_start),
-            _ => Err(SyntaxError::UnexpectedToken(next_token.to_string(), next_token.span())),
+            _ => todo!("Unexpected token."),
         }
     }
 
@@ -725,7 +720,7 @@ impl Parser {
             if self.lexer.peek()?.kind == TokenKind::Comma {
                 self.lexer.next()?;
             } else if self.lexer.peek()?.kind != TokenKind::RightParen {
-                return Err(self.lexer.next()?.into());
+                return todo!("Unexpected token.");
             }
         }
 
@@ -751,7 +746,7 @@ impl Parser {
             if self.lexer.peek()?.kind == TokenKind::Comma {
                 self.lexer.next()?;
             } else if self.lexer.peek()?.kind != TokenKind::RightParen {
-                return Err(self.lexer.next()?.into());
+                return todo!("Unexpected token.");
             }
         }
 
@@ -801,7 +796,7 @@ impl Parser {
                 TokenKind::String(value) => value,
                 TokenKind::Integer(value) => value.to_string(),
                 TokenKind::Identifier(value) => value,
-                _ => return Err(self.lexer.current().clone().into()),
+                _ => todo!("Unexpected token."),
             };
 
             self.lexer.consume(TokenKind::Colon)?;
@@ -810,7 +805,7 @@ impl Parser {
             if self.lexer.peek()?.kind == TokenKind::Comma {
                 self.lexer.next()?;
             } else if self.lexer.peek()?.kind != TokenKind::RightCurly {
-                return Err(self.lexer.next()?.into());
+                return todo!("Unexpected token.");
             }
 
             properties.push((key, value));
@@ -837,7 +832,7 @@ impl Parser {
             if self.lexer.peek()?.kind == TokenKind::Comma {
                 self.lexer.next()?;
             } else if self.lexer.peek()?.kind != TokenKind::RightSquare {
-                return Err(self.lexer.next()?.into());
+                return todo!("Unexpected token.");
             }
 
             values.push(value);
@@ -863,7 +858,7 @@ impl Parser {
             TokenKind::False => SyntaxNode::LitBool(LitBool { value: false, span }),
             TokenKind::True => SyntaxNode::LitBool(LitBool { value: true, span }),
             TokenKind::Null => SyntaxNode::LitNull(LitNull { span }),
-            _ => return Err(token.into()),
+            _ => return todo!("Unexpected token."),
         };
 
         Ok(self.arena.alloc(literal))
@@ -923,8 +918,7 @@ impl Parser {
 #[cfg(test)]
 mod test {
     use super::Parser;
-    use crate::{Binary, BinaryOperator, Block, LitInt, SyntaxNode, Unary, UnaryOperator};
-    use dice_error::syntax_error::SyntaxError;
+    use crate::{Binary, BinaryOperator, Block, LitInt, SyntaxError, SyntaxNode, Unary, UnaryOperator};
 
     #[test]
     fn test_parse_integer() -> Result<(), SyntaxError> {

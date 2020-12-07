@@ -1,7 +1,8 @@
 use super::NodeVisitor;
 use crate::{compiler::Compiler, scope_stack::State, upvalue::UpvalueDescriptor, visitor::FnKind};
+use dice_core::span::Span;
 use dice_core::value::{FnScript, Symbol, Value};
-use dice_error::{compiler_error::CompilerError, span::Span};
+use dice_error::compiler_error::CompilerError;
 use dice_syntax::{FnArg, FnDecl};
 use std::collections::HashSet;
 
@@ -32,7 +33,7 @@ impl Compiler {
         let has_unique_args = args.iter().all(|arg| items.insert(&arg.name));
 
         if !has_unique_args {
-            return Err(CompilerError::DuplicateArgumentNames(span));
+            return Err(CompilerError::DuplicateArgumentNames());
         }
 
         Ok(())

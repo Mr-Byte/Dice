@@ -6,7 +6,8 @@ use crate::{
     visitor::ClassKind,
 };
 use dice_core::protocol::{class::SELF, ProtocolSymbol};
-use dice_error::{compiler_error::CompilerError, span::Span};
+use dice_core::span::Span;
+use dice_error::compiler_error::CompilerError;
 use dice_syntax::{Block, FnArg, SyntaxNode};
 
 impl NodeVisitor<&Block> for Compiler {
@@ -112,7 +113,7 @@ impl Compiler {
             }
         }
 
-        Err(CompilerError::DerivedMustCallSuper(block.span))
+        Err(CompilerError::DerivedMustCallSuper())
     }
 
     fn visit_args(&mut self, kind: &FunctionBlockKind, args: &[FnArg]) -> Result<(), CompilerError> {

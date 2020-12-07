@@ -3,7 +3,6 @@ use dice_core::{
     runtime::Runtime,
     value::{NativeFn, Value, ValueKind},
 };
-use dice_error::runtime_error::RuntimeError;
 use std::rc::Rc;
 
 impl<L> crate::Runtime<L>
@@ -19,14 +18,14 @@ where
     }
 }
 
-fn name(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
+fn name(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
     match args {
         [Value::Class(class), ..] => Ok(Value::with_string(class.name())),
         _ => Ok(Value::Null),
     }
 }
 
-fn base_class(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
+fn base_class(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
     match args {
         [Value::Class(class), ..] => {
             let result = class.base().map_or_else(|| Value::Null, Value::Class);

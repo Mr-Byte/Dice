@@ -1,21 +1,19 @@
-use crate::{span::Span, syntax_error::SyntaxError};
-
 #[derive(thiserror::Error, Debug)]
 pub enum CompilerError {
     #[error("The new method on classes is not allowed to have a return type.")]
-    NewHasReturnType(Span),
+    NewHasReturnType(),
     #[error("The new method on classes must have a self receiver as the first parameter.")]
-    NewMustHaveSelfReceiver(Span),
+    NewMustHaveSelfReceiver(),
     #[error("The self parameter of methods cannot have a type annotation.")]
-    SelfParameterHasType(Span),
+    SelfParameterHasType(),
     #[error("Function cannot have duplicate argument names.")]
-    DuplicateArgumentNames(Span),
+    DuplicateArgumentNames(),
     #[error("Operator methods must have a self parameter.")]
-    OperatorMethodHasNoSelf(Span),
+    OperatorMethodHasNoSelf(),
     #[error("Only methods and constructors can access super.")]
-    InvalidSuperAccess(Span),
+    InvalidSuperAccess(),
     #[error("Constructors of derived classes must call their super constructor first.")]
-    DerivedMustCallSuper(Span),
+    DerivedMustCallSuper(),
     #[error("The item {0} has already been declared in this scope.")]
     ItemAlreadyDeclared(String),
     #[error("Encountered undeclared variable {0}.")]
@@ -27,7 +25,7 @@ pub enum CompilerError {
     #[error("Invalid assignment target.")]
     InvalidAssignmentTarget,
     #[error("Invalid operator name {0}.")]
-    InvalidOperatorName(String, Span),
+    InvalidOperatorName(String),
     #[error("The break keyword can only be used inside loops.")]
     InvalidBreak,
     #[error("The continue keyword can only be used inside loops.")]
@@ -46,6 +44,4 @@ pub enum CompilerError {
     TooManyUpvalues,
     #[error("Internal Compiler Error: {0}")]
     InternalCompilerError(String),
-    #[error(transparent)]
-    SyntaxError(#[from] SyntaxError),
 }

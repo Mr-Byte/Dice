@@ -10,7 +10,6 @@ use dice_core::{
     upvalue::{Upvalue, UpvalueState},
     value::{Class, FnClosure, Object, Value, ValueKind},
 };
-use dice_error::runtime_error::RuntimeError;
 use std::collections::hash_map::Entry;
 
 // TODO: Restrict the sub-classing of primitives. <-- This is a runtime error.
@@ -24,7 +23,7 @@ where
         bytecode: &Bytecode,
         stack_frame: StackFrame,
         parent_upvalues: Option<&[Upvalue]>,
-    ) -> Result<Value, RuntimeError> {
+    ) -> Result<Value, ()> {
         let initial_stack_depth = self.stack.len();
         let mut cursor = bytecode.cursor();
 
@@ -129,25 +128,21 @@ where
         self.stack.push(value);
     }
 
-    fn assert_bool(&mut self) -> Result<(), RuntimeError> {
+    fn assert_bool(&mut self) -> Result<(), ()> {
         if self.stack.peek_mut(0).kind() != ValueKind::Bool {
-            return Err(RuntimeError::Aborted(String::from("Value must evaluate to a boolean.")));
+            todo!("Value must evaluate to a boolean.");
         }
 
         Ok(())
     }
 
-    fn assert_type_for_local(
-        &mut self,
-        stack_frame: StackFrame,
-        cursor: &mut BytecodeCursor,
-    ) -> Result<(), RuntimeError> {
+    fn assert_type_for_local(&mut self, stack_frame: StackFrame, cursor: &mut BytecodeCursor) -> Result<(), ()> {
         let class = self.stack.pop();
         let class = class.as_class()?;
         let value = &self.stack[stack_frame][cursor.read_u8() as usize];
 
         if *value == Value::Null {
-            return Err(RuntimeError::Aborted(String::from("Value cannot be null.")));
+            todo!("Value cannot be null");
         }
 
         let is_type = value
@@ -161,7 +156,7 @@ where
             Ok(())
         } else {
             // TODO: Create a more contextual error.
-            Err(RuntimeError::Aborted(String::from("Types did not match.")))
+            todo!("Types did not match.");
         }
     }
 
@@ -169,7 +164,7 @@ where
         &mut self,
         stack_frame: StackFrame,
         cursor: &mut BytecodeCursor,
-    ) -> Result<(), RuntimeError> {
+    ) -> Result<(), ()> {
         let class = self.stack.pop();
         let class = class.as_class()?;
         let value = &self.stack[stack_frame][cursor.read_u8() as usize];
@@ -189,17 +184,17 @@ where
             Ok(())
         } else {
             // TODO: Create a more contextual error.
-            Err(RuntimeError::Aborted(String::from("Types did not match.")))
+            todo!("Types did not match.");
         }
     }
 
-    fn assert_type_and_return(&mut self) -> Result<(), RuntimeError> {
+    fn assert_type_and_return(&mut self) -> Result<(), ()> {
         let class = self.stack.pop();
         let class = class.as_class()?;
         let value = self.stack.peek(0);
 
         if *value == Value::Null {
-            return Err(RuntimeError::Aborted(String::from("Value cannot be null.")));
+            return todo!("Value cannot be null.");
         }
 
         let is_type = value
@@ -213,11 +208,11 @@ where
             Ok(())
         } else {
             // TODO: Create a more contextual error.
-            Err(RuntimeError::Aborted(String::from("Types did not match.")))
+            todo!("Types did not match.");
         }
     }
 
-    fn assert_type_or_null_and_return(&mut self) -> Result<(), RuntimeError> {
+    fn assert_type_or_null_and_return(&mut self) -> Result<(), ()> {
         let class = self.stack.pop();
         let class = class.as_class()?;
         let value = self.stack.peek(0);
@@ -237,38 +232,36 @@ where
             Ok(())
         } else {
             // TODO: Create a more contextual error.
-            Err(RuntimeError::Aborted(String::from("Types did not match.")))
+            todo!("Types did not match.");
         }
     }
 
-    fn not(&mut self) -> Result<(), RuntimeError> {
+    fn not(&mut self) -> Result<(), ()> {
         match self.stack.peek_mut(0) {
             Value::Bool(value) => *value = !*value,
-            _ => return Err(RuntimeError::Aborted(String::from("Value must be a boolean."))),
+            _ => return todo!("Value must be a boolean."),
         }
 
         Ok(())
     }
 
-    fn die_roll(&mut self) -> Result<(), RuntimeError> {
+    fn die_roll(&mut self) -> Result<(), ()> {
         self.call_unary_op(&DIE_ROLL)
     }
 
-    fn neg(&mut self) -> Result<(), RuntimeError> {
+    fn neg(&mut self) -> Result<(), ()> {
         match self.stack.peek_mut(0) {
             Value::Int(value) => *value = -*value,
             Value::Float(value) => *value = -*value,
             _ => {
-                return Err(RuntimeError::Aborted(String::from(
-                    "Can only negate an integer or float.",
-                )))
+                todo!("Can only negate an integer or float.",)
             }
         }
 
         Ok(())
     }
 
-    fn mul(&mut self) -> Result<(), RuntimeError> {
+    fn mul(&mut self) -> Result<(), ()> {
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Int(rhs), Value::Int(lhs)) => *lhs *= rhs,
             (Value::Float(rhs), Value::Float(lhs)) => *lhs *= rhs,
@@ -278,11 +271,11 @@ where
         Ok(())
     }
 
-    fn div(&mut self) -> Result<(), RuntimeError> {
+    fn div(&mut self) -> Result<(), ()> {
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Int(rhs), Value::Int(lhs)) => {
                 if rhs == 0 {
-                    return Err(RuntimeError::DivideByZero);
+                    todo!("Divide by zero.")
                 }
 
                 *lhs /= rhs;
@@ -294,11 +287,11 @@ where
         Ok(())
     }
 
-    fn rem(&mut self) -> Result<(), RuntimeError> {
+    fn rem(&mut self) -> Result<(), ()> {
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Int(rhs), Value::Int(lhs)) => {
                 if rhs == 0 {
-                    return Err(RuntimeError::DivideByZero);
+                    todo!("Divide by zero.")
                 }
 
                 *lhs %= rhs;
@@ -310,7 +303,7 @@ where
         Ok(())
     }
 
-    fn add(&mut self) -> Result<(), RuntimeError> {
+    fn add(&mut self) -> Result<(), ()> {
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Int(rhs), Value::Int(lhs)) => *lhs += rhs,
             (Value::Float(rhs), Value::Float(lhs)) => *lhs += rhs,
@@ -320,7 +313,7 @@ where
         Ok(())
     }
 
-    fn gt(&mut self) -> Result<(), RuntimeError> {
+    fn gt(&mut self) -> Result<(), ()> {
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Bool(rhs), Value::Bool(lhs)) => *lhs &= !rhs,
             (Value::Int(rhs), Value::Int(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs > rhs),
@@ -331,7 +324,7 @@ where
         Ok(())
     }
 
-    fn gte(&mut self) -> Result<(), RuntimeError> {
+    fn gte(&mut self) -> Result<(), ()> {
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Bool(rhs), Value::Bool(lhs)) => *lhs = *lhs >= rhs,
             (Value::Int(rhs), Value::Int(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs >= rhs),
@@ -342,7 +335,7 @@ where
         Ok(())
     }
 
-    fn lt(&mut self) -> Result<(), RuntimeError> {
+    fn lt(&mut self) -> Result<(), ()> {
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Bool(rhs), Value::Bool(lhs)) => *lhs = !(*lhs) & rhs,
             (Value::Int(rhs), Value::Int(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs < rhs),
@@ -353,7 +346,7 @@ where
         Ok(())
     }
 
-    fn lte(&mut self) -> Result<(), RuntimeError> {
+    fn lte(&mut self) -> Result<(), ()> {
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Bool(rhs), Value::Bool(lhs)) => *lhs = *lhs <= rhs,
             (Value::Int(rhs), Value::Int(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs <= rhs),
@@ -364,7 +357,7 @@ where
         Ok(())
     }
 
-    fn sub(&mut self) -> Result<(), RuntimeError> {
+    fn sub(&mut self) -> Result<(), ()> {
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Int(rhs), Value::Int(lhs)) => *lhs -= rhs,
             (Value::Float(rhs), Value::Float(lhs)) => *lhs -= rhs,
@@ -374,7 +367,7 @@ where
         Ok(())
     }
 
-    fn eq(&mut self) -> Result<(), RuntimeError> {
+    fn eq(&mut self) -> Result<(), ()> {
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Null, Value::Null) => *self.stack.peek_mut(0) = Value::Bool(true),
             (Value::Null, _) => *self.stack.peek_mut(0) = Value::Bool(false),
@@ -391,7 +384,7 @@ where
         Ok(())
     }
 
-    fn neq(&mut self) -> Result<(), RuntimeError> {
+    fn neq(&mut self) -> Result<(), ()> {
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Null, Value::Null) => *self.stack.peek_mut(0) = Value::Bool(false),
             (Value::Null, _) => *self.stack.peek_mut(0) = Value::Bool(true),
@@ -408,22 +401,22 @@ where
         Ok(())
     }
 
-    fn dice_roll(&mut self) -> Result<(), RuntimeError> {
+    fn dice_roll(&mut self) -> Result<(), ()> {
         let rhs = self.stack.pop();
         self.call_binary_op(&DICE_ROLL, rhs)
     }
 
-    fn range_inclusive(&mut self) -> Result<(), RuntimeError> {
+    fn range_inclusive(&mut self) -> Result<(), ()> {
         let rhs = self.stack.pop();
         self.call_binary_op(&RANGE_INCLUSIVE, rhs)
     }
 
-    fn range_exclusive(&mut self) -> Result<(), RuntimeError> {
+    fn range_exclusive(&mut self) -> Result<(), ()> {
         let rhs = self.stack.pop();
         self.call_binary_op(&RANGE_EXCLUSIVE, rhs)
     }
 
-    fn is(&mut self) -> Result<(), RuntimeError> {
+    fn is(&mut self) -> Result<(), ()> {
         let class = self.stack.pop();
         let class = class.as_class()?;
         let instance = self.stack.peek(0);
@@ -447,7 +440,7 @@ where
         self.stack.push(Value::Object(object));
     }
 
-    fn inherit_class(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
+    fn inherit_class(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), ()> {
         let name_slot = cursor.read_u8() as usize;
         let name = bytecode.constants()[name_slot].as_symbol()?;
         let class = Class::with_base(name, self.stack.pop().as_class()?);
@@ -463,7 +456,7 @@ where
         self.stack.push(value);
     }
 
-    fn jump_if_false(&mut self, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
+    fn jump_if_false(&mut self, cursor: &mut BytecodeCursor) -> Result<(), ()> {
         let offset = cursor.read_offset();
         let value = self.stack.pop().as_bool()?;
 
@@ -474,7 +467,7 @@ where
         Ok(())
     }
 
-    fn jump_if_true(&mut self, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
+    fn jump_if_true(&mut self, cursor: &mut BytecodeCursor) -> Result<(), ()> {
         let offset = cursor.read_offset();
         let value = self.stack.pop().as_bool()?;
 
@@ -575,7 +568,7 @@ where
         }
     }
 
-    fn store_global(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
+    fn store_global(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), ()> {
         let const_pos = cursor.read_u8() as usize;
         let value = &bytecode.constants()[const_pos];
         let global_name = value.as_symbol()?;
@@ -591,21 +584,21 @@ where
         Ok(())
     }
 
-    fn load_global(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
+    fn load_global(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), ()> {
         let const_pos = cursor.read_u8() as usize;
         let global = bytecode.constants()[const_pos].as_symbol()?;
         let value = self
             .globals
             .get(&global)
             .cloned()
-            .ok_or_else(|| RuntimeError::VariableNotFound((&*global).to_owned()))?;
+            .ok_or_else(|| todo!("Variable not found."))?;
 
         self.stack.push(value);
 
         Ok(())
     }
 
-    fn load_field(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
+    fn load_field(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), ()> {
         let key_index = cursor.read_u8() as usize;
         let key = bytecode.constants()[key_index].as_symbol()?;
 
@@ -617,7 +610,7 @@ where
         Ok(())
     }
 
-    fn store_field(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
+    fn store_field(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), ()> {
         let key_index = cursor.read_u8() as usize;
         let key = bytecode.constants()[key_index].as_symbol()?;
         let value = self.stack.pop();
@@ -630,7 +623,7 @@ where
         Ok(())
     }
 
-    fn assign_field(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
+    fn assign_field(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), ()> {
         let key_index = cursor.read_u8() as usize;
         let key = bytecode.constants()[key_index].as_symbol()?;
         let value = self.stack.pop();
@@ -643,7 +636,7 @@ where
         Ok(())
     }
 
-    fn load_index(&mut self) -> Result<(), RuntimeError> {
+    fn load_index(&mut self) -> Result<(), ()> {
         let index = self.stack.pop();
         let target = self.stack.peek(0);
         let result = match target {
@@ -662,7 +655,7 @@ where
         Ok(())
     }
 
-    fn store_index(&mut self) -> Result<(), RuntimeError> {
+    fn store_index(&mut self) -> Result<(), ()> {
         let value = self.stack.pop();
         let index = self.stack.pop();
         let target = self.stack.peek_mut(0);
@@ -684,7 +677,7 @@ where
         Ok(())
     }
 
-    fn assign_index(&mut self) -> Result<(), RuntimeError> {
+    fn assign_index(&mut self) -> Result<(), ()> {
         let value = self.stack.pop();
         let index = self.stack.pop();
         let target = self.stack.peek_mut(0);
@@ -706,14 +699,14 @@ where
         Ok(())
     }
 
-    fn load_method(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
+    fn load_method(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), ()> {
         let key_index = cursor.read_u8() as usize;
         let key = bytecode.constants()[key_index].as_symbol()?;
         let receiver = self.stack.pop();
         let class = self.stack.pop().as_class()?;
 
         if !self.is_value_of_type(&receiver, &class)? {
-            return Err(RuntimeError::Aborted(String::from("TODO: Invalid super type error.")));
+            return todo!("TODO: Invalid super type error.");
         }
 
         let method = self.get_method(Some(&class), &key, &receiver);
@@ -722,7 +715,7 @@ where
         Ok(())
     }
 
-    fn store_method(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
+    fn store_method(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), ()> {
         let key_index = cursor.read_u8() as usize;
         let key = bytecode.constants()[key_index].as_symbol()?;
         let value = self.stack.pop();
@@ -739,7 +732,7 @@ where
         bytecode: &Bytecode,
         stack_frame: StackFrame,
         cursor: &mut BytecodeCursor,
-    ) -> Result<(), RuntimeError> {
+    ) -> Result<(), ()> {
         let key_index = cursor.read_u8() as usize;
         let local_slot = cursor.read_u8() as usize;
         let key = bytecode.constants()[key_index].as_symbol()?;
@@ -758,7 +751,7 @@ where
         stack_frame: StackFrame,
         parent_upvalues: Option<&[Upvalue]>,
         cursor: &mut BytecodeCursor,
-    ) -> Result<(), RuntimeError> {
+    ) -> Result<(), ()> {
         let const_pos = cursor.read_u8() as usize;
 
         match bytecode.constants()[const_pos] {
@@ -792,18 +785,18 @@ where
                 let closure = Value::FnClosure(FnClosure::new(fn_script.clone(), upvalues.into_boxed_slice()));
                 self.stack.push(closure);
             }
-            _ => return Err(RuntimeError::NotAFunction),
+            _ => todo!("Not a function."),
         }
 
         Ok(())
     }
 
-    pub fn call(&mut self, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
+    pub fn call(&mut self, cursor: &mut BytecodeCursor) -> Result<(), ()> {
         let arg_count = cursor.read_u8() as usize;
         self.call_fn(arg_count)
     }
 
-    pub fn call_super(&mut self, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
+    pub fn call_super(&mut self, cursor: &mut BytecodeCursor) -> Result<(), ()> {
         let arg_count = cursor.read_u8() as usize;
         let super_ = self.stack.pop().as_class()?;
         let receiver = self.stack.peek(arg_count).clone();
@@ -814,7 +807,7 @@ where
         Ok(())
     }
 
-    fn load_module(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), RuntimeError> {
+    fn load_module(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), ()> {
         let module_slot = cursor.read_u8() as usize;
         let module_name = bytecode.constants()[module_slot].as_symbol()?;
         let module = match self.loaded_modules.entry(module_name.clone()) {
@@ -823,7 +816,7 @@ where
                 let export = Value::Object(Object::new(self.module_class.clone()));
                 entry.insert(export.clone());
 
-                let module = self.module_loader.load_module(module_name)?;
+                let module = self.module_loader.load_module(module_name).expect("Error conversion.");
                 self.run_module(module.bytecode, export)?
             }
         };

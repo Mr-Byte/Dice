@@ -1,4 +1,4 @@
-use dice_error::span::Span;
+use crate::span::Span;
 use std::collections::HashMap;
 use std::hash::BuildHasherDefault;
 use std::iter;
@@ -10,10 +10,10 @@ pub struct LineColumn {
     pub column_utf16: usize,
 }
 
-#[derive(Clone, Debug, Hash, PartialEq, Eq)]
-pub struct Utf16(Span);
+#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
+pub struct Utf16Character(Span);
 
-impl Utf16 {
+impl Utf16Character {
     pub const fn len(&self) -> usize {
         self.0.len()
     }
@@ -87,7 +87,7 @@ impl Source {
     }
 }
 
-pub type Utf16LineMap = HashMap<usize, Vec<Utf16>, BuildHasherDefault<WyHash>>;
+pub type Utf16LineMap = HashMap<usize, Vec<Utf16Character>, BuildHasherDefault<WyHash>>;
 
 #[derive(Clone, Default)]
 pub struct LineIndex {
@@ -124,7 +124,7 @@ impl LineIndex {
             }
 
             if !character.is_ascii() {
-                let utf16_character = Utf16(Span::new(current_column..(current_column + character_len)));
+                let utf16_character = Utf16Character(Span::new(current_column..(current_column + character_len)));
                 utf16_characters.push(utf16_character);
             }
 
@@ -155,42 +155,35 @@ impl LineIndex {
     }
 
     /// Get the entirety of all lines that contain the provided span.
-    pub fn lines(&self, span: Span) -> Box<dyn Iterator<Item = Span> + '_> {
+    pub fn lines(&self, span: Span) -> impl Iterator<Item = Span> + '_ {
         let mut start_line = partition_point(&self.newlines, |&it| it <= span.start);
         let mut end_line = partition_point(&self.newlines, |&it| it < span.end);
-        let mut include_last_line = false;
 
+        // NOTE: If the start line is not the first line, subtract 1 to get the start of the current line.
         if start_line != 0 {
             start_line -= 1;
         }
 
-        if end_line < self.newlines.len() {
+        // NOTE: If the end of the line is not the last line, add 1 to get the end of the current line.
+        // If this is the last, set the end of the range to the utf8 byte length of the source.
+        let end_range = if end_line < self.newlines.len() {
+            let result = self.newlines[end_line];
             end_line += 1;
+            result
         } else {
-            include_last_line = true;
-        }
+            self.utf8_len
+        };
 
-        let all_lines = self.newlines[start_line..end_line].iter().copied();
+        let all_lines = self.newlines[start_line..end_line]
+            .iter()
+            .copied()
+            .chain(iter::once(end_range));
 
-        if include_last_line {
-            let all_lines = all_lines.chain(iter::once(self.utf8_len));
-
-            Box::new(
-                all_lines
-                    .clone()
-                    .zip(all_lines.skip(1))
-                    .map(|(start, end)| Span::new(start..end))
-                    .filter(|span| !span.is_empty()),
-            )
-        } else {
-            Box::new(
-                all_lines
-                    .clone()
-                    .zip(all_lines.skip(1))
-                    .map(|(start, end)| Span::new(start..end))
-                    .filter(|span| !span.is_empty()),
-            )
-        }
+        all_lines
+            .clone()
+            .zip(all_lines.skip(1))
+            .map(|(start, end)| Span::new(start..end))
+            .filter(|span| !span.is_empty())
     }
 
     fn convert_to_utf16_column(&self, line: usize, col: usize) -> usize {
@@ -224,7 +217,7 @@ where
 #[cfg(test)]
 mod test {
     use crate::source::LineIndex;
-    use dice_error::span::Span;
+    use crate::span::Span;
 
     #[test]
     fn line_column_of_ascii_char() {

@@ -4,7 +4,6 @@ use dice_core::{
     runtime::Runtime,
     value::{NativeFn, Value, ValueKind},
 };
-use dice_error::runtime_error::RuntimeError;
 use std::rc::Rc;
 
 impl<L> crate::Runtime<L>
@@ -20,7 +19,7 @@ where
     }
 }
 
-fn construct_bool(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
+fn construct_bool(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
     match args {
         [_, param, ..] => match param {
             value @ Value::Bool(_) => Ok(value.clone()),

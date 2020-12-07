@@ -1,6 +1,6 @@
 use dice::{
     value::{NativeFn, Value},
-    Dice, Runtime, RuntimeError,
+    Dice, Runtime,
 };
 use std::{io::Write, rc::Rc};
 
@@ -8,11 +8,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     std::env::set_current_dir(std::fs::canonicalize("data/scripts")?)?;
 
     let mut dice = Dice::default();
-    dice.runtime().load_prelude("prelude.dm")?;
+    dice.runtime().load_prelude("prelude.dm").expect("Error conversion.");
     dice.runtime()
-        .add_global("print", Value::with_native_fn(Rc::new(print_value) as NativeFn))?;
-    dice.runtime()
-        .add_global("panic", Value::with_native_fn(Rc::new(err_panic) as NativeFn))?;
+        .add_global("print", Value::with_native_fn(Rc::new(print_value) as NativeFn))
+        .expect("Error conversion.");
 
     loop {
         print!("Input: ");
@@ -43,7 +42,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 }
 
-fn print_value(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
+fn print_value(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
     if let [_, arg, ..] = args {
         println!("{}", arg);
     }
@@ -51,10 +50,10 @@ fn print_value(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeErro
     Ok(Value::Unit)
 }
 
-fn err_panic(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, RuntimeError> {
-    if let [_, Value::String(str), ..] = args {
-        Err(RuntimeError::Aborted(str.to_string()))
-    } else {
-        Err(RuntimeError::Aborted(String::from("Panic occurred.")))
-    }
-}
+// fn err_panic(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
+//     if let [_, Value::String(str), ..] = args {
+//         Err(RuntimeError::Aborted(str.to_string()))
+//     } else {
+//         Err(RuntimeError::Aborted(String::from("Panic occurred.")))
+//     }
+// }

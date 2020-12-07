@@ -4,7 +4,6 @@ use dice_error::compiler_error::CompilerError;
 use dice_runtime::runtime;
 
 pub use dice_core::{protocol, runtime::Runtime, value};
-pub use dice_error::runtime_error::RuntimeError;
 
 pub struct Dice {
     runtime: runtime::Runtime,
@@ -14,7 +13,7 @@ impl Dice {
     pub fn run_script(&mut self, input: impl Into<String>) -> Result<value::Value, DiceError> {
         let source = Source::new(input.into(), SourceKind::Script);
         let bytecode = Compiler::compile(source)?;
-        let value = self.runtime.run_bytecode(bytecode)?;
+        let value = self.runtime.run_bytecode(bytecode).expect("Error conversion.");
 
         Ok(value)
     }
@@ -44,8 +43,6 @@ impl Default for Dice {
 
 #[derive(thiserror::Error, Debug)]
 pub enum DiceError {
-    #[error(transparent)]
-    RuntimeError(#[from] RuntimeError),
     #[error(transparent)]
     CompilerError(#[from] CompilerError),
 }

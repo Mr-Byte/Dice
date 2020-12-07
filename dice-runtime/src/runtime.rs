@@ -7,7 +7,6 @@ use dice_core::{
     upvalue::Upvalue,
     value::{Class, Object, Value, ValueKind, ValueMap},
 };
-use dice_error::runtime_error::RuntimeError;
 use std::{
     collections::{HashMap, VecDeque},
     hash::BuildHasherDefault,
@@ -59,21 +58,21 @@ impl<L> Runtime<L>
 where
     L: ModuleLoader + Default,
 {
-    pub fn run_bytecode(&mut self, bytecode: Bytecode) -> Result<Value, RuntimeError> {
+    pub fn run_bytecode(&mut self, bytecode: Bytecode) -> Result<Value, ()> {
         let stack_frame = self.stack.reserve_slots(bytecode.slot_count());
         let result = self.execute_bytecode(&bytecode, stack_frame, None);
         self.stack.release_stack_frame(stack_frame);
 
-        Ok(result?)
+        Ok(result.expect("Error conversion."))
     }
 
-    pub(super) fn run_module(&mut self, bytecode: Bytecode, export: Value) -> Result<Value, RuntimeError> {
+    pub(super) fn run_module(&mut self, bytecode: Bytecode, export: Value) -> Result<Value, ()> {
         let stack_frame = self.stack.reserve_slots(bytecode.slot_count());
         self.stack[stack_frame.start()] = export;
         let result = self.execute_bytecode(&bytecode, stack_frame, None);
         self.stack.release_stack_frame(stack_frame);
 
-        Ok(result?)
+        Ok(result.expect("Error conversion."))
     }
 
     pub(super) fn set_value_class(&mut self, value_kind: ValueKind, class: Class) {
@@ -86,7 +85,7 @@ impl<L> dice_core::runtime::Runtime for Runtime<L>
 where
     L: ModuleLoader,
 {
-    fn new_module(&mut self, name: &str) -> Result<Object, RuntimeError> {
+    fn new_module(&mut self, name: &str) -> Result<Object, ()> {
         let module = Object::new(None);
 
         if self
@@ -94,27 +93,27 @@ where
             .insert(name.into(), Value::Object(module.clone()))
             .is_some()
         {
-            return Err(RuntimeError::Aborted(String::from("Module already registered.")));
+            todo!("Module already loaded error.");
         }
 
         Ok(module)
     }
 
-    fn new_class(&mut self, name: &str) -> Result<Class, RuntimeError> {
+    fn new_class(&mut self, name: &str) -> Result<Class, ()> {
         let class = Class::with_base(name.into(), self.any_class.clone());
 
         Ok(class)
     }
 
-    fn new_object(&mut self) -> Result<Object, RuntimeError> {
+    fn new_object(&mut self) -> Result<Object, ()> {
         let object = Object::new(self.any_class.clone());
 
         Ok(object)
     }
 
-    fn load_prelude(&mut self, path: &str) -> Result<(), RuntimeError> {
+    fn load_prelude(&mut self, path: &str) -> Result<(), ()> {
         // TODO: Clean this up unify module loading with the runtime's own module loading process.
-        let module = self.module_loader.load_module(path.into())?;
+        let module = self.module_loader.load_module(path.into()).expect("Error conversion.");
         let prelude = Value::Object(Object::new(self.module_class.clone()));
         // NOTE: Add the loaded prelude module as a registered module.
         self.loaded_modules.insert(module.id.clone(), prelude.clone());
@@ -128,29 +127,29 @@ where
         Ok(())
     }
 
-    fn add_global(&mut self, name: &str, value: Value) -> Result<(), RuntimeError> {
+    fn add_global(&mut self, name: &str, value: Value) -> Result<(), ()> {
         if self.globals.insert(name.into(), value).is_some() {
             // TODO: Create a separate error variant for this.
-            return Err(RuntimeError::Aborted(String::from("Global already registered.")));
+            todo!("Global already exists error.")
         }
 
         Ok(())
     }
 
-    fn call_function(&mut self, target: Value, args: &[Value]) -> Result<Value, RuntimeError> {
+    fn call_function(&mut self, target: Value, args: &[Value]) -> Result<Value, ()> {
         let arg_count = args.len();
         self.stack.push(target);
         self.stack.push_multiple(args);
-        self.call_fn(arg_count)?;
+        self.call_fn(arg_count).expect("Error conversion.");
 
         Ok(self.stack.pop())
     }
 
-    fn any_class(&self) -> Result<Class, RuntimeError> {
+    fn any_class(&self) -> Result<Class, ()> {
         Ok(self.any_class.clone())
     }
 
-    fn class_of(&self, value: &Value) -> Result<Class, RuntimeError> {
+    fn class_of(&self, value: &Value) -> Result<Class, ()> {
         let result = value
             .as_object()
             .ok()
@@ -161,7 +160,7 @@ where
         Ok(result)
     }
 
-    fn is_value_of_type(&self, value: &Value, class: &Class) -> Result<bool, RuntimeError> {
+    fn is_value_of_type(&self, value: &Value, class: &Class) -> Result<bool, ()> {
         value
             .as_object()
             .ok()
