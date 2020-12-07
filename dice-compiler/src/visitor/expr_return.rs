@@ -1,7 +1,7 @@
 use super::NodeVisitor;
+use crate::compiler_error::CompilerError;
 use crate::{compiler::Compiler, compiler_stack::CompilerKind};
 use dice_core::protocol::class::SELF;
-use dice_error::compiler_error::CompilerError;
 use dice_syntax::Return;
 
 impl NodeVisitor<&Return> for Compiler {
@@ -22,9 +22,17 @@ impl NodeVisitor<&Return> for Compiler {
                 self.assembler()?.load_local(self_slot as u8, expr_return.span);
             }
             CompilerKind::Constructor if expr_return.result.is_some() => {
-                return Err(CompilerError::InvalidConstructorReturn)
+                return Err(CompilerError::new(
+                    "The return keyword cannot be used with an expression in constructors.",
+                    expr_return.span,
+                ))
             }
-            _ => return Err(CompilerError::InvalidReturn),
+            _ => {
+                return Err(CompilerError::new(
+                    "The return keyword can only be used inside functions.",
+                    expr_return.span,
+                ))
+            }
         }
 
         // NOTE: Cleanup any temporaries created while calling functions then return.

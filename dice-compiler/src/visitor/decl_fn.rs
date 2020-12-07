@@ -1,8 +1,8 @@
 use super::NodeVisitor;
+use crate::compiler_error::CompilerError;
 use crate::{compiler::Compiler, scope_stack::State, upvalue::UpvalueDescriptor, visitor::FnKind};
 use dice_core::span::Span;
 use dice_core::value::{FnScript, Symbol, Value};
-use dice_error::compiler_error::CompilerError;
 use dice_syntax::{FnArg, FnDecl};
 use std::collections::HashSet;
 
@@ -33,7 +33,10 @@ impl Compiler {
         let has_unique_args = args.iter().all(|arg| items.insert(&arg.name));
 
         if !has_unique_args {
-            return Err(CompilerError::DuplicateArgumentNames());
+            return Err(CompilerError::new(
+                "A function cannot have duplicate argument names.",
+                span,
+            ));
         }
 
         Ok(())
@@ -47,14 +50,22 @@ impl Compiler {
     ) -> Result<(), CompilerError> {
         let context = self.context()?;
         let fn_name: Symbol = (&*fn_decl.name).into();
-        let local = context.scope_stack().local(fn_name).ok_or_else(|| {
-            CompilerError::InternalCompilerError(String::from("Function not already declared in scope."))
-        })?;
+        let local = context
+            .scope_stack()
+            .local(fn_name)
+            .ok_or_else(|| CompilerError::new("ICE: Function not already declared in scope.", Span::empty()))?;
 
         // NOTE: Check if a function of the given name has already been initialized.
         match &mut local.state {
             State::Function { ref mut is_initialized } if *is_initialized => {
-                return Err(CompilerError::ItemAlreadyDeclared(fn_decl.name.to_owned()))
+                // TODO: Only propagate the span of the function name.
+                return Err(CompilerError::new(
+                    format!(
+                        "A function with the name {} has already been declared in this scope.",
+                        fn_decl.name.to_owned()
+                    ),
+                    fn_decl.span,
+                ));
             }
             State::Function { ref mut is_initialized } => *is_initialized = true,
             _ => unreachable!("Unexpected non-function local state while compiling a function."),

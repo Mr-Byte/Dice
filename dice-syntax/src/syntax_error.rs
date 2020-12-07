@@ -5,6 +5,12 @@ use dice_core::spanned_error::SpannedError;
 #[error("{0}")]
 pub struct SyntaxError(String, Span);
 
+impl SyntaxError {
+    pub fn new(message: impl Into<String>, span: Span) -> Self {
+        Self(message.into(), span)
+    }
+}
+
 impl SpannedError for SyntaxError {
     fn message(&self) -> &str {
         &self.0

@@ -1,4 +1,5 @@
 use super::NodeVisitor;
+use crate::compiler_error::CompilerError;
 use crate::{compiler::Compiler, upvalue::UpvalueDescriptor, visitor::FnKind};
 use dice_core::{
     protocol::{
@@ -9,7 +10,6 @@ use dice_core::{
     },
     value::{FnScript, Symbol, Value},
 };
-use dice_error::compiler_error::CompilerError;
 use dice_syntax::{OpDecl, OverloadedOperator};
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]

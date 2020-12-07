@@ -10,4 +10,3 @@ id-arena = "2.2"
 thiserror = "1"
 unicode-width = "0.1"
 dice-core = {path = "../dice-core"}
-dice-error = {path = "../dice-error"}

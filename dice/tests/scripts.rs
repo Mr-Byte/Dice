@@ -1,7 +1,7 @@
-use dice::{value::Value, Dice, DiceError};
+use dice::{value::Value, Dice};
 
 #[test]
-fn test_lazy_and_both_true() -> Result<(), DiceError> {
+fn test_lazy_and_both_true() -> Result<(), String> {
     let mut runtime = Dice::default();
     let result = runtime.run_script("true && true")?;
 
@@ -14,7 +14,7 @@ fn test_lazy_and_both_true() -> Result<(), DiceError> {
 }
 
 #[test]
-fn test_lazy_and_lhs_true() -> Result<(), DiceError> {
+fn test_lazy_and_lhs_true() -> Result<(), String> {
     let mut runtime = Dice::default();
     let result = runtime.run_script("true && false")?;
 
@@ -27,7 +27,7 @@ fn test_lazy_and_lhs_true() -> Result<(), DiceError> {
 }
 
 #[test]
-fn test_lazy_and_rhs_true() -> Result<(), DiceError> {
+fn test_lazy_and_rhs_true() -> Result<(), String> {
     let mut runtime = Dice::default();
     let result = runtime.run_script("false && true")?;
 
@@ -40,7 +40,7 @@ fn test_lazy_and_rhs_true() -> Result<(), DiceError> {
 }
 
 #[test]
-fn test_lazy_and_both_false() -> Result<(), DiceError> {
+fn test_lazy_and_both_false() -> Result<(), String> {
     let mut runtime = Dice::default();
     let result = runtime.run_script("false && false")?;
 
@@ -53,7 +53,7 @@ fn test_lazy_and_both_false() -> Result<(), DiceError> {
 }
 
 // #[test]
-// fn test_lazy_and_lhs_none_fails() -> Result<(), DiceError> {
+// fn test_lazy_and_lhs_none_fails() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script("none && false");
 //
@@ -63,7 +63,7 @@ fn test_lazy_and_both_false() -> Result<(), DiceError> {
 // }
 //
 // #[test]
-// fn test_lazy_and_rhs_none_fails() -> Result<(), DiceError> {
+// fn test_lazy_and_rhs_none_fails() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script("true && none");
 //
@@ -73,7 +73,7 @@ fn test_lazy_and_both_false() -> Result<(), DiceError> {
 // }
 
 #[test]
-fn test_lazy_or_both_true() -> Result<(), DiceError> {
+fn test_lazy_or_both_true() -> Result<(), String> {
     let mut runtime = Dice::default();
     let result = runtime.run_script("true || true")?;
 
@@ -86,7 +86,7 @@ fn test_lazy_or_both_true() -> Result<(), DiceError> {
 }
 
 #[test]
-fn test_lazy_or_lhs_true() -> Result<(), DiceError> {
+fn test_lazy_or_lhs_true() -> Result<(), String> {
     let mut runtime = Dice::default();
     let result = runtime.run_script("true || false")?;
 
@@ -99,7 +99,7 @@ fn test_lazy_or_lhs_true() -> Result<(), DiceError> {
 }
 
 #[test]
-fn test_lazy_or_rhs_true() -> Result<(), DiceError> {
+fn test_lazy_or_rhs_true() -> Result<(), String> {
     let mut runtime = Dice::default();
     let result = runtime.run_script("false || true")?;
 
@@ -112,7 +112,7 @@ fn test_lazy_or_rhs_true() -> Result<(), DiceError> {
 }
 
 #[test]
-fn test_lazy_or_both_false() -> Result<(), DiceError> {
+fn test_lazy_or_both_false() -> Result<(), String> {
     let mut runtime = Dice::default();
     let result = runtime.run_script("false || false")?;
 
@@ -127,7 +127,7 @@ fn test_lazy_or_both_false() -> Result<(), DiceError> {
 // #[test]
 // #[should_panic]
 // fn test_lazy_or_lhs_none_fails() {
-//     // -> Result<(), DiceError> {
+//     // -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script("null || false");
 //
@@ -137,7 +137,7 @@ fn test_lazy_or_both_false() -> Result<(), DiceError> {
 // }
 //
 // #[test]
-// fn test_lazy_or_rhs_none_fails() -> Result<(), DiceError> {
+// fn test_lazy_or_rhs_none_fails() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script("false || null");
 //
@@ -147,7 +147,7 @@ fn test_lazy_or_both_false() -> Result<(), DiceError> {
 // }
 
 #[test]
-fn test_multiplication() -> Result<(), DiceError> {
+fn test_multiplication() -> Result<(), String> {
     let mut runtime = Dice::default();
     let result = runtime.run_script("5 * 5 * 5")?;
 
@@ -160,7 +160,7 @@ fn test_multiplication() -> Result<(), DiceError> {
 }
 
 #[test]
-fn test_multiplication_parens_lhs() -> Result<(), DiceError> {
+fn test_multiplication_parens_lhs() -> Result<(), String> {
     let mut runtime = Dice::default();
     let result = runtime.run_script("(5 * 5) * 5")?;
 
@@ -173,7 +173,7 @@ fn test_multiplication_parens_lhs() -> Result<(), DiceError> {
 }
 
 #[test]
-fn test_multiplication_parens_rhs() -> Result<(), DiceError> {
+fn test_multiplication_parens_rhs() -> Result<(), String> {
     let mut runtime = Dice::default();
     let result = runtime.run_script("5 * (5 * 5)")?;
 
@@ -186,7 +186,7 @@ fn test_multiplication_parens_rhs() -> Result<(), DiceError> {
 }
 
 #[test]
-fn test_addition() -> Result<(), DiceError> {
+fn test_addition() -> Result<(), String> {
     let mut runtime = Dice::default();
     let result = runtime.run_script("5 + 5 + 5")?;
 
@@ -199,7 +199,7 @@ fn test_addition() -> Result<(), DiceError> {
 }
 
 #[test]
-fn test_precedence() -> Result<(), DiceError> {
+fn test_precedence() -> Result<(), String> {
     let mut runtime = Dice::default();
     let result = runtime.run_script("5 + 5 * 5")?;
 
@@ -212,7 +212,7 @@ fn test_precedence() -> Result<(), DiceError> {
 }
 
 #[test]
-fn test_subtraction() -> Result<(), DiceError> {
+fn test_subtraction() -> Result<(), String> {
     let mut runtime = Dice::default();
     let result = runtime.run_script("5-2")?;
 
@@ -222,7 +222,7 @@ fn test_subtraction() -> Result<(), DiceError> {
 }
 
 #[test]
-fn test_add_negative() -> Result<(), DiceError> {
+fn test_add_negative() -> Result<(), String> {
     let mut runtime = Dice::default();
     let result = runtime.run_script("5+-2")?;
 
@@ -232,7 +232,7 @@ fn test_add_negative() -> Result<(), DiceError> {
 }
 
 #[test]
-fn test_negate() -> Result<(), DiceError> {
+fn test_negate() -> Result<(), String> {
     let mut runtime = Dice::default();
     let result = runtime.run_script("- -5")?;
 
@@ -242,7 +242,7 @@ fn test_negate() -> Result<(), DiceError> {
 }
 
 #[test]
-fn test_not() -> Result<(), DiceError> {
+fn test_not() -> Result<(), String> {
     let mut runtime = Dice::default();
     let result = runtime.run_script("!true")?;
 
@@ -252,7 +252,7 @@ fn test_not() -> Result<(), DiceError> {
 }
 
 #[test]
-fn test_equality() -> Result<(), DiceError> {
+fn test_equality() -> Result<(), String> {
     let mut runtime = Dice::default();
     let result = runtime.run_script("2 + 3 == 5")?;
 
@@ -262,7 +262,7 @@ fn test_equality() -> Result<(), DiceError> {
 }
 
 // #[test]
-// fn test_equality_with_none() -> Result<(), DiceError> {
+// fn test_equality_with_none() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //
 //     let result = runtime.run_script("10 == none")?;
@@ -287,7 +287,7 @@ fn test_equality() -> Result<(), DiceError> {
 // }
 //
 // #[test]
-// fn test_none() -> Result<(), DiceError> {
+// fn test_none() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script("none")?;
 //
@@ -297,7 +297,7 @@ fn test_equality() -> Result<(), DiceError> {
 // }
 //
 // #[test]
-// fn test_object() -> Result<(), DiceError> {
+// fn test_object() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script(r#"object { test: 5 + 5 }"#)?;
 //     let inner = result.get(&ValueKey::Symbol(Symbol::new_static("test")))?;
@@ -308,7 +308,7 @@ fn test_equality() -> Result<(), DiceError> {
 // }
 //
 // #[test]
-// fn test_field_access() -> Result<(), DiceError> {
+// fn test_field_access() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script(r#"object { test: 5 + 5 }.test"#)?;
 //     assert_eq!(10, *result.value::<i64>().unwrap());
@@ -317,7 +317,7 @@ fn test_equality() -> Result<(), DiceError> {
 // }
 //
 // #[test]
-// fn test_safe_field_access() -> Result<(), DiceError> {
+// fn test_safe_field_access() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script(r#"none?.test"#)?;
 //     assert_eq!(value::None, *result.value::<value::None>().unwrap());
@@ -326,7 +326,7 @@ fn test_equality() -> Result<(), DiceError> {
 // }
 //
 // #[test]
-// fn test_nested_safe_field_access() -> Result<(), DiceError> {
+// fn test_nested_safe_field_access() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script(r#"object { test: none }.test?.xy"#)?;
 //     assert_eq!(value::None, *result.value::<value::None>().unwrap());
@@ -335,7 +335,7 @@ fn test_equality() -> Result<(), DiceError> {
 // }
 //
 // #[test]
-// fn test_coalesce() -> Result<(), DiceError> {
+// fn test_coalesce() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script(r#"none ?? 10"#)?;
 //     assert_eq!(10, *result.value::<i64>().unwrap());
@@ -344,7 +344,7 @@ fn test_equality() -> Result<(), DiceError> {
 // }
 //
 // #[test]
-// fn test_complex_coalesce() -> Result<(), DiceError> {
+// fn test_complex_coalesce() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script(r#"object { test: none }.test?.xy ?? 10"#)?;
 //     assert_eq!(10, *result.value::<i64>().unwrap());
@@ -353,7 +353,7 @@ fn test_equality() -> Result<(), DiceError> {
 // }
 //
 // #[test]
-// fn test_index_access() -> Result<(), DiceError> {
+// fn test_index_access() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script(r#"object { test: 5 + 5 }["test"]"#)?;
 //     assert_eq!(10, *result.value::<i64>().unwrap());
@@ -362,7 +362,7 @@ fn test_equality() -> Result<(), DiceError> {
 // }
 //
 // #[test]
-// fn test_variable() -> Result<(), DiceError> {
+// fn test_variable() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     context.add_variable(Symbol::new("test"), Value::new(5))?;
 //     let result = runtime.run_script(r#"test + 5"#)?;
@@ -373,7 +373,7 @@ fn test_equality() -> Result<(), DiceError> {
 // }
 //
 // #[test]
-// fn test_variable_from_parent_scope() -> Result<(), DiceError> {
+// fn test_variable_from_parent_scope() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     context.add_variable(Symbol::new("test"), Value::new(5))?;
 //     let result = context.scoped().eval_expression(r#"test + 5"#)?;
@@ -384,7 +384,7 @@ fn test_equality() -> Result<(), DiceError> {
 // }
 //
 // #[test]
-// fn test_conditional() -> Result<(), DiceError> {
+// fn test_conditional() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script(r#"if 5 == 5 { 10 } else { 12 }"#)?;
 //
@@ -394,7 +394,7 @@ fn test_equality() -> Result<(), DiceError> {
 // }
 //
 // #[test]
-// fn test_conditional_alternate() -> Result<(), DiceError> {
+// fn test_conditional_alternate() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script(r#"if 5 == 6 { 10 } else { 12 }"#)?;
 //
@@ -404,7 +404,7 @@ fn test_equality() -> Result<(), DiceError> {
 // }
 //
 // #[test]
-// fn test_conditional_multiple_alternate() -> Result<(), DiceError> {
+// fn test_conditional_multiple_alternate() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script(r#"if 5 == 6 { 10 } else if 5 == 5 { 42 } else { 12 }"#)?;
 //
@@ -414,7 +414,7 @@ fn test_equality() -> Result<(), DiceError> {
 // }
 //
 // #[test]
-// fn test_conditional_no_alternate() -> Result<(), DiceError> {
+// fn test_conditional_no_alternate() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script(r#"if 5 == 6 { 10 }"#)?;
 //
@@ -424,7 +424,7 @@ fn test_equality() -> Result<(), DiceError> {
 // }
 //
 // #[test]
-// fn test_conditional_gte_no_alternate() -> Result<(), DiceError> {
+// fn test_conditional_gte_no_alternate() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script(r#"if 5 >= 6 { 10 }"#)?;
 //
@@ -434,7 +434,7 @@ fn test_equality() -> Result<(), DiceError> {
 // }
 //
 // #[test]
-// fn test_discard_expression_seps() -> Result<(), DiceError> {
+// fn test_discard_expression_seps() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script("5 + 5; none")?;
 //
@@ -444,7 +444,7 @@ fn test_equality() -> Result<(), DiceError> {
 // }
 //
 // #[test]
-// fn test_discard_expression_seps_complex() -> Result<(), DiceError> {
+// fn test_discard_expression_seps_complex() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script(r##"5["#op_add"](5); 15; 20; 25; 25["#op_add"](5)"##)?;
 //
@@ -454,7 +454,7 @@ fn test_equality() -> Result<(), DiceError> {
 // }
 //
 // #[test]
-// fn test_discard_expression_seps_complex_if() -> Result<(), DiceError> {
+// fn test_discard_expression_seps_complex_if() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script(r##"if false { 5 } if true { 10 }"##)?;
 //
@@ -464,7 +464,7 @@ fn test_equality() -> Result<(), DiceError> {
 // }
 //
 // #[test]
-// fn test_method_call() -> Result<(), DiceError> {
+// fn test_method_call() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script("5.to_string()")?;
 //     let actual = result.value::<DiceString>().unwrap();
@@ -475,7 +475,7 @@ fn test_equality() -> Result<(), DiceError> {
 // }
 //
 // #[test]
-// fn test_method_call_with_index() -> Result<(), DiceError> {
+// fn test_method_call_with_index() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script(r##"5["#op_add"](5)"##)?;
 //     let actual = result.value::<i64>().unwrap();
@@ -486,17 +486,17 @@ fn test_equality() -> Result<(), DiceError> {
 // }
 //
 // #[test]
-// fn test_method_call_with_invalid_index() -> Result<(), DiceError> {
+// fn test_method_call_with_invalid_index() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script(r##"5[5.0]"##);
 //
-//     assert!(matches!(result, Err(DiceError::InvalidKeyType(_))));
+//     assert!(matches!(result, Err(String::InvalidKeyType(_))));
 //
 //     Ok(())
 // }
 //
 // #[test]
-// fn test_chained_method_call() -> Result<(), DiceError> {
+// fn test_chained_method_call() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script(r##"5["#op_add"](5).to_string()"##)?;
 //     let actual = result.value::<DiceString>().unwrap();
@@ -507,7 +507,7 @@ fn test_equality() -> Result<(), DiceError> {
 // }
 //
 // #[test]
-// fn test_int_constructor() -> Result<(), DiceError> {
+// fn test_int_constructor() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script("Int(5)")?;
 //     let actual = result.value::<i64>().unwrap();
@@ -518,7 +518,7 @@ fn test_equality() -> Result<(), DiceError> {
 // }
 //
 // #[test]
-// fn test_int_constructor_with_float() -> Result<(), DiceError> {
+// fn test_int_constructor_with_float() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script("Int(5.99)")?;
 //     let actual = result.value::<i64>().unwrap();
@@ -529,7 +529,7 @@ fn test_equality() -> Result<(), DiceError> {
 // }
 //
 // #[test]
-// fn test_int_constructor_with_string() -> Result<(), DiceError> {
+// fn test_int_constructor_with_string() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script(r#"Int("5")"#)?;
 //     let actual = result.value::<i64>().unwrap();
@@ -540,7 +540,7 @@ fn test_equality() -> Result<(), DiceError> {
 // }
 //
 // #[test]
-// fn test_string_concat() -> Result<(), DiceError> {
+// fn test_string_concat() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script(r##""test" + "value""##)?;
 //     let actual = result.value::<DiceString>().unwrap();
@@ -551,7 +551,7 @@ fn test_equality() -> Result<(), DiceError> {
 // }
 //
 // #[test]
-// fn test_string_concat_with_number() -> Result<(), DiceError> {
+// fn test_string_concat_with_number() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script(r#""test" + 5"#)?;
 //     let actual = result.value::<DiceString>().unwrap();
@@ -562,7 +562,7 @@ fn test_equality() -> Result<(), DiceError> {
 // }
 //
 // #[test]
-// fn test_list_concat() -> Result<(), DiceError> {
+// fn test_list_concat() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script(r#"[5] + [5, 5]"#)?;
 //     let actual = result.value::<List>().unwrap().as_ref();
@@ -573,7 +573,7 @@ fn test_equality() -> Result<(), DiceError> {
 // }
 //
 // #[test]
-// fn test_list_concat_with_value() -> Result<(), DiceError> {
+// fn test_list_concat_with_value() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script(r#"[5] + 5"#)?;
 //     let actual = result.value::<List>().unwrap().as_ref();
@@ -584,7 +584,7 @@ fn test_equality() -> Result<(), DiceError> {
 // }
 //
 // #[test]
-// fn test_list_index() -> Result<(), DiceError> {
+// fn test_list_index() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script(r#"[5][0]"#)?;
 //     let actual = *result.value::<i64>().unwrap();
@@ -595,7 +595,7 @@ fn test_equality() -> Result<(), DiceError> {
 // }
 //
 // #[test]
-// fn test_list_negative_index() -> Result<(), DiceError> {
+// fn test_list_negative_index() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script(r#"[5][-1]"#)?;
 //     let actual = *result.value::<i64>().unwrap();
@@ -606,17 +606,17 @@ fn test_equality() -> Result<(), DiceError> {
 // }
 //
 // #[test]
-// fn test_list_negative_index_out_of_bounds() -> Result<(), DiceError> {
+// fn test_list_negative_index_out_of_bounds() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script(r#"[5][-2]"#);
 //
-//     assert!(matches!(result, Err(DiceError::IndexOutOfBounds(1, -1))));
+//     assert!(matches!(result, Err(String::IndexOutOfBounds(1, -1))));
 //
 //     Ok(())
 // }
 //
 // #[test]
-// fn test_variable_decl() -> Result<(), DiceError> {
+// fn test_variable_decl() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script(r#"let x = 5;"#)?;
 //     let actual = *result.value::<i64>().unwrap();
@@ -627,7 +627,7 @@ fn test_equality() -> Result<(), DiceError> {
 // }
 //
 // #[test]
-// fn test_variable_decl_followed_by_expression() -> Result<(), DiceError> {
+// fn test_variable_decl_followed_by_expression() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script(r#"let x = 5; x + 5"#)?;
 //     let actual = *result.value::<i64>().unwrap();
@@ -638,7 +638,7 @@ fn test_equality() -> Result<(), DiceError> {
 // }
 //
 // #[test]
-// fn test_variable_decl_followed_by_assignment() -> Result<(), DiceError> {
+// fn test_variable_decl_followed_by_assignment() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script(r#"let x = 5; x = x + 10; x"#)?;
 //     let actual = *result.value::<i64>().unwrap();
@@ -649,7 +649,7 @@ fn test_equality() -> Result<(), DiceError> {
 // }
 //
 // #[test]
-// fn test_variable_decl_with_block_expression() -> Result<(), DiceError> {
+// fn test_variable_decl_with_block_expression() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script(r#"let x = { let x = 20; x * 2 };"#)?;
 //     let actual = *result.value::<i64>().unwrap();
@@ -660,7 +660,7 @@ fn test_equality() -> Result<(), DiceError> {
 // }
 //
 // #[test]
-// fn test_variable_decl_with_block_expression_nested_in_expression() -> Result<(), DiceError> {
+// fn test_variable_decl_with_block_expression_nested_in_expression() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script(r#"let x = { let x = 20; x * 2 } + 2;"#)?;
 //     let actual = *result.value::<i64>().unwrap();
@@ -671,7 +671,7 @@ fn test_equality() -> Result<(), DiceError> {
 // }
 //
 #[test]
-fn test_while_loop() -> Result<(), DiceError> {
+fn test_while_loop() -> Result<(), String> {
     let mut runtime = Dice::default();
     let result = runtime.run_script(r#"let mut x = 0; while x < 10 { x = x + 1 } x"#)?;
 
@@ -684,7 +684,7 @@ fn test_while_loop() -> Result<(), DiceError> {
 }
 //
 // #[test]
-// fn test_for_loop() -> Result<(), DiceError> {
+// fn test_for_loop() -> Result<(), String> {
 //     let mut runtime = Dice::default();
 //     let result = runtime.run_script(r#"let x = 0; for y in 0..10 { x = x + y } x"#)?;
 //     let actual = *result.value::<i64>().unwrap();

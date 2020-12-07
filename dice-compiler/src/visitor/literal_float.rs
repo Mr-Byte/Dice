@@ -1,7 +1,7 @@
 use super::NodeVisitor;
 use crate::compiler::Compiler;
+use crate::compiler_error::CompilerError;
 use dice_core::value::Value;
-use dice_error::compiler_error::CompilerError;
 use dice_syntax::LitFloat;
 
 impl NodeVisitor<&LitFloat> for Compiler {

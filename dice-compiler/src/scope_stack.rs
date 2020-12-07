@@ -1,5 +1,6 @@
+use crate::compiler_error::CompilerError;
+use dice_core::span::Span;
 use dice_core::value::Symbol;
-use dice_error::compiler_error::CompilerError;
 
 #[derive(Clone)]
 pub struct ScopeVariable {
@@ -104,7 +105,7 @@ impl ScopeStack {
     pub fn pop_scope(&mut self) -> Result<ScopeContext, CompilerError> {
         self.stack
             .pop()
-            .ok_or_else(|| CompilerError::InternalCompilerError(String::from("Scope stack underflowed.")))
+            .ok_or_else(|| CompilerError::new("ICE: Scope stack underflowed.", Span::empty()))
     }
 
     pub fn in_context_of(&self, kind: ScopeKind) -> bool {
@@ -148,12 +149,14 @@ impl ScopeStack {
     pub fn top_mut(&mut self) -> Result<&mut ScopeContext, CompilerError> {
         self.stack
             .last_mut()
-            .ok_or_else(|| CompilerError::InternalCompilerError(String::from("Scope stack underflowed.")))
+            .ok_or_else(|| CompilerError::new("ICE: Scope stack underflowed.", Span::empty()))
     }
 
     /// Push the bytecode location of an exit point to the inner most loop's scope, to later be patched.
     pub fn add_loop_exit_point(&mut self, exit_point: usize) -> Result<(), CompilerError> {
-        let scope = self.first_of_kind_mut(ScopeKind::Loop).expect("Add error here.");
+        let scope = self
+            .first_of_kind_mut(ScopeKind::Loop)
+            .ok_or_else(|| CompilerError::new("ICE: Unable to find loop context.", Span::empty()))?;
 
         scope.exit_points.push(exit_point);
 
@@ -164,12 +167,12 @@ impl ScopeStack {
     pub fn entry_point(&mut self, kind: ScopeKind) -> Result<usize, CompilerError> {
         let scope = self
             .first_of_kind(kind)
-            .ok_or_else(|| CompilerError::InternalCompilerError(String::from("Scope stack underflowed.")))?;
+            .ok_or_else(|| CompilerError::new("ICE: Scope stack underflowed.", Span::empty()))?;
 
         scope
             .entry_point
             .clone()
-            .ok_or_else(|| CompilerError::InternalCompilerError(String::from("Not in a loop context.")))
+            .ok_or_else(|| CompilerError::new("ICE: Not in a loop context.", Span::empty()))
     }
 
     fn first_of_kind(&self, kind: ScopeKind) -> Option<&ScopeContext> {

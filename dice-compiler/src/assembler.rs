@@ -1,11 +1,11 @@
 use super::upvalue::UpvalueDescriptor;
+use crate::compiler_error::CompilerError;
 use bytes::BufMut as _;
 use dice_core::span::Span;
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode},
     value::{Symbol, Value},
 };
-use dice_error::compiler_error::CompilerError;
 use std::collections::HashMap;
 
 #[derive(Default)]
@@ -85,7 +85,7 @@ impl Assembler {
         self.data.put_u8(fn_pos);
 
         if upvalues.len() > 255 {
-            return Err(CompilerError::TooManyUpvalues);
+            return Err(CompilerError::new("Too many upvalues.", span));
         }
 
         for upvalue in upvalues {
@@ -485,7 +485,10 @@ impl Assembler {
 
         // NOTE: This could be alleviated by offering a long-form PushConst.
         if position > 255 {
-            return Err(CompilerError::TooManyConstants);
+            return Err(CompilerError::new(
+                "Exceeded the maximum allowable 255 constants for a bytecode module.",
+                Span::empty(),
+            ));
         }
 
         Ok(position as u8)

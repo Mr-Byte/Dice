@@ -1,6 +1,6 @@
 use super::NodeVisitor;
+use crate::compiler_error::CompilerError;
 use crate::{compiler::Compiler, scope_stack::State};
-use dice_error::compiler_error::CompilerError;
 use dice_syntax::{VarDecl, VarDeclKind};
 
 impl NodeVisitor<&VarDecl> for Compiler {

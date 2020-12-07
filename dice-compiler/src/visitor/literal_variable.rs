@@ -1,7 +1,7 @@
 use super::NodeVisitor;
 use crate::compiler::Compiler;
+use crate::compiler_error::CompilerError;
 use dice_core::value::Symbol;
-use dice_error::compiler_error::CompilerError;
 use dice_syntax::LitIdent;
 
 impl NodeVisitor<&LitIdent> for Compiler {
@@ -12,7 +12,13 @@ impl NodeVisitor<&LitIdent> for Compiler {
             let context = self.context()?;
             if let Some(scope_variable) = context.scope_stack().local(name_symbol.clone()) {
                 if !scope_variable.is_initialized() {
-                    return Err(CompilerError::UninitializedVariable((&*scope_variable.name).to_owned()));
+                    return Err(CompilerError::new(
+                        format!(
+                            "The variable {} is not initialized.",
+                            (&*scope_variable.name).to_owned()
+                        ),
+                        *span,
+                    ));
                 }
 
                 let slot = scope_variable.slot as u8;

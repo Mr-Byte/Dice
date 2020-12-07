@@ -1,4 +1,5 @@
 use super::NodeVisitor;
+use crate::compiler_error::CompilerError;
 use crate::{
     compiler::Compiler,
     compiler_stack::CompilerKind,
@@ -7,7 +8,6 @@ use crate::{
 };
 use dice_core::protocol::{class::SELF, ProtocolSymbol};
 use dice_core::span::Span;
-use dice_error::compiler_error::CompilerError;
 use dice_syntax::{Block, FnArg, SyntaxNode};
 
 impl NodeVisitor<&Block> for Compiler {
@@ -113,7 +113,11 @@ impl Compiler {
             }
         }
 
-        Err(CompilerError::DerivedMustCallSuper())
+        // TODO: Get the span of the function and first line.
+        Err(CompilerError::new(
+            "The new method of a derived class must have a super call on the first line.",
+            block.span,
+        ))
     }
 
     fn visit_args(&mut self, kind: &FunctionBlockKind, args: &[FnArg]) -> Result<(), CompilerError> {

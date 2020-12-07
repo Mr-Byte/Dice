@@ -10,4 +10,3 @@ wyhash = "0.4"
 
 dice-core = {path = "../dice-core"}
 dice-compiler = {path = "../dice-compiler"}
-dice-error = {path = "../dice-error"}

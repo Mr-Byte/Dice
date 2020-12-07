@@ -1,6 +1,7 @@
 use super::{BlockKind, NodeVisitor};
+use crate::compiler_error::CompilerError;
 use crate::{compiler::Compiler, scope_stack::ScopeKind};
-use dice_error::compiler_error::CompilerError;
+use dice_core::span::Span;
 use dice_syntax::{SyntaxNode, WhileLoop};
 
 impl NodeVisitor<&WhileLoop> for Compiler {
@@ -28,9 +29,10 @@ impl NodeVisitor<&WhileLoop> for Compiler {
 
             self.assembler()?.push_unit(*span);
         } else {
-            return Err(CompilerError::InternalCompilerError(String::from(
-                "While loop bodies should only ever contain blocks.",
-            )));
+            return Err(CompilerError::new(
+                "ICE: While loop bodies should only ever contain blocks.",
+                Span::empty(),
+            ));
         }
 
         Ok(())

@@ -10,7 +10,7 @@ dice-syntax = {path = "../dice-syntax"}
 dice-compiler = {path = "../dice-compiler"}
 dice-runtime = {path = "../dice-runtime"}
 dice-core = {path = "../dice-core"}
-dice-error = {path = "../dice-error"}
+
 
 [dev-dependencies]
 criterion = "0.3"

@@ -1,13 +1,16 @@
 use super::NodeVisitor;
+use crate::compiler_error::CompilerError;
 use crate::{compiler::Compiler, compiler_stack::CompilerKind};
 use dice_core::protocol::error::{IS_OK, RESULT};
-use dice_error::compiler_error::CompilerError;
 use dice_syntax::ErrorPropagate;
 
 impl NodeVisitor<&ErrorPropagate> for Compiler {
     fn visit(&mut self, ErrorPropagate { expression, span }: &ErrorPropagate) -> Result<(), CompilerError> {
         if !matches!(self.context()?.kind(), CompilerKind::Function { .. } | CompilerKind::Method { .. }) {
-            return Err(CompilerError::InvalidErrorPropagate);
+            return Err(CompilerError::new(
+                "The error propagate function can only be used inside functions.",
+                *span,
+            ));
         }
 
         self.visit(*expression)?;

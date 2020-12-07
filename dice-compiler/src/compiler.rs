@@ -1,3 +1,4 @@
+use crate::compiler_error::CompilerError;
 use crate::{
     assembler::Assembler,
     compiler_stack::{CompilerContext, CompilerKind, CompilerStack},
@@ -10,7 +11,6 @@ use dice_core::{
     source::{Source, SourceKind},
     span::Span,
 };
-use dice_error::compiler_error::CompilerError;
 use dice_syntax::{Parser, SyntaxTree};
 
 #[allow(dead_code)]
@@ -39,8 +39,8 @@ impl Compiler {
         }
     }
 
-    pub fn compile(source: Source) -> Result<Bytecode, CompilerError> {
-        let syntax_tree = Parser::new(source.source()).parse().expect("FIX ME rooSlam");
+    pub fn compile(source: &Source) -> Result<Bytecode, CompilerError> {
+        let syntax_tree = Parser::new(source.source()).parse()?;
         let kind = match source.kind() {
             SourceKind::Module => CompilationKind::Module,
             SourceKind::Script => CompilationKind::Script,

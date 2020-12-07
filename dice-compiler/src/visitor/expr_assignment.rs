@@ -1,8 +1,8 @@
 use super::NodeVisitor;
+use crate::compiler_error::CompilerError;
 use crate::{compiler::Compiler, scope_stack::ScopeVariable};
 use dice_core::span::Span;
 use dice_core::value::Symbol;
-use dice_error::compiler_error::CompilerError;
 use dice_syntax::{Assignment, AssignmentOperator, FieldAccess, Index, SyntaxNode, SyntaxNodeId};
 
 impl NodeVisitor<&Assignment> for Compiler {
@@ -22,7 +22,7 @@ impl NodeVisitor<&Assignment> for Compiler {
                 let index = index.clone();
                 self.assign_index(index, assignment)
             }
-            _ => Err(CompilerError::InvalidAssignmentTarget),
+            _ => Err(CompilerError::new("Invalid assignment target.", lhs.span())),
         }
     }
 }
@@ -106,7 +106,10 @@ impl Compiler {
                     upvalue,
                 )
             } else {
-                Err(CompilerError::UndeclaredVariable((&*target).to_owned()))
+                Err(CompilerError::new(
+                    format!("No variable with the name {} was declared.", (&*target).to_owned()),
+                    assignment.span,
+                ))
             }
         }
     }
@@ -120,7 +123,10 @@ impl Compiler {
         upvalue: usize,
     ) -> Result<(), CompilerError> {
         if !self.context()?.upvalues()[upvalue].is_mutable() {
-            return Err(CompilerError::ImmutableVariable((&*target).to_owned()));
+            return Err(CompilerError::new(
+                format!("Cannot assign to the immutable variable {}.", (&*target).to_owned()),
+                span,
+            ));
         }
         match operator {
             AssignmentOperator::Assignment => {
@@ -157,7 +163,10 @@ impl Compiler {
         let slot = local.slot as u8;
 
         if !local.is_mutable() {
-            return Err(CompilerError::ImmutableVariable((&*target).to_owned()));
+            return Err(CompilerError::new(
+                format!("Cannot assign to the immutable variable {}.", (&*target).to_owned()),
+                span,
+            ));
         }
 
         match operator {

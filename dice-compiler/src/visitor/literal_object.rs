@@ -1,6 +1,6 @@
 use super::NodeVisitor;
 use crate::compiler::Compiler;
-use dice_error::compiler_error::CompilerError;
+use crate::compiler_error::CompilerError;
 use dice_syntax::LitObject;
 
 impl NodeVisitor<&LitObject> for Compiler {

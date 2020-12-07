@@ -1,6 +1,7 @@
 use super::{BlockKind, NodeVisitor};
+use crate::compiler_error::CompilerError;
 use crate::{compiler::Compiler, scope_stack::ScopeKind};
-use dice_error::compiler_error::CompilerError;
+use dice_core::span::Span;
 use dice_syntax::{Loop, SyntaxNode};
 
 impl NodeVisitor<&Loop> for Compiler {
@@ -24,9 +25,10 @@ impl NodeVisitor<&Loop> for Compiler {
 
             self.assembler()?.push_unit(*span);
         } else {
-            return Err(CompilerError::InternalCompilerError(String::from(
+            return Err(CompilerError::new(
                 "While loop bodies should only ever contain blocks.",
-            )));
+                Span::empty(),
+            ));
         }
 
         Ok(())

@@ -1,10 +1,10 @@
 use super::NodeVisitor;
+use crate::compiler_error::CompilerError;
 use crate::{compiler::Compiler, compiler_stack::CompilerKind};
 use dice_core::protocol::{
     class::{SELF, SUPER},
     ProtocolSymbol,
 };
-use dice_error::compiler_error::CompilerError;
 use dice_syntax::{LitIdent, SuperAccess};
 
 impl NodeVisitor<&SuperAccess> for Compiler {
@@ -17,7 +17,10 @@ impl NodeVisitor<&SuperAccess> for Compiler {
         }: &SuperAccess,
     ) -> Result<(), CompilerError> {
         if !matches!(self.context()?.kind(), CompilerKind::Method { .. } | CompilerKind::Constructor) {
-            return Err(CompilerError::InvalidSuperAccess());
+            return Err(CompilerError::new(
+                "The super keyword can only be used inside of methods and constructors.",
+                *span,
+            ));
         }
 
         match super_class {

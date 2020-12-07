@@ -1,10 +1,10 @@
 use super::NodeVisitor;
+use crate::compiler_error::CompilerError;
 use crate::{
     compiler::Compiler,
     scope_stack::{ScopeKind, State},
 };
 use dice_core::protocol::iterator::{DONE, ITER, NEXT, VALUE};
-use dice_error::compiler_error::CompilerError;
 use dice_syntax::ForLoop;
 
 impl NodeVisitor<&ForLoop> for Compiler {

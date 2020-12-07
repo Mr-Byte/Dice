@@ -21,7 +21,9 @@ impl Token {
 
         lexer.spanned().map(move |(kind, range)| {
             let span = Span::new(range);
-            error.error().map_or_else(|| Ok(Token { kind, span }), |err| todo!())
+            error
+                .error()
+                .map_or_else(|| Ok(Token { kind, span }), |err| Err(SyntaxError::new(err, span)))
         })
     }
 
@@ -195,10 +197,10 @@ pub enum TokenKind {
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct LexerResult(Rc<RefCell<Option<()>>>);
+pub struct LexerResult(Rc<RefCell<Option<String>>>);
 
 impl LexerResult {
-    fn error(&self) -> Option<()> {
+    fn error(&self) -> Option<String> {
         self.0.borrow().clone()
     }
 }
@@ -206,8 +208,8 @@ impl LexerResult {
 fn parse_int(lexer: &mut Lexer<TokenKind>) -> Option<i64> {
     match lexer.slice().parse() {
         Ok(int) => Some(int),
-        Err(err) => {
-            *lexer.extras.0.borrow_mut() = Some(());
+        Err(_) => {
+            *lexer.extras.0.borrow_mut() = Some(String::from("Unable to parse integer."));
             None
         }
     }
@@ -216,8 +218,8 @@ fn parse_int(lexer: &mut Lexer<TokenKind>) -> Option<i64> {
 fn parse_float(lexer: &mut Lexer<TokenKind>) -> Option<f64> {
     match lexer.slice().parse() {
         Ok(float) => Some(float),
-        Err(err) => {
-            *lexer.extras.0.borrow_mut() = Some(());
+        Err(_) => {
+            *lexer.extras.0.borrow_mut() = Some(String::from("Unable to parse float."));
             None
         }
     }
@@ -241,14 +243,11 @@ fn lex_string(lexer: &mut Lexer<TokenKind>) -> Option<String> {
                     Some('r') => result.push('\r'),
                     Some('t') => result.push('\t'),
                     Some(next) => {
-                        let sequence = format!("\\{}", next);
-                        // Unknown escape sequence
-                        *lexer.extras.0.borrow_mut() = Some(());
+                        *lexer.extras.0.borrow_mut() = Some(format!("Unknown escape sequence \\{}.", next));
                         return None;
                     }
                     None => {
-                        // Unterminated string
-                        *lexer.extras.0.borrow_mut() = Some(());
+                        *lexer.extras.0.borrow_mut() = Some(String::from("Unterminated string."));
                         return None;
                     }
                 }
@@ -265,8 +264,7 @@ fn lex_string(lexer: &mut Lexer<TokenKind>) -> Option<String> {
                 result.push(current);
             }
             None => {
-                // Unterminated string
-                *lexer.extras.0.borrow_mut() = Some(());
+                *lexer.extras.0.borrow_mut() = Some(String::from("Unterminated string."));
                 return None;
             }
         }

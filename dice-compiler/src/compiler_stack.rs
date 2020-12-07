@@ -3,8 +3,9 @@ use super::{
     scope_stack::{ScopeKind, ScopeStack},
     upvalue::UpvalueDescriptor,
 };
+use crate::compiler_error::CompilerError;
+use dice_core::span::Span;
 use dice_core::{bytecode::Bytecode, value::Symbol};
-use dice_error::compiler_error::CompilerError;
 use dice_syntax::TypeAnnotation;
 
 #[derive(Debug, Clone)]
@@ -92,13 +93,13 @@ impl CompilerStack {
     pub fn pop(&mut self) -> Result<CompilerContext, CompilerError> {
         self.stack
             .pop()
-            .ok_or_else(|| CompilerError::InternalCompilerError(String::from("Compiler stack cannot be empty.")))
+            .ok_or_else(|| CompilerError::new("ICE: Compiler stack cannot be empty.", Span::empty()))
     }
 
     pub fn top_mut(&mut self) -> Result<&mut CompilerContext, CompilerError> {
         self.stack
             .last_mut()
-            .ok_or_else(|| CompilerError::InternalCompilerError(String::from("Compiler stack cannot be empty.")))
+            .ok_or_else(|| CompilerError::new("ICE: Compiler stack cannot be empty.", Span::empty()))
     }
 
     pub fn offset(&mut self, offset: usize) -> Option<&mut CompilerContext> {

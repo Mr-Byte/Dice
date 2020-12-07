@@ -14,6 +14,10 @@ impl Span {
         }
     }
 
+    pub const fn empty() -> Self {
+        Self { start: 0, end: 0 }
+    }
+
     pub const fn len(&self) -> usize {
         self.end - self.start
     }

@@ -1,10 +1,10 @@
 use super::NodeVisitor;
 use crate::compiler::Compiler;
+use crate::compiler_error::CompilerError;
 use dice_core::protocol::{
     class::{SELF, SUPER},
     ProtocolSymbol,
 };
-use dice_error::compiler_error::CompilerError;
 use dice_syntax::{LitIdent, SuperCall};
 
 impl NodeVisitor<&SuperCall> for Compiler {

@@ -1,6 +1,5 @@
 use dice_compiler::compiler::Compiler;
 use dice_core::source::{Source, SourceKind};
-use dice_error::compiler_error::CompilerError;
 use dice_runtime::runtime;
 
 pub use dice_core::{protocol, runtime::Runtime, value};
@@ -10,27 +9,39 @@ pub struct Dice {
 }
 
 impl Dice {
-    pub fn run_script(&mut self, input: impl Into<String>) -> Result<value::Value, DiceError> {
+    pub fn run_script(&mut self, input: impl Into<String>) -> Result<value::Value, String> {
         let source = Source::new(input.into(), SourceKind::Script);
-        let bytecode = Compiler::compile(source)?;
-        let value = self.runtime.run_bytecode(bytecode).expect("Error conversion.");
+        let bytecode = Compiler::compile(&source);
 
-        Ok(value)
+        match bytecode {
+            Ok(bytecode) => {
+                let value = self.runtime.run_bytecode(bytecode).expect("Error conversion.");
+
+                Ok(value)
+            }
+            Err(error) => {
+                let error = source.format_error(&error);
+                Err(error)
+            }
+        }
     }
 
-    pub fn disassemble_script(&self, input: impl Into<String>) -> Result<String, DiceError> {
+    pub fn disassemble_script(&self, input: impl Into<String>) -> Result<String, String> {
         let source = Source::new(input.into(), SourceKind::Script);
-        let bytecode = Compiler::compile(source)?;
-        Ok(bytecode.to_string())
+        let bytecode = Compiler::compile(&source);
+
+        match bytecode {
+            Ok(bytecode) => Ok(bytecode.to_string()),
+            Err(error) => {
+                let error = source.format_error(&error);
+                Err(error)
+            }
+        }
     }
 
     pub fn runtime(&mut self) -> &mut impl Runtime {
         &mut self.runtime
     }
-
-    // pub fn register_native_fn(&mut self, name: &str, native_fn: NativeFn) {
-    //     self.runtime.function(name, native_fn);
-    // }
 }
 
 impl Default for Dice {
@@ -39,10 +50,4 @@ impl Default for Dice {
 
         Self { runtime }
     }
-}
-
-#[derive(thiserror::Error, Debug)]
-pub enum DiceError {
-    #[error(transparent)]
-    CompilerError(#[from] CompilerError),
 }
