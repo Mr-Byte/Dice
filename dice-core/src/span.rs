@@ -27,24 +27,6 @@ impl Span {
     }
 }
 
-impl From<Range<usize>> for Span {
-    fn from(span: Range<usize>) -> Self {
-        Self::new(span)
-    }
-}
-
-impl From<&Range<usize>> for Span {
-    fn from(span: &Range<usize>) -> Self {
-        Self::new(span.clone())
-    }
-}
-
-impl Into<Range<usize>> for Span {
-    fn into(self) -> Range<usize> {
-        self.start..self.end
-    }
-}
-
 impl Add for Span {
     type Output = Span;
 

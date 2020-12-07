@@ -19,8 +19,8 @@ impl Token {
         let lexer = TokenKind::lexer(input);
         let error = lexer.extras.clone();
 
-        lexer.spanned().map(move |(kind, span)| {
-            let span: Span = span.into();
+        lexer.spanned().map(move |(kind, range)| {
+            let span = Span::new(range);
             error.error().map_or_else(|| Ok(Token { kind, span }), |err| todo!())
         })
     }

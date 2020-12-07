@@ -3,6 +3,7 @@ pub mod protocol;
 pub mod runtime;
 pub mod source;
 pub mod span;
+pub mod spanned_error;
 pub mod type_id;
 pub mod upvalue;
 pub mod value;

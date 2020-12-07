@@ -1,4 +1,5 @@
 use crate::span::Span;
+use crate::spanned_error::SpannedError;
 use std::collections::HashMap;
 use std::hash::BuildHasherDefault;
 use std::iter;
@@ -84,6 +85,28 @@ impl Source {
 
     pub fn kind(&self) -> SourceKind {
         self.kind
+    }
+
+    // TODO: Do more to pretty print errors.
+    pub fn format_error(&self, error: &impl SpannedError) -> String {
+        let span = error.span();
+        let position = self.line_index.position_of(span.start);
+        let lines = self
+            .line_index
+            .lines(span)
+            .map(|span| {
+                let position = self.line_index.position_of(span.start);
+                format!("{:<4} | {}", position.line + 1, &self.source[span.range()].trim_end())
+            })
+            .collect::<Vec<_>>()
+            .join("\n");
+        let location = self
+            .path
+            .clone()
+            .map(|path| format!("{}:{}:{}", path, position.line + 1, position.column_utf16 + 1))
+            .unwrap_or_else(|| format!("<Script>:{}:{}", position.line + 1, position.column_utf16 + 1));
+
+        format!("error: {}\n  --> {}\n{}", error.message(), location, lines)
     }
 }
 
@@ -216,8 +239,54 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::source::LineIndex;
+    use crate::source::{LineIndex, Source, SourceKind};
     use crate::span::Span;
+    use crate::spanned_error::SpannedError;
+
+    struct TestError(String, Span);
+
+    impl SpannedError for TestError {
+        fn message(&self) -> &str {
+            &self.0
+        }
+
+        fn span(&self) -> Span {
+            self.1
+        }
+    }
+
+    #[test]
+    fn format_error() {
+        let source = Source::new("let x = 0;\nx = 1;", SourceKind::Script);
+        let error = TestError(
+            String::from("Immutable variable cannot be reassigned."),
+            Span::new(11..17),
+        );
+
+        let expected = "\
+error: Immutable variable cannot be reassigned.
+  --> <Script>:2:1
+2    | x = 1;";
+
+        assert_eq!(expected, source.format_error(&error));
+    }
+
+    #[test]
+    fn format_error_multi_line() {
+        let source = Source::new("let x = 0;\nx = 1;\nx = 1;\ntest", SourceKind::Script);
+        let error = TestError(
+            String::from("Immutable variable cannot be reassigned."),
+            Span::new(11..23),
+        );
+
+        let expected = "\
+error: Immutable variable cannot be reassigned.
+  --> <Script>:2:1
+2    | x = 1;
+3    | x = 1;";
+
+        assert_eq!(expected, source.format_error(&error));
+    }
 
     #[test]
     fn line_column_of_ascii_char() {
