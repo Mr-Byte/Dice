@@ -2,6 +2,7 @@ use crate::{
     module::{file_loader::FileModuleLoader, ModuleLoader},
     stack::Stack,
 };
+use dice_core::error::Error;
 use dice_core::{
     bytecode::Bytecode,
     upvalue::Upvalue,
@@ -58,21 +59,21 @@ impl<L> Runtime<L>
 where
     L: ModuleLoader + Default,
 {
-    pub fn run_bytecode(&mut self, bytecode: Bytecode) -> Result<Value, ()> {
+    pub fn run_bytecode(&mut self, bytecode: Bytecode) -> Result<Value, Error> {
         let stack_frame = self.stack.reserve_slots(bytecode.slot_count());
-        let result = self.execute_bytecode(&bytecode, stack_frame, None);
+        let result = self.execute_bytecode(&bytecode, stack_frame, None)?;
         self.stack.release_stack_frame(stack_frame);
 
-        Ok(result.expect("Error conversion."))
+        Ok(result)
     }
 
-    pub(super) fn run_module(&mut self, bytecode: Bytecode, export: Value) -> Result<Value, ()> {
+    pub(super) fn run_module(&mut self, bytecode: Bytecode, export: Value) -> Result<Value, Error> {
         let stack_frame = self.stack.reserve_slots(bytecode.slot_count());
         self.stack[stack_frame.start()] = export;
-        let result = self.execute_bytecode(&bytecode, stack_frame, None);
+        let result = self.execute_bytecode(&bytecode, stack_frame, None)?;
         self.stack.release_stack_frame(stack_frame);
 
-        Ok(result.expect("Error conversion."))
+        Ok(result)
     }
 
     pub(super) fn set_value_class(&mut self, value_kind: ValueKind, class: Class) {
@@ -85,7 +86,7 @@ impl<L> dice_core::runtime::Runtime for Runtime<L>
 where
     L: ModuleLoader,
 {
-    fn new_module(&mut self, name: &str) -> Result<Object, ()> {
+    fn new_module(&mut self, name: &str) -> Result<Object, Error> {
         let module = Object::new(None);
 
         if self
@@ -99,19 +100,19 @@ where
         Ok(module)
     }
 
-    fn new_class(&mut self, name: &str) -> Result<Class, ()> {
+    fn new_class(&mut self, name: &str) -> Result<Class, Error> {
         let class = Class::with_base(name.into(), self.any_class.clone());
 
         Ok(class)
     }
 
-    fn new_object(&mut self) -> Result<Object, ()> {
+    fn new_object(&mut self) -> Result<Object, Error> {
         let object = Object::new(self.any_class.clone());
 
         Ok(object)
     }
 
-    fn load_prelude(&mut self, path: &str) -> Result<(), ()> {
+    fn load_prelude(&mut self, path: &str) -> Result<(), Error> {
         // TODO: Clean this up unify module loading with the runtime's own module loading process.
         let module = self.module_loader.load_module(path.into()).expect("Error conversion.");
         let prelude = Value::Object(Object::new(self.module_class.clone()));
@@ -127,7 +128,7 @@ where
         Ok(())
     }
 
-    fn add_global(&mut self, name: &str, value: Value) -> Result<(), ()> {
+    fn add_global(&mut self, name: &str, value: Value) -> Result<(), Error> {
         if self.globals.insert(name.into(), value).is_some() {
             // TODO: Create a separate error variant for this.
             todo!("Global already exists error.")
@@ -136,20 +137,20 @@ where
         Ok(())
     }
 
-    fn call_function(&mut self, target: Value, args: &[Value]) -> Result<Value, ()> {
+    fn call_function(&mut self, target: Value, args: &[Value]) -> Result<Value, Error> {
         let arg_count = args.len();
         self.stack.push(target);
         self.stack.push_multiple(args);
-        self.call_fn(arg_count).expect("Error conversion.");
+        self.call_fn(arg_count)?;
 
         Ok(self.stack.pop())
     }
 
-    fn any_class(&self) -> Result<Class, ()> {
+    fn any_class(&self) -> Result<Class, Error> {
         Ok(self.any_class.clone())
     }
 
-    fn class_of(&self, value: &Value) -> Result<Class, ()> {
+    fn class_of(&self, value: &Value) -> Result<Class, Error> {
         let result = value
             .as_object()
             .ok()
@@ -160,7 +161,7 @@ where
         Ok(result)
     }
 
-    fn is_value_of_type(&self, value: &Value, class: &Class) -> Result<bool, ()> {
+    fn is_value_of_type(&self, value: &Value, class: &Class) -> Result<bool, Error> {
         value
             .as_object()
             .ok()

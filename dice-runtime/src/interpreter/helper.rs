@@ -1,4 +1,5 @@
 use crate::{module::ModuleLoader, runtime::Runtime};
+use dice_core::error::Error;
 use dice_core::{
     protocol::{class::NEW, ProtocolSymbol},
     upvalue::{Upvalue, UpvalueState},
@@ -20,8 +21,12 @@ impl<L: ModuleLoader> Runtime<L> {
         found_upvalue
     }
 
-    pub(super) fn call_binary_op(&mut self, operator: impl Into<Symbol>, rhs: Value) -> Result<(), ()> {
-        fn call_binary_op<L: ModuleLoader>(runtime: &mut Runtime<L>, operator: Symbol, rhs: Value) -> Result<(), ()> {
+    pub(super) fn call_binary_op(&mut self, operator: impl Into<Symbol>, rhs: Value) -> Result<(), Error> {
+        fn call_binary_op<L: ModuleLoader>(
+            runtime: &mut Runtime<L>,
+            operator: Symbol,
+            rhs: Value,
+        ) -> Result<(), Error> {
             let lhs = runtime.stack.pop();
             let method = runtime.get_field(&operator, lhs.clone())?;
 
@@ -47,8 +52,8 @@ impl<L: ModuleLoader> Runtime<L> {
         call_binary_op(self, operator.into(), rhs)
     }
 
-    pub(super) fn call_unary_op(&mut self, operator: impl Into<Symbol>) -> Result<(), ()> {
-        fn call_unary_op<L: ModuleLoader>(runtime: &mut Runtime<L>, operator: Symbol) -> Result<(), ()> {
+    pub(super) fn call_unary_op(&mut self, operator: impl Into<Symbol>) -> Result<(), Error> {
+        fn call_unary_op<L: ModuleLoader>(runtime: &mut Runtime<L>, operator: Symbol) -> Result<(), Error> {
             let operand = runtime.stack.pop();
             let method = runtime.get_field(&operator, operand.clone())?;
 
@@ -72,7 +77,7 @@ impl<L: ModuleLoader> Runtime<L> {
         call_unary_op(self, operator.into())
     }
 
-    pub(super) fn get_field(&self, key: &Symbol, value: Value) -> Result<Value, ()> {
+    pub(super) fn get_field(&self, key: &Symbol, value: Value) -> Result<Value, Error> {
         if value.kind() == ValueKind::Object || value.kind() == ValueKind::Class || value.kind() == ValueKind::Array {
             let object = value.as_object()?;
             let fields = object.fields();
@@ -111,7 +116,7 @@ impl<L: ModuleLoader> Runtime<L> {
     }
 
     // TODO: Replace this mutually recursive call with an execution stack to prevent the thread's stack from overflowing.
-    pub(crate) fn call_fn(&mut self, arg_count: usize) -> Result<(), ()> {
+    pub(crate) fn call_fn(&mut self, arg_count: usize) -> Result<(), Error> {
         let (function, receiver) = match self.stack.peek(arg_count) {
             Value::FnBound(fn_bound) => (fn_bound.function(), Some(fn_bound.receiver())),
             value => (value.clone(), None),
@@ -139,7 +144,7 @@ impl<L: ModuleLoader> Runtime<L> {
         arg_count: usize,
         class: &Class,
         mut object: Value,
-    ) -> Result<Value, ()> {
+    ) -> Result<Value, Error> {
         let class = class.clone();
 
         if let Some(new) = class.method(&NEW) {
@@ -164,7 +169,12 @@ impl<L: ModuleLoader> Runtime<L> {
         Ok(object)
     }
 
-    fn call_fn_native(&mut self, arg_count: usize, receiver: Option<Value>, fn_native: &FnNative) -> Result<Value, ()> {
+    fn call_fn_native(
+        &mut self,
+        arg_count: usize,
+        receiver: Option<Value>,
+        fn_native: &FnNative,
+    ) -> Result<Value, Error> {
         let fn_native = fn_native.clone();
         // NOTE: Include the function/receiver slot as the first parameter to the native function call.
         let mut args = self.stack.pop_count(arg_count + 1);
@@ -182,7 +192,7 @@ impl<L: ModuleLoader> Runtime<L> {
         receiver: Option<Value>,
         fn_script: &FnScript,
         parent_upvalues: Option<&[Upvalue]>,
-    ) -> Result<Value, ()> {
+    ) -> Result<Value, Error> {
         let slots = fn_script.bytecode().slot_count();
         let reserved = slots - arg_count;
         // NOTE: Reserve only the slots needed to cover locals beyond the arguments already on the stack.

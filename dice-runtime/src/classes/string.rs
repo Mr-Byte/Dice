@@ -1,4 +1,5 @@
 use crate::module::ModuleLoader;
+use dice_core::error::Error;
 use dice_core::{
     protocol::{class::NEW, operator::ADD},
     runtime::Runtime,
@@ -22,13 +23,13 @@ where
     }
 }
 
-fn construct_string(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
+fn construct_string(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, Error> {
     match args {
         [_, param, ..] => Ok(Value::with_string(param.to_string())),
         _ => Ok(Value::Null),
     }
 }
-fn concat(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
+fn concat(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, Error> {
     match args {
         [Value::String(this), Value::String(other), ..] => Ok(Value::with_string(format!("{}{}", &*this, &*other))),
         _ => Ok(Value::Null),

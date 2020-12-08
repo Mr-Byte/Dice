@@ -1,4 +1,5 @@
 use crate::module::ModuleLoader;
+use dice_core::error::Error;
 use dice_core::{
     protocol::{
         object::{ANY_CLASS, TO_STRING},
@@ -24,14 +25,14 @@ where
     }
 }
 
-fn to_string(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
+fn to_string(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, Error> {
     match args {
         [value, ..] => Ok(Value::with_string(format!("{}", value))),
         _ => Ok(Value::Null),
     }
 }
 
-fn fields(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
+fn fields(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, Error> {
     let result = args
         .first()
         .and_then(|value| value.as_object().ok())
@@ -44,7 +45,7 @@ fn fields(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
     Ok(result)
 }
 
-fn methods(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
+fn methods(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, Error> {
     match args {
         [this, ..] => {
             let class = runtime.class_of(this)?;
@@ -60,7 +61,7 @@ fn methods(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
     }
 }
 
-fn class_of(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
+fn class_of(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, Error> {
     match args {
         [this, ..] => Ok(Value::Class(runtime.class_of(this)?)),
         _ => Ok(Value::Null),

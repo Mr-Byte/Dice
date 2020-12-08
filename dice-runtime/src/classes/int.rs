@@ -1,4 +1,5 @@
 use crate::module::ModuleLoader;
+use dice_core::error::Error;
 use dice_core::{
     protocol::class::NEW,
     runtime::Runtime,
@@ -40,7 +41,7 @@ where
     }
 }
 
-fn construct_int(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
+fn construct_int(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, Error> {
     match args {
         [_, param, ..] => match param {
             value @ Value::Int(_) => Ok(value.clone()),
@@ -73,7 +74,7 @@ fn bind_i64_i64_ret_i64(function: impl Fn(i64, i64) -> i64 + 'static) -> NativeF
     })
 }
 
-fn pow(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
+fn pow(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, Error> {
     if let [Value::Int(this), Value::Int(exp), ..] = args {
         Ok(Value::Int(this.pow(*exp as u32)))
     } else {

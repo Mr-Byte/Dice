@@ -1,4 +1,5 @@
 use crate::module::ModuleLoader;
+use dice_core::error::Error;
 use dice_core::{
     protocol::class::NEW,
     runtime::Runtime,
@@ -19,7 +20,7 @@ where
     }
 }
 
-fn construct_bool(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
+fn construct_bool(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, Error> {
     match args {
         [_, param, ..] => match param {
             value @ Value::Bool(_) => Ok(value.clone()),

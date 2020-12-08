@@ -1,10 +1,11 @@
+use crate::error::Error;
 use crate::{runtime::Runtime, value::Value};
 use std::{
     fmt::{Debug, Display},
     rc::Rc,
 };
 
-pub type NativeFn = Rc<dyn Fn(&mut dyn Runtime, &[Value]) -> Result<Value, ()>>;
+pub type NativeFn = Rc<dyn Fn(&mut dyn Runtime, &[Value]) -> Result<Value, Error>>;
 
 #[derive(Clone)]
 pub struct FnNative(NativeFn);
@@ -15,7 +16,7 @@ impl FnNative {
     }
 
     #[inline]
-    pub fn call(&self, runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
+    pub fn call(&self, runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, Error> {
         self.0(runtime, args)
     }
 }

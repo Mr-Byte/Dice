@@ -1,16 +1,17 @@
+use crate::error::Error;
 use crate::value::{Class, Object, Value};
 
 pub trait Runtime {
-    fn new_module(&mut self, name: &str) -> Result<Object, ()>;
-    fn new_class(&mut self, name: &str) -> Result<Class, ()>;
-    fn new_object(&mut self) -> Result<Object, ()>;
+    fn new_module(&mut self, name: &str) -> Result<Object, Error>;
+    fn new_class(&mut self, name: &str) -> Result<Class, Error>;
+    fn new_object(&mut self) -> Result<Object, Error>;
 
-    fn load_prelude(&mut self, path: &str) -> Result<(), ()>;
-    fn add_global(&mut self, name: &str, value: Value) -> Result<(), ()>;
+    fn load_prelude(&mut self, path: &str) -> Result<(), Error>;
+    fn add_global(&mut self, name: &str, value: Value) -> Result<(), Error>;
 
-    fn call_function(&mut self, target: Value, args: &[Value]) -> Result<Value, ()>;
+    fn call_function(&mut self, target: Value, args: &[Value]) -> Result<Value, Error>;
 
-    fn any_class(&self) -> Result<Class, ()>;
-    fn class_of(&self, value: &Value) -> Result<Class, ()>;
-    fn is_value_of_type(&self, value: &Value, class: &Class) -> Result<bool, ()>;
+    fn any_class(&self) -> Result<Class, Error>;
+    fn class_of(&self, value: &Value) -> Result<Class, Error>;
+    fn is_value_of_type(&self, value: &Value, class: &Class) -> Result<bool, Error>;
 }

@@ -11,6 +11,7 @@ mod symbol;
 use std::{collections::HashMap, fmt::Display, hash::BuildHasherDefault};
 use wyhash::WyHash;
 
+use crate::error::Error;
 pub use array::*;
 pub use class::*;
 pub use fn_bound::*;
@@ -59,62 +60,62 @@ impl Value {
         Value::Array(vec.into())
     }
 
-    pub fn as_bool(&self) -> Result<bool, ()> {
+    pub fn as_bool(&self) -> Result<bool, Error> {
         match self {
             Value::Bool(bool) => Ok(*bool),
-            _ => Err(()),
+            _ => todo!("Type conversion error."),
         }
     }
 
-    pub fn as_int(&self) -> Result<i64, ()> {
+    pub fn as_int(&self) -> Result<i64, Error> {
         match self {
             Value::Int(int) => Ok(*int),
-            _ => Err(()),
+            _ => todo!("Type conversion error."),
         }
     }
 
-    pub fn as_float(&self) -> Result<f64, ()> {
+    pub fn as_float(&self) -> Result<f64, Error> {
         match self {
             Value::Float(float) => Ok(*float),
-            _ => Err(()),
+            _ => todo!("Type conversion error."),
         }
     }
 
-    pub fn as_array(&self) -> Result<&Array, ()> {
+    pub fn as_array(&self) -> Result<&Array, Error> {
         match self {
             Value::Array(list) => Ok(list),
-            _ => Err(()),
+            _ => todo!("Type conversion error."),
         }
     }
 
-    pub fn as_string(&self) -> Result<&String, ()> {
+    pub fn as_string(&self) -> Result<&String, Error> {
         match self {
             Value::String(string) => Ok(string),
-            _ => Err(()),
+            _ => todo!("Type conversion error."),
         }
     }
 
-    pub fn as_symbol(&self) -> Result<Symbol, ()> {
+    pub fn as_symbol(&self) -> Result<Symbol, Error> {
         match self {
             Value::Symbol(symbol) => Ok(symbol.clone()),
             Value::String(string) => Ok(string.into()),
-            _ => Err(()),
+            _ => todo!("Type conversion error."),
         }
     }
 
-    pub fn as_object(&self) -> Result<&Object, ()> {
+    pub fn as_object(&self) -> Result<&Object, Error> {
         match self {
             Value::Object(object) => Ok(object),
             Value::Class(class) => Ok(&(**class)),
             Value::Array(array) => Ok(&(**array)),
-            _ => Err(()),
+            _ => todo!("Type conversion error."),
         }
     }
 
-    pub fn as_class(&self) -> Result<Class, ()> {
+    pub fn as_class(&self) -> Result<Class, Error> {
         match self {
             Value::Class(class) => Ok(class.clone()),
-            _ => Err(()),
+            _ => todo!("Type conversion error."),
         }
     }
 

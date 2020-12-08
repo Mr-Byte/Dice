@@ -1,6 +1,7 @@
 mod helper;
 
 use crate::{module::ModuleLoader, runtime::Runtime, stack::StackFrame};
+use dice_core::error::Error;
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
     protocol::operator::{
@@ -23,7 +24,7 @@ where
         bytecode: &Bytecode,
         stack_frame: StackFrame,
         parent_upvalues: Option<&[Upvalue]>,
-    ) -> Result<Value, ()> {
+    ) -> Result<Value, Error> {
         let initial_stack_depth = self.stack.len();
         let mut cursor = bytecode.cursor();
 
@@ -128,7 +129,7 @@ where
         self.stack.push(value);
     }
 
-    fn assert_bool(&mut self) -> Result<(), ()> {
+    fn assert_bool(&mut self) -> Result<(), Error> {
         if self.stack.peek_mut(0).kind() != ValueKind::Bool {
             todo!("Value must evaluate to a boolean.");
         }
@@ -136,7 +137,7 @@ where
         Ok(())
     }
 
-    fn assert_type_for_local(&mut self, stack_frame: StackFrame, cursor: &mut BytecodeCursor) -> Result<(), ()> {
+    fn assert_type_for_local(&mut self, stack_frame: StackFrame, cursor: &mut BytecodeCursor) -> Result<(), Error> {
         let class = self.stack.pop();
         let class = class.as_class()?;
         let value = &self.stack[stack_frame][cursor.read_u8() as usize];
@@ -164,7 +165,7 @@ where
         &mut self,
         stack_frame: StackFrame,
         cursor: &mut BytecodeCursor,
-    ) -> Result<(), ()> {
+    ) -> Result<(), Error> {
         let class = self.stack.pop();
         let class = class.as_class()?;
         let value = &self.stack[stack_frame][cursor.read_u8() as usize];
@@ -188,7 +189,7 @@ where
         }
     }
 
-    fn assert_type_and_return(&mut self) -> Result<(), ()> {
+    fn assert_type_and_return(&mut self) -> Result<(), Error> {
         let class = self.stack.pop();
         let class = class.as_class()?;
         let value = self.stack.peek(0);
@@ -212,7 +213,7 @@ where
         }
     }
 
-    fn assert_type_or_null_and_return(&mut self) -> Result<(), ()> {
+    fn assert_type_or_null_and_return(&mut self) -> Result<(), Error> {
         let class = self.stack.pop();
         let class = class.as_class()?;
         let value = self.stack.peek(0);
@@ -236,7 +237,7 @@ where
         }
     }
 
-    fn not(&mut self) -> Result<(), ()> {
+    fn not(&mut self) -> Result<(), Error> {
         match self.stack.peek_mut(0) {
             Value::Bool(value) => *value = !*value,
             _ => return todo!("Value must be a boolean."),
@@ -245,11 +246,11 @@ where
         Ok(())
     }
 
-    fn die_roll(&mut self) -> Result<(), ()> {
+    fn die_roll(&mut self) -> Result<(), Error> {
         self.call_unary_op(&DIE_ROLL)
     }
 
-    fn neg(&mut self) -> Result<(), ()> {
+    fn neg(&mut self) -> Result<(), Error> {
         match self.stack.peek_mut(0) {
             Value::Int(value) => *value = -*value,
             Value::Float(value) => *value = -*value,
@@ -261,7 +262,7 @@ where
         Ok(())
     }
 
-    fn mul(&mut self) -> Result<(), ()> {
+    fn mul(&mut self) -> Result<(), Error> {
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Int(rhs), Value::Int(lhs)) => *lhs *= rhs,
             (Value::Float(rhs), Value::Float(lhs)) => *lhs *= rhs,
@@ -271,7 +272,7 @@ where
         Ok(())
     }
 
-    fn div(&mut self) -> Result<(), ()> {
+    fn div(&mut self) -> Result<(), Error> {
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Int(rhs), Value::Int(lhs)) => {
                 if rhs == 0 {
@@ -287,7 +288,7 @@ where
         Ok(())
     }
 
-    fn rem(&mut self) -> Result<(), ()> {
+    fn rem(&mut self) -> Result<(), Error> {
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Int(rhs), Value::Int(lhs)) => {
                 if rhs == 0 {
@@ -303,7 +304,7 @@ where
         Ok(())
     }
 
-    fn add(&mut self) -> Result<(), ()> {
+    fn add(&mut self) -> Result<(), Error> {
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Int(rhs), Value::Int(lhs)) => *lhs += rhs,
             (Value::Float(rhs), Value::Float(lhs)) => *lhs += rhs,
@@ -313,7 +314,7 @@ where
         Ok(())
     }
 
-    fn gt(&mut self) -> Result<(), ()> {
+    fn gt(&mut self) -> Result<(), Error> {
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Bool(rhs), Value::Bool(lhs)) => *lhs &= !rhs,
             (Value::Int(rhs), Value::Int(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs > rhs),
@@ -324,7 +325,7 @@ where
         Ok(())
     }
 
-    fn gte(&mut self) -> Result<(), ()> {
+    fn gte(&mut self) -> Result<(), Error> {
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Bool(rhs), Value::Bool(lhs)) => *lhs = *lhs >= rhs,
             (Value::Int(rhs), Value::Int(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs >= rhs),
@@ -335,7 +336,7 @@ where
         Ok(())
     }
 
-    fn lt(&mut self) -> Result<(), ()> {
+    fn lt(&mut self) -> Result<(), Error> {
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Bool(rhs), Value::Bool(lhs)) => *lhs = !(*lhs) & rhs,
             (Value::Int(rhs), Value::Int(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs < rhs),
@@ -346,7 +347,7 @@ where
         Ok(())
     }
 
-    fn lte(&mut self) -> Result<(), ()> {
+    fn lte(&mut self) -> Result<(), Error> {
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Bool(rhs), Value::Bool(lhs)) => *lhs = *lhs <= rhs,
             (Value::Int(rhs), Value::Int(lhs)) => *self.stack.peek_mut(0) = Value::Bool(*lhs <= rhs),
@@ -357,7 +358,7 @@ where
         Ok(())
     }
 
-    fn sub(&mut self) -> Result<(), ()> {
+    fn sub(&mut self) -> Result<(), Error> {
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Int(rhs), Value::Int(lhs)) => *lhs -= rhs,
             (Value::Float(rhs), Value::Float(lhs)) => *lhs -= rhs,
@@ -367,7 +368,7 @@ where
         Ok(())
     }
 
-    fn eq(&mut self) -> Result<(), ()> {
+    fn eq(&mut self) -> Result<(), Error> {
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Null, Value::Null) => *self.stack.peek_mut(0) = Value::Bool(true),
             (Value::Null, _) => *self.stack.peek_mut(0) = Value::Bool(false),
@@ -384,7 +385,7 @@ where
         Ok(())
     }
 
-    fn neq(&mut self) -> Result<(), ()> {
+    fn neq(&mut self) -> Result<(), Error> {
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Null, Value::Null) => *self.stack.peek_mut(0) = Value::Bool(false),
             (Value::Null, _) => *self.stack.peek_mut(0) = Value::Bool(true),
@@ -401,22 +402,22 @@ where
         Ok(())
     }
 
-    fn dice_roll(&mut self) -> Result<(), ()> {
+    fn dice_roll(&mut self) -> Result<(), Error> {
         let rhs = self.stack.pop();
         self.call_binary_op(&DICE_ROLL, rhs)
     }
 
-    fn range_inclusive(&mut self) -> Result<(), ()> {
+    fn range_inclusive(&mut self) -> Result<(), Error> {
         let rhs = self.stack.pop();
         self.call_binary_op(&RANGE_INCLUSIVE, rhs)
     }
 
-    fn range_exclusive(&mut self) -> Result<(), ()> {
+    fn range_exclusive(&mut self) -> Result<(), Error> {
         let rhs = self.stack.pop();
         self.call_binary_op(&RANGE_EXCLUSIVE, rhs)
     }
 
-    fn is(&mut self) -> Result<(), ()> {
+    fn is(&mut self) -> Result<(), Error> {
         let class = self.stack.pop();
         let class = class.as_class()?;
         let instance = self.stack.peek(0);
@@ -440,7 +441,7 @@ where
         self.stack.push(Value::Object(object));
     }
 
-    fn inherit_class(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), ()> {
+    fn inherit_class(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), Error> {
         let name_slot = cursor.read_u8() as usize;
         let name = bytecode.constants()[name_slot].as_symbol()?;
         let class = Class::with_base(name, self.stack.pop().as_class()?);
@@ -456,7 +457,7 @@ where
         self.stack.push(value);
     }
 
-    fn jump_if_false(&mut self, cursor: &mut BytecodeCursor) -> Result<(), ()> {
+    fn jump_if_false(&mut self, cursor: &mut BytecodeCursor) -> Result<(), Error> {
         let offset = cursor.read_offset();
         let value = self.stack.pop().as_bool()?;
 
@@ -467,7 +468,7 @@ where
         Ok(())
     }
 
-    fn jump_if_true(&mut self, cursor: &mut BytecodeCursor) -> Result<(), ()> {
+    fn jump_if_true(&mut self, cursor: &mut BytecodeCursor) -> Result<(), Error> {
         let offset = cursor.read_offset();
         let value = self.stack.pop().as_bool()?;
 
@@ -568,7 +569,7 @@ where
         }
     }
 
-    fn store_global(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), ()> {
+    fn store_global(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), Error> {
         let const_pos = cursor.read_u8() as usize;
         let value = &bytecode.constants()[const_pos];
         let global_name = value.as_symbol()?;
@@ -584,7 +585,7 @@ where
         Ok(())
     }
 
-    fn load_global(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), ()> {
+    fn load_global(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), Error> {
         let const_pos = cursor.read_u8() as usize;
         let global = bytecode.constants()[const_pos].as_symbol()?;
         let value = self
@@ -598,7 +599,7 @@ where
         Ok(())
     }
 
-    fn load_field(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), ()> {
+    fn load_field(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), Error> {
         let key_index = cursor.read_u8() as usize;
         let key = bytecode.constants()[key_index].as_symbol()?;
 
@@ -610,7 +611,7 @@ where
         Ok(())
     }
 
-    fn store_field(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), ()> {
+    fn store_field(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), Error> {
         let key_index = cursor.read_u8() as usize;
         let key = bytecode.constants()[key_index].as_symbol()?;
         let value = self.stack.pop();
@@ -623,7 +624,7 @@ where
         Ok(())
     }
 
-    fn assign_field(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), ()> {
+    fn assign_field(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), Error> {
         let key_index = cursor.read_u8() as usize;
         let key = bytecode.constants()[key_index].as_symbol()?;
         let value = self.stack.pop();
@@ -636,7 +637,7 @@ where
         Ok(())
     }
 
-    fn load_index(&mut self) -> Result<(), ()> {
+    fn load_index(&mut self) -> Result<(), Error> {
         let index = self.stack.pop();
         let target = self.stack.peek(0);
         let result = match target {
@@ -655,7 +656,7 @@ where
         Ok(())
     }
 
-    fn store_index(&mut self) -> Result<(), ()> {
+    fn store_index(&mut self) -> Result<(), Error> {
         let value = self.stack.pop();
         let index = self.stack.pop();
         let target = self.stack.peek_mut(0);
@@ -677,7 +678,7 @@ where
         Ok(())
     }
 
-    fn assign_index(&mut self) -> Result<(), ()> {
+    fn assign_index(&mut self) -> Result<(), Error> {
         let value = self.stack.pop();
         let index = self.stack.pop();
         let target = self.stack.peek_mut(0);
@@ -699,7 +700,7 @@ where
         Ok(())
     }
 
-    fn load_method(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), ()> {
+    fn load_method(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), Error> {
         let key_index = cursor.read_u8() as usize;
         let key = bytecode.constants()[key_index].as_symbol()?;
         let receiver = self.stack.pop();
@@ -715,7 +716,7 @@ where
         Ok(())
     }
 
-    fn store_method(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), ()> {
+    fn store_method(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), Error> {
         let key_index = cursor.read_u8() as usize;
         let key = bytecode.constants()[key_index].as_symbol()?;
         let value = self.stack.pop();
@@ -732,7 +733,7 @@ where
         bytecode: &Bytecode,
         stack_frame: StackFrame,
         cursor: &mut BytecodeCursor,
-    ) -> Result<(), ()> {
+    ) -> Result<(), Error> {
         let key_index = cursor.read_u8() as usize;
         let local_slot = cursor.read_u8() as usize;
         let key = bytecode.constants()[key_index].as_symbol()?;
@@ -751,7 +752,7 @@ where
         stack_frame: StackFrame,
         parent_upvalues: Option<&[Upvalue]>,
         cursor: &mut BytecodeCursor,
-    ) -> Result<(), ()> {
+    ) -> Result<(), Error> {
         let const_pos = cursor.read_u8() as usize;
 
         match bytecode.constants()[const_pos] {
@@ -791,12 +792,12 @@ where
         Ok(())
     }
 
-    pub fn call(&mut self, cursor: &mut BytecodeCursor) -> Result<(), ()> {
+    pub fn call(&mut self, cursor: &mut BytecodeCursor) -> Result<(), Error> {
         let arg_count = cursor.read_u8() as usize;
         self.call_fn(arg_count)
     }
 
-    pub fn call_super(&mut self, cursor: &mut BytecodeCursor) -> Result<(), ()> {
+    pub fn call_super(&mut self, cursor: &mut BytecodeCursor) -> Result<(), Error> {
         let arg_count = cursor.read_u8() as usize;
         let super_ = self.stack.pop().as_class()?;
         let receiver = self.stack.peek(arg_count).clone();
@@ -807,7 +808,7 @@ where
         Ok(())
     }
 
-    fn load_module(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), ()> {
+    fn load_module(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), Error> {
         let module_slot = cursor.read_u8() as usize;
         let module_name = bytecode.constants()[module_slot].as_symbol()?;
         let module = match self.loaded_modules.entry(module_name.clone()) {

@@ -1,4 +1,5 @@
 use crate::module::ModuleLoader;
+use dice_core::error::Error;
 use dice_core::{
     protocol::{
         class::NEW,
@@ -30,14 +31,14 @@ where
     }
 }
 
-fn construct_array(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
+fn construct_array(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, Error> {
     match args {
         [_, rest @ ..] => Ok(Value::Array(rest.to_vec().into())),
         _ => Ok(Value::Null),
     }
 }
 
-fn push(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
+fn push(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, Error> {
     if let [Value::Array(arr), param, ..] = args {
         arr.push(param.clone());
 
@@ -47,7 +48,7 @@ fn push(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
     }
 }
 
-fn pop(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
+fn pop(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, Error> {
     if let [Value::Array(arr), ..] = args {
         let result = arr.pop().unwrap_or(Value::Unit);
 
@@ -57,7 +58,7 @@ fn pop(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
     }
 }
 
-fn length(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
+fn length(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, Error> {
     if let [Value::Array(arr), ..] = args {
         Ok(Value::Int(arr.elements().len() as i64))
     } else {
@@ -65,7 +66,7 @@ fn length(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
     }
 }
 
-fn first(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
+fn first(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, Error> {
     match args {
         [Value::Array(arr), predicate, ..] => Ok(arr
             .elements()
@@ -84,7 +85,7 @@ fn first(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
     }
 }
 
-fn filter(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
+fn filter(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, Error> {
     match args {
         [Value::Array(arr), predicate, ..] => Ok(Value::Array(
             arr.elements()
@@ -104,7 +105,7 @@ fn filter(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
     }
 }
 
-fn map(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
+fn map(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, Error> {
     match args {
         [Value::Array(arr), selector, ..] => Ok(Value::Array(
             arr.elements()
@@ -122,7 +123,7 @@ fn map(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
     }
 }
 
-fn iter(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
+fn iter(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, Error> {
     match args {
         [Value::Array(arr), ..] => {
             let arr = arr.clone();

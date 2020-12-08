@@ -1,4 +1,5 @@
 use crate::module::ModuleLoader;
+use dice_core::error::Error;
 use dice_core::{
     runtime::Runtime,
     value::{NativeFn, Value, ValueKind},
@@ -18,14 +19,14 @@ where
     }
 }
 
-fn name(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
+fn name(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, Error> {
     match args {
         [Value::Class(class), ..] => Ok(Value::with_string(class.name())),
         _ => Ok(Value::Null),
     }
 }
 
-fn base_class(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
+fn base_class(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, Error> {
     match args {
         [Value::Class(class), ..] => {
             let result = class.base().map_or_else(|| Value::Null, Value::Class);

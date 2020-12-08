@@ -20,7 +20,7 @@ impl ModuleLoader for FileModuleLoader {
         }
 
         let source = std::fs::read_to_string(&path).expect("Error conversion");
-        let source = Source::with_path(source, path.to_string_lossy().into(), SourceKind::Module);
+        let source = Source::with_path(source, path.to_string_lossy(), SourceKind::Module);
         let module = Compiler::compile(&source).expect("Error conversion");
         let module = Module::new(name, module);
 

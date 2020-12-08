@@ -1,4 +1,4 @@
-use crate::{span::Span, spanned_error::SpannedError};
+use crate::span::Span;
 use std::{collections::HashMap, hash::BuildHasherDefault, iter, rc::Rc};
 use wyhash::WyHash;
 
@@ -38,12 +38,16 @@ pub enum SourceKind {
     Script,
 }
 
-#[derive(Clone)]
-pub struct Source {
-    path: Option<Rc<str>>,
-    source: Rc<str>,
+pub struct SourceInner {
+    path: Option<String>,
+    source: String,
     line_index: LineIndex,
     kind: SourceKind,
+}
+
+#[derive(Clone)]
+pub struct Source {
+    inner: Rc<SourceInner>,
 }
 
 impl Source {
@@ -52,57 +56,43 @@ impl Source {
         let line_index = LineIndex::new(&source);
 
         Self {
-            path: None,
-            source: source.into(),
-            line_index,
-            kind,
+            inner: Rc::new(SourceInner {
+                path: None,
+                source,
+                line_index,
+                kind,
+            }),
         }
     }
 
-    pub fn with_path(source: impl Into<String>, path: String, kind: SourceKind) -> Self {
+    pub fn with_path(source: impl Into<String>, path: impl Into<String>, kind: SourceKind) -> Self {
         let source = source.into();
         let line_index = LineIndex::new(&source);
 
         Self {
-            path: Some(path.into()),
-            source: source.into(),
-            line_index,
-            kind,
+            inner: Rc::new(SourceInner {
+                path: Some(path.into()),
+                source,
+                line_index,
+                kind,
+            }),
         }
     }
 
     pub fn path(&self) -> Option<&str> {
-        self.path.as_deref()
+        self.inner.path.as_deref()
     }
 
     pub fn source(&self) -> &str {
-        &*self.source
+        &self.inner.source
     }
 
     pub fn kind(&self) -> SourceKind {
-        self.kind
+        self.inner.kind
     }
 
-    // TODO: Do more to pretty print errors.
-    pub fn format_error(&self, error: &impl SpannedError) -> String {
-        let span = error.span();
-        let position = self.line_index.position_of(span.start);
-        let lines = self
-            .line_index
-            .lines(span)
-            .map(|span| {
-                let position = self.line_index.position_of(span.start);
-                format!("{:<4} | {}", position.line + 1, &self.source[span.range()].trim_end())
-            })
-            .collect::<Vec<_>>()
-            .join("\n");
-        let location = self
-            .path
-            .clone()
-            .map(|path| format!("{}:{}:{}", path, position.line + 1, position.column_utf16 + 1))
-            .unwrap_or_else(|| format!("<Script>:{}:{}", position.line + 1, position.column_utf16 + 1));
-
-        format!("error: {}\n  --> {}\n{}", error.message(), location, lines)
+    pub fn line_index(&self) -> &LineIndex {
+        &self.inner.line_index
     }
 }
 
@@ -235,56 +225,7 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::{
-        source::{LineIndex, Source, SourceKind},
-        span::Span,
-        spanned_error::SpannedError,
-    };
-
-    struct TestError(String, Span);
-
-    impl SpannedError for TestError {
-        fn message(&self) -> &str {
-            &self.0
-        }
-
-        fn span(&self) -> Span {
-            self.1
-        }
-    }
-
-    #[test]
-    fn format_error() {
-        let source = Source::new("let x = 0;\nx = 1;", SourceKind::Script);
-        let error = TestError(
-            String::from("Immutable variable cannot be reassigned."),
-            Span::new(11..17),
-        );
-
-        let expected = "\
-error: Immutable variable cannot be reassigned.
-  --> <Script>:2:1
-2    | x = 1;";
-
-        assert_eq!(expected, source.format_error(&error));
-    }
-
-    #[test]
-    fn format_error_multi_line() {
-        let source = Source::new("let x = 0;\nx = 1;\nx = 1;\ntest", SourceKind::Script);
-        let error = TestError(
-            String::from("Immutable variable cannot be reassigned."),
-            Span::new(11..23),
-        );
-
-        let expected = "\
-error: Immutable variable cannot be reassigned.
-  --> <Script>:2:1
-2    | x = 1;
-3    | x = 1;";
-
-        assert_eq!(expected, source.format_error(&error));
-    }
+    use crate::{source::LineIndex, span::Span};
 
     #[test]
     fn line_column_of_ascii_char() {
