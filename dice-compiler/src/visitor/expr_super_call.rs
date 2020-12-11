@@ -1,13 +1,16 @@
 use super::NodeVisitor;
-use crate::{compiler::Compiler, compiler_error::CompilerError};
-use dice_core::protocol::{
-    class::{SELF, SUPER},
-    ProtocolSymbol,
+use crate::compiler::Compiler;
+use dice_core::{
+    error::Error,
+    protocol::{
+        class::{SELF, SUPER},
+        ProtocolSymbol,
+    },
 };
 use dice_syntax::{LitIdent, SuperCall};
 
 impl NodeVisitor<&SuperCall> for Compiler {
-    fn visit(&mut self, node: &SuperCall) -> Result<(), CompilerError> {
+    fn visit(&mut self, node: &SuperCall) -> Result<(), Error> {
         let local_slot = self
             .context()?
             .scope_stack()
@@ -33,7 +36,7 @@ impl NodeVisitor<&SuperCall> for Compiler {
         *self.context()?.temporary_count() = original_temporary_count;
 
         self.visit(&LitIdent {
-            name: SUPER.get().to_string(),
+            identifier: SUPER.get().to_string(),
             span: node.span,
         })?;
         self.assembler()?.call_super(node.args.len() as u8, node.span);

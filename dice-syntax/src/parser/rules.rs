@@ -1,14 +1,13 @@
 use crate::{
     lexer::{Token, TokenKind},
-    Parser, SyntaxError, SyntaxNodeId,
+    Parser, SyntaxNodeId,
 };
-use dice_core::span::Span;
+use dice_core::{error::Error, span::Span};
 
-pub type PrefixParser = fn(&mut Parser, can_assign: bool) -> Result<SyntaxNodeId, SyntaxError>;
-pub type InfixParser =
-    fn(&mut Parser, lhs: SyntaxNodeId, can_assign: bool, span: Span) -> Result<SyntaxNodeId, SyntaxError>;
+pub type PrefixParser = fn(&mut Parser, can_assign: bool) -> Result<SyntaxNodeId, Error>;
+pub type InfixParser = fn(&mut Parser, lhs: SyntaxNodeId, can_assign: bool, span: Span) -> Result<SyntaxNodeId, Error>;
 pub type PostfixParser =
-    fn(&mut Parser, lhs: SyntaxNodeId, can_assign: bool, span: Span) -> Result<SyntaxNodeId, SyntaxError>;
+    fn(&mut Parser, lhs: SyntaxNodeId, can_assign: bool, span: Span) -> Result<SyntaxNodeId, Error>;
 
 #[derive(Default)]
 pub struct ParserRule {
@@ -36,7 +35,7 @@ impl ParserRule {
         }
     }
 
-    pub fn for_token(token: &Token) -> Result<ParserRule, SyntaxError> {
+    pub fn for_token(token: &Token) -> Result<ParserRule, Error> {
         let rule = match token.kind {
             // Empty rules
             TokenKind::RightSquare => ParserRule::default(),

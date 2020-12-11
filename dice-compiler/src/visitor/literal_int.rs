@@ -1,10 +1,10 @@
 use super::NodeVisitor;
-use crate::{compiler::Compiler, compiler_error::CompilerError};
-use dice_core::value::Value;
+use crate::compiler::Compiler;
+use dice_core::{error::Error, value::Value};
 use dice_syntax::LitInt;
 
 impl NodeVisitor<&LitInt> for Compiler {
-    fn visit(&mut self, LitInt { value, span }: &LitInt) -> Result<(), CompilerError> {
+    fn visit(&mut self, LitInt { value, span }: &LitInt) -> Result<(), Error> {
         let context = self.context()?;
 
         match value {

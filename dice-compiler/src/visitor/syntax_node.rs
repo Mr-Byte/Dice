@@ -1,13 +1,13 @@
 use super::{expr_block::BlockKind, NodeVisitor};
 use crate::{
     compiler::Compiler,
-    compiler_error::CompilerError,
     visitor::{decl_op::OpKind, FnKind},
 };
+use dice_core::error::Error;
 use dice_syntax::{SyntaxNode, SyntaxNodeId};
 
 impl NodeVisitor<SyntaxNodeId> for Compiler {
-    fn visit(&mut self, node: SyntaxNodeId) -> Result<(), CompilerError> {
+    fn visit(&mut self, node: SyntaxNodeId) -> Result<(), Error> {
         let node = self.syntax_tree.get(node).clone();
 
         match &node {
@@ -81,14 +81,14 @@ impl NodeVisitor<SyntaxNodeId> for Compiler {
 }
 
 impl Compiler {
-    fn enter_call(&mut self) -> Result<(), CompilerError> {
+    fn enter_call(&mut self) -> Result<(), Error> {
         let context = &mut self.context()?.scope_stack().top_mut()?.call_context;
         context.depth += 1;
 
         Ok(())
     }
 
-    fn exit_call(&mut self) -> Result<(), CompilerError> {
+    fn exit_call(&mut self) -> Result<(), Error> {
         let context = &mut self.context()?.scope_stack().top_mut()?.call_context;
         context.depth -= 1;
 

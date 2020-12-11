@@ -1,5 +1,6 @@
 use super::NodeVisitor;
-use crate::{compiler::Compiler, compiler_error::CompilerError};
+use crate::compiler::Compiler;
+use dice_core::error::Error;
 use dice_syntax::IfExpression;
 
 impl NodeVisitor<&IfExpression> for Compiler {
@@ -11,7 +12,7 @@ impl NodeVisitor<&IfExpression> for Compiler {
             secondary,
             span,
         }: &IfExpression,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), Error> {
         self.visit(*condition)?;
         let if_jump = self.assembler()?.jump_if_false(*span);
         self.visit(*primary)?;

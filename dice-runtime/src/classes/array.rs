@@ -1,6 +1,6 @@
 use crate::module::ModuleLoader;
-use dice_core::error::Error;
 use dice_core::{
+    error::Error,
     protocol::{
         class::NEW,
         iterator::{DONE, NEXT, VALUE},

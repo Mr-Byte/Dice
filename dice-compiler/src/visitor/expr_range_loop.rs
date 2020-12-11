@@ -1,10 +1,9 @@
 use crate::{
     compiler::Compiler,
-    compiler_error::CompilerError,
     scope_stack::{ScopeKind, State},
     visitor::NodeVisitor,
 };
-use dice_core::span::Span;
+use dice_core::{error::Error, span::Span};
 use dice_syntax::{BinaryOperator, ForLoop, SyntaxNode, SyntaxNodeId};
 
 enum RangeLoopKind {
@@ -22,7 +21,7 @@ pub(super) struct RangeLoop {
 }
 
 impl NodeVisitor<&RangeLoop> for Compiler {
-    fn visit(&mut self, range_loop: &RangeLoop) -> Result<(), CompilerError> {
+    fn visit(&mut self, range_loop: &RangeLoop) -> Result<(), Error> {
         // NOTE: Evaluate the end of the range first as a temporary so that it doesn't have to be evaluated again.
         self.visit(range_loop.end)?;
         // NOTE: The start is then evaluated. It will get popped and re-pushed later when stored as a local.

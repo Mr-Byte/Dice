@@ -1,6 +1,6 @@
 use super::NodeVisitor;
-use crate::{compiler::Compiler, compiler_error::CompilerError};
-use dice_core::span::Span;
+use crate::compiler::Compiler;
+use dice_core::{error::Error, span::Span};
 use dice_syntax::{Binary, BinaryOperator, SyntaxNodeId};
 
 impl NodeVisitor<&Binary> for Compiler {
@@ -12,7 +12,7 @@ impl NodeVisitor<&Binary> for Compiler {
             rhs_expression,
             span,
         }: &Binary,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), Error> {
         match operator {
             BinaryOperator::LogicalAnd => self.logical_and(*lhs_expression, *rhs_expression, *span)?,
             BinaryOperator::LogicalOr => self.logical_or(*lhs_expression, *rhs_expression, *span)?,
@@ -31,7 +31,7 @@ impl Compiler {
         lhs_expression: SyntaxNodeId,
         rhs_expression: SyntaxNodeId,
         span: Span,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), Error> {
         let short_circuit_jump;
 
         emit_bytecode! {
@@ -61,7 +61,7 @@ impl Compiler {
         lhs_expression: SyntaxNodeId,
         rhs_expression: SyntaxNodeId,
         span: Span,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), Error> {
         let short_circuit_jump;
 
         emit_bytecode! {
@@ -89,7 +89,7 @@ impl Compiler {
         lhs_expression: SyntaxNodeId,
         rhs_expression: SyntaxNodeId,
         span: Span,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), Error> {
         self.visit(rhs_expression)?;
         self.visit(lhs_expression)?;
         self.assembler()?.call(1, span);
@@ -102,7 +102,7 @@ impl Compiler {
         lhs_expression: SyntaxNodeId,
         rhs_expression: SyntaxNodeId,
         span: Span,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), Error> {
         self.visit(lhs_expression)?;
         let coalesce_jump;
         emit_bytecode! {
@@ -127,7 +127,7 @@ impl Compiler {
         lhs_expression: SyntaxNodeId,
         rhs_expression: SyntaxNodeId,
         span: Span,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), Error> {
         self.visit(lhs_expression)?;
         self.visit(rhs_expression)?;
 

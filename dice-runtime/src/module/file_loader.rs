@@ -1,6 +1,7 @@
 use crate::module::{Module, ModuleLoader};
 use dice_compiler::compiler::Compiler;
 use dice_core::{
+    error::Error,
     source::{Source, SourceKind},
     value::Symbol,
 };
@@ -9,7 +10,7 @@ use dice_core::{
 pub struct FileModuleLoader;
 
 impl ModuleLoader for FileModuleLoader {
-    fn load_module(&mut self, name: Symbol) -> Result<Module, ()> {
+    fn load_module(&mut self, name: Symbol) -> Result<Module, Error> {
         let path = std::fs::canonicalize(&*name).expect("Error conversion");
         let working_dir =
             std::fs::canonicalize(std::env::current_dir().expect("Error conversion")).expect("Error conversion");
@@ -21,7 +22,7 @@ impl ModuleLoader for FileModuleLoader {
 
         let source = std::fs::read_to_string(&path).expect("Error conversion");
         let source = Source::with_path(source, path.to_string_lossy(), SourceKind::Module);
-        let module = Compiler::compile(&source).expect("Error conversion");
+        let module = Compiler::compile_source(source)?;
         let module = Module::new(name, module);
 
         Ok(module)

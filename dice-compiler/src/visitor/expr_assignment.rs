@@ -1,15 +1,23 @@
 use super::NodeVisitor;
-use crate::{compiler::Compiler, compiler_error::CompilerError, scope_stack::ScopeVariable};
-use dice_core::{span::Span, value::Symbol};
+use crate::{compiler::Compiler, scope_stack::ScopeVariable};
+use dice_core::{
+    error::{
+        codes::{CANNOT_REASSIGN_IMMUTABLE_VARIABLE, INVALID_ASSIGNMENT_TARGET, VARIABLE_NOT_DECLARED},
+        Error,
+    },
+    error_tags,
+    span::Span,
+    value::Symbol,
+};
 use dice_syntax::{Assignment, AssignmentOperator, FieldAccess, Index, SyntaxNode, SyntaxNodeId};
 
 impl NodeVisitor<&Assignment> for Compiler {
-    fn visit(&mut self, assignment: &Assignment) -> Result<(), CompilerError> {
+    fn visit(&mut self, assignment: &Assignment) -> Result<(), Error> {
         let lhs = self.syntax_tree.get(assignment.lhs_expression);
 
         match lhs {
             SyntaxNode::LitIdent(lit_ident) => {
-                let target: Symbol = (&*lit_ident.name).into();
+                let target: Symbol = (&*lit_ident.identifier).into();
                 self.assign_ident(target, assignment)
             }
             SyntaxNode::FieldAccess(field_access) => {
@@ -20,13 +28,13 @@ impl NodeVisitor<&Assignment> for Compiler {
                 let index = index.clone();
                 self.assign_index(index, assignment)
             }
-            _ => Err(CompilerError::new("Invalid assignment target.", lhs.span())),
+            _ => Err(Error::new(INVALID_ASSIGNMENT_TARGET).with_span(lhs.span())),
         }
     }
 }
 
 impl Compiler {
-    fn assign_index(&mut self, target: Index, assignment: &Assignment) -> Result<(), CompilerError> {
+    fn assign_index(&mut self, target: Index, assignment: &Assignment) -> Result<(), Error> {
         self.visit(target.expression)?;
         self.visit(target.index_expression)?;
 
@@ -56,7 +64,7 @@ impl Compiler {
         Ok(())
     }
 
-    fn assign_field(&mut self, target: FieldAccess, assignment: &Assignment) -> Result<(), CompilerError> {
+    fn assign_field(&mut self, target: FieldAccess, assignment: &Assignment) -> Result<(), Error> {
         self.visit(target.expression)?;
 
         match assignment.operator {
@@ -84,7 +92,7 @@ impl Compiler {
         Ok(())
     }
 
-    fn assign_ident(&mut self, target: Symbol, assignment: &Assignment) -> Result<(), CompilerError> {
+    fn assign_ident(&mut self, target: Symbol, assignment: &Assignment) -> Result<(), Error> {
         {
             if let Some(local) = self.context()?.scope_stack().local(target.clone()) {
                 let local = local.clone();
@@ -104,10 +112,11 @@ impl Compiler {
                     upvalue,
                 )
             } else {
-                Err(CompilerError::new(
-                    format!("No variable with the name {} was declared.", (&*target).to_owned()),
-                    assignment.span,
-                ))
+                Err(Error::new(VARIABLE_NOT_DECLARED)
+                    .with_span(assignment.span)
+                    .with_tags(error_tags! {
+                        name => (&*target).to_owned()
+                    }))
             }
         }
     }
@@ -119,12 +128,13 @@ impl Compiler {
         rhs_expression: SyntaxNodeId,
         span: Span,
         upvalue: usize,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), Error> {
         if !self.context()?.upvalues()[upvalue].is_mutable() {
-            return Err(CompilerError::new(
-                format!("Cannot assign to the immutable variable {}.", (&*target).to_owned()),
-                span,
-            ));
+            return Err(Error::new(CANNOT_REASSIGN_IMMUTABLE_VARIABLE)
+                .with_span(span)
+                .with_tags(error_tags! {
+                    name => (&*target).to_owned()
+                }));
         }
         match operator {
             AssignmentOperator::Assignment => {
@@ -157,14 +167,15 @@ impl Compiler {
         rhs_expression: SyntaxNodeId,
         span: Span,
         local: ScopeVariable,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), Error> {
         let slot = local.slot as u8;
 
         if !local.is_mutable() {
-            return Err(CompilerError::new(
-                format!("Cannot assign to the immutable variable {}.", (&*target).to_owned()),
-                span,
-            ));
+            return Err(Error::new(CANNOT_REASSIGN_IMMUTABLE_VARIABLE)
+                .with_span(span)
+                .with_tags(error_tags! {
+                    name => (&*target).to_owned()
+                }));
         }
 
         match operator {
@@ -191,7 +202,7 @@ impl Compiler {
         Ok(())
     }
 
-    fn visit_operator(&mut self, operator: AssignmentOperator, span: Span) -> Result<(), CompilerError> {
+    fn visit_operator(&mut self, operator: AssignmentOperator, span: Span) -> Result<(), Error> {
         match operator {
             AssignmentOperator::MulAssignment => self.assembler()?.mul(span),
             AssignmentOperator::DivAssignment => self.assembler()?.div(span),

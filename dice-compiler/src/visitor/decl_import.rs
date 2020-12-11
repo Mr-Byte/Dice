@@ -1,8 +1,9 @@
-use crate::{compiler::Compiler, compiler_error::CompilerError, scope_stack::State, visitor::NodeVisitor};
+use crate::{compiler::Compiler, scope_stack::State, visitor::NodeVisitor};
+use dice_core::error::Error;
 use dice_syntax::ImportDecl;
 
 impl NodeVisitor<&ImportDecl> for Compiler {
-    fn visit(&mut self, node: &ImportDecl) -> Result<(), CompilerError> {
+    fn visit(&mut self, node: &ImportDecl) -> Result<(), Error> {
         let imports: Vec<(&str, u8)> = node
             .item_imports
             .iter()
@@ -14,7 +15,7 @@ impl NodeVisitor<&ImportDecl> for Compiler {
 
                 Ok((item.as_str(), slot as u8))
             })
-            .collect::<Result<Vec<_>, CompilerError>>()?;
+            .collect::<Result<Vec<_>, Error>>()?;
 
         emit_bytecode! {
             self.assembler()?, node.span => [

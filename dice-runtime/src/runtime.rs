@@ -2,9 +2,9 @@ use crate::{
     module::{file_loader::FileModuleLoader, ModuleLoader},
     stack::Stack,
 };
-use dice_core::error::Error;
 use dice_core::{
     bytecode::Bytecode,
+    error::Error,
     upvalue::Upvalue,
     value::{Class, Object, Value, ValueKind, ValueMap},
 };

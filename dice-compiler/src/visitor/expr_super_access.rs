@@ -1,8 +1,11 @@
 use super::NodeVisitor;
-use crate::{compiler::Compiler, compiler_error::CompilerError, compiler_stack::CompilerKind};
-use dice_core::protocol::{
-    class::{SELF, SUPER},
-    ProtocolSymbol,
+use crate::{compiler::Compiler, compiler_stack::CompilerKind};
+use dice_core::{
+    error::{codes::INVALID_SUPER_CALL, Error},
+    protocol::{
+        class::{SELF, SUPER},
+        ProtocolSymbol,
+    },
 };
 use dice_syntax::{LitIdent, SuperAccess};
 
@@ -14,12 +17,9 @@ impl NodeVisitor<&SuperAccess> for Compiler {
             super_class,
             span,
         }: &SuperAccess,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), Error> {
         if !matches!(self.context()?.kind(), CompilerKind::Method { .. } | CompilerKind::Constructor) {
-            return Err(CompilerError::new(
-                "The super keyword can only be used inside of methods and constructors.",
-                *span,
-            ));
+            return Err(Error::new(INVALID_SUPER_CALL).with_span(*span));
         }
 
         match super_class {

@@ -1,9 +1,12 @@
-use crate::{compiler::Compiler, compiler_error::CompilerError, compiler_stack::CompilerKind, visitor::NodeVisitor};
-use dice_core::protocol::{module::EXPORT, ProtocolSymbol};
+use crate::{compiler::Compiler, compiler_stack::CompilerKind, visitor::NodeVisitor};
+use dice_core::{
+    error::Error,
+    protocol::{module::EXPORT, ProtocolSymbol},
+};
 use dice_syntax::{ExportDecl, SyntaxNode, VarDecl, VarDeclKind};
 
 impl NodeVisitor<&ExportDecl> for Compiler {
-    fn visit(&mut self, node: &ExportDecl) -> Result<(), CompilerError> {
+    fn visit(&mut self, node: &ExportDecl) -> Result<(), Error> {
         if !matches!(self.context()?.kind(), CompilerKind::Module) {
             todo!("Error about how exports can only be used in modules.");
         }
@@ -26,9 +29,9 @@ impl NodeVisitor<&ExportDecl> for Compiler {
                 kind: VarDeclKind::Singular(name),
                 ..
             }) => name.clone(),
-            SyntaxNode::FnDecl(fn_decl) => fn_decl.name.clone(),
-            SyntaxNode::ClassDecl(class_decl) => class_decl.name.clone(),
-            SyntaxNode::LitIdent(lit_ident) => lit_ident.name.clone(),
+            SyntaxNode::FnDecl(fn_decl) => fn_decl.name.identifier.clone(),
+            SyntaxNode::ClassDecl(class_decl) => class_decl.name.identifier.clone(),
+            SyntaxNode::LitIdent(lit_ident) => lit_ident.identifier.clone(),
             _ => todo!("Error about invalid export type."),
         };
 

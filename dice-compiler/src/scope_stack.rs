@@ -1,5 +1,7 @@
-use crate::compiler_error::CompilerError;
-use dice_core::{span::Span, value::Symbol};
+use dice_core::{
+    error::{codes::INTERNAL_COMPILER_ERROR, Error},
+    value::Symbol,
+};
 
 #[derive(Clone)]
 pub struct ScopeVariable {
@@ -101,21 +103,19 @@ impl ScopeStack {
         });
     }
 
-    pub fn pop_scope(&mut self) -> Result<ScopeContext, CompilerError> {
-        self.stack
-            .pop()
-            .ok_or_else(|| CompilerError::new("ICE: Scope stack underflowed.", Span::empty()))
+    pub fn pop_scope(&mut self) -> Result<ScopeContext, Error> {
+        self.stack.pop().ok_or_else(|| Error::new(INTERNAL_COMPILER_ERROR))
     }
 
     pub fn in_context_of(&self, kind: ScopeKind) -> bool {
         self.first_of_kind(kind).is_some()
     }
 
-    pub fn add_local(&mut self, name: impl Into<Symbol>, state: State) -> Result<usize, CompilerError> {
+    pub fn add_local(&mut self, name: impl Into<Symbol>, state: State) -> Result<usize, Error> {
         self.add_local_impl(name.into(), state)
     }
 
-    fn add_local_impl(&mut self, name: Symbol, state: State) -> Result<usize, CompilerError> {
+    fn add_local_impl(&mut self, name: Symbol, state: State) -> Result<usize, Error> {
         self.top_mut()?.slot_count += 1;
 
         let slot_count = self.stack.iter().rev().map(|scope| scope.slot_count).sum();
@@ -145,17 +145,15 @@ impl ScopeStack {
             .find(|var| var.name == name)
     }
 
-    pub fn top_mut(&mut self) -> Result<&mut ScopeContext, CompilerError> {
-        self.stack
-            .last_mut()
-            .ok_or_else(|| CompilerError::new("ICE: Scope stack underflowed.", Span::empty()))
+    pub fn top_mut(&mut self) -> Result<&mut ScopeContext, Error> {
+        self.stack.last_mut().ok_or_else(|| Error::new(INTERNAL_COMPILER_ERROR))
     }
 
     /// Push the bytecode location of an exit point to the inner most loop's scope, to later be patched.
-    pub fn add_loop_exit_point(&mut self, exit_point: usize) -> Result<(), CompilerError> {
+    pub fn add_loop_exit_point(&mut self, exit_point: usize) -> Result<(), Error> {
         let scope = self
             .first_of_kind_mut(ScopeKind::Loop)
-            .ok_or_else(|| CompilerError::new("ICE: Unable to find loop context.", Span::empty()))?;
+            .ok_or_else(|| Error::new(INTERNAL_COMPILER_ERROR))?;
 
         scope.exit_points.push(exit_point);
 
@@ -163,15 +161,15 @@ impl ScopeStack {
     }
 
     /// Get the entry point of the first scope to match the specified kind.
-    pub fn entry_point(&mut self, kind: ScopeKind) -> Result<usize, CompilerError> {
+    pub fn entry_point(&mut self, kind: ScopeKind) -> Result<usize, Error> {
         let scope = self
             .first_of_kind(kind)
-            .ok_or_else(|| CompilerError::new("ICE: Scope stack underflowed.", Span::empty()))?;
+            .ok_or_else(|| Error::new(INTERNAL_COMPILER_ERROR))?;
 
         scope
             .entry_point
             .clone()
-            .ok_or_else(|| CompilerError::new("ICE: Not in a loop context.", Span::empty()))
+            .ok_or_else(|| Error::new(INTERNAL_COMPILER_ERROR))
     }
 
     fn first_of_kind(&self, kind: ScopeKind) -> Option<&ScopeContext> {

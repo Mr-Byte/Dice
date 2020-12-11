@@ -1,10 +1,9 @@
 use crate::{
     compiler::Compiler,
-    compiler_error::CompilerError,
     compiler_stack::{CompilerContext, CompilerKind},
     visitor::{FnKind, FunctionBlockKind, NodeVisitor},
 };
-use dice_core::span::Span;
+use dice_core::error::{codes::NEW_METHOD_CANNOT_HAVE_RETURN_TYPE, Error};
 use dice_syntax::{Block, FnArg, SyntaxNode, SyntaxTree, TypeAnnotation};
 
 impl Compiler {
@@ -14,14 +13,12 @@ impl Compiler {
         args: &[FnArg],
         return_type: Option<TypeAnnotation>,
         kind: FnKind,
-    ) -> Result<CompilerContext, CompilerError> {
+    ) -> Result<CompilerContext, Error> {
         // NOTE: Constructors cannot have a return type annotation.
         if matches!(kind, FnKind::Constructor(_)) && return_type.is_some() {
             // TODO: Propagate span of the function and type annotations correctly.
-            return Err(CompilerError::new(
-                "The new method cannot have a return type.",
-                Span::empty(),
-            ));
+            let err = Error::new(NEW_METHOD_CANNOT_HAVE_RETURN_TYPE).with_span(return_type.unwrap().span);
+            return Err(err);
         }
 
         let compiler_kind = match kind {

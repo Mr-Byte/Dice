@@ -1,9 +1,10 @@
 use super::NodeVisitor;
-use crate::{compiler::Compiler, compiler_error::CompilerError};
+use crate::compiler::Compiler;
+use dice_core::error::Error;
 use dice_syntax::LitList;
 
 impl NodeVisitor<&LitList> for Compiler {
-    fn visit(&mut self, LitList { items: value, span }: &LitList) -> Result<(), CompilerError> {
+    fn visit(&mut self, LitList { items: value, span }: &LitList) -> Result<(), Error> {
         for item in value {
             self.visit(*item)?;
         }

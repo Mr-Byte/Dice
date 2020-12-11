@@ -1,16 +1,14 @@
 use super::NodeVisitor;
-use crate::{compiler::Compiler, compiler_error::CompilerError, scope_stack::ScopeKind};
+use crate::{compiler::Compiler, scope_stack::ScopeKind};
+use dice_core::error::{codes::INVALID_BREAK_USAGE, Error};
 use dice_syntax::Break;
 
 impl NodeVisitor<&Break> for Compiler {
-    fn visit(&mut self, Break { span }: &Break) -> Result<(), CompilerError> {
+    fn visit(&mut self, Break { span }: &Break) -> Result<(), Error> {
         let context = self.context()?;
 
         if !context.scope_stack().in_context_of(ScopeKind::Loop) {
-            return Err(CompilerError::new(
-                "The break keyword can only be used inside loops.",
-                *span,
-            ));
+            return Err(Error::new(INVALID_BREAK_USAGE).with_span(*span));
         }
 
         let patch_location = context.assembler().jump(*span);

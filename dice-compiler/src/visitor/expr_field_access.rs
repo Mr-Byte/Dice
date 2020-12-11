@@ -1,5 +1,6 @@
 use super::NodeVisitor;
-use crate::{compiler::Compiler, compiler_error::CompilerError};
+use crate::compiler::Compiler;
+use dice_core::error::Error;
 use dice_syntax::FieldAccess;
 
 impl NodeVisitor<&FieldAccess> for Compiler {
@@ -10,7 +11,7 @@ impl NodeVisitor<&FieldAccess> for Compiler {
             field,
             span,
         }: &FieldAccess,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), Error> {
         self.visit(*expression)?;
         self.assembler()?.load_field(&**field, *span)?;
 

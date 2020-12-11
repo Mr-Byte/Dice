@@ -1,5 +1,5 @@
-use dice::error::Error;
 use dice::{
+    error::Error,
     value::{NativeFn, Value},
     Dice, Runtime,
 };

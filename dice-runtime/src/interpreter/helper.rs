@@ -1,6 +1,6 @@
 use crate::{module::ModuleLoader, runtime::Runtime};
-use dice_core::error::Error;
 use dice_core::{
+    error::Error,
     protocol::{class::NEW, ProtocolSymbol},
     upvalue::{Upvalue, UpvalueState},
     value::{Class, FnBound, FnNative, FnScript, Object, Symbol, Value, ValueKind},

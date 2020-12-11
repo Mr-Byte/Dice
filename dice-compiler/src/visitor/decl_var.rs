@@ -1,9 +1,10 @@
 use super::NodeVisitor;
-use crate::{compiler::Compiler, compiler_error::CompilerError, scope_stack::State};
+use crate::{compiler::Compiler, scope_stack::State};
+use dice_core::error::Error;
 use dice_syntax::{VarDecl, VarDeclKind};
 
 impl NodeVisitor<&VarDecl> for Compiler {
-    fn visit(&mut self, var_decl: &VarDecl) -> Result<(), CompilerError> {
+    fn visit(&mut self, var_decl: &VarDecl) -> Result<(), Error> {
         self.visit(var_decl.expr)?;
 
         match &var_decl.kind {
@@ -14,7 +15,7 @@ impl NodeVisitor<&VarDecl> for Compiler {
 }
 
 impl Compiler {
-    fn singular_var(&mut self, var_decl: &VarDecl, name: &str) -> Result<(), CompilerError> {
+    fn singular_var(&mut self, var_decl: &VarDecl, name: &str) -> Result<(), Error> {
         let slot = self
             .context()?
             .scope_stack()
@@ -31,7 +32,7 @@ impl Compiler {
 }
 
 impl Compiler {
-    fn destructured_var(&mut self, var_decl: &VarDecl, variables: &[String]) -> Result<(), CompilerError> {
+    fn destructured_var(&mut self, var_decl: &VarDecl, variables: &[String]) -> Result<(), Error> {
         let imports: Vec<(&str, u8)> = variables
             .iter()
             .map(|item| {
@@ -42,7 +43,7 @@ impl Compiler {
 
                 Ok((item.as_str(), slot as u8))
             })
-            .collect::<Result<Vec<_>, CompilerError>>()?;
+            .collect::<Result<Vec<_>, Error>>()?;
 
         emit_bytecode! {
             self.assembler()?, var_decl.span => [

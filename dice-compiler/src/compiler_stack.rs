@@ -3,8 +3,11 @@ use super::{
     scope_stack::{ScopeKind, ScopeStack},
     upvalue::UpvalueDescriptor,
 };
-use crate::compiler_error::CompilerError;
-use dice_core::{bytecode::Bytecode, span::Span, value::Symbol};
+use dice_core::{
+    bytecode::Bytecode,
+    error::{codes::INTERNAL_COMPILER_ERROR, Error},
+    value::Symbol,
+};
 use dice_syntax::TypeAnnotation;
 
 #[derive(Debug, Clone)]
@@ -27,7 +30,7 @@ pub struct CompilerContext {
 impl CompilerContext {
     pub fn new(kind: CompilerKind) -> Self {
         Self {
-            assembler: Assembler::default(),
+            assembler: Assembler::new(),
             scope_stack: ScopeStack::new(ScopeKind::Block),
             upvalues: Vec::new(),
             temporary_count: 0,
@@ -89,16 +92,12 @@ impl CompilerStack {
         self.stack.push(CompilerContext::new(kind));
     }
 
-    pub fn pop(&mut self) -> Result<CompilerContext, CompilerError> {
-        self.stack
-            .pop()
-            .ok_or_else(|| CompilerError::new("ICE: Compiler stack cannot be empty.", Span::empty()))
+    pub fn pop(&mut self) -> Result<CompilerContext, Error> {
+        self.stack.pop().ok_or_else(|| Error::new(INTERNAL_COMPILER_ERROR))
     }
 
-    pub fn top_mut(&mut self) -> Result<&mut CompilerContext, CompilerError> {
-        self.stack
-            .last_mut()
-            .ok_or_else(|| CompilerError::new("ICE: Compiler stack cannot be empty.", Span::empty()))
+    pub fn top_mut(&mut self) -> Result<&mut CompilerContext, Error> {
+        self.stack.last_mut().ok_or_else(|| Error::new(INTERNAL_COMPILER_ERROR))
     }
 
     pub fn offset(&mut self, offset: usize) -> Option<&mut CompilerContext> {

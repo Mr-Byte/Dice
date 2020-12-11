@@ -1,9 +1,10 @@
 use super::NodeVisitor;
-use crate::{compiler::Compiler, compiler_error::CompilerError};
+use crate::compiler::Compiler;
+use dice_core::error::Error;
 use dice_syntax::Is;
 
 impl NodeVisitor<&Is> for Compiler {
-    fn visit(&mut self, Is { value, type_, span }: &Is) -> Result<(), CompilerError> {
+    fn visit(&mut self, Is { value, type_, span }: &Is) -> Result<(), Error> {
         if type_.is_nullable {
             // TODO: Replace this with an IS_TYPE_OR_NULL instruction.
             let type_check_jump;

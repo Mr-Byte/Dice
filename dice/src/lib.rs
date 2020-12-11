@@ -11,7 +11,7 @@ pub struct Dice {
 impl Dice {
     pub fn run_script(&mut self, input: impl Into<String>) -> Result<value::Value, error::Error> {
         let source = Source::new(input.into(), SourceKind::Script);
-        let bytecode = Compiler::compile(&source);
+        let bytecode = Compiler::compile_source(source);
 
         match bytecode {
             Ok(bytecode) => {
@@ -19,7 +19,7 @@ impl Dice {
 
                 Ok(value)
             }
-            Err(error) => {
+            Err(_error) => {
                 // let error = source.format_error(&error);
                 // Err(error)
                 todo!()
@@ -29,11 +29,11 @@ impl Dice {
 
     pub fn disassemble_script(&self, input: impl Into<String>) -> Result<String, error::Error> {
         let source = Source::new(input.into(), SourceKind::Script);
-        let bytecode = Compiler::compile(&source);
+        let bytecode = Compiler::compile_source(source);
 
         match bytecode {
             Ok(bytecode) => Ok(bytecode.to_string()),
-            Err(error) => {
+            Err(_error) => {
                 // let error = source.format_error(&error);
                 // Err(error)
                 todo!()

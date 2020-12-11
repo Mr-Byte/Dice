@@ -1,5 +1,11 @@
-use crate::SyntaxError;
-use dice_core::span::Span;
+use dice_core::{
+    error::{
+        codes::{INVALID_ESCAPE_SEQUENCE, UNTERMINATED_STRING},
+        Error, ResultExt as _,
+    },
+    source::Source,
+    span::Span,
+};
 use logos::{Lexer, Logos};
 use std::{
     cell::RefCell,
@@ -15,15 +21,16 @@ pub struct Token {
 }
 
 impl Token {
-    pub fn tokenize(input: &str) -> impl Iterator<Item = Result<Token, SyntaxError>> + '_ {
-        let lexer = TokenKind::lexer(input);
-        let error = lexer.extras.clone();
+    pub fn tokenize(input: &Source) -> impl Iterator<Item = Result<Token, Error>> + '_ {
+        let lexer = TokenKind::lexer(input.source());
+        let extras = lexer.extras.clone();
 
         lexer.spanned().map(move |(kind, range)| {
             let span = Span::new(range);
-            error
+            extras
                 .error()
-                .map_or_else(|| Ok(Token { kind, span }), |err| Err(SyntaxError::new(err, span)))
+                .map_or_else(|| Ok(Token { kind, span }), Err)
+                .with_source(input.clone())
         })
     }
 
@@ -196,33 +203,21 @@ pub enum TokenKind {
     Error,
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct LexerResult(Rc<RefCell<Option<String>>>);
+#[derive(Default, Clone)]
+pub struct LexerResult(Rc<RefCell<Option<Error>>>);
 
 impl LexerResult {
-    fn error(&self) -> Option<String> {
-        self.0.borrow().clone()
+    fn error(&self) -> Option<Error> {
+        self.0.borrow_mut().take()
     }
 }
 
-fn parse_int(lexer: &mut Lexer<TokenKind>) -> Option<i64> {
-    match lexer.slice().parse() {
-        Ok(int) => Some(int),
-        Err(_) => {
-            *lexer.extras.0.borrow_mut() = Some(String::from("Unable to parse integer."));
-            None
-        }
-    }
+fn parse_int(lexer: &mut Lexer<TokenKind>) -> i64 {
+    lexer.slice().parse().expect("Invalid integer literal.")
 }
 
-fn parse_float(lexer: &mut Lexer<TokenKind>) -> Option<f64> {
-    match lexer.slice().parse() {
-        Ok(float) => Some(float),
-        Err(_) => {
-            *lexer.extras.0.borrow_mut() = Some(String::from("Unable to parse float."));
-            None
-        }
-    }
+fn parse_float(lexer: &mut Lexer<TokenKind>) -> f64 {
+    lexer.slice().parse().expect("Invalid float literal.")
 }
 
 fn lex_string(lexer: &mut Lexer<TokenKind>) -> Option<String> {
@@ -243,11 +238,14 @@ fn lex_string(lexer: &mut Lexer<TokenKind>) -> Option<String> {
                     Some('r') => result.push('\r'),
                     Some('t') => result.push('\t'),
                     Some(next) => {
-                        *lexer.extras.0.borrow_mut() = Some(format!("Unknown escape sequence \\{}.", next));
+                        *lexer.extras.0.borrow_mut() =
+                            Some(Error::new(INVALID_ESCAPE_SEQUENCE).with_tags(dice_core::error_tags! {
+                                sequence => format!("\\{}", next)
+                            }));
                         return None;
                     }
                     None => {
-                        *lexer.extras.0.borrow_mut() = Some(String::from("Unterminated string."));
+                        *lexer.extras.0.borrow_mut() = Some(Error::new(UNTERMINATED_STRING));
                         return None;
                     }
                 }
@@ -264,7 +262,7 @@ fn lex_string(lexer: &mut Lexer<TokenKind>) -> Option<String> {
                 result.push(current);
             }
             None => {
-                *lexer.extras.0.borrow_mut() = Some(String::from("Unterminated string."));
+                *lexer.extras.0.borrow_mut() = Some(Error::new(UNTERMINATED_STRING));
                 return None;
             }
         }

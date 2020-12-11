@@ -1,9 +1,10 @@
 use super::NodeVisitor;
-use crate::{compiler::Compiler, compiler_error::CompilerError};
+use crate::compiler::Compiler;
+use dice_core::error::Error;
 use dice_syntax::Index;
 
 impl NodeVisitor<&Index> for Compiler {
-    fn visit(&mut self, node: &Index) -> Result<(), CompilerError> {
+    fn visit(&mut self, node: &Index) -> Result<(), Error> {
         self.visit(node.expression)?;
 
         // NOTE: Take the current call context and temporarily store it on the stack, replacing it with a new one, so that

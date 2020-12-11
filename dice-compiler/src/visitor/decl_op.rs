@@ -1,6 +1,7 @@
 use super::NodeVisitor;
-use crate::{compiler::Compiler, compiler_error::CompilerError, upvalue::UpvalueDescriptor, visitor::FnKind};
+use crate::{compiler::Compiler, upvalue::UpvalueDescriptor, visitor::FnKind};
 use dice_core::{
+    error::Error,
     protocol::{
         operator::{
             ADD, DICE_ROLL, DIE_ROLL, DIV, EQ, GT, GTE, LT, LTE, MUL, NEQ, RANGE_EXCLUSIVE, RANGE_INCLUSIVE, REM, SUB,
@@ -19,7 +20,7 @@ pub enum OpKind {
 
 impl NodeVisitor<(&OpDecl, OpKind)> for Compiler {
     // TODO: Only allow operators to compile in the context of a prelude?
-    fn visit(&mut self, (node, kind): (&OpDecl, OpKind)) -> Result<(), CompilerError> {
+    fn visit(&mut self, (node, kind): (&OpDecl, OpKind)) -> Result<(), Error> {
         Self::assert_unique_params(&node.args, node.span)?;
 
         let body = self.syntax_tree.child(node.body);
@@ -73,7 +74,7 @@ impl Compiler {
         name: Symbol,
         upvalues: &[UpvalueDescriptor],
         compiled_op: Value,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), Error> {
         emit_bytecode! {
             self.assembler()?, op_decl.span => [
                 if upvalues.is_empty() => [
@@ -95,7 +96,7 @@ impl Compiler {
         op_decl: &OpDecl,
         upvalues: &[UpvalueDescriptor],
         compiled_op: Value,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), Error> {
         emit_bytecode! {
             self.assembler()?, op_decl.span => [
                 if upvalues.is_empty() => [

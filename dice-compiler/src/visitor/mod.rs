@@ -36,12 +36,11 @@ mod literal_unit;
 mod literal_variable;
 mod syntax_node;
 
-use crate::compiler_error::CompilerError;
-
+use dice_core::error::Error;
 pub use expr_block::{BlockKind, FunctionBlockKind};
 
 pub(super) trait NodeVisitor<T> {
-    fn visit(&mut self, node: T) -> Result<(), CompilerError>;
+    fn visit(&mut self, node: T) -> Result<(), Error>;
 }
 
 #[derive(Clone, Copy, Eq, PartialEq)]

@@ -1,9 +1,10 @@
 use super::NodeVisitor;
-use crate::{compiler::Compiler, compiler_error::CompilerError};
+use crate::compiler::Compiler;
+use dice_core::error::Error;
 use dice_syntax::NullPropagate;
 
 impl NodeVisitor<&NullPropagate> for Compiler {
-    fn visit(&mut self, NullPropagate { expression, span }: &NullPropagate) -> Result<(), CompilerError> {
+    fn visit(&mut self, NullPropagate { expression, span }: &NullPropagate) -> Result<(), Error> {
         self.visit(*expression)?;
         let null_propagate_jump;
 

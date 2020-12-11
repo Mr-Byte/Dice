@@ -1,9 +1,9 @@
 mod helper;
 
 use crate::{module::ModuleLoader, runtime::Runtime, stack::StackFrame};
-use dice_core::error::Error;
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
+    error::Error,
     protocol::operator::{
         ADD, DICE_ROLL, DIE_ROLL, DIV, EQ, GT, GTE, LT, LTE, MUL, NEQ, RANGE_EXCLUSIVE, RANGE_INCLUSIVE, REM, SUB,
     },

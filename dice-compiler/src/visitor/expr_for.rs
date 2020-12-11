@@ -1,14 +1,16 @@
 use super::NodeVisitor;
 use crate::{
     compiler::Compiler,
-    compiler_error::CompilerError,
     scope_stack::{ScopeKind, State},
 };
-use dice_core::protocol::iterator::{DONE, ITER, NEXT, VALUE};
+use dice_core::{
+    error::Error,
+    protocol::iterator::{DONE, ITER, NEXT, VALUE},
+};
 use dice_syntax::ForLoop;
 
 impl NodeVisitor<&ForLoop> for Compiler {
-    fn visit(&mut self, for_loop: &ForLoop) -> Result<(), CompilerError> {
+    fn visit(&mut self, for_loop: &ForLoop) -> Result<(), Error> {
         if let Some(range_loop) = self.lower_to_range_loop(for_loop) {
             return self.visit(&range_loop);
         }

@@ -1,22 +1,28 @@
 use crate::{
     compiler::Compiler,
-    compiler_error::CompilerError,
     scope_stack::{ScopeKind, State},
     visitor::{decl_op::OpKind, ClassKind, FnKind, NodeVisitor},
 };
 use dice_core::{
+    error::{
+        codes::{
+            CLASS_ALREADY_DECLARED, INTERNAL_COMPILER_ERROR, METHOD_RECEIVER_CANNOT_HAVE_TYPE,
+            NEW_METHOD_MUST_HAVE_RECEIVER,
+        },
+        Error,
+    },
+    error_tags,
     protocol::{
         class::{NEW, SELF, SUPER},
         object::ANY_CLASS,
         ProtocolSymbol,
     },
-    span::Span,
     value::Symbol,
 };
 use dice_syntax::{ClassDecl, FnDecl, LitIdent, OpDecl, SyntaxNode};
 
 impl NodeVisitor<&ClassDecl> for Compiler {
-    fn visit(&mut self, node: &ClassDecl) -> Result<(), CompilerError> {
+    fn visit(&mut self, node: &ClassDecl) -> Result<(), Error> {
         self.context()?.scope_stack().push_scope(ScopeKind::Block, None);
 
         let class_kind = if let Some(base) = node.base {
@@ -24,7 +30,7 @@ impl NodeVisitor<&ClassDecl> for Compiler {
             ClassKind::Derived
         } else {
             self.visit(&LitIdent {
-                name: ANY_CLASS.get().to_string(),
+                identifier: ANY_CLASS.get().to_string(),
                 span: node.span,
             })?;
             ClassKind::Base
@@ -42,23 +48,21 @@ impl NodeVisitor<&ClassDecl> for Compiler {
         }
 
         let slot = {
-            let class_name: Symbol = (&*node.name).into();
+            let class_name: Symbol = (&*node.name.identifier).into();
             let local = self
                 .context()?
                 .scope_stack()
                 .local(class_name)
-                .ok_or_else(|| CompilerError::new("Class not already declared in scope.", Span::empty()))?;
+                .ok_or_else(|| Error::new(INTERNAL_COMPILER_ERROR))?;
 
             // NOTE: Check if a class of the given name has already been initialized.
             if let State::Class { ref mut is_initialized } = &mut local.state {
                 if *is_initialized {
-                    return Err(CompilerError::new(
-                        format!(
-                            "A class with the name {} has already been declared in this scope.",
-                            node.name.to_owned()
-                        ),
-                        node.span,
-                    ));
+                    return Err(Error::new(CLASS_ALREADY_DECLARED)
+                        .with_span(node.name.span)
+                        .with_tags(error_tags! {
+                            name => node.name.identifier.clone()
+                        }));
                 }
 
                 *is_initialized = true;
@@ -70,7 +74,7 @@ impl NodeVisitor<&ClassDecl> for Compiler {
         // NOTE: The base class is already on top of the stack from being stored in the super local.
         emit_bytecode! {
             self.assembler()?, node.span => [
-                INHERIT_CLASS &node.name;
+                INHERIT_CLASS &node.name.identifier;
                 STORE_LOCAL slot;
             ]
         }
@@ -99,29 +103,23 @@ impl NodeVisitor<&ClassDecl> for Compiler {
 }
 
 impl Compiler {
-    fn visit_fn(&mut self, slot: u8, fn_decl: FnDecl, class_kind: ClassKind) -> Result<(), CompilerError> {
+    fn visit_fn(&mut self, slot: u8, fn_decl: FnDecl, class_kind: ClassKind) -> Result<(), Error> {
         let self_param = fn_decl.args.first().filter(|arg| arg.name == *SELF.get());
         let kind = if let Some(self_param) = self_param {
             // NOTE: If the self parameter has a type annotation, return an error.
             if self_param.type_.is_some() {
-                return Err(CompilerError::new(
-                    "The self parameter of methods cannot have a type annotation.",
-                    self_param.span,
-                ));
+                return Err(Error::new(METHOD_RECEIVER_CANNOT_HAVE_TYPE).with_span(self_param.span));
             }
 
-            if fn_decl.name == *NEW.get() {
+            if fn_decl.name.identifier == *NEW.get() {
                 FnKind::Constructor(class_kind)
             } else {
                 FnKind::Method
             }
         } else {
-            if fn_decl.name == *NEW.get() {
+            if fn_decl.name.identifier == *NEW.get() {
                 // TODO: Propagate the span of the function's name only.
-                return Err(CompilerError::new(
-                    "The new method must have a self parameter.",
-                    fn_decl.span,
-                ));
+                return Err(Error::new(NEW_METHOD_MUST_HAVE_RECEIVER).with_span(fn_decl.span));
             }
 
             FnKind::StaticMethod
@@ -132,10 +130,10 @@ impl Compiler {
         emit_bytecode! {
             self.assembler()?, fn_decl.span => [
                 if matches!(kind, FnKind::Constructor(_) | FnKind::Method) => [
-                    STORE_METHOD &*fn_decl.name;
+                    STORE_METHOD &*fn_decl.name.identifier;
                     LOAD_LOCAL slot;
                 ] else [
-                    STORE_FIELD &*fn_decl.name;
+                    STORE_FIELD &*fn_decl.name.identifier;
                     POP;
                     LOAD_LOCAL slot;
                 ]
@@ -145,19 +143,16 @@ impl Compiler {
         Ok(())
     }
 
-    fn visit_op(&mut self, slot: u8, op_decl: OpDecl) -> Result<(), CompilerError> {
+    fn visit_op(&mut self, slot: u8, op_decl: OpDecl) -> Result<(), Error> {
         let self_param = op_decl.args.first().filter(|arg| arg.name == *SELF.get());
 
         if let Some(self_param) = self_param {
             if self_param.type_.is_some() {
-                return Err(CompilerError::new(
-                    "The self parameter of methods cannot have a type annotation.",
-                    self_param.span,
-                ));
+                return Err(Error::new(METHOD_RECEIVER_CANNOT_HAVE_TYPE).with_span(self_param.span));
             }
         } else {
             // TODO: Propagate the span of the operator's name only.
-            return Err(CompilerError::new("Operator must have a self parameter.", op_decl.span));
+            return Err(Error::new(NEW_METHOD_MUST_HAVE_RECEIVER).with_span(op_decl.span));
         }
 
         self.visit((&op_decl, OpKind::Method))?;
@@ -172,7 +167,7 @@ impl Compiler {
         Ok(())
     }
 
-    pub fn close_upvalues(&mut self, class: &ClassDecl) -> Result<(), CompilerError> {
+    pub fn close_upvalues(&mut self, class: &ClassDecl) -> Result<(), Error> {
         let scope = self.context()?.scope_stack().top_mut()?;
 
         for variable in scope.variables.clone() {

@@ -1,10 +1,10 @@
 use super::{BlockKind, NodeVisitor};
-use crate::{compiler::Compiler, compiler_error::CompilerError, scope_stack::ScopeKind};
-use dice_core::span::Span;
+use crate::{compiler::Compiler, scope_stack::ScopeKind};
+use dice_core::error::{codes::INTERNAL_COMPILER_ERROR, Error};
 use dice_syntax::{Loop, SyntaxNode};
 
 impl NodeVisitor<&Loop> for Compiler {
-    fn visit(&mut self, Loop { body, span }: &Loop) -> Result<(), CompilerError> {
+    fn visit(&mut self, Loop { body, span }: &Loop) -> Result<(), Error> {
         if let SyntaxNode::Block(block) = self.syntax_tree.get(*body) {
             let block = block.clone();
             let loop_start = self.assembler()?.current_position();
@@ -24,10 +24,7 @@ impl NodeVisitor<&Loop> for Compiler {
 
             self.assembler()?.push_unit(*span);
         } else {
-            return Err(CompilerError::new(
-                "While loop bodies should only ever contain blocks.",
-                Span::empty(),
-            ));
+            return Err(Error::new(INTERNAL_COMPILER_ERROR));
         }
 
         Ok(())

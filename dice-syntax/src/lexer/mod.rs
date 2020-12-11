@@ -1,17 +1,17 @@
 mod token;
 
-use crate::SyntaxError;
 use std::collections::VecDeque;
 
+use dice_core::{error::Error, source::Source};
 pub use token::{Token, TokenKind};
 
 pub struct Lexer {
     current: Token,
-    tokens: VecDeque<Result<Token, SyntaxError>>,
+    tokens: VecDeque<Result<Token, Error>>,
 }
 
 impl Lexer {
-    pub fn from_str(input: &str) -> Lexer {
+    pub fn from_source(input: &Source) -> Lexer {
         let tokens = Token::tokenize(input).collect::<VecDeque<_>>();
 
         Lexer {
@@ -24,12 +24,12 @@ impl Lexer {
         &self.current
     }
 
-    pub fn next(&mut self) -> Result<Token, SyntaxError> {
+    pub fn next(&mut self) -> Result<Token, Error> {
         self.current = self.tokens.pop_front().transpose()?.unwrap_or_else(Token::end_of_input);
         Ok(self.current.clone())
     }
 
-    pub fn peek(&self) -> Result<Token, SyntaxError> {
+    pub fn peek(&self) -> Result<Token, Error> {
         Ok(self
             .tokens
             .front()
@@ -38,16 +38,16 @@ impl Lexer {
             .unwrap_or_else(Token::end_of_input))
     }
 
-    pub fn consume(&mut self, kind: TokenKind) -> Result<Token, SyntaxError> {
+    pub fn consume(&mut self, kind: TokenKind) -> Result<Token, Error> {
         let next = self.next()?;
         if next.kind == kind {
             Ok(next)
         } else {
-            todo!("Unexpected token.")
+            todo!("Unexpected token. Expected: {:?}, Found: {:?}", kind, next.kind)
         }
     }
 
-    pub fn consume_ident(&mut self) -> Result<(Token, String), SyntaxError> {
+    pub fn consume_ident(&mut self) -> Result<(Token, String), Error> {
         let next = self.next()?;
         if let TokenKind::Identifier(ref ident) = next.kind {
             let ident = ident.clone();
@@ -57,7 +57,7 @@ impl Lexer {
         }
     }
 
-    pub fn consume_string(&mut self) -> Result<(Token, String), SyntaxError> {
+    pub fn consume_string(&mut self) -> Result<(Token, String), Error> {
         let next = self.next()?;
         if let TokenKind::String(ref string) = next.kind {
             let string = string.to_owned();
@@ -67,7 +67,7 @@ impl Lexer {
         }
     }
 
-    pub fn consume_one_of(&mut self, kinds: &[TokenKind]) -> Result<Token, SyntaxError> {
+    pub fn consume_one_of(&mut self, kinds: &[TokenKind]) -> Result<Token, Error> {
         let next = self.next()?;
         if kinds.contains(&next.kind) {
             Ok(next)
@@ -80,6 +80,7 @@ impl Lexer {
 #[cfg(test)]
 pub mod test {
     use super::*;
+    use dice_core::source::SourceKind;
 
     macro_rules! assert_next_token {
         ($tokens:expr, $token:pat) => {
@@ -89,8 +90,8 @@ pub mod test {
 
     #[test]
     fn tokenize_delimiters() {
-        let delimiters = "( ) { } [ ] ; : ,";
-        let mut tokens = Token::tokenize(delimiters);
+        let delimiters = Source::new("( ) { } [ ] ; : ,", SourceKind::Script);
+        let mut tokens = Token::tokenize(&delimiters);
 
         assert_next_token!(tokens, TokenKind::LeftParen);
         assert_next_token!(tokens, TokenKind::RightParen);
@@ -105,8 +106,11 @@ pub mod test {
 
     #[test]
     fn tokenize_operators() {
-        let delimiters = ".. ..= -> => . ?? % - + * / ! != == > >= < <= = d && ||";
-        let mut tokens = Token::tokenize(delimiters);
+        let delimiters = Source::new(
+            ".. ..= -> => . ?? % - + * / ! != == > >= < <= = d && ||",
+            SourceKind::Script,
+        );
+        let mut tokens = Token::tokenize(&delimiters);
 
         assert_next_token!(tokens, TokenKind::RangeInclusive);
         assert_next_token!(tokens, TokenKind::RangeExclusive);
@@ -134,8 +138,11 @@ pub mod test {
 
     #[test]
     fn tokenize_literals() {
-        let delimiters = r#"1 -1 +1 1.0 -1.0 +1.0 abc _abc _123 "abc" "abc\"abc""#;
-        let mut tokens = Token::tokenize(delimiters);
+        let delimiters = Source::new(
+            r#"1 -1 +1 1.0 -1.0 +1.0 abc _abc _123 "abc" "abc\"abc""#,
+            SourceKind::Script,
+        );
+        let mut tokens = Token::tokenize(&delimiters);
 
         assert_next_token!(tokens, TokenKind::Integer(_));
         assert_next_token!(tokens, TokenKind::Integer(_));
@@ -152,7 +159,8 @@ pub mod test {
 
     #[test]
     fn tokenize_keywords() {
-        let delimiters = "
+        let delimiters = Source::new(
+            "
             false
             true
             none
@@ -181,8 +189,10 @@ pub mod test {
             where
             import
             from
-        ";
-        let mut tokens = Token::tokenize(delimiters);
+        ",
+            SourceKind::Script,
+        );
+        let mut tokens = Token::tokenize(&delimiters);
 
         assert_next_token!(tokens, TokenKind::False);
         assert_next_token!(tokens, TokenKind::True);
@@ -212,8 +222,8 @@ pub mod test {
 
     #[test]
     fn tokenize_errors() {
-        let delimiters = r#"❤ @ \ ^"#;
-        let mut tokens = Token::tokenize(delimiters);
+        let delimiters = Source::new(r#"❤ @ \ ^"#, SourceKind::Script);
+        let mut tokens = Token::tokenize(&delimiters);
 
         assert_next_token!(tokens, TokenKind::Error);
         assert_next_token!(tokens, TokenKind::Error);
@@ -223,16 +233,16 @@ pub mod test {
 
     #[test]
     fn tokenize_comment_yields_no_tokens() {
-        let delimiters = r#"// test"#;
-        let mut tokens = Token::tokenize(delimiters);
+        let delimiters = Source::new(r#"// test"#, SourceKind::Script);
+        let mut tokens = Token::tokenize(&delimiters);
 
         assert!(tokens.next().is_none());
     }
 
     #[test]
     fn tokenize_token_followed_by_comment_yields_one_token() {
-        let delimiters = r#"12 // test"#;
-        let mut tokens = Token::tokenize(delimiters);
+        let delimiters = Source::new(r#"12 // test"#, SourceKind::Script);
+        let mut tokens = Token::tokenize(&delimiters);
 
         assert_next_token!(tokens, TokenKind::Integer(_));
         assert!(tokens.next().is_none());
@@ -240,8 +250,8 @@ pub mod test {
 
     #[test]
     fn tokenize_token_followed_by_comment_followed_by_token_on_newline_yields_two_tokens() {
-        let delimiters = r#"12 // test\n14"#;
-        let mut tokens = Token::tokenize(delimiters);
+        let delimiters = Source::new(r#"12 // test\n14"#, SourceKind::Script);
+        let mut tokens = Token::tokenize(&delimiters);
 
         assert_next_token!(tokens, TokenKind::Integer(_));
         assert_next_token!(tokens, TokenKind::Integer(_));

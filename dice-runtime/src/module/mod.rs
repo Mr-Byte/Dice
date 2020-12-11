@@ -1,6 +1,6 @@
 pub mod file_loader;
 
-use dice_core::{bytecode::Bytecode, value::Symbol};
+use dice_core::{bytecode::Bytecode, error::Error, value::Symbol};
 
 #[derive(Clone)]
 pub struct Module {
@@ -15,5 +15,5 @@ impl Module {
 }
 
 pub trait ModuleLoader: Default {
-    fn load_module(&mut self, name: Symbol) -> Result<Module, ()>;
+    fn load_module(&mut self, name: Symbol) -> Result<Module, Error>;
 }

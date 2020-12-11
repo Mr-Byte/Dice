@@ -1,10 +1,16 @@
 use super::NodeVisitor;
-use crate::{compiler::Compiler, compiler_error::CompilerError, compiler_stack::CompilerKind};
-use dice_core::protocol::class::SELF;
+use crate::{compiler::Compiler, compiler_stack::CompilerKind};
+use dice_core::{
+    error::{
+        codes::{INVALID_RETURN_USAGE, NEW_RETURN_CANNOT_HAVE_EXPRESSION},
+        Error,
+    },
+    protocol::class::SELF,
+};
 use dice_syntax::Return;
 
 impl NodeVisitor<&Return> for Compiler {
-    fn visit(&mut self, expr_return: &Return) -> Result<(), CompilerError> {
+    fn visit(&mut self, expr_return: &Return) -> Result<(), Error> {
         let context = self.context()?;
 
         match context.kind() {
@@ -21,17 +27,9 @@ impl NodeVisitor<&Return> for Compiler {
                 self.assembler()?.load_local(self_slot as u8, expr_return.span);
             }
             CompilerKind::Constructor if expr_return.result.is_some() => {
-                return Err(CompilerError::new(
-                    "The return keyword cannot be used with an expression in constructors.",
-                    expr_return.span,
-                ))
+                return Err(Error::new(NEW_RETURN_CANNOT_HAVE_EXPRESSION).with_span(expr_return.span))
             }
-            _ => {
-                return Err(CompilerError::new(
-                    "The return keyword can only be used inside functions.",
-                    expr_return.span,
-                ))
-            }
+            _ => return Err(Error::new(INVALID_RETURN_USAGE).with_span(expr_return.span)),
         }
 
         // NOTE: Cleanup any temporaries created while calling functions then return.

@@ -1,5 +1,7 @@
-use crate::error::Error;
-use crate::value::{Class, Object, Value};
+use crate::{
+    error::Error,
+    value::{Class, Object, Value},
+};
 
 pub trait Runtime {
     fn new_module(&mut self, name: &str) -> Result<Object, Error>;

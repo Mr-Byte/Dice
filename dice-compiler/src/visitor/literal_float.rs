@@ -1,10 +1,10 @@
 use super::NodeVisitor;
-use crate::{compiler::Compiler, compiler_error::CompilerError};
-use dice_core::value::Value;
+use crate::compiler::Compiler;
+use dice_core::{error::Error, value::Value};
 use dice_syntax::LitFloat;
 
 impl NodeVisitor<&LitFloat> for Compiler {
-    fn visit(&mut self, LitFloat { value, span }: &LitFloat) -> Result<(), CompilerError> {
+    fn visit(&mut self, LitFloat { value, span }: &LitFloat) -> Result<(), Error> {
         let context = self.context()?;
 
         if *value == 0.0 {

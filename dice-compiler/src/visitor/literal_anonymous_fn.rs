@@ -1,10 +1,13 @@
 use super::NodeVisitor;
-use crate::{compiler::Compiler, compiler_error::CompilerError, visitor::FnKind};
-use dice_core::value::{FnScript, Value};
+use crate::{compiler::Compiler, visitor::FnKind};
+use dice_core::{
+    error::Error,
+    value::{FnScript, Value},
+};
 use dice_syntax::LitAnonymousFn;
 
 impl NodeVisitor<&LitAnonymousFn> for Compiler {
-    fn visit(&mut self, node: &LitAnonymousFn) -> Result<(), CompilerError> {
+    fn visit(&mut self, node: &LitAnonymousFn) -> Result<(), Error> {
         let id = uuid::Uuid::new_v4();
         let name = format!("__anonymous_fn_{:X}", id.clone().to_simple());
         let body = self.syntax_tree.child(node.body);

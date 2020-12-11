@@ -9,12 +9,12 @@ use super::{
 use crate::{
     parser::rules::{ParserRule, RulePrecedence},
     ClassDecl, ErrorPropagate, FieldAccess, FnArg, ForLoop, ImportDecl, Index, Is, Loop, NullPropagate, OpDecl,
-    OverloadedOperator, SuperAccess, SuperCall, SyntaxError, TypeAnnotation, VarDeclKind,
+    OverloadedOperator, SuperAccess, SuperCall, TypeAnnotation, VarDeclKind,
 };
-use dice_core::span::Span;
+use dice_core::{error::Error, source::Source, span::Span};
 use id_arena::Arena;
 
-pub type SyntaxNodeResult = Result<SyntaxNodeId, SyntaxError>;
+pub type SyntaxNodeResult = Result<SyntaxNodeId, Error>;
 
 pub struct Parser {
     lexer: Lexer,
@@ -22,15 +22,15 @@ pub struct Parser {
 }
 
 impl Parser {
-    pub fn new(input: &str) -> Self {
-        let lexer = Lexer::from_str(input);
+    pub fn new(input: &Source) -> Self {
+        let lexer = Lexer::from_source(input);
         let arena = Arena::new();
 
         Self { lexer, arena }
     }
 
     // TODO: Have this return a collection of parse errors.
-    pub fn parse(mut self) -> Result<SyntaxTree, SyntaxError> {
+    pub fn parse(mut self) -> Result<SyntaxTree, Error> {
         let root = self.expression_sequence()?;
 
         Ok(SyntaxTree::new(root, self.arena))
@@ -232,9 +232,10 @@ impl Parser {
         let next_token = self.lexer.next()?;
         let span_start = next_token.span();
         let lhs_expression = match next_token.kind {
-            TokenKind::Identifier(name) => self
-                .arena
-                .alloc(SyntaxNode::LitIdent(LitIdent { name, span: span_start })),
+            TokenKind::Identifier(name) => self.arena.alloc(SyntaxNode::LitIdent(LitIdent {
+                identifier: name,
+                span: span_start,
+            })),
             _ => return todo!("Unexpected token."),
         };
 
@@ -290,7 +291,7 @@ impl Parser {
             TokenKind::Function => self.fn_decl()?,
             TokenKind::Class => self.class_decl()?,
             TokenKind::Identifier(name) => self.arena.alloc(SyntaxNode::LitIdent(LitIdent {
-                name,
+                identifier: name,
                 span: self.lexer.peek()?.span(),
             })),
             _ => unreachable!("Unsupported export type encountered."),
@@ -363,11 +364,8 @@ impl Parser {
 
     fn fn_decl(&mut self) -> SyntaxNodeResult {
         let span_start = self.lexer.consume(TokenKind::Function)?.span();
-        let name_token = self.lexer.next()?;
-        let name = match name_token.kind {
-            TokenKind::Identifier(ref name) => name.clone(),
-            _ => return todo!("Unexpected token."),
-        };
+        let (name_token, name) = self.lexer.consume_ident()?;
+        let name = LitIdent::synthesize(name, name_token.span());
         let args = self.parse_args(TokenKind::LeftParen, TokenKind::RightParen)?;
 
         if args.len() > (u8::MAX as usize) {
@@ -432,20 +430,15 @@ impl Parser {
         Ok(self.arena.alloc(node))
     }
 
-    fn parse_return(&mut self) -> Result<Option<TypeAnnotation>, SyntaxError> {
+    fn parse_return(&mut self) -> Result<Option<TypeAnnotation>, Error> {
         if self.lexer.peek()?.kind == TokenKind::Arrow {
-            self.lexer.consume(TokenKind::Arrow)?;
-            self.parse_type_annotation().map(Some)
+            self.parse_type_annotation(TokenKind::Arrow).map(Some)
         } else {
             Ok(None)
         }
     }
 
-    fn parse_args(
-        &mut self,
-        open_token_kind: TokenKind,
-        close_token_kind: TokenKind,
-    ) -> Result<Vec<FnArg>, SyntaxError> {
+    fn parse_args(&mut self, open_token_kind: TokenKind, close_token_kind: TokenKind) -> Result<Vec<FnArg>, Error> {
         self.lexer.consume(open_token_kind)?;
 
         let mut args = Vec::new();
@@ -455,8 +448,7 @@ impl Parser {
             let span = token.span();
 
             let type_ = if self.lexer.peek()?.kind == TokenKind::Colon {
-                self.lexer.consume(TokenKind::Colon)?;
-                Some(self.parse_type_annotation()?)
+                Some(self.parse_type_annotation(TokenKind::Colon)?)
             } else {
                 None
             };
@@ -478,25 +470,30 @@ impl Parser {
         Ok(args)
     }
 
-    fn parse_type_annotation(&mut self) -> Result<TypeAnnotation, SyntaxError> {
+    fn parse_type_annotation(&mut self, delimiter: TokenKind) -> Result<TypeAnnotation, Error> {
+        let span_start = self.lexer.consume(delimiter)?.span();
         let (name_token, name) = self.lexer.consume_ident()?;
-        let mut span = name_token.span();
+        let ident_span = name_token.span();
         let is_nullable = if self.lexer.peek()?.kind == TokenKind::QuestionMark {
-            span = span + self.lexer.consume(TokenKind::QuestionMark)?.span();
+            self.lexer.consume(TokenKind::QuestionMark)?;
             true
         } else {
             false
         };
-        let name = LitIdent { name, span };
+        let name = LitIdent {
+            identifier: name,
+            span: ident_span,
+        };
+        let span_end = self.lexer.current().span();
 
-        Ok(TypeAnnotation { name, is_nullable })
+        Ok(TypeAnnotation {
+            name,
+            is_nullable,
+            span: span_start + span_end,
+        })
     }
 
-    fn parse_fields(
-        &mut self,
-        open_token_kind: TokenKind,
-        close_token_kind: TokenKind,
-    ) -> Result<Vec<String>, SyntaxError> {
+    fn parse_fields(&mut self, open_token_kind: TokenKind, close_token_kind: TokenKind) -> Result<Vec<String>, Error> {
         self.lexer.consume(open_token_kind)?;
 
         let mut args = Vec::new();
@@ -518,7 +515,11 @@ impl Parser {
 
     fn class_decl(&mut self) -> SyntaxNodeResult {
         let span_start = self.lexer.consume(TokenKind::Class)?.span();
-        let (_, name) = self.lexer.consume_ident()?;
+        let (name_token, name) = self.lexer.consume_ident()?;
+        let name = LitIdent {
+            identifier: name,
+            span: name_token.span(),
+        };
         let base = if self.lexer.peek()?.kind == TokenKind::Colon {
             self.lexer.consume(TokenKind::Colon)?;
             Some(self.expression()?)
@@ -599,8 +600,7 @@ impl Parser {
     }
 
     fn parse_is_operator(&mut self, lhs: SyntaxNodeId, _: bool, span_start: Span) -> SyntaxNodeResult {
-        self.lexer.consume(TokenKind::Is)?;
-        let type_annotation = self.parse_type_annotation()?;
+        let type_annotation = self.parse_type_annotation(TokenKind::Is)?;
         let node = SyntaxNode::Is(Is {
             value: lhs,
             type_: type_annotation,
@@ -759,7 +759,7 @@ impl Parser {
         Ok(self.arena.alloc(node))
     }
 
-    fn super_method_access(&mut self, _: bool, span_start: Span) -> Result<SyntaxNodeId, SyntaxError> {
+    fn super_method_access(&mut self, _: bool, span_start: Span) -> Result<SyntaxNodeId, Error> {
         let super_class = if self.lexer.peek()?.kind == TokenKind::LeftSquare {
             self.lexer.consume(TokenKind::LeftSquare)?;
             let (_, ident) = self.lexer.consume_ident()?;
@@ -912,279 +912,5 @@ impl Parser {
         } else {
             Ok(lhs_expression)
         }
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::Parser;
-    use crate::{Binary, BinaryOperator, Block, LitInt, SyntaxError, SyntaxNode, Unary, UnaryOperator};
-
-    #[test]
-    fn test_parse_integer() -> Result<(), SyntaxError> {
-        let syntax_tree = Parser::new("5").parse()?;
-        let root = syntax_tree.get(syntax_tree.root());
-
-        if let SyntaxNode::Block(Block {
-            trailing_expression: Some(block),
-            ..
-        }) = root
-        {
-            let node = syntax_tree.get(*block);
-
-            assert!(matches!(node, SyntaxNode::LitInt(LitInt { value: 5, .. })));
-        } else {
-            panic!("Root element is not a block.")
-        }
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_parse_unary_minus() -> Result<(), SyntaxError> {
-        let syntax_tree = Parser::new("-5").parse()?;
-        let root = syntax_tree.get(syntax_tree.root());
-
-        if let SyntaxNode::Block(Block {
-            trailing_expression: Some(block),
-            ..
-        }) = root
-        {
-            let node = syntax_tree.get(*block);
-
-            assert!(matches!(
-                node,
-                SyntaxNode::Unary(Unary {
-                    operator: UnaryOperator::Negate,
-                    ..
-                })
-            ));
-        } else {
-            panic!("Root element is not a block.")
-        }
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_parse_binary_minus() -> Result<(), SyntaxError> {
-        let syntax_tree = Parser::new("5 - 5").parse()?;
-        let root = syntax_tree.get(syntax_tree.root());
-
-        if let SyntaxNode::Block(Block {
-            trailing_expression: Some(block),
-            ..
-        }) = root
-        {
-            let node = syntax_tree.get(*block);
-
-            assert!(matches!(
-                node,
-                SyntaxNode::Binary(Binary {
-                    operator: BinaryOperator::Subtract,
-                    ..
-                })
-            ));
-        } else {
-            panic!("Root element is not a block.")
-        }
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_parse_binary_minus_with_unary_minus() -> Result<(), SyntaxError> {
-        let syntax_tree = Parser::new("5 - -5").parse()?;
-        let root = syntax_tree.get(syntax_tree.root());
-
-        if let SyntaxNode::Block(Block {
-            trailing_expression: Some(block),
-            ..
-        }) = root
-        {
-            let node = syntax_tree.get(*block);
-
-            assert!(matches!(
-                node,
-                SyntaxNode::Binary(Binary {
-                    operator: BinaryOperator::Subtract,
-                    ..
-                })
-            ));
-        } else {
-            panic!("Root element is not a block.")
-        }
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_parse_binary_precedence_multiply_right() -> Result<(), SyntaxError> {
-        let syntax_tree = Parser::new("5 - 5 * 5").parse()?;
-        let root = syntax_tree.get(syntax_tree.root());
-
-        if let SyntaxNode::Block(Block {
-            trailing_expression: Some(block),
-            ..
-        }) = root
-        {
-            let node = syntax_tree.get(*block);
-
-            assert!(matches!(
-                node,
-                SyntaxNode::Binary(Binary {
-                    operator: BinaryOperator::Subtract,
-                    ..
-                })
-            ));
-        } else {
-            panic!("Root element is not a block.")
-        }
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_parse_binary_precedence_multiply_left() -> Result<(), SyntaxError> {
-        let syntax_tree = Parser::new("5 * 5 - 5").parse()?;
-        let root = syntax_tree.get(syntax_tree.root());
-
-        if let SyntaxNode::Block(Block {
-            trailing_expression: Some(block),
-            ..
-        }) = root
-        {
-            let node = syntax_tree.get(*block);
-
-            assert!(matches!(
-                node,
-                SyntaxNode::Binary(Binary {
-                    operator: BinaryOperator::Subtract,
-                    ..
-                })
-            ));
-        } else {
-            panic!("Root element is not a block.")
-        }
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_parse_grouping() -> Result<(), SyntaxError> {
-        let syntax_tree = Parser::new("5 * (5 - 5)").parse()?;
-        let root = syntax_tree.get(syntax_tree.root());
-
-        if let SyntaxNode::Block(Block {
-            trailing_expression: Some(block),
-            ..
-        }) = root
-        {
-            let node = syntax_tree.get(*block);
-
-            assert!(matches!(
-                node,
-                SyntaxNode::Binary(Binary {
-                    operator: BinaryOperator::Multiply,
-                    ..
-                })
-            ));
-        } else {
-            panic!("Root element is not a block.")
-        }
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_parse_unary_die() -> Result<(), SyntaxError> {
-        let syntax_tree = Parser::new("d8").parse()?;
-        let root = syntax_tree.get(syntax_tree.root());
-
-        if let SyntaxNode::Block(Block {
-            trailing_expression: Some(block),
-            ..
-        }) = root
-        {
-            let node = syntax_tree.get(*block);
-
-            assert!(matches!(
-                node,
-                SyntaxNode::Unary(Unary {
-                    operator: UnaryOperator::DiceRoll,
-                    ..
-                })
-            ));
-        } else {
-            panic!("Root element is not a block.")
-        }
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_parse_binary_dice() -> Result<(), SyntaxError> {
-        let syntax_tree = Parser::new("6d8").parse()?;
-        let root = syntax_tree.get(syntax_tree.root());
-
-        if let SyntaxNode::Block(Block {
-            trailing_expression: Some(block),
-            ..
-        }) = root
-        {
-            let node = syntax_tree.get(*block);
-
-            assert!(matches!(
-                node,
-                SyntaxNode::Binary(Binary {
-                    operator: BinaryOperator::DiceRoll,
-                    ..
-                })
-            ));
-        } else {
-            panic!("Root element is not a block.")
-        }
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_parse_object_expression() -> Result<(), SyntaxError> {
-        let syntax_tree = Parser::new("#{ x: 50, y: 30 }").parse()?;
-        let root = syntax_tree.get(syntax_tree.root());
-
-        if let SyntaxNode::Block(Block {
-            trailing_expression: Some(block),
-            ..
-        }) = root
-        {
-            let node = syntax_tree.get(*block);
-
-            assert!(matches!(node, SyntaxNode::LitObject(_)));
-        } else {
-            panic!("Root element is not a block.")
-        }
-
-        Ok(())
-    }
-
-    #[test]
-    fn test_parse_list_expression() -> Result<(), SyntaxError> {
-        let syntax_tree = Parser::new("[x, y, 1, 1*2, #{}]").parse()?;
-        let root = syntax_tree.get(syntax_tree.root());
-
-        if let SyntaxNode::Block(Block {
-            trailing_expression: Some(block),
-            ..
-        }) = root
-        {
-            let node = syntax_tree.get(*block);
-
-            assert!(matches!(node, SyntaxNode::LitList(_)));
-        } else {
-            panic!("Root element is not a block.")
-        }
-
-        Ok(())
     }
 }

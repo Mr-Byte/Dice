@@ -1,8 +1,11 @@
 use super::NodeVisitor;
-use crate::{
-    compiler::Compiler, compiler_error::CompilerError, scope_stack::State, upvalue::UpvalueDescriptor, visitor::FnKind,
-};
+use crate::{compiler::Compiler, scope_stack::State, upvalue::UpvalueDescriptor, visitor::FnKind};
 use dice_core::{
+    error::{
+        codes::{FUNCTION_ALREADY_DECLARE, FUNCTION_CANNOT_HAVE_DUPLICATE_ARGS, INTERNAL_COMPILER_ERROR},
+        Error,
+    },
+    error_tags,
     span::Span,
     value::{FnScript, Symbol, Value},
 };
@@ -10,14 +13,14 @@ use dice_syntax::{FnArg, FnDecl};
 use std::collections::HashSet;
 
 impl NodeVisitor<(&FnDecl, FnKind)> for Compiler {
-    fn visit(&mut self, (fn_decl, fn_kind): (&FnDecl, FnKind)) -> Result<(), CompilerError> {
+    fn visit(&mut self, (fn_decl, fn_kind): (&FnDecl, FnKind)) -> Result<(), Error> {
         Self::assert_unique_params(&fn_decl.args, fn_decl.span)?;
 
         let body = self.syntax_tree.child(fn_decl.body);
         let mut fn_context = self.compile_fn(body, &fn_decl.args, fn_decl.return_.clone(), fn_kind)?;
         let upvalues = fn_context.upvalues().clone();
         let bytecode = fn_context.finish();
-        let compiled_fn = Value::FnScript(FnScript::new(&*fn_decl.name, bytecode, uuid::Uuid::new_v4()));
+        let compiled_fn = Value::FnScript(FnScript::new(&*fn_decl.name.identifier, bytecode, uuid::Uuid::new_v4()));
 
         if fn_kind == FnKind::Function {
             self.emit_fn(fn_decl, &upvalues, compiled_fn)?;
@@ -30,45 +33,36 @@ impl NodeVisitor<(&FnDecl, FnKind)> for Compiler {
 }
 
 impl Compiler {
-    pub(super) fn assert_unique_params(args: &[FnArg], span: Span) -> Result<(), CompilerError> {
+    pub(super) fn assert_unique_params(args: &[FnArg], span: Span) -> Result<(), Error> {
         // NOTE: Assert that all arguments are uniquely named.
         let mut items = HashSet::with_capacity(args.len());
+        // TODO: Return the span of the duplicate arg.
         let has_unique_args = args.iter().all(|arg| items.insert(&arg.name));
 
         if !has_unique_args {
-            return Err(CompilerError::new(
-                "A function cannot have duplicate argument names.",
-                span,
-            ));
+            return Err(Error::new(FUNCTION_CANNOT_HAVE_DUPLICATE_ARGS).with_span(span));
         }
 
         Ok(())
     }
 
-    fn emit_fn(
-        &mut self,
-        fn_decl: &FnDecl,
-        upvalues: &[UpvalueDescriptor],
-        compiled_fn: Value,
-    ) -> Result<(), CompilerError> {
+    fn emit_fn(&mut self, fn_decl: &FnDecl, upvalues: &[UpvalueDescriptor], compiled_fn: Value) -> Result<(), Error> {
         let context = self.context()?;
-        let fn_name: Symbol = (&*fn_decl.name).into();
+        let fn_name: Symbol = (&*fn_decl.name.identifier).into();
         let local = context
             .scope_stack()
             .local(fn_name)
-            .ok_or_else(|| CompilerError::new("ICE: Function not already declared in scope.", Span::empty()))?;
+            .ok_or_else(|| Error::new(INTERNAL_COMPILER_ERROR))?;
 
         // NOTE: Check if a function of the given name has already been initialized.
         match &mut local.state {
             State::Function { ref mut is_initialized } if *is_initialized => {
                 // TODO: Only propagate the span of the function name.
-                return Err(CompilerError::new(
-                    format!(
-                        "A function with the name {} has already been declared in this scope.",
-                        fn_decl.name.to_owned()
-                    ),
-                    fn_decl.span,
-                ));
+                return Err(Error::new(FUNCTION_ALREADY_DECLARE)
+                    .with_span(fn_decl.name.span)
+                    .with_tags(error_tags! {
+                        name => fn_decl.name.identifier.clone()
+                    }));
             }
             State::Function { ref mut is_initialized } => *is_initialized = true,
             _ => unreachable!("Unexpected non-function local state while compiling a function."),
@@ -96,7 +90,7 @@ impl Compiler {
         fn_decl: &FnDecl,
         upvalues: &[UpvalueDescriptor],
         compiled_fn: Value,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<(), Error> {
         emit_bytecode! {
             self.assembler()?, fn_decl.span => [
                 if upvalues.is_empty() => [

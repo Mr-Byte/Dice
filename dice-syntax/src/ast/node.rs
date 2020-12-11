@@ -24,14 +24,14 @@ pub struct LitObject {
 
 #[derive(Debug, Clone)]
 pub struct LitIdent {
-    pub name: String,
+    pub identifier: String,
     pub span: Span,
 }
 
 impl LitIdent {
-    pub fn synthesize(name: impl Into<String>, span: Span) -> Self {
+    pub fn synthesize(identifier: impl Into<String>, span: Span) -> Self {
         Self {
-            name: name.into(),
+            identifier: identifier.into(),
             span,
         }
     }
@@ -201,7 +201,8 @@ pub enum VarDeclKind {
 
 #[derive(Debug, Clone)]
 pub struct FnDecl {
-    pub name: String,
+    // TODO: Add a span for the name of the function.
+    pub name: LitIdent,
     pub args: Vec<FnArg>,
     pub return_: Option<TypeAnnotation>,
     pub body: SyntaxNodeId,
@@ -228,6 +229,7 @@ pub struct FnArg {
 pub struct TypeAnnotation {
     pub name: LitIdent,
     pub is_nullable: bool,
+    pub span: Span,
 }
 
 #[derive(Debug, Clone)]
@@ -287,7 +289,7 @@ impl Display for OverloadedOperator {
 
 #[derive(Debug, Clone)]
 pub struct ClassDecl {
-    pub name: String,
+    pub name: LitIdent,
     pub span: Span,
     pub associated_items: Vec<SyntaxNodeId>,
     pub base: Option<SyntaxNodeId>,

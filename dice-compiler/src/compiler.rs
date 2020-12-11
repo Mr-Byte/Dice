@@ -1,24 +1,17 @@
 use crate::{
     assembler::Assembler,
-    compiler_error::CompilerError,
     compiler_stack::{CompilerContext, CompilerKind, CompilerStack},
     scope_stack::State,
     visitor::NodeVisitor,
 };
 use dice_core::{
     bytecode::Bytecode,
+    error::{Error, ResultExt as _},
     protocol::{module::EXPORT, ProtocolSymbol},
     source::{Source, SourceKind},
     span::Span,
 };
 use dice_syntax::{Parser, SyntaxTree};
-
-#[allow(dead_code)]
-#[derive(Ord, PartialOrd, Eq, PartialEq, Copy, Clone)]
-enum CompilationKind {
-    Script,
-    Module,
-}
 
 pub struct Compiler {
     pub(crate) syntax_tree: SyntaxTree,
@@ -26,38 +19,32 @@ pub struct Compiler {
 }
 
 impl Compiler {
-    fn new(syntax_tree: SyntaxTree, kind: CompilationKind) -> Self {
-        let compiler_kind = match kind {
-            CompilationKind::Script => CompilerKind::Script,
-            CompilationKind::Module => CompilerKind::Module,
+    pub fn compile_source(source: Source) -> Result<Bytecode, Error> {
+        let syntax_tree = Parser::new(&source).parse()?;
+        let kind = match source.kind() {
+            SourceKind::Module => CompilerKind::Module,
+            SourceKind::Script => CompilerKind::Script,
         };
-        let compiler_stack = CompilerStack::new(compiler_kind);
-
-        Self {
+        let compiler_stack = CompilerStack::new(kind.clone());
+        let mut compiler = Self {
             syntax_tree,
             compiler_stack,
-        }
+        };
+
+        compiler.compile(kind).with_source(source)
     }
 
-    pub fn compile(source: &Source) -> Result<Bytecode, CompilerError> {
-        let syntax_tree = Parser::new(source.source()).parse()?;
-        let kind = match source.kind() {
-            SourceKind::Module => CompilationKind::Module,
-            SourceKind::Script => CompilationKind::Script,
-        };
-        let mut compiler = Self::new(syntax_tree, kind);
-
-        if kind == CompilationKind::Module {
-            compiler
-                .context()?
+    fn compile(&mut self, kind: CompilerKind) -> Result<Bytecode, Error> {
+        if let CompilerKind::Module = kind {
+            self.context()?
                 .scope_stack()
                 .add_local(&EXPORT, State::initialized(false))?;
         }
 
-        compiler.visit(compiler.syntax_tree.root())?;
+        self.visit(self.syntax_tree.root())?;
 
-        if kind == CompilationKind::Module {
-            let exports_slot = compiler
+        if let CompilerKind::Module = kind {
+            let exports_slot = self
                 .context()?
                 .scope_stack()
                 .local(&*EXPORT.get())
@@ -65,23 +52,23 @@ impl Compiler {
                 .slot as u8;
 
             emit_bytecode! {
-                compiler.assembler()?, Span::new(0..0) => [
+                self.assembler()?, Span::new(0..0) => [
                     POP;
                     LOAD_LOCAL exports_slot;
                 ]
             };
         }
 
-        let compiler_context = compiler.compiler_stack.pop()?;
+        let compiler_context = self.compiler_stack.pop()?;
 
         Ok(compiler_context.finish())
     }
 
-    pub(super) fn context(&mut self) -> Result<&mut CompilerContext, CompilerError> {
+    pub(super) fn context(&mut self) -> Result<&mut CompilerContext, Error> {
         self.compiler_stack.top_mut()
     }
 
-    pub(super) fn assembler(&mut self) -> Result<&mut Assembler, CompilerError> {
+    pub(super) fn assembler(&mut self) -> Result<&mut Assembler, Error> {
         Ok(self.compiler_stack.top_mut()?.assembler())
     }
 }
