@@ -1,3 +1,4 @@
+use crate::source::Source;
 use crate::{span::Span, value::Value};
 pub use cursor::BytecodeCursor;
 use instruction::Instruction;
@@ -12,6 +13,7 @@ struct BytecodeInner {
     upvalue_count: usize,
     constants: Box<[Value]>,
     data: Box<[u8]>,
+    source: Source,
     source_map: HashMap<u64, Span>,
 }
 
@@ -26,6 +28,7 @@ impl Bytecode {
         slot_count: usize,
         upvalue_count: usize,
         constants: Box<[Value]>,
+        source: Source,
         source_map: HashMap<u64, Span>,
     ) -> Self {
         Self {
@@ -33,10 +36,15 @@ impl Bytecode {
                 constants,
                 slot_count,
                 upvalue_count,
+                source,
                 source_map,
                 data,
             }),
         }
+    }
+
+    pub fn source(&self) -> &Source {
+        &self.inner.source
     }
 
     #[allow(dead_code)]

@@ -3,6 +3,7 @@ use super::{
     scope_stack::{ScopeKind, ScopeStack},
     upvalue::UpvalueDescriptor,
 };
+use dice_core::source::Source;
 use dice_core::{
     bytecode::Bytecode,
     error::{codes::INTERNAL_COMPILER_ERROR, Error},
@@ -70,10 +71,10 @@ impl CompilerContext {
         &mut self.temporary_count
     }
 
-    pub fn finish(mut self) -> Bytecode {
+    pub fn finish(mut self, source: Source) -> Bytecode {
         let slot_count = self.scope_stack.slot_count;
         let upvalue_count = self.upvalues().len();
-        self.assembler.generate(slot_count, upvalue_count)
+        self.assembler.generate(slot_count, upvalue_count, source)
     }
 }
 

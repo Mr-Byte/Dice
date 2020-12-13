@@ -32,7 +32,7 @@ impl NodeVisitor<(&OpDecl, OpKind)> for Compiler {
         let name = Compiler::op_name(node);
 
         let upvalues = op_context.upvalues().clone();
-        let bytecode = op_context.finish();
+        let bytecode = op_context.finish(self.source.clone());
         let value = Value::FnScript(FnScript::new(name.clone(), bytecode, uuid::Uuid::new_v4()));
 
         match kind {

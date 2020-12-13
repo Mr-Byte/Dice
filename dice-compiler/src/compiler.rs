@@ -16,6 +16,7 @@ use dice_syntax::{Parser, SyntaxTree};
 pub struct Compiler {
     pub(crate) syntax_tree: SyntaxTree,
     pub(crate) compiler_stack: CompilerStack,
+    pub(crate) source: Source,
 }
 
 impl Compiler {
@@ -29,9 +30,10 @@ impl Compiler {
         let mut compiler = Self {
             syntax_tree,
             compiler_stack,
+            source,
         };
 
-        compiler.compile(kind).with_source(source)
+        compiler.compile(kind).with_source(compiler.source)
     }
 
     fn compile(&mut self, kind: CompilerKind) -> Result<Bytecode, Error> {
@@ -61,7 +63,7 @@ impl Compiler {
 
         let compiler_context = self.compiler_stack.pop()?;
 
-        Ok(compiler_context.finish())
+        Ok(compiler_context.finish(self.source.clone()))
     }
 
     pub(super) fn context(&mut self) -> Result<&mut CompilerContext, Error> {

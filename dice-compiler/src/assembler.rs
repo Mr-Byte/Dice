@@ -1,5 +1,6 @@
 use super::upvalue::UpvalueDescriptor;
 use bytes::BufMut as _;
+use dice_core::source::Source;
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode},
     error::{
@@ -26,12 +27,13 @@ impl Assembler {
         }
     }
 
-    pub fn generate(self, slot_count: usize, upvalue_count: usize) -> Bytecode {
+    pub fn generate(self, slot_count: usize, upvalue_count: usize, source: Source) -> Bytecode {
         Bytecode::new(
             self.data.into(),
             slot_count,
             upvalue_count,
             self.constants.into_boxed_slice(),
+            source,
             self.source_map,
         )
     }

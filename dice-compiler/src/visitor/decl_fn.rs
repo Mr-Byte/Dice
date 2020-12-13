@@ -19,7 +19,7 @@ impl NodeVisitor<(&FnDecl, FnKind)> for Compiler {
         let body = self.syntax_tree.child(fn_decl.body);
         let mut fn_context = self.compile_fn(body, &fn_decl.args, fn_decl.return_.clone(), fn_kind)?;
         let upvalues = fn_context.upvalues().clone();
-        let bytecode = fn_context.finish();
+        let bytecode = fn_context.finish(self.source.clone());
         let compiled_fn = Value::FnScript(FnScript::new(&*fn_decl.name.identifier, bytecode, uuid::Uuid::new_v4()));
 
         if fn_kind == FnKind::Function {
@@ -57,7 +57,6 @@ impl Compiler {
         // NOTE: Check if a function of the given name has already been initialized.
         match &mut local.state {
             State::Function { ref mut is_initialized } if *is_initialized => {
-                // TODO: Only propagate the span of the function name.
                 return Err(Error::new(FUNCTION_ALREADY_DECLARE)
                     .with_span(fn_decl.name.span)
                     .with_tags(error_tags! {

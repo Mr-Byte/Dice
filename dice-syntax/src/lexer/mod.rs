@@ -1,8 +1,8 @@
 mod token;
 
+use dice_core::error::codes::UNEXPECTED_TOKEN;
+use dice_core::{error::Error, error_tags, source::Source};
 use std::collections::VecDeque;
-
-use dice_core::{error::Error, source::Source};
 pub use token::{Token, TokenKind};
 
 pub struct Lexer {
@@ -43,7 +43,12 @@ impl Lexer {
         if next.kind == kind {
             Ok(next)
         } else {
-            todo!("Unexpected token. Expected: {:?}, Found: {:?}", kind, next.kind)
+            Err(Error::new(UNEXPECTED_TOKEN)
+                .with_span(next.span())
+                .with_tags(error_tags! {
+                    expected => kind.to_string(),
+                    actual => next.kind.to_string()
+                }))
         }
     }
 
@@ -53,7 +58,12 @@ impl Lexer {
             let ident = ident.clone();
             Ok((next, ident))
         } else {
-            todo!("Unexpected token.")
+            Err(Error::new(UNEXPECTED_TOKEN)
+                .with_span(next.span())
+                .with_tags(error_tags! {
+                    // TODO: Revamp tokens to be easier to list the kind of.
+                    actual => next.kind.to_string()
+                }))
         }
     }
 
@@ -63,7 +73,11 @@ impl Lexer {
             let string = string.to_owned();
             Ok((next, string))
         } else {
-            todo!("Unexpected token.")
+            Err(Error::new(UNEXPECTED_TOKEN)
+                .with_span(next.span())
+                .with_tags(error_tags! {
+                    actual => next.kind.to_string()
+                }))
         }
     }
 
@@ -72,7 +86,12 @@ impl Lexer {
         if kinds.contains(&next.kind) {
             Ok(next)
         } else {
-            todo!("Unexpected token.")
+            Err(Error::new(UNEXPECTED_TOKEN)
+                .with_span(next.span())
+                .with_tags(error_tags! {
+                    expected => kinds.iter().map(ToString::to_string).collect::<Vec<_>>().join(", "),
+                    actual => next.kind.to_string()
+                }))
         }
     }
 }

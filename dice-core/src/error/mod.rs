@@ -14,20 +14,20 @@ pub struct Error {
     error_code: ErrorCode,
     source_code: Option<Source>,
     span: Span,
-    tags: TagsMap,
+    tags: Option<TagsMap>,
 }
 
 impl Error {
-    pub fn new(error_code: ErrorCode) -> Self {
+    pub const fn new(error_code: ErrorCode) -> Self {
         Self {
             error_code,
             source_code: None,
             span: Span::empty(),
-            tags: TagsMap::default(),
+            tags: None,
         }
     }
 
-    pub fn with_span(mut self, span: Span) -> Self {
+    pub const fn with_span(mut self, span: Span) -> Self {
         self.span = span;
         self
     }
@@ -38,7 +38,7 @@ impl Error {
     }
 
     pub fn with_tags(mut self, tags: TagsMap) -> Self {
-        self.tags = tags;
+        self.tags = Some(tags);
         self
     }
 }
@@ -92,8 +92,9 @@ pub mod codes {
     pub type ErrorCode = &'static str;
 
     // Syntax errors
-    pub static INVALID_ESCAPE_SEQUENCE: ErrorCode = "E1000";
-    pub static UNTERMINATED_STRING: ErrorCode = "E1001";
+    pub static UNEXPECTED_TOKEN: ErrorCode = "E1000";
+    pub static INVALID_ESCAPE_SEQUENCE: ErrorCode = "E1001";
+    pub static UNTERMINATED_STRING: ErrorCode = "E1002";
 
     // Compiler errors
     pub static INTERNAL_COMPILER_ERROR: ErrorCode = "E2000";

@@ -13,7 +13,7 @@ impl NodeVisitor<&LitAnonymousFn> for Compiler {
         let body = self.syntax_tree.child(node.body);
         let mut fn_context = self.compile_fn(body, &node.args, node.return_.clone(), FnKind::Function)?;
         let upvalues = fn_context.upvalues().clone();
-        let bytecode = fn_context.finish();
+        let bytecode = fn_context.finish(self.source.clone());
         let value = Value::FnScript(FnScript::new(name, bytecode, id));
         let context = self.context()?;
 

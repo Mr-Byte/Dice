@@ -32,12 +32,13 @@ impl Utf16Character {
     }
 }
 
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum SourceKind {
     Module,
     Script,
 }
 
+#[derive(Debug)]
 pub struct SourceInner {
     path: Option<String>,
     source: String,
@@ -45,7 +46,7 @@ pub struct SourceInner {
     kind: SourceKind,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Source {
     inner: Rc<SourceInner>,
 }
@@ -98,7 +99,7 @@ impl Source {
 
 pub type Utf16LineMap = HashMap<usize, Vec<Utf16Character>, BuildHasherDefault<WyHash>>;
 
-#[derive(Clone, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct LineIndex {
     newlines: Vec<usize>,
     utf16_lines: Utf16LineMap,
