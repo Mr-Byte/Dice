@@ -1,18 +1,22 @@
 mod token;
 
-use dice_core::error::codes::UNEXPECTED_TOKEN;
-use dice_core::{error::Error, error_tags, source::Source};
-use std::collections::VecDeque;
+use crate::lexer::token::TokenIter;
+use dice_core::{
+    error::{codes::UNEXPECTED_TOKEN, Error},
+    error_tags,
+    source::Source,
+};
+use std::iter::Peekable;
 pub use token::{Token, TokenKind};
 
-pub struct Lexer {
-    current: Token,
-    tokens: VecDeque<Result<Token, Error>>,
+pub struct Lexer<'a> {
+    current: Token<'a>,
+    tokens: Peekable<TokenIter<'a>>,
 }
 
-impl Lexer {
-    pub fn from_source(input: &Source) -> Lexer {
-        let tokens = Token::tokenize(input).collect::<VecDeque<_>>();
+impl<'a> Lexer<'a> {
+    pub fn from_source(input: &'a Source) -> Lexer<'a> {
+        let tokens = Token::tokenize(input).peekable();
 
         Lexer {
             tokens,
@@ -24,18 +28,12 @@ impl Lexer {
         &self.current
     }
 
-    pub fn next(&mut self) -> Result<Token, Error> {
-        self.current = self.tokens.pop_front().transpose()?.unwrap_or_else(Token::end_of_input);
-        Ok(self.current.clone())
+    pub fn next(&mut self) -> Result<Token<'a>, Error> {
+        Ok(self.tokens.next().transpose()?.unwrap_or_else(Token::end_of_input))
     }
 
-    pub fn peek(&self) -> Result<Token, Error> {
-        Ok(self
-            .tokens
-            .front()
-            .cloned()
-            .transpose()?
-            .unwrap_or_else(Token::end_of_input))
+    pub fn peek(&mut self) -> Result<Token<'a>, Error> {
+        self.tokens.peek().cloned().unwrap_or_else(|| Ok(Token::end_of_input()))
     }
 
     pub fn consume(&mut self, kind: TokenKind) -> Result<Token, Error> {
@@ -44,7 +42,7 @@ impl Lexer {
             Ok(next)
         } else {
             Err(Error::new(UNEXPECTED_TOKEN)
-                .with_span(next.span())
+                .with_span(next.span)
                 .with_tags(error_tags! {
                     expected => kind.to_string(),
                     actual => next.kind.to_string()
@@ -54,12 +52,13 @@ impl Lexer {
 
     pub fn consume_ident(&mut self) -> Result<(Token, String), Error> {
         let next = self.next()?;
-        if let TokenKind::Identifier(ref ident) = next.kind {
-            let ident = ident.clone();
+        if let TokenKind::Identifier = next.kind {
+            let ident = next.slice.to_owned();
+
             Ok((next, ident))
         } else {
             Err(Error::new(UNEXPECTED_TOKEN)
-                .with_span(next.span())
+                .with_span(next.span)
                 .with_tags(error_tags! {
                     // TODO: Revamp tokens to be easier to list the kind of.
                     actual => next.kind.to_string()
@@ -69,12 +68,13 @@ impl Lexer {
 
     pub fn consume_string(&mut self) -> Result<(Token, String), Error> {
         let next = self.next()?;
-        if let TokenKind::String(ref string) = next.kind {
-            let string = string.to_owned();
+        if let TokenKind::String = next.kind {
+            let string = next.slice.to_owned();
+
             Ok((next, string))
         } else {
             Err(Error::new(UNEXPECTED_TOKEN)
-                .with_span(next.span())
+                .with_span(next.span)
                 .with_tags(error_tags! {
                     actual => next.kind.to_string()
                 }))
@@ -87,7 +87,7 @@ impl Lexer {
             Ok(next)
         } else {
             Err(Error::new(UNEXPECTED_TOKEN)
-                .with_span(next.span())
+                .with_span(next.span)
                 .with_tags(error_tags! {
                     expected => kinds.iter().map(ToString::to_string).collect::<Vec<_>>().join(", "),
                     actual => next.kind.to_string()
@@ -163,17 +163,17 @@ pub mod test {
         );
         let mut tokens = Token::tokenize(&delimiters);
 
-        assert_next_token!(tokens, TokenKind::Integer(_));
-        assert_next_token!(tokens, TokenKind::Integer(_));
-        assert_next_token!(tokens, TokenKind::Integer(_));
-        assert_next_token!(tokens, TokenKind::Float(_));
-        assert_next_token!(tokens, TokenKind::Float(_));
-        assert_next_token!(tokens, TokenKind::Float(_));
-        assert_next_token!(tokens, TokenKind::Identifier(_));
-        assert_next_token!(tokens, TokenKind::Identifier(_));
-        assert_next_token!(tokens, TokenKind::Identifier(_));
-        assert_next_token!(tokens, TokenKind::String(_));
-        assert_next_token!(tokens, TokenKind::String(_));
+        assert_next_token!(tokens, TokenKind::Integer);
+        assert_next_token!(tokens, TokenKind::Integer);
+        assert_next_token!(tokens, TokenKind::Integer);
+        assert_next_token!(tokens, TokenKind::Float);
+        assert_next_token!(tokens, TokenKind::Float);
+        assert_next_token!(tokens, TokenKind::Float);
+        assert_next_token!(tokens, TokenKind::Identifier);
+        assert_next_token!(tokens, TokenKind::Identifier);
+        assert_next_token!(tokens, TokenKind::Identifier);
+        assert_next_token!(tokens, TokenKind::String);
+        assert_next_token!(tokens, TokenKind::String);
     }
 
     #[test]
@@ -263,7 +263,7 @@ pub mod test {
         let delimiters = Source::new(r#"12 // test"#, SourceKind::Script);
         let mut tokens = Token::tokenize(&delimiters);
 
-        assert_next_token!(tokens, TokenKind::Integer(_));
+        assert_next_token!(tokens, TokenKind::Integer);
         assert!(tokens.next().is_none());
     }
 
@@ -272,8 +272,8 @@ pub mod test {
         let delimiters = Source::new(r#"12 // test\n14"#, SourceKind::Script);
         let mut tokens = Token::tokenize(&delimiters);
 
-        assert_next_token!(tokens, TokenKind::Integer(_));
-        assert_next_token!(tokens, TokenKind::Integer(_));
+        assert_next_token!(tokens, TokenKind::Integer);
+        assert_next_token!(tokens, TokenKind::Integer);
         assert!(tokens.next().is_none());
     }
 }

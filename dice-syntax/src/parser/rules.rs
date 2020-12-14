@@ -1,28 +1,30 @@
+use dice_core::{error::Error, span::Span};
+
 use crate::{
     lexer::{Token, TokenKind},
     Parser, SyntaxNodeId,
 };
-use dice_core::{error::Error, span::Span};
 
-pub type PrefixParser = fn(&mut Parser, can_assign: bool) -> Result<SyntaxNodeId, Error>;
-pub type InfixParser = fn(&mut Parser, lhs: SyntaxNodeId, can_assign: bool, span: Span) -> Result<SyntaxNodeId, Error>;
-pub type PostfixParser =
-    fn(&mut Parser, lhs: SyntaxNodeId, can_assign: bool, span: Span) -> Result<SyntaxNodeId, Error>;
+pub type PrefixParser<'a> = fn(&mut Parser<'a>, can_assign: bool) -> Result<SyntaxNodeId, Error>;
+pub type InfixParser<'a> =
+    fn(&mut Parser<'a>, lhs: SyntaxNodeId, can_assign: bool, span: Span) -> Result<SyntaxNodeId, Error>;
+pub type PostfixParser<'a> =
+    fn(&mut Parser<'a>, lhs: SyntaxNodeId, can_assign: bool, span: Span) -> Result<SyntaxNodeId, Error>;
 
 #[derive(Default)]
-pub struct ParserRule {
-    pub prefix: Option<PrefixParser>,
-    pub infix: Option<InfixParser>,
-    pub postfix: Option<PostfixParser>,
+pub struct ParserRule<'a> {
+    pub prefix: Option<PrefixParser<'a>>,
+    pub infix: Option<InfixParser<'a>>,
+    pub postfix: Option<PostfixParser<'a>>,
     pub infix_precedence: RulePrecedence,
     pub postfix_precedence: Option<RulePrecedence>,
 }
 
-impl ParserRule {
+impl<'a> ParserRule<'a> {
     fn new(
-        prefix: Option<PrefixParser>,
-        infix: Option<InfixParser>,
-        postfix: Option<PostfixParser>,
+        prefix: Option<PrefixParser<'a>>,
+        infix: Option<InfixParser<'a>>,
+        postfix: Option<PostfixParser<'a>>,
         infix_precedence: RulePrecedence,
         postfix_precedence: Option<RulePrecedence>,
     ) -> Self {
@@ -35,7 +37,7 @@ impl ParserRule {
         }
     }
 
-    pub fn for_token(token: &Token) -> Result<ParserRule, Error> {
+    pub fn for_token(token: &Token) -> Result<ParserRule<'a>, Error> {
         let rule = match token.kind {
             // Empty rules
             TokenKind::RightSquare => ParserRule::default(),
@@ -51,15 +53,13 @@ impl ParserRule {
             TokenKind::SubAssign => ParserRule::default(),
 
             // Literals
-            TokenKind::Integer(_) => ParserRule::new(Some(Parser::literal), None, None, RulePrecedence::Primary, None),
-            TokenKind::Float(_) => ParserRule::new(Some(Parser::literal), None, None, RulePrecedence::Primary, None),
-            TokenKind::String(_) => ParserRule::new(Some(Parser::literal), None, None, RulePrecedence::Primary, None),
+            TokenKind::Integer => ParserRule::new(Some(Parser::literal), None, None, RulePrecedence::Primary, None),
+            TokenKind::Float => ParserRule::new(Some(Parser::literal), None, None, RulePrecedence::Primary, None),
+            TokenKind::String => ParserRule::new(Some(Parser::literal), None, None, RulePrecedence::Primary, None),
             TokenKind::Null => ParserRule::new(Some(Parser::literal), None, None, RulePrecedence::Primary, None),
             TokenKind::False => ParserRule::new(Some(Parser::literal), None, None, RulePrecedence::Primary, None),
             TokenKind::True => ParserRule::new(Some(Parser::literal), None, None, RulePrecedence::Primary, None),
-            TokenKind::Identifier(_) => {
-                ParserRule::new(Some(Parser::variable), None, None, RulePrecedence::Primary, None)
-            }
+            TokenKind::Identifier => ParserRule::new(Some(Parser::variable), None, None, RulePrecedence::Primary, None),
 
             // If expression
             TokenKind::If => ParserRule::new(Some(Parser::if_expression), None, None, RulePrecedence::None, None),

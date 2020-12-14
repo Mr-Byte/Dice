@@ -14,45 +14,65 @@ use std::{
     rc::Rc,
 };
 
-#[derive(Clone, Debug)]
-pub struct Token {
-    pub kind: TokenKind,
-    span: Span,
+pub struct TokenIter<'a> {
+    source: &'a Source,
+    lexer: logos::Lexer<'a, TokenKind>,
 }
 
-impl Token {
-    pub fn tokenize(input: &Source) -> impl Iterator<Item = Result<Token, Error>> + '_ {
-        let lexer = TokenKind::lexer(input.source());
-        let extras = lexer.extras.clone();
+impl<'a> TokenIter<'a> {
+    fn new(source: &'a Source) -> Self {
+        let lexer = TokenKind::lexer(source.source());
+        Self { lexer, source }
+    }
+}
 
-        lexer.spanned().map(move |(kind, range)| {
-            let span = Span::new(range);
-            extras
-                .error()
-                .map_or_else(|| Ok(Token { kind, span }), Err)
-                .with_source(input.clone())
-        })
+impl<'a> Iterator for TokenIter<'a> {
+    type Item = Result<Token<'a>, Error>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let kind = self.lexer.next()?;
+        let span = Span::new(self.lexer.span());
+        let slice = self.lexer.slice();
+        let result = self
+            .lexer
+            .extras
+            .error()
+            .map_or_else(|| Ok(Token { kind, span, slice }), Err)
+            .with_span(span)
+            .with_source(|| self.source.clone());
+
+        Some(result)
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct Token<'a> {
+    pub kind: TokenKind,
+    pub slice: &'a str,
+    pub span: Span,
+}
+
+impl<'a> Token<'a> {
+    pub fn tokenize(input: &'a Source) -> TokenIter<'a> {
+        TokenIter::new(input)
     }
 
-    pub fn span(&self) -> Span {
-        self.span
-    }
-
-    pub const fn end_of_input() -> Token {
+    pub const fn end_of_input() -> Token<'a> {
         Self {
             kind: TokenKind::EndOfInput,
             span: Span::new(0..0),
+            slice: "",
         }
     }
 }
 
-impl Display for Token {
+impl Display for Token<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.kind)
     }
 }
 
-#[derive(Logos, Clone, Debug, PartialEq)]
+#[derive(Logos, Clone, Copy, Debug, PartialEq, Eq, Hash)]
 #[logos(extras = LexerResult)]
 pub enum TokenKind {
     // End of input.
@@ -188,14 +208,14 @@ pub enum TokenKind {
     Reserved,
 
     // Literals,
-    #[regex("(d[_a-zA-Z][_a-zA-Z0-9]*)|([_a-ce-zA-Z][_a-zA-Z0-9]*)", |lex| lex.slice().to_owned())]
-    Identifier(String),
-    #[regex("[0-9]+", parse_int)]
-    Integer(i64),
-    #[regex(r"[0-9]+\.[0-9]+", parse_float)]
-    Float(f64),
+    #[regex("(d[_a-zA-Z][_a-zA-Z0-9]*)|([_a-ce-zA-Z][_a-zA-Z0-9]*)")]
+    Identifier,
+    #[regex("[0-9]+")]
+    Integer,
+    #[regex(r"[0-9]+\.[0-9]+")]
+    Float,
     #[regex(r#"""#, lex_string)]
-    String(String),
+    String,
 
     // TODO: Propagate error for unexpected tokens.
     #[error]
@@ -218,15 +238,7 @@ impl LexerResult {
     }
 }
 
-fn parse_int(lexer: &mut Lexer<TokenKind>) -> i64 {
-    lexer.slice().parse().expect("Invalid integer literal.")
-}
-
-fn parse_float(lexer: &mut Lexer<TokenKind>) -> f64 {
-    lexer.slice().parse().expect("Invalid float literal.")
-}
-
-fn lex_string(lexer: &mut Lexer<TokenKind>) -> Option<String> {
+fn lex_string(lexer: &mut Lexer<TokenKind>) -> bool {
     let remainder = lexer.remainder();
     let mut result = String::new();
     let mut chars = remainder.chars();
@@ -248,11 +260,11 @@ fn lex_string(lexer: &mut Lexer<TokenKind>) -> Option<String> {
                             Some(Error::new(INVALID_ESCAPE_SEQUENCE).with_tags(dice_core::error_tags! {
                                 sequence => format!("\\{}", next)
                             }));
-                        return None;
+                        return false;
                     }
                     None => {
                         *lexer.extras.0.borrow_mut() = Some(Error::new(UNTERMINATED_STRING));
-                        return None;
+                        return false;
                     }
                 }
 
@@ -269,12 +281,12 @@ fn lex_string(lexer: &mut Lexer<TokenKind>) -> Option<String> {
             }
             None => {
                 *lexer.extras.0.borrow_mut() = Some(Error::new(UNTERMINATED_STRING));
-                return None;
+                return false;
             }
         }
     }
 
     lexer.bump(bump_count);
 
-    Some(result)
+    true
 }

@@ -1,5 +1,4 @@
-use crate::source::Source;
-use crate::{span::Span, value::Value};
+use crate::{source::Source, span::Span, value::Value};
 pub use cursor::BytecodeCursor;
 use instruction::Instruction;
 use std::{collections::HashMap, fmt::Display, rc::Rc};

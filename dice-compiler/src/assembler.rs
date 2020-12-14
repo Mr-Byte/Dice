@@ -1,12 +1,12 @@
 use super::upvalue::UpvalueDescriptor;
 use bytes::BufMut as _;
-use dice_core::source::Source;
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode},
     error::{
         codes::{TOO_MANY_CONSTANTS, TOO_MANY_UPVALUES},
         Error,
     },
+    source::Source,
     span::Span,
     value::{Symbol, Value},
 };

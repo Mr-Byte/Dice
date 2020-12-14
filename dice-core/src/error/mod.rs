@@ -56,14 +56,14 @@ impl Display for Error {
 }
 
 pub trait ResultExt {
-    fn with_source(self, source: Source) -> Self;
+    fn with_source(self, source: impl Fn() -> Source) -> Self;
     fn with_span(self, span: Span) -> Self;
     fn with_tags(self, tags: TagsMap) -> Self;
 }
 
 impl<T> ResultExt for Result<T, Error> {
-    fn with_source(self, source: Source) -> Self {
-        self.map_err(|error| error.with_source(source))
+    fn with_source(self, source: impl Fn() -> Source) -> Self {
+        self.map_err(|error| error.with_source(source()))
     }
 
     fn with_span(self, span: Span) -> Self {

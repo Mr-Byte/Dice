@@ -33,7 +33,7 @@ impl Compiler {
             source,
         };
 
-        compiler.compile(kind).with_source(compiler.source)
+        compiler.compile(kind).with_source(|| compiler.source.clone())
     }
 
     fn compile(&mut self, kind: CompilerKind) -> Result<Bytecode, Error> {

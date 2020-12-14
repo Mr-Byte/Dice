@@ -6,6 +6,7 @@ use super::{
     IfExpression, LitAnonymousFn, LitBool, LitFloat, LitIdent, LitInt, LitList, LitNull, LitObject, LitString, LitUnit,
     Return, SyntaxNode, SyntaxNodeId, SyntaxTree, Unary, UnaryOperator, VarDecl, WhileLoop,
 };
+use crate::lexer::Token;
 use crate::{
     parser::rules::{ParserRule, RulePrecedence},
     ClassDecl, ErrorPropagate, FieldAccess, FnArg, ForLoop, ImportDecl, Index, Is, Loop, NullPropagate, OpDecl,
@@ -16,13 +17,13 @@ use id_arena::Arena;
 
 pub type SyntaxNodeResult = Result<SyntaxNodeId, Error>;
 
-pub struct Parser {
-    lexer: Lexer,
+pub struct Parser<'a> {
+    lexer: Lexer<'a>,
     arena: Arena<SyntaxNode>,
 }
 
-impl Parser {
-    pub fn new(input: &Source) -> Self {
+impl<'a> Parser<'a> {
+    pub fn new(input: &'a Source) -> Self {
         let lexer = Lexer::from_source(input);
         let arena = Arena::new();
 
@@ -39,7 +40,7 @@ impl Parser {
     fn expression_sequence(&mut self) -> SyntaxNodeResult {
         let mut expressions = Vec::new();
         let mut next_token = self.lexer.peek()?;
-        let span_start = next_token.span();
+        let span_start = next_token.span;
         let mut trailing_expression = None;
 
         while !matches!(next_token.kind, TokenKind::EndOfInput | TokenKind::RightCurly) {
@@ -73,7 +74,7 @@ impl Parser {
             expressions.push(expression);
         }
 
-        let span_end = next_token.span();
+        let span_end = next_token.span;
         let node = SyntaxNode::Block(Block {
             expressions,
             trailing_expression,
@@ -89,14 +90,14 @@ impl Parser {
 
     fn parse_precedence(&mut self, precedence: RulePrecedence) -> SyntaxNodeResult {
         let next_token = self.lexer.peek()?;
-        let rule = ParserRule::for_token(&next_token)?;
+        let rule = ParserRule::<'a>::for_token(&next_token)?;
         let mut node = rule
             .prefix
             .map(|prefix| prefix(self, precedence <= RulePrecedence::Assignment))
             .unwrap_or_else(|| todo!("Unexpected token."))?;
 
         loop {
-            let span_start = next_token.span();
+            let span_start = next_token.span;
             let next_token = self.lexer.peek()?;
             let rule = ParserRule::for_token(&next_token)?;
 
@@ -127,7 +128,7 @@ impl Parser {
     }
 
     fn if_expression(&mut self, _: bool) -> SyntaxNodeResult {
-        let span_start = self.lexer.consume(TokenKind::If)?.span();
+        let span_start = self.lexer.consume(TokenKind::If)?.span;
         let condition = self.expression()?;
         let primary = self.block_expression(false)?;
         let secondary = if self.lexer.peek()?.kind == TokenKind::Else {
@@ -141,7 +142,7 @@ impl Parser {
         } else {
             None
         };
-        let span_end = self.lexer.current().span();
+        let span_end = self.lexer.current().span;
         let node = SyntaxNode::IfExpression(IfExpression {
             condition,
             primary,
@@ -153,9 +154,9 @@ impl Parser {
     }
 
     fn loop_statement(&mut self) -> SyntaxNodeResult {
-        let span_start = self.lexer.consume(TokenKind::Loop)?.span();
+        let span_start = self.lexer.consume(TokenKind::Loop)?.span;
         let body = self.block_expression(false)?;
-        let span_end = self.lexer.current().span();
+        let span_end = self.lexer.current().span;
         let node = SyntaxNode::Loop(Loop {
             body,
             span: span_start + span_end,
@@ -165,10 +166,10 @@ impl Parser {
     }
 
     fn while_statement(&mut self) -> SyntaxNodeResult {
-        let span_start = self.lexer.consume(TokenKind::While)?.span();
+        let span_start = self.lexer.consume(TokenKind::While)?.span;
         let condition = self.expression()?;
         let body = self.block_expression(false)?;
-        let span_end = self.lexer.current().span();
+        let span_end = self.lexer.current().span;
         let node = SyntaxNode::WhileLoop(WhileLoop {
             condition,
             body,
@@ -179,12 +180,12 @@ impl Parser {
     }
 
     fn for_statement(&mut self) -> SyntaxNodeResult {
-        let span_start = self.lexer.consume(TokenKind::For)?.span();
+        let span_start = self.lexer.consume(TokenKind::For)?.span;
         let (_, variable) = self.lexer.consume_ident()?;
         self.lexer.consume(TokenKind::In)?;
         let source = self.expression()?;
         let body = self.block_expression(false)?;
-        let span_end = self.lexer.current().span();
+        let span_end = self.lexer.current().span;
         let node = SyntaxNode::ForLoop(ForLoop {
             variable,
             source,
@@ -199,19 +200,19 @@ impl Parser {
         let token = self.lexer.next()?;
 
         let node = match token.kind {
-            TokenKind::Break => SyntaxNode::Break(Break { span: token.span() }),
-            TokenKind::Continue => SyntaxNode::Continue(Continue { span: token.span() }),
+            TokenKind::Break => SyntaxNode::Break(Break { span: token.span }),
+            TokenKind::Continue => SyntaxNode::Continue(Continue { span: token.span }),
             TokenKind::Return => {
                 let result = if self.lexer.peek()?.kind != TokenKind::Semicolon {
                     Some(self.expression()?)
                 } else {
                     None
                 };
-                let span_end = self.lexer.current().span();
+                let span_end = self.lexer.current().span;
 
                 SyntaxNode::Return(Return {
                     result,
-                    span: token.span() + span_end,
+                    span: token.span + span_end,
                 })
             }
             _ => return todo!("Unexpected token."),
@@ -230,10 +231,10 @@ impl Parser {
 
     fn variable(&mut self, can_assign: bool) -> SyntaxNodeResult {
         let next_token = self.lexer.next()?;
-        let span_start = next_token.span();
+        let span_start = next_token.span;
         let lhs_expression = match next_token.kind {
-            TokenKind::Identifier(name) => self.arena.alloc(SyntaxNode::LitIdent(LitIdent {
-                identifier: name,
+            TokenKind::Identifier => self.arena.alloc(SyntaxNode::LitIdent(LitIdent {
+                identifier: next_token.slice.to_owned(),
                 span: span_start,
             })),
             _ => return todo!("Unexpected token."),
@@ -243,7 +244,7 @@ impl Parser {
     }
 
     fn import_decl(&mut self) -> SyntaxNodeResult {
-        let span_start = self.lexer.consume(TokenKind::Import)?.span();
+        let span_start = self.lexer.consume(TokenKind::Import)?.span;
         let next_token = self.lexer.peek()?;
         let module_import = if next_token.kind == TokenKind::Star {
             self.lexer.consume(TokenKind::Star)?;
@@ -272,7 +273,7 @@ impl Parser {
         self.lexer.consume(TokenKind::From)?;
 
         let (token, relative_path) = self.lexer.consume_string()?;
-        let span_end = token.span();
+        let span_end = token.span;
         let node = SyntaxNode::ImportDecl(ImportDecl {
             module_import,
             item_imports,
@@ -284,20 +285,21 @@ impl Parser {
     }
 
     fn export_decl(&mut self) -> SyntaxNodeResult {
-        let span_start = self.lexer.consume(TokenKind::Export)?.span();
+        let span_start = self.lexer.consume(TokenKind::Export)?.span;
 
-        let node = match self.lexer.peek()?.kind {
+        let next = self.lexer.peek()?;
+        let node = match next.kind {
             TokenKind::Let => self.var_decl()?,
             TokenKind::Function => self.fn_decl()?,
             TokenKind::Class => self.class_decl()?,
-            TokenKind::Identifier(name) => self.arena.alloc(SyntaxNode::LitIdent(LitIdent {
-                identifier: name,
-                span: self.lexer.peek()?.span(),
+            TokenKind::Identifier => self.arena.alloc(SyntaxNode::LitIdent(LitIdent {
+                identifier: next.slice.to_owned(),
+                span: self.lexer.peek()?.span,
             })),
             _ => unreachable!("Unsupported export type encountered."),
         };
 
-        let span_end = self.lexer.current().span();
+        let span_end = self.lexer.current().span;
         let node = SyntaxNode::ExportDecl(ExportDecl {
             export: node,
             span: span_start + span_end,
@@ -307,7 +309,7 @@ impl Parser {
     }
 
     fn var_decl(&mut self) -> SyntaxNodeResult {
-        let span_start = self.lexer.consume(TokenKind::Let)?.span();
+        let span_start = self.lexer.consume(TokenKind::Let)?.span;
 
         let is_mutable = if self.lexer.peek()?.kind == TokenKind::Mut {
             self.lexer.consume(TokenKind::Mut)?;
@@ -318,9 +320,9 @@ impl Parser {
 
         let next_token = self.lexer.peek()?;
         let kind = match next_token.kind {
-            TokenKind::Identifier(name) => {
+            TokenKind::Identifier => {
                 self.lexer.next()?;
-                VarDeclKind::Singular(name)
+                VarDeclKind::Singular(next_token.slice.to_owned())
             }
             TokenKind::LeftCurly => {
                 VarDeclKind::Destructured(self.parse_fields(TokenKind::LeftCurly, TokenKind::RightCurly)?)
@@ -330,7 +332,7 @@ impl Parser {
 
         self.lexer.consume(TokenKind::Assign)?;
         let expr = self.expression()?;
-        let span_end = self.lexer.current().span();
+        let span_end = self.lexer.current().span;
         let node = SyntaxNode::VarDecl(VarDecl {
             kind,
             is_mutable,
@@ -342,7 +344,7 @@ impl Parser {
     }
 
     fn anonymous_fn(&mut self, _: bool) -> SyntaxNodeResult {
-        let span_start = self.lexer.peek()?.span();
+        let span_start = self.lexer.peek()?.span;
         let args = self.parse_args(TokenKind::Pipe, TokenKind::Pipe)?;
 
         if args.len() > (u8::MAX as usize) {
@@ -350,7 +352,7 @@ impl Parser {
         }
 
         let body = self.expression()?;
-        let span_end = self.lexer.current().span();
+        let span_end = self.lexer.current().span;
         let node = SyntaxNode::LitAnonymousFn(LitAnonymousFn {
             args,
             body,
@@ -363,9 +365,9 @@ impl Parser {
     }
 
     fn fn_decl(&mut self) -> SyntaxNodeResult {
-        let span_start = self.lexer.consume(TokenKind::Function)?.span();
+        let span_start = self.lexer.consume(TokenKind::Function)?.span;
         let (name_token, name) = self.lexer.consume_ident()?;
-        let name = LitIdent::synthesize(name, name_token.span());
+        let name = LitIdent::synthesize(name, name_token.span);
         let args = self.parse_args(TokenKind::LeftParen, TokenKind::RightParen)?;
 
         if args.len() > (u8::MAX as usize) {
@@ -374,7 +376,7 @@ impl Parser {
 
         let return_ = self.parse_return()?;
         let body = self.block_expression(false)?;
-        let span_end = self.lexer.current().span();
+        let span_end = self.lexer.current().span;
         let node = SyntaxNode::FnDecl(FnDecl {
             name,
             args,
@@ -387,7 +389,7 @@ impl Parser {
     }
 
     fn op_decl(&mut self) -> SyntaxNodeResult {
-        let span_start = self.lexer.consume(TokenKind::Operator)?.span();
+        let span_start = self.lexer.consume(TokenKind::Operator)?.span;
         let operator_token = self.lexer.next()?;
         let mut operator = match operator_token.kind {
             TokenKind::DiceRoll => OverloadedOperator::DiceRoll,
@@ -418,7 +420,7 @@ impl Parser {
 
         let return_ = self.parse_return()?;
         let body = self.block_expression(false)?;
-        let span_end = self.lexer.current().span();
+        let span_end = self.lexer.current().span;
         let node = SyntaxNode::OpDecl(OpDecl {
             operator,
             args,
@@ -445,7 +447,7 @@ impl Parser {
 
         while self.lexer.peek()?.kind != close_token_kind {
             let (token, name) = self.lexer.consume_ident()?;
-            let span = token.span();
+            let span = token.span;
 
             let type_ = if self.lexer.peek()?.kind == TokenKind::Colon {
                 Some(self.parse_type_annotation(TokenKind::Colon)?)
@@ -456,7 +458,7 @@ impl Parser {
             args.push(FnArg {
                 name,
                 type_,
-                span: span + self.lexer.current().span(),
+                span: span + self.lexer.current().span,
             });
 
             if self.lexer.peek()?.kind == TokenKind::Comma {
@@ -471,9 +473,9 @@ impl Parser {
     }
 
     fn parse_type_annotation(&mut self, delimiter: TokenKind) -> Result<TypeAnnotation, Error> {
-        let span_start = self.lexer.consume(delimiter)?.span();
+        let span_start = self.lexer.consume(delimiter)?.span;
         let (name_token, name) = self.lexer.consume_ident()?;
-        let ident_span = name_token.span();
+        let ident_span = name_token.span;
         let is_nullable = if self.lexer.peek()?.kind == TokenKind::QuestionMark {
             self.lexer.consume(TokenKind::QuestionMark)?;
             true
@@ -484,7 +486,7 @@ impl Parser {
             identifier: name,
             span: ident_span,
         };
-        let span_end = self.lexer.current().span();
+        let span_end = self.lexer.current().span;
 
         Ok(TypeAnnotation {
             name,
@@ -514,11 +516,11 @@ impl Parser {
     }
 
     fn class_decl(&mut self) -> SyntaxNodeResult {
-        let span_start = self.lexer.consume(TokenKind::Class)?.span();
+        let span_start = self.lexer.consume(TokenKind::Class)?.span;
         let (name_token, name) = self.lexer.consume_ident()?;
         let name = LitIdent {
             identifier: name,
-            span: name_token.span(),
+            span: name_token.span,
         };
         let base = if self.lexer.peek()?.kind == TokenKind::Colon {
             self.lexer.consume(TokenKind::Colon)?;
@@ -548,7 +550,7 @@ impl Parser {
             }
         }
 
-        let span_end = self.lexer.consume(TokenKind::RightCurly)?.span();
+        let span_end = self.lexer.consume(TokenKind::RightCurly)?.span;
         let class_decl = ClassDecl {
             name,
             associated_items,
@@ -593,7 +595,7 @@ impl Parser {
             operator,
             lhs_expression: lhs,
             rhs_expression: rhs,
-            span: span_start + token.span(),
+            span: span_start + token.span,
         });
 
         Ok(self.arena.alloc(node))
@@ -604,7 +606,7 @@ impl Parser {
         let node = SyntaxNode::Is(Is {
             value: lhs,
             type_: type_annotation,
-            span: span_start + self.lexer.current().span(),
+            span: span_start + self.lexer.current().span,
         });
 
         Ok(self.arena.alloc(node))
@@ -622,14 +624,14 @@ impl Parser {
         let node = SyntaxNode::Unary(Unary {
             operator,
             expression: child_node_id,
-            span: token.span(),
+            span: token.span,
         });
 
         Ok(self.arena.alloc(node))
     }
 
     fn null_propagate(&mut self, expression: SyntaxNodeId, _: bool, span_start: Span) -> SyntaxNodeResult {
-        let span_end = self.lexer.consume(TokenKind::QuestionMark)?.span();
+        let span_end = self.lexer.consume(TokenKind::QuestionMark)?.span;
         let node = SyntaxNode::NullPropagate(NullPropagate {
             expression,
             span: span_start + span_end,
@@ -639,7 +641,7 @@ impl Parser {
     }
 
     fn error_propagate(&mut self, expression: SyntaxNodeId, _: bool, span_start: Span) -> SyntaxNodeResult {
-        let span_end = self.lexer.consume(TokenKind::ErrorPropagate)?.span();
+        let span_end = self.lexer.consume(TokenKind::ErrorPropagate)?.span;
         let node = SyntaxNode::ErrorPropagate(ErrorPropagate {
             expression,
             span: span_start + span_end,
@@ -653,7 +655,7 @@ impl Parser {
         let index_expression = self.expression()?;
         self.lexer.consume(TokenKind::RightSquare)?;
 
-        let span_end = self.lexer.current().span();
+        let span_end = self.lexer.current().span;
         let node = SyntaxNode::Index(Index {
             expression,
             index_expression,
@@ -668,7 +670,7 @@ impl Parser {
         self.lexer.consume(TokenKind::Dot)?;
 
         let (_, field) = self.lexer.consume_ident()?;
-        let span_end = self.lexer.current().span();
+        let span_end = self.lexer.current().span;
         let node = SyntaxNode::FieldAccess(FieldAccess {
             expression: lhs,
             field,
@@ -680,7 +682,7 @@ impl Parser {
     }
 
     fn super_access(&mut self, can_assign: bool) -> SyntaxNodeResult {
-        let span_start = self.lexer.consume(TokenKind::Super)?.span();
+        let span_start = self.lexer.consume(TokenKind::Super)?.span;
         let next_token = self.lexer.peek()?;
 
         match next_token.kind {
@@ -691,10 +693,10 @@ impl Parser {
     }
 
     fn grouping(&mut self, _: bool) -> SyntaxNodeResult {
-        let span_start = self.lexer.consume(TokenKind::LeftParen)?.span();
+        let span_start = self.lexer.consume(TokenKind::LeftParen)?.span;
 
         if self.lexer.peek()?.kind == TokenKind::RightParen {
-            let span_end = self.lexer.consume(TokenKind::RightParen)?.span();
+            let span_end = self.lexer.consume(TokenKind::RightParen)?.span;
 
             let node = SyntaxNode::LitUnit(LitUnit {
                 span: span_start + span_end,
@@ -724,7 +726,7 @@ impl Parser {
             }
         }
 
-        let span_end = self.lexer.consume(TokenKind::RightParen)?.span();
+        let span_end = self.lexer.consume(TokenKind::RightParen)?.span;
         let node = SyntaxNode::FnCall(FnCall {
             target: lhs,
             args,
@@ -750,7 +752,7 @@ impl Parser {
             }
         }
 
-        let span_end = self.lexer.consume(TokenKind::RightParen)?.span();
+        let span_end = self.lexer.consume(TokenKind::RightParen)?.span;
         let node = SyntaxNode::SuperCall(SuperCall {
             args,
             span: span_start + span_end,
@@ -773,7 +775,7 @@ impl Parser {
         self.lexer.consume(TokenKind::Dot)?;
 
         let (_, field) = self.lexer.consume_ident()?;
-        let span_end = self.lexer.current().span();
+        let span_end = self.lexer.current().span;
         let node = SyntaxNode::SuperAccess(SuperAccess {
             field,
             super_class,
@@ -786,16 +788,15 @@ impl Parser {
     }
 
     fn object(&mut self, _: bool) -> SyntaxNodeResult {
-        let span_start = self.lexer.consume(TokenKind::Object)?.span();
+        let span_start = self.lexer.consume(TokenKind::Object)?.span;
         self.lexer.consume(TokenKind::LeftCurly)?;
 
         let mut properties = Vec::new();
 
         while self.lexer.peek()?.kind != TokenKind::RightCurly {
-            let key = match self.lexer.next()?.kind {
-                TokenKind::String(value) => value,
-                TokenKind::Integer(value) => value.to_string(),
-                TokenKind::Identifier(value) => value,
+            let next = self.lexer.next()?;
+            let key = match next.kind {
+                TokenKind::String | TokenKind::Integer | TokenKind::Identifier => next.slice.to_owned(),
                 _ => todo!("Unexpected token."),
             };
 
@@ -811,7 +812,7 @@ impl Parser {
             properties.push((key, value));
         }
 
-        let span_end = self.lexer.consume(TokenKind::RightCurly)?.span();
+        let span_end = self.lexer.consume(TokenKind::RightCurly)?.span;
 
         let node = self.arena.alloc(SyntaxNode::LitObject(LitObject {
             items: properties,
@@ -822,7 +823,7 @@ impl Parser {
     }
 
     fn list(&mut self, _: bool) -> SyntaxNodeResult {
-        let span_start = self.lexer.consume(TokenKind::LeftSquare)?.span();
+        let span_start = self.lexer.consume(TokenKind::LeftSquare)?.span;
 
         let mut values = Vec::new();
 
@@ -838,7 +839,7 @@ impl Parser {
             values.push(value);
         }
 
-        let span_end = self.lexer.consume(TokenKind::RightSquare)?.span();
+        let span_end = self.lexer.consume(TokenKind::RightSquare)?.span;
 
         let node = self.arena.alloc(SyntaxNode::LitList(LitList {
             items: values,
@@ -850,11 +851,20 @@ impl Parser {
 
     fn literal(&mut self, _: bool) -> SyntaxNodeResult {
         let token = self.lexer.next()?;
-        let span = token.span();
+        let span = token.span;
         let literal = match token.kind {
-            TokenKind::Integer(value) => SyntaxNode::LitInt(LitInt { value, span }),
-            TokenKind::Float(value) => SyntaxNode::LitFloat(LitFloat { value, span }),
-            TokenKind::String(value) => SyntaxNode::LitString(LitString { value, span }),
+            TokenKind::Integer => SyntaxNode::LitInt(LitInt {
+                value: token.slice.parse().expect("Invalid integer literal."),
+                span,
+            }),
+            TokenKind::Float => SyntaxNode::LitFloat(LitFloat {
+                value: token.slice.parse().expect("Invalid float literal."),
+                span,
+            }),
+            TokenKind::String => SyntaxNode::LitString(LitString {
+                value: token.slice.to_owned(),
+                span,
+            }),
             TokenKind::False => SyntaxNode::LitBool(LitBool { value: false, span }),
             TokenKind::True => SyntaxNode::LitBool(LitBool { value: true, span }),
             TokenKind::Null => SyntaxNode::LitNull(LitNull { span }),
@@ -893,7 +903,7 @@ impl Parser {
                 .kind;
 
             let rhs_expression = self.expression()?;
-            let span_end = self.lexer.current().span();
+            let span_end = self.lexer.current().span;
             let operator = match kind {
                 TokenKind::Assign => AssignmentOperator::Assignment,
                 TokenKind::MulAssign => AssignmentOperator::MulAssignment,

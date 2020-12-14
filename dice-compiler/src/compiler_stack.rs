@@ -3,10 +3,10 @@ use super::{
     scope_stack::{ScopeKind, ScopeStack},
     upvalue::UpvalueDescriptor,
 };
-use dice_core::source::Source;
 use dice_core::{
     bytecode::Bytecode,
     error::{codes::INTERNAL_COMPILER_ERROR, Error},
+    source::Source,
     value::Symbol,
 };
 use dice_syntax::TypeAnnotation;
