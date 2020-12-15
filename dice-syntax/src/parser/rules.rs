@@ -1,226 +1,239 @@
+use crate::{lexer::TokenKind, Parser, SyntaxNodeId};
 use dice_core::{error::Error, span::Span};
+use std::collections::HashMap;
 
-use crate::{
-    lexer::{Token, TokenKind},
-    Parser, SyntaxNodeId,
-};
+pub type ParseResult = Result<SyntaxNodeId, Error>;
+pub type PrefixParser<'a> = fn(&mut Parser<'a>, bool) -> ParseResult;
+pub type InfixParser<'a> = fn(&mut Parser<'a>, SyntaxNodeId, bool, Span) -> ParseResult;
+pub type PostfixParser<'a> = fn(&mut Parser<'a>, SyntaxNodeId, bool, Span) -> ParseResult;
 
-pub type PrefixParser<'a> = fn(&mut Parser<'a>, can_assign: bool) -> Result<SyntaxNodeId, Error>;
-pub type InfixParser<'a> =
-    fn(&mut Parser<'a>, lhs: SyntaxNodeId, can_assign: bool, span: Span) -> Result<SyntaxNodeId, Error>;
-pub type PostfixParser<'a> =
-    fn(&mut Parser<'a>, lhs: SyntaxNodeId, can_assign: bool, span: Span) -> Result<SyntaxNodeId, Error>;
-
-#[derive(Default)]
-pub struct ParserRule<'a> {
-    pub prefix: Option<PrefixParser<'a>>,
-    pub infix: Option<InfixParser<'a>>,
-    pub postfix: Option<PostfixParser<'a>>,
-    pub infix_precedence: RulePrecedence,
-    pub postfix_precedence: Option<RulePrecedence>,
+pub struct ParserRules<'a> {
+    rules: HashMap<TokenKind, Rule<'a>>,
 }
 
-impl<'a> ParserRule<'a> {
-    fn new(
-        prefix: Option<PrefixParser<'a>>,
-        infix: Option<InfixParser<'a>>,
-        postfix: Option<PostfixParser<'a>>,
-        infix_precedence: RulePrecedence,
-        postfix_precedence: Option<RulePrecedence>,
-    ) -> Self {
-        Self {
-            prefix,
-            infix,
-            postfix,
-            infix_precedence,
-            postfix_precedence,
-        }
+impl<'a> ParserRules<'a> {
+    pub fn new() -> Self {
+        let mut rules = HashMap::default();
+
+        // Empty rules
+        rules.insert(TokenKind::RightSquare, Rule::new());
+        rules.insert(TokenKind::RightParen, Rule::new());
+        rules.insert(TokenKind::RightCurly, Rule::new());
+        rules.insert(TokenKind::Semicolon, Rule::new());
+        rules.insert(TokenKind::Comma, Rule::new());
+        rules.insert(TokenKind::Colon, Rule::new());
+        rules.insert(TokenKind::Assign, Rule::new());
+        rules.insert(TokenKind::MulAssign, Rule::new());
+        rules.insert(TokenKind::DivAssign, Rule::new());
+        rules.insert(TokenKind::AddAssign, Rule::new());
+        rules.insert(TokenKind::SubAssign, Rule::new());
+
+        // Literals
+        rules.insert(
+            TokenKind::Integer,
+            Rule::new().with_prefix(Parser::literal, Precedence::Primary),
+        );
+        rules.insert(
+            TokenKind::Float,
+            Rule::new().with_prefix(Parser::literal, Precedence::Primary),
+        );
+        rules.insert(
+            TokenKind::String,
+            Rule::new().with_prefix(Parser::literal, Precedence::Primary),
+        );
+        rules.insert(
+            TokenKind::Null,
+            Rule::new().with_prefix(Parser::literal, Precedence::Primary),
+        );
+        rules.insert(
+            TokenKind::False,
+            Rule::new().with_prefix(Parser::literal, Precedence::Primary),
+        );
+        rules.insert(
+            TokenKind::True,
+            Rule::new().with_prefix(Parser::literal, Precedence::Primary),
+        );
+        rules.insert(
+            TokenKind::Identifier,
+            Rule::new().with_prefix(Parser::variable, Precedence::Primary),
+        );
+
+        rules.insert(
+            TokenKind::If,
+            Rule::new().with_prefix(Parser::if_expression, Precedence::None),
+        );
+
+        // Objects
+        rules.insert(
+            TokenKind::Object,
+            Rule::new().with_prefix(Parser::object, Precedence::Primary),
+        );
+
+        rules.insert(
+            TokenKind::LeftSquare,
+            Rule::new()
+                .with_prefix(Parser::list, Precedence::Primary)
+                .with_infix(Parser::index_access, Precedence::Call),
+        );
+        rules.insert(
+            TokenKind::Dot,
+            Rule::new().with_infix(Parser::field_access, Precedence::Call),
+        );
+        rules.insert(
+            TokenKind::Super,
+            Rule::new().with_prefix(Parser::super_access, Precedence::Call),
+        );
+
+        // Grouping
+        rules.insert(
+            TokenKind::LeftParen,
+            Rule::new()
+                .with_prefix(Parser::grouping, Precedence::Primary)
+                .with_infix(Parser::fn_call, Precedence::Call),
+        );
+        rules.insert(
+            TokenKind::LeftCurly,
+            Rule::new().with_prefix(Parser::block_expression, Precedence::None),
+        );
+
+        // Operators
+        rules.insert(
+            TokenKind::Pipeline,
+            Rule::new().with_infix(Parser::binary_operator, Precedence::Pipeline),
+        );
+        rules.insert(
+            TokenKind::Coalesce,
+            Rule::new().with_infix(Parser::binary_operator, Precedence::Coalesce),
+        );
+        rules.insert(
+            TokenKind::RangeExclusive,
+            Rule::new().with_infix(Parser::binary_operator, Precedence::Range),
+        );
+        rules.insert(
+            TokenKind::RangeInclusive,
+            Rule::new().with_infix(Parser::binary_operator, Precedence::Range),
+        );
+        rules.insert(
+            TokenKind::LazyAnd,
+            Rule::new().with_infix(Parser::binary_operator, Precedence::And),
+        );
+        rules.insert(
+            TokenKind::Pipe,
+            Rule::new()
+                .with_prefix(Parser::anonymous_fn, Precedence::Primary)
+                .with_infix(Parser::binary_operator, Precedence::Or),
+        );
+        rules.insert(
+            TokenKind::Equal,
+            Rule::new().with_infix(Parser::binary_operator, Precedence::Comparison),
+        );
+        rules.insert(
+            TokenKind::NotEqual,
+            Rule::new().with_infix(Parser::binary_operator, Precedence::Comparison),
+        );
+        rules.insert(
+            TokenKind::Greater,
+            Rule::new().with_infix(Parser::binary_operator, Precedence::Comparison),
+        );
+        rules.insert(
+            TokenKind::GreaterEqual,
+            Rule::new().with_infix(Parser::binary_operator, Precedence::Comparison),
+        );
+        rules.insert(
+            TokenKind::Less,
+            Rule::new().with_infix(Parser::binary_operator, Precedence::Comparison),
+        );
+        rules.insert(
+            TokenKind::LessEqual,
+            Rule::new().with_infix(Parser::binary_operator, Precedence::Comparison),
+        );
+        rules.insert(
+            TokenKind::Is,
+            Rule::new().with_infix(Parser::is_operator, Precedence::Comparison),
+        );
+        rules.insert(
+            TokenKind::Star,
+            Rule::new().with_infix(Parser::binary_operator, Precedence::Factor),
+        );
+        rules.insert(
+            TokenKind::Slash,
+            Rule::new().with_infix(Parser::binary_operator, Precedence::Factor),
+        );
+        rules.insert(
+            TokenKind::Remainder,
+            Rule::new().with_infix(Parser::binary_operator, Precedence::Factor),
+        );
+        rules.insert(
+            TokenKind::Plus,
+            Rule::new().with_infix(Parser::binary_operator, Precedence::Term),
+        );
+        rules.insert(
+            TokenKind::Minus,
+            Rule::new()
+                .with_prefix(Parser::unary_operator, Precedence::Unary)
+                .with_infix(Parser::binary_operator, Precedence::Term),
+        );
+        rules.insert(
+            TokenKind::DiceRoll,
+            Rule::new()
+                .with_prefix(Parser::unary_operator, Precedence::Unary)
+                .with_infix(Parser::binary_operator, Precedence::DiceRoll),
+        );
+        rules.insert(
+            TokenKind::Not,
+            Rule::new().with_prefix(Parser::unary_operator, Precedence::Unary),
+        );
+        rules.insert(
+            TokenKind::QuestionMark,
+            Rule::new().with_postfix(Parser::null_propagate, Precedence::Propagate),
+        );
+        rules.insert(
+            TokenKind::ErrorPropagate,
+            Rule::new().with_postfix(Parser::error_propagate, Precedence::Propagate),
+        );
+
+        // TODO: Setup reserved keywords and sequence with a parser that returns a friendly error.
+        // End of input
+        rules.insert(TokenKind::EndOfInput, Rule::new());
+
+        Self { rules }
     }
 
-    pub fn for_token(token: &Token) -> Result<ParserRule<'a>, Error> {
-        let rule = match token.kind {
-            // Empty rules
-            TokenKind::RightSquare => ParserRule::default(),
-            TokenKind::RightParen => ParserRule::default(),
-            TokenKind::RightCurly => ParserRule::default(),
-            TokenKind::Semicolon => ParserRule::default(),
-            TokenKind::Comma => ParserRule::default(),
-            TokenKind::Colon => ParserRule::default(),
-            TokenKind::Assign => ParserRule::default(),
-            TokenKind::MulAssign => ParserRule::default(),
-            TokenKind::DivAssign => ParserRule::default(),
-            TokenKind::AddAssign => ParserRule::default(),
-            TokenKind::SubAssign => ParserRule::default(),
+    pub fn for_token(&self, kind: TokenKind) -> Result<&Rule<'a>, Error> {
+        self.rules.get(&kind).ok_or_else(|| todo!("Unexpected token."))
+    }
+}
 
-            // Literals
-            TokenKind::Integer => ParserRule::new(Some(Parser::literal), None, None, RulePrecedence::Primary, None),
-            TokenKind::Float => ParserRule::new(Some(Parser::literal), None, None, RulePrecedence::Primary, None),
-            TokenKind::String => ParserRule::new(Some(Parser::literal), None, None, RulePrecedence::Primary, None),
-            TokenKind::Null => ParserRule::new(Some(Parser::literal), None, None, RulePrecedence::Primary, None),
-            TokenKind::False => ParserRule::new(Some(Parser::literal), None, None, RulePrecedence::Primary, None),
-            TokenKind::True => ParserRule::new(Some(Parser::literal), None, None, RulePrecedence::Primary, None),
-            TokenKind::Identifier => ParserRule::new(Some(Parser::variable), None, None, RulePrecedence::Primary, None),
+#[derive(Default)]
+pub struct Rule<'a> {
+    pub prefix: Option<(PrefixParser<'a>, Precedence)>,
+    pub infix: Option<(InfixParser<'a>, Precedence)>,
+    pub postfix: Option<(PostfixParser<'a>, Precedence)>,
+}
 
-            // If expression
-            TokenKind::If => ParserRule::new(Some(Parser::if_expression), None, None, RulePrecedence::None, None),
+impl<'a> Rule<'a> {
+    pub fn new() -> Self {
+        Self::default()
+    }
 
-            // Objects
-            TokenKind::Object => ParserRule::new(Some(Parser::object), None, None, RulePrecedence::Primary, None),
-            TokenKind::LeftSquare => ParserRule::new(
-                Some(Parser::list),
-                Some(Parser::index_access),
-                None,
-                RulePrecedence::Call,
-                None,
-            ),
-            TokenKind::Dot => ParserRule::new(None, Some(Parser::field_access), None, RulePrecedence::Call, None),
-            TokenKind::Super => ParserRule::new(Some(Parser::super_access), None, None, RulePrecedence::Call, None),
+    fn with_prefix(mut self, prefix: PrefixParser<'a>, precedence: Precedence) -> Self {
+        self.prefix = Some((prefix, precedence));
+        self
+    }
 
-            // Grouping
-            TokenKind::LeftParen => ParserRule::new(
-                Some(Parser::grouping),
-                Some(Parser::fn_call),
-                None,
-                RulePrecedence::Call,
-                None,
-            ),
+    fn with_infix(mut self, infix: InfixParser<'a>, precedence: Precedence) -> Self {
+        self.infix = Some((infix, precedence));
+        self
+    }
 
-            // Block expressions
-            TokenKind::LeftCurly => {
-                ParserRule::new(Some(Parser::block_expression), None, None, RulePrecedence::None, None)
-            }
-
-            // Operators
-            TokenKind::Pipeline => ParserRule::new(
-                None,
-                Some(Parser::binary_operator),
-                None,
-                RulePrecedence::Pipeline,
-                None,
-            ),
-            TokenKind::Coalesce => ParserRule::new(
-                None,
-                Some(Parser::binary_operator),
-                None,
-                RulePrecedence::Coalesce,
-                None,
-            ),
-            TokenKind::RangeExclusive => {
-                ParserRule::new(None, Some(Parser::binary_operator), None, RulePrecedence::Range, None)
-            }
-            TokenKind::RangeInclusive => {
-                ParserRule::new(None, Some(Parser::binary_operator), None, RulePrecedence::Range, None)
-            }
-            TokenKind::LazyAnd => ParserRule::new(None, Some(Parser::binary_operator), None, RulePrecedence::And, None),
-            TokenKind::Pipe => ParserRule::new(
-                Some(Parser::anonymous_fn),
-                Some(Parser::binary_operator),
-                None,
-                RulePrecedence::Or,
-                None,
-            ),
-            TokenKind::Equal => ParserRule::new(
-                None,
-                Some(Parser::binary_operator),
-                None,
-                RulePrecedence::Comparison,
-                None,
-            ),
-            TokenKind::NotEqual => ParserRule::new(
-                None,
-                Some(Parser::binary_operator),
-                None,
-                RulePrecedence::Comparison,
-                None,
-            ),
-            TokenKind::Greater => ParserRule::new(
-                None,
-                Some(Parser::binary_operator),
-                None,
-                RulePrecedence::Comparison,
-                None,
-            ),
-            TokenKind::GreaterEqual => ParserRule::new(
-                None,
-                Some(Parser::binary_operator),
-                None,
-                RulePrecedence::Comparison,
-                None,
-            ),
-            TokenKind::Less => ParserRule::new(
-                None,
-                Some(Parser::binary_operator),
-                None,
-                RulePrecedence::Comparison,
-                None,
-            ),
-            TokenKind::LessEqual => ParserRule::new(
-                None,
-                Some(Parser::binary_operator),
-                None,
-                RulePrecedence::Comparison,
-                None,
-            ),
-            TokenKind::Is => ParserRule::new(
-                None,
-                Some(Parser::parse_is_operator),
-                None,
-                RulePrecedence::Comparison,
-                None,
-            ),
-            TokenKind::Star => ParserRule::new(None, Some(Parser::binary_operator), None, RulePrecedence::Factor, None),
-            TokenKind::Slash => {
-                ParserRule::new(None, Some(Parser::binary_operator), None, RulePrecedence::Factor, None)
-            }
-            TokenKind::Remainder => {
-                ParserRule::new(None, Some(Parser::binary_operator), None, RulePrecedence::Factor, None)
-            }
-            TokenKind::Plus => ParserRule::new(None, Some(Parser::binary_operator), None, RulePrecedence::Term, None),
-            TokenKind::Minus => ParserRule::new(
-                Some(Parser::unary_operator),
-                Some(Parser::binary_operator),
-                None,
-                RulePrecedence::Term,
-                None,
-            ),
-            TokenKind::DiceRoll => ParserRule::new(
-                Some(Parser::unary_operator),
-                Some(Parser::binary_operator),
-                None,
-                RulePrecedence::DiceRoll,
-                None,
-            ),
-            TokenKind::Not => ParserRule::new(Some(Parser::unary_operator), None, None, RulePrecedence::Unary, None),
-
-            // Postfix operators
-            TokenKind::QuestionMark => ParserRule::new(
-                None,
-                None,
-                Some(Parser::null_propagate),
-                RulePrecedence::None,
-                Some(RulePrecedence::Propagate),
-            ),
-            TokenKind::ErrorPropagate => ParserRule::new(
-                None,
-                None,
-                Some(Parser::error_propagate),
-                RulePrecedence::None,
-                Some(RulePrecedence::Propagate),
-            ),
-
-            // Setup reserved keywords and sequence with a parser that returns a friendly error.
-
-            // End of input
-            TokenKind::EndOfInput => ParserRule::new(None, None, None, RulePrecedence::None, None),
-            _ => todo!("Unexpected token"),
-        };
-
-        Ok(rule)
+    fn with_postfix(mut self, postfix: PostfixParser<'a>, precedence: Precedence) -> Self {
+        self.postfix = Some((postfix, precedence));
+        self
     }
 }
 
 #[derive(Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub enum RulePrecedence {
+pub enum Precedence {
     None,
     Assignment,
     Pipeline,
@@ -239,30 +252,30 @@ pub enum RulePrecedence {
     Primary,
 }
 
-impl RulePrecedence {
+impl Precedence {
     pub const fn increment(self) -> Self {
         match self {
-            RulePrecedence::None => RulePrecedence::Assignment,
-            RulePrecedence::Assignment => RulePrecedence::Pipeline,
-            RulePrecedence::Pipeline => RulePrecedence::Coalesce,
-            RulePrecedence::Coalesce => RulePrecedence::Range,
-            RulePrecedence::Range => RulePrecedence::Or,
-            RulePrecedence::Or => RulePrecedence::And,
-            RulePrecedence::And => RulePrecedence::Comparison,
-            RulePrecedence::Comparison => RulePrecedence::Term,
-            RulePrecedence::Term => RulePrecedence::Factor,
-            RulePrecedence::Factor => RulePrecedence::DiceRoll,
-            RulePrecedence::DiceRoll => RulePrecedence::Unary,
-            RulePrecedence::Unary => RulePrecedence::Propagate,
-            RulePrecedence::Propagate => RulePrecedence::Call,
-            RulePrecedence::Call => RulePrecedence::Object,
-            RulePrecedence::Object => RulePrecedence::Primary,
-            RulePrecedence::Primary => RulePrecedence::Primary,
+            Precedence::None => Precedence::Assignment,
+            Precedence::Assignment => Precedence::Pipeline,
+            Precedence::Pipeline => Precedence::Coalesce,
+            Precedence::Coalesce => Precedence::Range,
+            Precedence::Range => Precedence::Or,
+            Precedence::Or => Precedence::And,
+            Precedence::And => Precedence::Comparison,
+            Precedence::Comparison => Precedence::Term,
+            Precedence::Term => Precedence::Factor,
+            Precedence::Factor => Precedence::DiceRoll,
+            Precedence::DiceRoll => Precedence::Unary,
+            Precedence::Unary => Precedence::Propagate,
+            Precedence::Propagate => Precedence::Call,
+            Precedence::Call => Precedence::Object,
+            Precedence::Object => Precedence::Primary,
+            Precedence::Primary => Precedence::Primary,
         }
     }
 }
 
-impl Default for RulePrecedence {
+impl Default for Precedence {
     fn default() -> Self {
         Self::None
     }

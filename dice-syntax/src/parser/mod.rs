@@ -6,20 +6,19 @@ use super::{
     IfExpression, LitAnonymousFn, LitBool, LitFloat, LitIdent, LitInt, LitList, LitNull, LitObject, LitString, LitUnit,
     Return, SyntaxNode, SyntaxNodeId, SyntaxTree, Unary, UnaryOperator, VarDecl, WhileLoop,
 };
-use crate::lexer::Token;
+use crate::parser::rules::{ParseResult, ParserRules};
 use crate::{
-    parser::rules::{ParserRule, RulePrecedence},
+    parser::rules::{Precedence, Rule},
     ClassDecl, ErrorPropagate, FieldAccess, FnArg, ForLoop, ImportDecl, Index, Is, Loop, NullPropagate, OpDecl,
     OverloadedOperator, SuperAccess, SuperCall, TypeAnnotation, VarDeclKind,
 };
 use dice_core::{error::Error, source::Source, span::Span};
 use id_arena::Arena;
 
-pub type SyntaxNodeResult = Result<SyntaxNodeId, Error>;
-
 pub struct Parser<'a> {
     lexer: Lexer<'a>,
     arena: Arena<SyntaxNode>,
+    rules: ParserRules<'a>,
 }
 
 impl<'a> Parser<'a> {
@@ -27,7 +26,11 @@ impl<'a> Parser<'a> {
         let lexer = Lexer::from_source(input);
         let arena = Arena::new();
 
-        Self { lexer, arena }
+        Self {
+            lexer,
+            arena,
+            rules: ParserRules::new(),
+        }
     }
 
     // TODO: Have this return a collection of parse errors.
@@ -37,7 +40,7 @@ impl<'a> Parser<'a> {
         Ok(SyntaxTree::new(root, self.arena))
     }
 
-    fn expression_sequence(&mut self) -> SyntaxNodeResult {
+    fn expression_sequence(&mut self) -> ParseResult {
         let mut expressions = Vec::new();
         let mut next_token = self.lexer.peek()?;
         let span_start = next_token.span;
@@ -84,50 +87,48 @@ impl<'a> Parser<'a> {
         Ok(self.arena.alloc(node))
     }
 
-    fn expression(&mut self) -> SyntaxNodeResult {
-        self.parse_precedence(RulePrecedence::Assignment)
+    fn expression(&mut self) -> ParseResult {
+        self.parse_precedence(Precedence::Assignment)
     }
 
-    fn parse_precedence(&mut self, precedence: RulePrecedence) -> SyntaxNodeResult {
+    fn parse_precedence(&mut self, precedence: Precedence) -> ParseResult {
         let next_token = self.lexer.peek()?;
-        let rule = ParserRule::<'a>::for_token(&next_token)?;
+        let rule = self.rules.for_token(next_token.kind)?;
         let mut node = rule
             .prefix
-            .map(|prefix| prefix(self, precedence <= RulePrecedence::Assignment))
+            .map(|(prefix, _)| prefix(self, precedence <= Precedence::Assignment))
             .unwrap_or_else(|| todo!("Unexpected token."))?;
 
         loop {
             let span_start = next_token.span;
             let next_token = self.lexer.peek()?;
-            let rule = ParserRule::for_token(&next_token)?;
+            let rule = self.rules.for_token(next_token.kind)?;
 
-            if let Some(postfix_precedence) = rule.postfix_precedence {
+            if let Some((postfix, postfix_precedence)) = rule.postfix {
                 if precedence > postfix_precedence {
                     break;
                 }
 
-                node = rule
-                    .postfix
-                    .map(|postfix| postfix(self, node, precedence <= RulePrecedence::Assignment, span_start))
-                    .unwrap_or_else(|| todo!("Unexpected token."))?;
+                node = postfix(self, node, precedence <= Precedence::Assignment, span_start)?;
 
                 continue;
             }
 
-            if precedence > rule.infix_precedence {
+            if let Some((infix, infix_precedence)) = rule.infix {
+                if precedence > infix_precedence {
+                    break;
+                }
+
+                node = infix(self, node, precedence <= Precedence::Assignment, span_start)?;
+            } else {
                 break;
             }
-
-            node = rule
-                .infix
-                .map(|infix| infix(self, node, precedence <= RulePrecedence::Assignment, span_start))
-                .unwrap_or_else(|| todo!("Unexpected token."))?;
         }
 
         Ok(node)
     }
 
-    fn if_expression(&mut self, _: bool) -> SyntaxNodeResult {
+    fn if_expression(&mut self, _: bool) -> ParseResult {
         let span_start = self.lexer.consume(TokenKind::If)?.span;
         let condition = self.expression()?;
         let primary = self.block_expression(false)?;
@@ -153,7 +154,7 @@ impl<'a> Parser<'a> {
         Ok(self.arena.alloc(node))
     }
 
-    fn loop_statement(&mut self) -> SyntaxNodeResult {
+    fn loop_statement(&mut self) -> ParseResult {
         let span_start = self.lexer.consume(TokenKind::Loop)?.span;
         let body = self.block_expression(false)?;
         let span_end = self.lexer.current().span;
@@ -165,7 +166,7 @@ impl<'a> Parser<'a> {
         Ok(self.arena.alloc(node))
     }
 
-    fn while_statement(&mut self) -> SyntaxNodeResult {
+    fn while_statement(&mut self) -> ParseResult {
         let span_start = self.lexer.consume(TokenKind::While)?.span;
         let condition = self.expression()?;
         let body = self.block_expression(false)?;
@@ -179,7 +180,7 @@ impl<'a> Parser<'a> {
         Ok(self.arena.alloc(node))
     }
 
-    fn for_statement(&mut self) -> SyntaxNodeResult {
+    fn for_statement(&mut self) -> ParseResult {
         let span_start = self.lexer.consume(TokenKind::For)?.span;
         let (_, variable) = self.lexer.consume_ident()?;
         self.lexer.consume(TokenKind::In)?;
@@ -196,7 +197,7 @@ impl<'a> Parser<'a> {
         Ok(self.arena.alloc(node))
     }
 
-    fn control_flow(&mut self) -> SyntaxNodeResult {
+    fn control_flow(&mut self) -> ParseResult {
         let token = self.lexer.next()?;
 
         let node = match token.kind {
@@ -221,7 +222,7 @@ impl<'a> Parser<'a> {
         Ok(self.arena.alloc(node))
     }
 
-    fn block_expression(&mut self, _: bool) -> SyntaxNodeResult {
+    fn block_expression(&mut self, _: bool) -> ParseResult {
         self.lexer.consume(TokenKind::LeftCurly)?;
         let expressions = self.expression_sequence()?;
         self.lexer.consume(TokenKind::RightCurly)?;
@@ -229,21 +230,20 @@ impl<'a> Parser<'a> {
         Ok(expressions)
     }
 
-    fn variable(&mut self, can_assign: bool) -> SyntaxNodeResult {
+    fn variable(&mut self, can_assign: bool) -> ParseResult {
         let next_token = self.lexer.next()?;
         let span_start = next_token.span;
         let lhs_expression = match next_token.kind {
-            TokenKind::Identifier => self.arena.alloc(SyntaxNode::LitIdent(LitIdent {
-                identifier: next_token.slice.to_owned(),
-                span: span_start,
-            })),
+            TokenKind::Identifier => self
+                .arena
+                .alloc(SyntaxNode::LitIdent(LitIdent::synthesize(next_token.slice, span_start))),
             _ => return todo!("Unexpected token."),
         };
 
         self.parse_assignment(lhs_expression, can_assign, span_start)
     }
 
-    fn import_decl(&mut self) -> SyntaxNodeResult {
+    fn import_decl(&mut self) -> ParseResult {
         let span_start = self.lexer.consume(TokenKind::Import)?.span;
         let next_token = self.lexer.peek()?;
         let module_import = if next_token.kind == TokenKind::Star {
@@ -284,7 +284,7 @@ impl<'a> Parser<'a> {
         Ok(self.arena.alloc(node))
     }
 
-    fn export_decl(&mut self) -> SyntaxNodeResult {
+    fn export_decl(&mut self) -> ParseResult {
         let span_start = self.lexer.consume(TokenKind::Export)?.span;
 
         let next = self.lexer.peek()?;
@@ -292,10 +292,10 @@ impl<'a> Parser<'a> {
             TokenKind::Let => self.var_decl()?,
             TokenKind::Function => self.fn_decl()?,
             TokenKind::Class => self.class_decl()?,
-            TokenKind::Identifier => self.arena.alloc(SyntaxNode::LitIdent(LitIdent {
-                identifier: next.slice.to_owned(),
-                span: self.lexer.peek()?.span,
-            })),
+            TokenKind::Identifier => self.arena.alloc(SyntaxNode::LitIdent(LitIdent::synthesize(
+                next.slice,
+                self.lexer.peek()?.span,
+            ))),
             _ => unreachable!("Unsupported export type encountered."),
         };
 
@@ -308,7 +308,7 @@ impl<'a> Parser<'a> {
         Ok(self.arena.alloc(node))
     }
 
-    fn var_decl(&mut self) -> SyntaxNodeResult {
+    fn var_decl(&mut self) -> ParseResult {
         let span_start = self.lexer.consume(TokenKind::Let)?.span;
 
         let is_mutable = if self.lexer.peek()?.kind == TokenKind::Mut {
@@ -343,7 +343,7 @@ impl<'a> Parser<'a> {
         Ok(self.arena.alloc(node))
     }
 
-    fn anonymous_fn(&mut self, _: bool) -> SyntaxNodeResult {
+    fn anonymous_fn(&mut self, _: bool) -> ParseResult {
         let span_start = self.lexer.peek()?.span;
         let args = self.parse_args(TokenKind::Pipe, TokenKind::Pipe)?;
 
@@ -364,7 +364,7 @@ impl<'a> Parser<'a> {
         Ok(self.arena.alloc(node))
     }
 
-    fn fn_decl(&mut self) -> SyntaxNodeResult {
+    fn fn_decl(&mut self) -> ParseResult {
         let span_start = self.lexer.consume(TokenKind::Function)?.span;
         let (name_token, name) = self.lexer.consume_ident()?;
         let name = LitIdent::synthesize(name, name_token.span);
@@ -388,7 +388,7 @@ impl<'a> Parser<'a> {
         Ok(self.arena.alloc(node))
     }
 
-    fn op_decl(&mut self) -> SyntaxNodeResult {
+    fn op_decl(&mut self) -> ParseResult {
         let span_start = self.lexer.consume(TokenKind::Operator)?.span;
         let operator_token = self.lexer.next()?;
         let mut operator = match operator_token.kind {
@@ -515,7 +515,7 @@ impl<'a> Parser<'a> {
         Ok(args)
     }
 
-    fn class_decl(&mut self) -> SyntaxNodeResult {
+    fn class_decl(&mut self) -> ParseResult {
         let span_start = self.lexer.consume(TokenKind::Class)?.span;
         let (name_token, name) = self.lexer.consume_ident()?;
         let name = LitIdent {
@@ -563,9 +563,8 @@ impl<'a> Parser<'a> {
         Ok(node)
     }
 
-    fn binary_operator(&mut self, lhs: SyntaxNodeId, _: bool, span_start: Span) -> SyntaxNodeResult {
+    fn binary_operator(&mut self, lhs: SyntaxNodeId, _: bool, span_start: Span) -> ParseResult {
         let token = self.lexer.next()?;
-        let rule = ParserRule::for_token(&token)?;
         let operator = match token.kind {
             TokenKind::Pipeline => BinaryOperator::Pipeline,
             TokenKind::Coalesce => BinaryOperator::Coalesce,
@@ -590,7 +589,11 @@ impl<'a> Parser<'a> {
             TokenKind::DiceRoll => BinaryOperator::DiceRoll,
             _ => unreachable!(),
         };
-        let rhs = self.parse_precedence(rule.infix_precedence.increment())?;
+
+        let rule = self.rules.for_token(token.kind)?;
+        let precedence = rule.infix.expect("Invalid infix rule.").1.increment();
+        let rhs = self.parse_precedence(precedence)?;
+
         let node = SyntaxNode::Binary(Binary {
             operator,
             lhs_expression: lhs,
@@ -601,7 +604,7 @@ impl<'a> Parser<'a> {
         Ok(self.arena.alloc(node))
     }
 
-    fn parse_is_operator(&mut self, lhs: SyntaxNodeId, _: bool, span_start: Span) -> SyntaxNodeResult {
+    fn is_operator(&mut self, lhs: SyntaxNodeId, _: bool, span_start: Span) -> ParseResult {
         let type_annotation = self.parse_type_annotation(TokenKind::Is)?;
         let node = SyntaxNode::Is(Is {
             value: lhs,
@@ -612,9 +615,9 @@ impl<'a> Parser<'a> {
         Ok(self.arena.alloc(node))
     }
 
-    fn unary_operator(&mut self, _: bool) -> SyntaxNodeResult {
+    fn unary_operator(&mut self, _: bool) -> ParseResult {
         let token = self.lexer.next()?;
-        let child_node_id = self.parse_precedence(RulePrecedence::Unary)?;
+        let child_node_id = self.parse_precedence(Precedence::Unary)?;
         let operator = match token.kind {
             TokenKind::Minus => UnaryOperator::Negate,
             TokenKind::Not => UnaryOperator::Not,
@@ -630,7 +633,7 @@ impl<'a> Parser<'a> {
         Ok(self.arena.alloc(node))
     }
 
-    fn null_propagate(&mut self, expression: SyntaxNodeId, _: bool, span_start: Span) -> SyntaxNodeResult {
+    fn null_propagate(&mut self, expression: SyntaxNodeId, _: bool, span_start: Span) -> ParseResult {
         let span_end = self.lexer.consume(TokenKind::QuestionMark)?.span;
         let node = SyntaxNode::NullPropagate(NullPropagate {
             expression,
@@ -640,7 +643,7 @@ impl<'a> Parser<'a> {
         Ok(self.arena.alloc(node))
     }
 
-    fn error_propagate(&mut self, expression: SyntaxNodeId, _: bool, span_start: Span) -> SyntaxNodeResult {
+    fn error_propagate(&mut self, expression: SyntaxNodeId, _: bool, span_start: Span) -> ParseResult {
         let span_end = self.lexer.consume(TokenKind::ErrorPropagate)?.span;
         let node = SyntaxNode::ErrorPropagate(ErrorPropagate {
             expression,
@@ -650,7 +653,7 @@ impl<'a> Parser<'a> {
         Ok(self.arena.alloc(node))
     }
 
-    fn index_access(&mut self, expression: SyntaxNodeId, can_assign: bool, span_start: Span) -> SyntaxNodeResult {
+    fn index_access(&mut self, expression: SyntaxNodeId, can_assign: bool, span_start: Span) -> ParseResult {
         self.lexer.consume(TokenKind::LeftSquare)?;
         let index_expression = self.expression()?;
         self.lexer.consume(TokenKind::RightSquare)?;
@@ -666,7 +669,7 @@ impl<'a> Parser<'a> {
         self.parse_assignment(lhs_expression, can_assign, span_start)
     }
 
-    fn field_access(&mut self, lhs: SyntaxNodeId, can_assign: bool, span_start: Span) -> SyntaxNodeResult {
+    fn field_access(&mut self, lhs: SyntaxNodeId, can_assign: bool, span_start: Span) -> ParseResult {
         self.lexer.consume(TokenKind::Dot)?;
 
         let (_, field) = self.lexer.consume_ident()?;
@@ -681,7 +684,7 @@ impl<'a> Parser<'a> {
         self.parse_assignment(lhs_expression, can_assign, span_start)
     }
 
-    fn super_access(&mut self, can_assign: bool) -> SyntaxNodeResult {
+    fn super_access(&mut self, can_assign: bool) -> ParseResult {
         let span_start = self.lexer.consume(TokenKind::Super)?.span;
         let next_token = self.lexer.peek()?;
 
@@ -692,7 +695,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn grouping(&mut self, _: bool) -> SyntaxNodeResult {
+    fn grouping(&mut self, _: bool) -> ParseResult {
         let span_start = self.lexer.consume(TokenKind::LeftParen)?.span;
 
         if self.lexer.peek()?.kind == TokenKind::RightParen {
@@ -710,13 +713,13 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn fn_call(&mut self, lhs: SyntaxNodeId, _: bool, span_start: Span) -> SyntaxNodeResult {
+    fn fn_call(&mut self, lhs: SyntaxNodeId, _: bool, span_start: Span) -> ParseResult {
         self.lexer.consume(TokenKind::LeftParen)?;
 
         let mut args = Vec::new();
 
         while self.lexer.peek()?.kind != TokenKind::RightParen {
-            let value = self.parse_precedence(RulePrecedence::Assignment)?;
+            let value = self.parse_precedence(Precedence::Assignment)?;
             args.push(value);
 
             if self.lexer.peek()?.kind == TokenKind::Comma {
@@ -736,13 +739,13 @@ impl<'a> Parser<'a> {
         Ok(self.arena.alloc(node))
     }
 
-    fn super_call(&mut self, span_start: Span) -> SyntaxNodeResult {
+    fn super_call(&mut self, span_start: Span) -> ParseResult {
         self.lexer.consume(TokenKind::LeftParen)?;
 
         let mut args = Vec::new();
 
         while self.lexer.peek()?.kind != TokenKind::RightParen {
-            let value = self.parse_precedence(RulePrecedence::Assignment)?;
+            let value = self.parse_precedence(Precedence::Assignment)?;
             args.push(value);
 
             if self.lexer.peek()?.kind == TokenKind::Comma {
@@ -761,7 +764,7 @@ impl<'a> Parser<'a> {
         Ok(self.arena.alloc(node))
     }
 
-    fn super_method_access(&mut self, _: bool, span_start: Span) -> Result<SyntaxNodeId, Error> {
+    fn super_method_access(&mut self, _: bool, span_start: Span) -> ParseResult {
         let super_class = if self.lexer.peek()?.kind == TokenKind::LeftSquare {
             self.lexer.consume(TokenKind::LeftSquare)?;
             let (_, ident) = self.lexer.consume_ident()?;
@@ -787,7 +790,7 @@ impl<'a> Parser<'a> {
         Ok(super_call)
     }
 
-    fn object(&mut self, _: bool) -> SyntaxNodeResult {
+    fn object(&mut self, _: bool) -> ParseResult {
         let span_start = self.lexer.consume(TokenKind::Object)?.span;
         self.lexer.consume(TokenKind::LeftCurly)?;
 
@@ -801,7 +804,7 @@ impl<'a> Parser<'a> {
             };
 
             self.lexer.consume(TokenKind::Colon)?;
-            let value = self.parse_precedence(RulePrecedence::Assignment)?;
+            let value = self.parse_precedence(Precedence::Assignment)?;
 
             if self.lexer.peek()?.kind == TokenKind::Comma {
                 self.lexer.next()?;
@@ -822,13 +825,13 @@ impl<'a> Parser<'a> {
         Ok(node)
     }
 
-    fn list(&mut self, _: bool) -> SyntaxNodeResult {
+    fn list(&mut self, _: bool) -> ParseResult {
         let span_start = self.lexer.consume(TokenKind::LeftSquare)?.span;
 
         let mut values = Vec::new();
 
         while self.lexer.peek()?.kind != TokenKind::RightSquare {
-            let value = self.parse_precedence(RulePrecedence::Assignment)?;
+            let value = self.parse_precedence(Precedence::Assignment)?;
 
             if self.lexer.peek()?.kind == TokenKind::Comma {
                 self.lexer.next()?;
@@ -849,7 +852,7 @@ impl<'a> Parser<'a> {
         Ok(node)
     }
 
-    fn literal(&mut self, _: bool) -> SyntaxNodeResult {
+    fn literal(&mut self, _: bool) -> ParseResult {
         let token = self.lexer.next()?;
         let span = token.span;
         let literal = match token.kind {
@@ -874,12 +877,7 @@ impl<'a> Parser<'a> {
         Ok(self.arena.alloc(literal))
     }
 
-    fn parse_assignment(
-        &mut self,
-        lhs_expression: SyntaxNodeId,
-        can_assign: bool,
-        span_start: Span,
-    ) -> SyntaxNodeResult {
+    fn parse_assignment(&mut self, lhs_expression: SyntaxNodeId, can_assign: bool, span_start: Span) -> ParseResult {
         let next_token_kind = self.lexer.peek()?.kind;
         let is_assignment = matches!(
             next_token_kind,

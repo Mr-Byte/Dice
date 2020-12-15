@@ -14,6 +14,33 @@ use std::{
     rc::Rc,
 };
 
+#[derive(Clone, Debug)]
+pub struct Token<'a> {
+    pub kind: TokenKind,
+    pub span: Span,
+    pub slice: &'a str,
+}
+
+impl<'a> Token<'a> {
+    pub fn tokenize(input: &'a Source) -> TokenIter<'a> {
+        TokenIter::new(input)
+    }
+
+    pub const fn end_of_input() -> Token<'a> {
+        Self {
+            kind: TokenKind::EndOfInput,
+            span: Span::new(0..0),
+            slice: "",
+        }
+    }
+}
+
+impl Display for Token<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.kind)
+    }
+}
+
 pub struct TokenIter<'a> {
     source: &'a Source,
     lexer: logos::Lexer<'a, TokenKind>,
@@ -45,34 +72,8 @@ impl<'a> Iterator for TokenIter<'a> {
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct Token<'a> {
-    pub kind: TokenKind,
-    pub slice: &'a str,
-    pub span: Span,
-}
-
-impl<'a> Token<'a> {
-    pub fn tokenize(input: &'a Source) -> TokenIter<'a> {
-        TokenIter::new(input)
-    }
-
-    pub const fn end_of_input() -> Token<'a> {
-        Self {
-            kind: TokenKind::EndOfInput,
-            span: Span::new(0..0),
-            slice: "",
-        }
-    }
-}
-
-impl Display for Token<'_> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self.kind)
-    }
-}
-
 #[derive(Logos, Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[repr(u16)]
 #[logos(extras = LexerResult)]
 pub enum TokenKind {
     // End of input.
@@ -111,8 +112,10 @@ pub enum TokenKind {
     Dot,
     #[token("?")]
     QuestionMark,
+    // TODO: Change the parser to look for a double Bang token instead of this token.
     #[token("!!")]
     ErrorPropagate,
+    // TODO: Change the parser to look for a double Question token instead of this token.
     #[token("??")]
     Coalesce,
     #[token("-")]
@@ -225,7 +228,79 @@ pub enum TokenKind {
 
 impl Display for TokenKind {
     fn fmt(&self, _f: &mut Formatter<'_>) -> std::fmt::Result {
-        unimplemented!()
+        match self {
+            TokenKind::EndOfInput => {}
+            TokenKind::LeftParen => {}
+            TokenKind::RightParen => {}
+            TokenKind::LeftCurly => {}
+            TokenKind::RightCurly => {}
+            TokenKind::LeftSquare => {}
+            TokenKind::RightSquare => {}
+            TokenKind::Semicolon => {}
+            TokenKind::Colon => {}
+            TokenKind::Comma => {}
+            TokenKind::Pipe => {}
+            TokenKind::RangeExclusive => {}
+            TokenKind::RangeInclusive => {}
+            TokenKind::Arrow => {}
+            TokenKind::WideArrow => {}
+            TokenKind::Dot => {}
+            TokenKind::QuestionMark => {}
+            TokenKind::ErrorPropagate => {}
+            TokenKind::Coalesce => {}
+            TokenKind::Minus => {}
+            TokenKind::Plus => {}
+            TokenKind::Remainder => {}
+            TokenKind::Star => {}
+            TokenKind::Slash => {}
+            TokenKind::Not => {}
+            TokenKind::NotEqual => {}
+            TokenKind::Equal => {}
+            TokenKind::Greater => {}
+            TokenKind::GreaterEqual => {}
+            TokenKind::Less => {}
+            TokenKind::LessEqual => {}
+            TokenKind::Assign => {}
+            TokenKind::MulAssign => {}
+            TokenKind::DivAssign => {}
+            TokenKind::AddAssign => {}
+            TokenKind::SubAssign => {}
+            TokenKind::DiceRoll => {}
+            TokenKind::LazyAnd => {}
+            TokenKind::Pipeline => {}
+            TokenKind::Object => {}
+            TokenKind::False => {}
+            TokenKind::True => {}
+            TokenKind::Null => {}
+            TokenKind::If => {}
+            TokenKind::Else => {}
+            TokenKind::While => {}
+            TokenKind::Loop => {}
+            TokenKind::For => {}
+            TokenKind::Break => {}
+            TokenKind::Continue => {}
+            TokenKind::Return => {}
+            TokenKind::Function => {}
+            TokenKind::Let => {}
+            TokenKind::Mut => {}
+            TokenKind::In => {}
+            TokenKind::Operator => {}
+            TokenKind::Class => {}
+            TokenKind::Is => {}
+            TokenKind::Import => {}
+            TokenKind::As => {}
+            TokenKind::From => {}
+            TokenKind::Export => {}
+            TokenKind::Super => {}
+            TokenKind::Reserved => {}
+            TokenKind::Identifier => {}
+            TokenKind::Integer => {}
+            TokenKind::Float => {}
+            TokenKind::String => {}
+            TokenKind::Error => {}
+        }
+
+        todo!()
     }
 }
 
