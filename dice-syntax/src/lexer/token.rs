@@ -72,7 +72,7 @@ impl<'a> Iterator for TokenIter<'a> {
     }
 }
 
-#[derive(Logos, Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Logos, Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(u16)]
 #[logos(extras = LexerResult)]
 pub enum TokenKind {

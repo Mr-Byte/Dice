@@ -4,13 +4,12 @@ use super::{
     lexer::{Lexer, TokenKind},
     Assignment, AssignmentOperator, Binary, BinaryOperator, Block, Break, Continue, ExportDecl, FnCall, FnDecl,
     IfExpression, LitAnonymousFn, LitBool, LitFloat, LitIdent, LitInt, LitList, LitNull, LitObject, LitString, LitUnit,
-    Return, SyntaxNode, SyntaxNodeId, SyntaxTree, Unary, UnaryOperator, VarDecl, WhileLoop,
+    Prefix, Return, SyntaxNode, SyntaxNodeId, SyntaxTree, UnaryOperator, VarDecl, WhileLoop,
 };
 use crate::parser::rules::{ParseResult, ParserRules};
 use crate::{
-    parser::rules::{Precedence, Rule},
-    ClassDecl, ErrorPropagate, FieldAccess, FnArg, ForLoop, ImportDecl, Index, Is, Loop, NullPropagate, OpDecl,
-    OverloadedOperator, SuperAccess, SuperCall, TypeAnnotation, VarDeclKind,
+    parser::rules::Precedence, ClassDecl, ErrorPropagate, FieldAccess, FnArg, ForLoop, ImportDecl, Index, Is, Loop,
+    NullPropagate, OpDecl, OverloadedOperator, SuperAccess, SuperCall, TypeAnnotation, VarDeclKind,
 };
 use dice_core::{error::Error, source::Source, span::Span};
 use id_arena::Arena;
@@ -69,6 +68,8 @@ impl<'a> Parser<'a> {
                 break;
             }
 
+            // TODO: Should semi-colons be hard-required after non-block expressions?
+            // If not, how to make things like `let mut x = 0 while true { ... }` valid?
             if next_token.kind == TokenKind::Semicolon {
                 self.lexer.consume(TokenKind::Semicolon)?;
                 next_token = self.lexer.peek()?;
@@ -615,7 +616,7 @@ impl<'a> Parser<'a> {
         Ok(self.arena.alloc(node))
     }
 
-    fn unary_operator(&mut self, _: bool) -> ParseResult {
+    fn prefix_operator(&mut self, _: bool) -> ParseResult {
         let token = self.lexer.next()?;
         let child_node_id = self.parse_precedence(Precedence::Unary)?;
         let operator = match token.kind {
@@ -624,7 +625,7 @@ impl<'a> Parser<'a> {
             TokenKind::DiceRoll => UnaryOperator::DiceRoll,
             _ => unreachable!(),
         };
-        let node = SyntaxNode::Unary(Unary {
+        let node = SyntaxNode::Prefix(Prefix {
             operator,
             expression: child_node_id,
             span: token.span,
@@ -633,6 +634,7 @@ impl<'a> Parser<'a> {
         Ok(self.arena.alloc(node))
     }
 
+    // TODO: Combine postfix operators into a single parser?
     fn null_propagate(&mut self, expression: SyntaxNodeId, _: bool, span_start: Span) -> ParseResult {
         let span_end = self.lexer.consume(TokenKind::QuestionMark)?.span;
         let node = SyntaxNode::NullPropagate(NullPropagate {

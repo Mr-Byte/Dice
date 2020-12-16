@@ -27,6 +27,18 @@ impl<'a> ParserRules<'a> {
         rules.insert(TokenKind::DivAssign, Rule::new());
         rules.insert(TokenKind::AddAssign, Rule::new());
         rules.insert(TokenKind::SubAssign, Rule::new());
+        rules.insert(TokenKind::While, Rule::new());
+        rules.insert(TokenKind::Loop, Rule::new());
+        rules.insert(TokenKind::For, Rule::new());
+        rules.insert(TokenKind::Let, Rule::new());
+        rules.insert(TokenKind::Function, Rule::new());
+        rules.insert(TokenKind::Operator, Rule::new());
+        rules.insert(TokenKind::Class, Rule::new());
+        rules.insert(TokenKind::Import, Rule::new());
+        rules.insert(TokenKind::Export, Rule::new());
+        rules.insert(TokenKind::Return, Rule::new());
+        rules.insert(TokenKind::Break, Rule::new());
+        rules.insert(TokenKind::Continue, Rule::new());
 
         // Literals
         rules.insert(
@@ -170,18 +182,18 @@ impl<'a> ParserRules<'a> {
         rules.insert(
             TokenKind::Minus,
             Rule::new()
-                .with_prefix(Parser::unary_operator, Precedence::Unary)
+                .with_prefix(Parser::prefix_operator, Precedence::Unary)
                 .with_infix(Parser::binary_operator, Precedence::Term),
         );
         rules.insert(
             TokenKind::DiceRoll,
             Rule::new()
-                .with_prefix(Parser::unary_operator, Precedence::Unary)
+                .with_prefix(Parser::prefix_operator, Precedence::Unary)
                 .with_infix(Parser::binary_operator, Precedence::DiceRoll),
         );
         rules.insert(
             TokenKind::Not,
-            Rule::new().with_prefix(Parser::unary_operator, Precedence::Unary),
+            Rule::new().with_prefix(Parser::prefix_operator, Precedence::Unary),
         );
         rules.insert(
             TokenKind::QuestionMark,

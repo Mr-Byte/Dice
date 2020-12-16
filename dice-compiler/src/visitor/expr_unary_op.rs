@@ -1,16 +1,16 @@
 use super::NodeVisitor;
 use crate::compiler::Compiler;
 use dice_core::{error::Error, span::Span};
-use dice_syntax::{SyntaxNodeId, Unary, UnaryOperator};
+use dice_syntax::{Prefix, SyntaxNodeId, UnaryOperator};
 
-impl NodeVisitor<&Unary> for Compiler {
+impl NodeVisitor<&Prefix> for Compiler {
     fn visit(
         &mut self,
-        Unary {
+        Prefix {
             operator,
             expression,
             span,
-        }: &Unary,
+        }: &Prefix,
     ) -> Result<(), Error> {
         match operator {
             UnaryOperator::Negate => self.negate(*expression, *span),

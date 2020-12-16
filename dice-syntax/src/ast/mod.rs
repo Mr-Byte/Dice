@@ -59,7 +59,7 @@ pub enum SyntaxNode {
     Index(Index),
 
     // Operators
-    Unary(Unary),
+    Prefix(Prefix),
     Binary(Binary),
     Is(Is),
     NullPropagate(NullPropagate),
@@ -103,7 +103,7 @@ impl SyntaxNode {
             SyntaxNode::FieldAccess(FieldAccess { span, .. }) => *span,
             SyntaxNode::SuperAccess(SuperAccess { span, .. }) => *span,
             SyntaxNode::Index(Index { span, .. }) => *span,
-            SyntaxNode::Unary(Unary { span, .. }) => *span,
+            SyntaxNode::Prefix(Prefix { span, .. }) => *span,
             SyntaxNode::Binary(Binary { span, .. }) => *span,
             SyntaxNode::Is(Is { span, .. }) => *span,
             SyntaxNode::NullPropagate(NullPropagate { span, .. }) => *span,

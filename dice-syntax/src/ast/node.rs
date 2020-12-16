@@ -132,7 +132,7 @@ pub struct Is {
 }
 
 #[derive(Debug, Clone)]
-pub struct Unary {
+pub struct Prefix {
     pub operator: UnaryOperator,
     pub expression: SyntaxNodeId,
     pub span: Span,
