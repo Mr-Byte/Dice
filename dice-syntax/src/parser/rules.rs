@@ -19,7 +19,6 @@ impl<'a> ParserRules<'a> {
         rules.insert(TokenKind::RightSquare, Rule::new());
         rules.insert(TokenKind::RightParen, Rule::new());
         rules.insert(TokenKind::RightCurly, Rule::new());
-        rules.insert(TokenKind::Semicolon, Rule::new());
         rules.insert(TokenKind::Comma, Rule::new());
         rules.insert(TokenKind::Colon, Rule::new());
         rules.insert(TokenKind::Assign, Rule::new());

@@ -109,7 +109,7 @@ pub mod test {
 
     #[test]
     fn tokenize_delimiters() {
-        let delimiters = Source::new("( ) { } [ ] ; : ,", SourceKind::Script);
+        let delimiters = Source::new("( ) { } [ ] : ,", SourceKind::Script);
         let mut tokens = Token::tokenize(&delimiters);
 
         assert_next_token!(tokens, TokenKind::LeftParen);
@@ -118,7 +118,6 @@ pub mod test {
         assert_next_token!(tokens, TokenKind::RightCurly);
         assert_next_token!(tokens, TokenKind::LeftSquare);
         assert_next_token!(tokens, TokenKind::RightSquare);
-        assert_next_token!(tokens, TokenKind::Semicolon);
         assert_next_token!(tokens, TokenKind::Colon);
         assert_next_token!(tokens, TokenKind::Comma);
     }

@@ -1,11 +1,11 @@
 export class Range {
     fn new(self, start, end) {
-        self.start = start;
-        self.end = end;
+        self.start = start
+        self.end = end
     }
 
     fn iter(self) {
-        let mut current = self.start;
+        let mut current = self.start
 
         #{
             next: || {
@@ -13,9 +13,9 @@ export class Range {
                     #{ value: current, is_done: false }
                 } else {
                     #{ is_done: true }
-                };
+                }
 
-                current += 1;
+                current += 1
 
                 result
             }
@@ -25,12 +25,12 @@ export class Range {
 
 export class RangeInclusive {
     fn new(self, start, end) {
-        self.start = start;
-        self.end = end;
+        self.start = start
+        self.end = end
     }
 
     fn iter(self) {
-        let mut current = self.start;
+        let mut current = self.start
 
         #{
             next: || {
@@ -38,9 +38,9 @@ export class RangeInclusive {
                     #{ value: current, done: false }
                 } else {
                     #{ done: true }
-                };
+                }
 
-                current += 1;
+                current += 1
 
                 result
             }
@@ -66,8 +66,8 @@ op d(lhs, rhs) {
 
 export class Result {
     fn new(self, is_ok: Bool, result: Any?) {
-        self.is_ok = is_ok;
-        self.result = result;
+        self.is_ok = is_ok
+        self.result = result
     }
 
     fn map(self, map_fn: Function) -> Result {
@@ -81,12 +81,12 @@ export class Result {
 
 export class Ok : Result {
     fn new(self, result) {
-        super(true, result);
+        super(true, result)
     }
 }
 
 export class Err : Result {
     fn new(self, result) {
-        super(false, result);
+        super(false, result)
     }
 }

@@ -68,13 +68,6 @@ impl<'a> Parser<'a> {
                 break;
             }
 
-            // TODO: Should semi-colons be hard-required after non-block expressions?
-            // If not, how to make things like `let mut x = 0 while true { ... }` valid?
-            if next_token.kind == TokenKind::Semicolon {
-                self.lexer.consume(TokenKind::Semicolon)?;
-                next_token = self.lexer.peek()?;
-            }
-
             expressions.push(expression);
         }
 
@@ -205,7 +198,7 @@ impl<'a> Parser<'a> {
             TokenKind::Break => SyntaxNode::Break(Break { span: token.span }),
             TokenKind::Continue => SyntaxNode::Continue(Continue { span: token.span }),
             TokenKind::Return => {
-                let result = if self.lexer.peek()?.kind != TokenKind::Semicolon {
+                let result = if self.lexer.peek()?.kind != TokenKind::RightCurly {
                     Some(self.expression()?)
                 } else {
                     None

@@ -91,8 +91,6 @@ pub enum TokenKind {
     LeftSquare,
     #[token("]")]
     RightSquare,
-    #[token(";")]
-    Semicolon,
     #[token(":")]
     Colon,
     #[token(",")]
@@ -236,7 +234,6 @@ impl Display for TokenKind {
             TokenKind::RightCurly => {}
             TokenKind::LeftSquare => {}
             TokenKind::RightSquare => {}
-            TokenKind::Semicolon => {}
             TokenKind::Colon => {}
             TokenKind::Comma => {}
             TokenKind::Pipe => {}
