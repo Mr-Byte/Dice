@@ -46,8 +46,8 @@ impl<'a> Parser<'a> {
         let mut trailing_expression = None;
 
         while !matches!(next_token.kind, TokenKind::EndOfInput | TokenKind::RightCurly) {
+            // TODO: Do each of these just become prefix parsers?
             let expression = match next_token.kind {
-                TokenKind::If => self.if_expression(false)?,
                 TokenKind::Loop => self.loop_statement()?,
                 TokenKind::While => self.while_statement()?,
                 TokenKind::For => self.for_statement()?,
@@ -88,6 +88,7 @@ impl<'a> Parser<'a> {
     fn parse_precedence(&mut self, precedence: Precedence) -> ParseResult {
         let next_token = self.lexer.peek()?;
         let rule = self.rules.for_token(next_token.kind)?;
+        // TODO: Handle prefix precedence.
         let mut node = rule
             .prefix
             .map(|(prefix, _)| prefix(self, precedence <= Precedence::Assignment))
