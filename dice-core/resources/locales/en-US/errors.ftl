@@ -1,0 +1,1 @@
+E2300 = The class {$name} is already defined in this scope.

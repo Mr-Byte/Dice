@@ -1,12 +1,25 @@
 use crate::{error::codes::ErrorCode, source::Source, span::Span};
+use fluent_templates::fluent_bundle::FluentValue;
+use fluent_templates::loader::langid;
+use fluent_templates::{LanguageIdentifier, Loader};
 use std::{
     collections::HashMap,
     fmt::{Debug, Display, Formatter},
-    hash::BuildHasherDefault,
 };
-use wyhash::WyHash;
 
-pub type TagsMap = HashMap<&'static str, String, BuildHasherDefault<WyHash>>;
+// TODO: Pull localization out into its own module.
+fluent_templates::static_loader! {
+    static LOCALES = {
+        locales: "./resources/locales",
+        fallback_language: "en-US",
+        // TODO: Make this configurable. CLI doesn't need it.
+        customise: |bundle| bundle.set_use_isolating(false),
+    };
+}
+
+const US_ENGLISH: LanguageIdentifier = langid!("en-US");
+
+pub type TagsMap = Vec<(&'static str, String)>;
 
 #[derive(thiserror::Error, Clone)]
 
@@ -14,7 +27,7 @@ pub struct Error {
     error_code: ErrorCode,
     source_code: Option<Source>,
     span: Span,
-    tags: Option<TagsMap>,
+    tags: TagsMap,
 }
 
 impl Error {
@@ -23,7 +36,7 @@ impl Error {
             error_code,
             source_code: None,
             span: Span::empty(),
-            tags: None,
+            tags: TagsMap::new(),
         }
     }
 
@@ -38,7 +51,7 @@ impl Error {
     }
 
     pub fn with_tags(mut self, tags: TagsMap) -> Self {
-        self.tags = Some(tags);
+        self.tags = tags;
         self
     }
 }
@@ -52,7 +65,14 @@ impl Debug for Error {
 impl Display for Error {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         // TODO: Get a formatted error message.
-        writeln!(f, "error[{}]: {}", self.error_code, "...")?;
+        let args = self
+            .tags
+            .iter()
+            .map(|(key, value)| (key.to_string(), FluentValue::String(std::borrow::Cow::Borrowed(value))))
+            .collect::<HashMap<_, _>>();
+
+        let error_message = LOCALES.lookup_with_args(&US_ENGLISH, self.error_code, &args);
+        writeln!(f, "error[{}]: {}", self.error_code, error_message)?;
 
         if let Some(source) = &self.source_code {
             let position = source.line_index().position_of(self.span.start);
@@ -114,7 +134,7 @@ macro_rules! error_tags {
         let mut tags = $crate::error::TagsMap::default();
 
         $(
-            tags.insert(stringify!($tag), $value);
+            tags.push((stringify!($tag), $value));
         )*
 
         tags
@@ -158,58 +178,3 @@ pub mod codes {
 
     // Runtime errors
 }
-
-// TODO: Do more to pretty print errors.
-// pub fn format_error(&self, error: &impl SpannedError) -> String {
-//     let span = error.span();
-//     let position = self.line_index.position_of(span.start);
-//     let lines = self
-//         .line_index
-//         .lines(span)
-//         .map(|span| {
-//             let position = self.line_index.position_of(span.start);
-//             format!("{:<4} | {}", position.line + 1, &self.source[span.range()].trim_end())
-//         })
-//         .collect::<Vec<_>>()
-//         .join("\n");
-//     let location = self
-//         .path
-//         .clone()
-//         .map(|path| format!("{}:{}:{}", path, position.line + 1, position.column_utf16 + 1))
-//         .unwrap_or_else(|| format!("<Script>:{}:{}", position.line + 1, position.column_utf16 + 1));
-//
-//     format!("error: {}\n  --> {}\n{}", error.message(), location, lines)
-// }
-
-// #[test]
-// fn format_error() {
-//     let source = Source::new("let x = 0;\nx = 1;", SourceKind::Script);
-//     let error = TestError(
-//         String::from("Immutable variable cannot be reassigned."),
-//         Span::new(11..17),
-//     );
-//
-//     let expected = "\
-// error: Immutable variable cannot be reassigned.
-//   --> <Script>:2:1
-// 2    | x = 1;";
-//
-//     assert_eq!(expected, source.format_error(&error));
-// }
-//
-// #[test]
-// fn format_error_multi_line() {
-//     let source = Source::new("let x = 0;\nx = 1;\nx = 1;\ntest", SourceKind::Script);
-//     let error = TestError(
-//         String::from("Immutable variable cannot be reassigned."),
-//         Span::new(11..23),
-//     );
-//
-//     let expected = "\
-// error: Immutable variable cannot be reassigned.
-//   --> <Script>:2:1
-// 2    | x = 1;
-// 3    | x = 1;";
-//
-//     assert_eq!(expected, source.format_error(&error));
-// }

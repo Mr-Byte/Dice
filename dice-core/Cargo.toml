@@ -6,8 +6,9 @@ edition = "2018"
 
 [dependencies]
 bytes = "0.5"
+fluent-templates = "0.5.16"
+num-derive = "0.3"
+num-traits = "0.2"
 thiserror = "1.0"
 uuid = { version = "0.8", features = ["v4"] }
 wyhash = "0.4"
-num-derive = "0.3"
-num-traits = "0.2"
