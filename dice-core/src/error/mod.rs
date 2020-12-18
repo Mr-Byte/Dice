@@ -12,7 +12,7 @@ fluent_templates::static_loader! {
     static LOCALES = {
         locales: "./resources/locales",
         fallback_language: "en-US",
-        // TODO: Make this configurable. CLI doesn't need it.
+        // TODO: Make this configurable (most likely via Cargo features).
         customise: |bundle| bundle.set_use_isolating(false),
     };
 }
@@ -161,7 +161,7 @@ pub mod codes {
     pub static NEW_RETURN_CANNOT_HAVE_EXPRESSION: ErrorCode = "E2203";
     pub static INVALID_SUPER_CALL: ErrorCode = "E2204";
     pub static METHOD_RECEIVER_CANNOT_HAVE_TYPE: ErrorCode = "E2205";
-    pub static FUNCTION_CANNOT_HAVE_DUPLICATE_ARGS: ErrorCode = "E2207";
+    pub static FUNCTION_CANNOT_HAVE_DUPLICATE_ARGS: ErrorCode = "E2206";
 
     pub static CLASS_ALREADY_DECLARED: ErrorCode = "E2300";
     pub static FUNCTION_ALREADY_DECLARE: ErrorCode = "E2301";
