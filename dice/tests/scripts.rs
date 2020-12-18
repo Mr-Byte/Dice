@@ -673,12 +673,16 @@ fn test_equality() -> Result<(), Error> {
 #[test]
 fn test_while_loop() -> Result<(), Error> {
     let mut runtime = Dice::default();
-    let result = runtime.run_script(r#"let mut x = 0 while x < 10 { x = x + 1 } x"#)?;
+    let script = r#"
+        let mut x = 0
+        while x < 10 {
+            x = x + 1
+        }
+        x
+    "#;
+    let result = runtime.run_script(script)?;
 
-    assert!(matches! {
-        result,
-        Value::Int(10)
-    });
+    assert_eq!(result, Value::Int(10));
 
     Ok(())
 }

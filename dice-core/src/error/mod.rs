@@ -44,14 +44,47 @@ impl Error {
 }
 
 impl Debug for Error {
-    fn fmt(&self, _f: &mut Formatter<'_>) -> std::fmt::Result {
-        unimplemented!()
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "error[{}]", self.error_code)
     }
 }
 
 impl Display for Error {
-    fn fmt(&self, _f: &mut Formatter<'_>) -> std::fmt::Result {
-        unimplemented!()
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        // TODO: Get a formatted error message.
+        writeln!(f, "error[{}]: {}", self.error_code, "...")?;
+
+        if let Some(source) = &self.source_code {
+            let position = source.line_index().position_of(self.span.start);
+            let location = source
+                .path()
+                .map(|path| format!("{}:{}:{}", path, position.line + 1, position.column_utf16 + 1))
+                .unwrap_or_else(|| format!("<Script>:{}:{}", position.line + 1, position.column_utf16 + 1));
+
+            writeln!(f, "  --> {}", location)?;
+
+            let lines = source
+                .line_index()
+                .lines(self.span)
+                .map(|span| {
+                    let position = source.line_index().position_of(span.start);
+
+                    format!(
+                        "{:<4} | {}",
+                        position.line + 1,
+                        &source.source()[span.range()].trim_end()
+                    )
+                })
+                .collect::<Vec<_>>();
+
+            if !lines.is_empty() {
+                writeln!(f, "     |")?;
+                writeln!(f, "{}", lines.join("\n"))?;
+                writeln!(f, "     |")?;
+            }
+        }
+
+        Ok(())
     }
 }
 

@@ -16,6 +16,7 @@ impl<'a> ParserRules<'a> {
         let mut rules = HashMap::default();
 
         // Empty rules
+        // NOTE: When these rules are encountered, they indicate the end of the current expression/start of a new expression.
         rules.insert(TokenKind::RightSquare, Rule::new());
         rules.insert(TokenKind::RightParen, Rule::new());
         rules.insert(TokenKind::RightCurly, Rule::new());
