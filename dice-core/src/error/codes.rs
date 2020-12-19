@@ -31,3 +31,13 @@ pub static INVALID_RETURN_USAGE: ErrorCode = "E2500";
 pub static INVALID_BREAK_USAGE: ErrorCode = "E2501";
 pub static INVALID_CONTINUE_USAGE: ErrorCode = "E2502";
 pub static INVALID_ERROR_PROPAGATE_USAGE: ErrorCode = "E2503";
+
+// Runtime errors
+pub static INVALID_BOOL_CONVERSION: ErrorCode = "E3000";
+pub static INVALID_INT_CONVERSION: ErrorCode = "E3001";
+pub static INVALID_FLOAT_CONVERSION: ErrorCode = "E3002";
+pub static INVALID_ARRAY_CONVERSION: ErrorCode = "E3003";
+pub static INVALID_STRING_CONVERSION: ErrorCode = "E3004";
+pub static INVALID_SYMBOL_CONVERSION: ErrorCode = "E3005";
+pub static INVALID_OBJECT_CONVERSION: ErrorCode = "E3006";
+pub static INVALID_CLASS_CONVERSION: ErrorCode = "E3007";

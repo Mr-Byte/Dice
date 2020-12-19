@@ -11,7 +11,13 @@ mod symbol;
 use std::{collections::HashMap, fmt::Display, hash::BuildHasherDefault};
 use wyhash::WyHash;
 
-use crate::error::Error;
+use crate::error::{
+    codes::{
+        INVALID_ARRAY_CONVERSION, INVALID_BOOL_CONVERSION, INVALID_CLASS_CONVERSION, INVALID_FLOAT_CONVERSION,
+        INVALID_INT_CONVERSION, INVALID_OBJECT_CONVERSION, INVALID_STRING_CONVERSION, INVALID_SYMBOL_CONVERSION,
+    },
+    Error,
+};
 pub use array::*;
 pub use class::*;
 pub use fn_bound::*;
@@ -63,35 +69,35 @@ impl Value {
     pub fn as_bool(&self) -> Result<bool, Error> {
         match self {
             Value::Bool(bool) => Ok(*bool),
-            _ => todo!("Type conversion error."),
+            _ => Err(Error::new(INVALID_BOOL_CONVERSION)),
         }
     }
 
     pub fn as_int(&self) -> Result<i64, Error> {
         match self {
             Value::Int(int) => Ok(*int),
-            _ => todo!("Type conversion error."),
+            _ => Err(Error::new(INVALID_INT_CONVERSION)),
         }
     }
 
     pub fn as_float(&self) -> Result<f64, Error> {
         match self {
             Value::Float(float) => Ok(*float),
-            _ => todo!("Type conversion error."),
+            _ => Err(Error::new(INVALID_FLOAT_CONVERSION)),
         }
     }
 
     pub fn as_array(&self) -> Result<&Array, Error> {
         match self {
             Value::Array(list) => Ok(list),
-            _ => todo!("Type conversion error."),
+            _ => Err(Error::new(INVALID_ARRAY_CONVERSION)),
         }
     }
 
     pub fn as_string(&self) -> Result<&String, Error> {
         match self {
             Value::String(string) => Ok(string),
-            _ => todo!("Type conversion error."),
+            _ => Err(Error::new(INVALID_STRING_CONVERSION)),
         }
     }
 
@@ -99,7 +105,7 @@ impl Value {
         match self {
             Value::Symbol(symbol) => Ok(symbol.clone()),
             Value::String(string) => Ok(string.into()),
-            _ => todo!("Type conversion error."),
+            _ => Err(Error::new(INVALID_SYMBOL_CONVERSION)),
         }
     }
 
@@ -108,14 +114,14 @@ impl Value {
             Value::Object(object) => Ok(object),
             Value::Class(class) => Ok(&(**class)),
             Value::Array(array) => Ok(&(**array)),
-            _ => todo!("Type conversion error."),
+            _ => Err(Error::new(INVALID_OBJECT_CONVERSION)),
         }
     }
 
     pub fn as_class(&self) -> Result<Class, Error> {
         match self {
             Value::Class(class) => Ok(class.clone()),
-            _ => todo!("Type conversion error."),
+            _ => Err(Error::new(INVALID_CLASS_CONVERSION)),
         }
     }
 

@@ -14,15 +14,14 @@ use crate::{
 };
 use std::fmt::{Debug, Display, Formatter};
 
-pub type TagsMap = Vec<(&'static str, String)>;
+pub type Tags = Vec<(&'static str, String)>;
 
 #[derive(thiserror::Error, Clone)]
-
 pub struct Error {
     error_code: ErrorCode,
     source_code: Option<Source>,
     span: Span,
-    tags: TagsMap,
+    tags: Tags,
 }
 
 impl Error {
@@ -31,7 +30,7 @@ impl Error {
             error_code,
             source_code: None,
             span: Span::empty(),
-            tags: TagsMap::new(),
+            tags: Tags::new(),
         }
     }
 
@@ -45,7 +44,7 @@ impl Error {
         self
     }
 
-    pub fn with_tags(mut self, tags: TagsMap) -> Self {
+    pub fn with_tags(mut self, tags: Tags) -> Self {
         self.tags = tags;
         self
     }
@@ -66,7 +65,7 @@ impl Display for Error {
 pub trait ResultExt {
     fn with_source(self, source: impl Fn() -> Source) -> Self;
     fn with_span(self, span: Span) -> Self;
-    fn with_tags(self, tags: TagsMap) -> Self;
+    fn with_tags(self, tags: Tags) -> Self;
 }
 
 impl<T> ResultExt for Result<T, Error> {
@@ -78,7 +77,7 @@ impl<T> ResultExt for Result<T, Error> {
         self.map_err(|error| error.with_span(span))
     }
 
-    fn with_tags(self, tags: TagsMap) -> Self {
+    fn with_tags(self, tags: Tags) -> Self {
         self.map_err(|error| error.with_tags(tags))
     }
 }
@@ -86,7 +85,7 @@ impl<T> ResultExt for Result<T, Error> {
 #[macro_export]
 macro_rules! error_tags {
     ($($tag:ident => $value:expr),*) => {{
-        let mut tags = $crate::error::TagsMap::default();
+        let mut tags = $crate::error::Tags::default();
 
         $(
             tags.push((stringify!($tag), $value));

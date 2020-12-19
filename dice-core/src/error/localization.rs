@@ -1,4 +1,4 @@
-use crate::error::{codes::ErrorCode, TagsMap};
+use crate::error::{codes::ErrorCode, Tags};
 use fluent_templates::{fluent_bundle::FluentValue, loader::langid, LanguageIdentifier, Loader};
 use std::collections::HashMap;
 
@@ -18,7 +18,7 @@ fluent_templates::static_loader! {
     };
 }
 
-pub fn localize_error_code(error_code: ErrorCode, tags: &TagsMap, locale: &Locale) -> String {
+pub fn localize_error_code(error_code: ErrorCode, tags: &Tags, locale: &Locale) -> String {
     let args = tags
         .iter()
         .map(|(key, value)| (key.to_string(), FluentValue::String(std::borrow::Cow::Borrowed(value))))
