@@ -6,10 +6,10 @@ use super::{
     IfExpression, LitAnonymousFn, LitBool, LitFloat, LitIdent, LitInt, LitList, LitNull, LitObject, LitString, LitUnit,
     Prefix, Return, SyntaxNode, SyntaxNodeId, SyntaxTree, UnaryOperator, VarDecl, WhileLoop,
 };
-use crate::parser::rules::{ParseResult, ParserRules};
 use crate::{
-    parser::rules::Precedence, ClassDecl, ErrorPropagate, FieldAccess, FnArg, ForLoop, ImportDecl, Index, Is, Loop,
-    NullPropagate, OpDecl, OverloadedOperator, SuperAccess, SuperCall, TypeAnnotation, VarDeclKind,
+    parser::rules::{ParseResult, ParserRules, Precedence},
+    ClassDecl, ErrorPropagate, FieldAccess, FnArg, ForLoop, ImportDecl, Index, Is, Loop, NullPropagate, OpDecl,
+    OverloadedOperator, SuperAccess, SuperCall, TypeAnnotation, VarDeclKind,
 };
 use dice_core::{error::Error, source::Source, span::Span};
 use id_arena::Arena;
