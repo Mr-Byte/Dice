@@ -29,4 +29,17 @@ E3005 = The value cannot be converted to a symbol.
 E3006 = The value cannot be converted to an object.
 E3007 = The value cannot be converted to a class.
 
+E3100 = Type assertion failed due to mismatching types.
+E3101 = Type assertion failed due to unexpected null value.
+E3102 = Type assertion failed due to the target value not being a boolean type.
+E3103 = Type assertion failed due to the target value not being a numeric type.
+E3104 = Type assertion failed due to the target value not being a function type.
+E3105 = Type assertion failed due to encountering invalid super type.
+
+E3200 = Attempted to divide by zero.
+
+E3300 = Global variable {$name} cannot be redefined.
+E3301 = Global variable {$name} could not be found.
+E3302 = Global operator {$name} could not be found.
+
 # TODO: Syntax errors and variable usage errors.

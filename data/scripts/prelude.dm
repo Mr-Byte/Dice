@@ -56,14 +56,6 @@ op ..=(start, end) {
     RangeInclusive(start, end)
 }
 
-op d(value) {
-    value
-}
-
-op d(lhs, rhs) {
-    lhs * rhs
-}
-
 export class Result {
     fn new(self, is_ok: Bool, result: Any?) {
         self.is_ok = is_ok

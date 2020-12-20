@@ -3,15 +3,20 @@ mod helper;
 use crate::{module::ModuleLoader, runtime::Runtime, stack::StackFrame};
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
-    error::{Error, ResultExt, TraceLocation},
+    error::{
+        codes::{
+            DIVIDE_BY_ZERO, GLOBAL_VARIABLE_ALREADY_DEFINED, GLOBAL_VARIABLE_UNDEFINED, TYPE_ASSERTION_BOOL_FAILURE, TYPE_ASSERTION_FAILURE,
+            TYPE_ASSERTION_FUNCTION_FAILURE, TYPE_ASSERTION_NULLABILITY_FAILURE, TYPE_ASSERTION_NUMBER_FAILURE, TYPE_ASSERTION_SUPER_FAILURE,
+        },
+        Error, ResultExt, TraceLocation,
+    },
+    error_tags,
     protocol::operator::{ADD, DICE_ROLL, DIE_ROLL, DIV, EQ, GT, GTE, LT, LTE, MUL, NEQ, RANGE_EXCLUSIVE, RANGE_INCLUSIVE, REM, SUB},
     runtime::Runtime as _,
     upvalue::{Upvalue, UpvalueState},
     value::{Class, FnClosure, Object, Value, ValueKind},
 };
 use std::collections::hash_map::Entry;
-
-// TODO: Restrict the sub-classing of primitives. <-- This is a runtime error.
 
 impl<L> Runtime<L>
 where
@@ -141,7 +146,6 @@ where
                 Instruction::Return => break,
             };
 
-            // TODO: Create a stack of errors, to help with proper stack traces.
             result.with_stack_location(|| TraceLocation::from_bytecode(&bytecode, cursor.last_instruction_offset()))?;
         }
 
@@ -171,7 +175,7 @@ where
 
     fn assert_bool(&mut self) -> Result<(), Error> {
         if self.stack.peek_mut(0).kind() != ValueKind::Bool {
-            todo!("Value must evaluate to a boolean.");
+            return Err(Error::new(TYPE_ASSERTION_BOOL_FAILURE));
         }
 
         Ok(())
@@ -183,7 +187,7 @@ where
         let value = &self.stack[stack_frame][cursor.read_u8() as usize];
 
         if *value == Value::Null {
-            todo!("Value cannot be null");
+            return Err(Error::new(TYPE_ASSERTION_NULLABILITY_FAILURE));
         }
 
         let is_type = value
@@ -196,8 +200,7 @@ where
         if is_type {
             Ok(())
         } else {
-            // TODO: Create a more contextual error.
-            todo!("Types did not match.");
+            Err(Error::new(TYPE_ASSERTION_FAILURE))
         }
     }
 
@@ -220,8 +223,7 @@ where
         if is_type {
             Ok(())
         } else {
-            // TODO: Create a more contextual error.
-            todo!("Types did not match.");
+            Err(Error::new(TYPE_ASSERTION_FAILURE))
         }
     }
 
@@ -231,7 +233,7 @@ where
         let value = self.stack.peek(0);
 
         if *value == Value::Null {
-            return todo!("Value cannot be null.");
+            return Err(Error::new(TYPE_ASSERTION_NULLABILITY_FAILURE));
         }
 
         let is_type = value
@@ -244,8 +246,7 @@ where
         if is_type {
             Ok(())
         } else {
-            // TODO: Create a more contextual error.
-            todo!("Types did not match.");
+            Err(Error::new(TYPE_ASSERTION_FAILURE))
         }
     }
 
@@ -268,15 +269,14 @@ where
         if is_type {
             Ok(())
         } else {
-            // TODO: Create a more contextual error.
-            todo!("Types did not match.");
+            Err(Error::new(TYPE_ASSERTION_FAILURE))
         }
     }
 
     fn not(&mut self) -> Result<(), Error> {
         match self.stack.peek_mut(0) {
             Value::Bool(value) => *value = !*value,
-            _ => return todo!("Value must be a boolean."),
+            _ => return Err(Error::new(TYPE_ASSERTION_BOOL_FAILURE)),
         }
 
         Ok(())
@@ -291,7 +291,7 @@ where
             Value::Int(value) => *value = -*value,
             Value::Float(value) => *value = -*value,
             _ => {
-                todo!("Can only negate an integer or float.",)
+                return Err(Error::new(TYPE_ASSERTION_NUMBER_FAILURE));
             }
         }
 
@@ -312,7 +312,7 @@ where
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Int(rhs), Value::Int(lhs)) => {
                 if rhs == 0 {
-                    todo!("Divide by zero.")
+                    return Err(Error::new(DIVIDE_BY_ZERO));
                 }
 
                 *lhs /= rhs;
@@ -328,7 +328,7 @@ where
         match (self.stack.pop(), self.stack.peek_mut(0)) {
             (Value::Int(rhs), Value::Int(lhs)) => {
                 if rhs == 0 {
-                    todo!("Divide by zero.")
+                    return Err(Error::new(DIVIDE_BY_ZERO));
                 }
 
                 *lhs %= rhs;
@@ -516,7 +516,6 @@ where
     }
 
     fn load_local(&mut self, stack_frame: StackFrame, cursor: &mut BytecodeCursor) -> Result<(), Error> {
-        // TODO Bounds check the slot?
         let slot = cursor.read_u8() as usize;
         let frame = &self.stack[stack_frame];
         let value = frame[slot].clone();
@@ -625,8 +624,12 @@ where
         let global_name = value.as_symbol()?;
         let global = self.stack.pop();
 
-        match self.globals.entry(global_name) {
-            Entry::Occupied(_) => todo!("Return error that global already exists."),
+        match self.globals.entry(global_name.clone()) {
+            Entry::Occupied(_) => {
+                return Err(Error::new(GLOBAL_VARIABLE_ALREADY_DEFINED).with_tags(error_tags! {
+                    name => global_name.to_string()
+                }))
+            }
             Entry::Vacant(entry) => {
                 entry.insert(global);
             }
@@ -638,7 +641,11 @@ where
     fn load_global(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), Error> {
         let const_pos = cursor.read_u8() as usize;
         let global = bytecode.constants()[const_pos].as_symbol()?;
-        let value = self.globals.get(&global).cloned().ok_or_else(|| todo!("Variable not found."))?;
+        let value = self.globals.get(&global).cloned().ok_or_else(|| {
+            Error::new(GLOBAL_VARIABLE_UNDEFINED).with_tags(error_tags! {
+                name => global.to_string()
+            })
+        })?;
 
         self.stack.push(value);
 
@@ -752,8 +759,9 @@ where
         let receiver = self.stack.pop();
         let class = self.stack.pop().as_class()?;
 
+        // TODO: Assert sub-classing rules around value types.
         if !self.is_value_of_type(&receiver, &class)? {
-            return todo!("TODO: Invalid super type error.");
+            return Err(Error::new(TYPE_ASSERTION_SUPER_FAILURE));
         }
 
         let method = self.get_method(Some(&class), &key, &receiver);
@@ -827,7 +835,7 @@ where
                 let closure = Value::FnClosure(FnClosure::new(fn_script.clone(), upvalues.into_boxed_slice()));
                 self.stack.push(closure);
             }
-            _ => todo!("Not a function."),
+            _ => return Err(Error::new(TYPE_ASSERTION_FUNCTION_FAILURE)),
         }
 
         Ok(())

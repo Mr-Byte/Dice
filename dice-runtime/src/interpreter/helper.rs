@@ -1,6 +1,10 @@
 use crate::{module::ModuleLoader, runtime::Runtime};
 use dice_core::{
-    error::Error,
+    error::{
+        codes::{GLOBAL_OPERATOR_UNDEFINED, TYPE_ASSERTION_FUNCTION_FAILURE},
+        Error,
+    },
+    error_tags,
     protocol::{class::NEW, ProtocolSymbol},
     upvalue::{Upvalue, UpvalueState},
     value::{Class, FnBound, FnNative, FnScript, Object, Symbol, Value, ValueKind},
@@ -31,7 +35,11 @@ impl<L: ModuleLoader> Runtime<L> {
                 runtime.stack.push(rhs);
                 runtime.call_fn(1)?;
             } else {
-                let value = runtime.globals.get(&operator).ok_or_else(|| todo!("No global operator defined."))?;
+                let value = runtime.globals.get(&operator).ok_or_else(|| {
+                    Error::new(GLOBAL_OPERATOR_UNDEFINED).with_tags(error_tags! {
+                        name => operator.to_string()
+                    })
+                })?;
 
                 runtime.stack.push(value.clone());
                 runtime.stack.push(lhs);
@@ -54,7 +62,11 @@ impl<L: ModuleLoader> Runtime<L> {
                 runtime.stack.push(method);
                 runtime.call_fn(0)?;
             } else {
-                let value = runtime.globals.get(&operator).ok_or_else(|| todo!("No global operator defined."))?;
+                let value = runtime.globals.get(&operator).ok_or_else(|| {
+                    Error::new(GLOBAL_OPERATOR_UNDEFINED).with_tags(error_tags! {
+                        name => operator.to_string()
+                    })
+                })?;
 
                 runtime.stack.push(value.clone());
                 runtime.stack.push(operand);
@@ -105,7 +117,6 @@ impl<L: ModuleLoader> Runtime<L> {
         value
     }
 
-    // TODO: Replace this mutually recursive call with an execution stack to prevent the thread's stack from overflowing.
     pub(crate) fn call_fn(&mut self, arg_count: usize) -> Result<(), Error> {
         let (function, receiver) = match self.stack.peek(arg_count) {
             Value::FnBound(fn_bound) => (fn_bound.function(), Some(fn_bound.receiver())),
@@ -117,7 +128,7 @@ impl<L: ModuleLoader> Runtime<L> {
             Value::FnScript(fn_script) => self.call_fn_script(arg_count, receiver, &fn_script, None)?,
             Value::Class(class) => self.call_class_constructor(arg_count, class, Value::Object(Object::new(class.clone())))?,
             Value::FnNative(fn_native) => self.call_fn_native(arg_count, receiver, fn_native)?,
-            _ => todo!("Not a function"),
+            _ => return Err(Error::new(TYPE_ASSERTION_FUNCTION_FAILURE)),
         };
 
         self.stack.push(value);

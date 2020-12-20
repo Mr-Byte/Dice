@@ -41,3 +41,16 @@ pub static INVALID_STRING_CONVERSION: ErrorCode = "E3004";
 pub static INVALID_SYMBOL_CONVERSION: ErrorCode = "E3005";
 pub static INVALID_OBJECT_CONVERSION: ErrorCode = "E3006";
 pub static INVALID_CLASS_CONVERSION: ErrorCode = "E3007";
+
+pub static TYPE_ASSERTION_FAILURE: ErrorCode = "E3100";
+pub static TYPE_ASSERTION_NULLABILITY_FAILURE: ErrorCode = "E3101";
+pub static TYPE_ASSERTION_BOOL_FAILURE: ErrorCode = "E3102";
+pub static TYPE_ASSERTION_NUMBER_FAILURE: ErrorCode = "E3103";
+pub static TYPE_ASSERTION_FUNCTION_FAILURE: ErrorCode = "E3104";
+pub static TYPE_ASSERTION_SUPER_FAILURE: ErrorCode = "E3105";
+
+pub static DIVIDE_BY_ZERO: ErrorCode = "E3200";
+
+pub static GLOBAL_VARIABLE_ALREADY_DEFINED: ErrorCode = "E3300";
+pub static GLOBAL_VARIABLE_UNDEFINED: ErrorCode = "E3301";
+pub static GLOBAL_OPERATOR_UNDEFINED: ErrorCode = "E3302";
