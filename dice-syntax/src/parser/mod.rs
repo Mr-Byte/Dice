@@ -193,7 +193,7 @@ impl<'a> Parser<'a> {
     }
 
     fn control_flow(&mut self) -> ParseResult {
-        let token = self.lexer.next()?;
+        let token = self.lexer.next()?.clone();
 
         let node = match token.kind {
             TokenKind::Break => SyntaxNode::Break(Break { span: token.span }),
@@ -554,7 +554,7 @@ impl<'a> Parser<'a> {
     }
 
     fn binary_operator(&mut self, lhs: SyntaxNodeId, _: bool, span_start: Span) -> ParseResult {
-        let token = self.lexer.next()?;
+        let token = self.lexer.next()?.clone();
         let operator = match token.kind {
             TokenKind::Pipeline => BinaryOperator::Pipeline,
             TokenKind::Coalesce => BinaryOperator::Coalesce,
@@ -606,7 +606,7 @@ impl<'a> Parser<'a> {
     }
 
     fn prefix_operator(&mut self, _: bool) -> ParseResult {
-        let token = self.lexer.next()?;
+        let token = self.lexer.next()?.clone();
         let child_node_id = self.parse_precedence(Precedence::Unary)?;
         let operator = match token.kind {
             TokenKind::Minus => UnaryOperator::Negate,
@@ -647,9 +647,8 @@ impl<'a> Parser<'a> {
     fn index_access(&mut self, expression: SyntaxNodeId, can_assign: bool, span_start: Span) -> ParseResult {
         self.lexer.consume(TokenKind::LeftSquare)?;
         let index_expression = self.expression()?;
-        self.lexer.consume(TokenKind::RightSquare)?;
+        let span_end = self.lexer.consume(TokenKind::RightSquare)?.span;
 
-        let span_end = self.lexer.current().span;
         let node = SyntaxNode::Index(Index {
             expression,
             index_expression,

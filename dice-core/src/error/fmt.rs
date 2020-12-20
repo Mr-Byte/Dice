@@ -45,16 +45,22 @@ impl ErrorFormatter for HumanReadableErrorFormatter {
             }
         }
 
-        if !error.stack_trace.is_empty() {
+        if !error.trace.is_empty() {
             writeln!(buffer)?;
             // TODO: Should this be localized?
-            writeln!(buffer, "Stack Trace:")?;
+            writeln!(buffer, "Trace:")?;
 
-            for location in &error.stack_trace {
-                if let Some(path) = &location.path {
-                    writeln!(buffer, "{}:{}:{}", path, location.position.line + 1, location.position.column_utf16 + 1)?;
+            for trace in error.trace.iter().rev() {
+                let position = trace.source.line_index().position_of(trace.span.start);
+
+                if let Some(path) = &trace.source.path() {
+                    writeln!(buffer, "  Location: {}:{}:{}", path, position.line + 1, position.column_utf16 + 1)?;
                 } else {
-                    writeln!(buffer, "<Script>:{}:{}", location.position.line + 1, location.position.column_utf16 + 1)?;
+                    writeln!(buffer, "  Location: <Script>:{}:{}", position.line + 1, position.column_utf16 + 1)?;
+                }
+
+                for line in trace.source.line_index().lines(trace.span) {
+                    writeln!(buffer, "    {:<4} | {}", position.line + 1, &trace.source.source()[line.range()].trim())?
                 }
             }
         }

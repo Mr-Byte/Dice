@@ -11,7 +11,7 @@ impl Locale {
 
 fluent_templates::static_loader! {
     static LOCALES = {
-        locales: "./resources/locales",
+        locales: "../data/locales",
         fallback_language: "en-US",
         // TODO: Make this configurable (most likely via Cargo features).
         customise: |bundle| bundle.set_use_isolating(false),

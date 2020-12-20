@@ -3,7 +3,7 @@ mod helper;
 use crate::{module::ModuleLoader, runtime::Runtime, stack::StackFrame};
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
-    error::{Error, ResultExt, StackLocation},
+    error::{Error, ResultExt, TraceLocation},
     protocol::operator::{ADD, DICE_ROLL, DIE_ROLL, DIV, EQ, GT, GTE, LT, LTE, MUL, NEQ, RANGE_EXCLUSIVE, RANGE_INCLUSIVE, REM, SUB},
     runtime::Runtime as _,
     upvalue::{Upvalue, UpvalueState},
@@ -127,15 +127,13 @@ where
                 Instruction::AssertTypeOrNullForLocal => self.assert_type_or_null_for_local(stack_frame, &mut cursor),
                 Instruction::AssertTypeAndReturn => {
                     self.assert_type_and_return()
-                        .with_source(|| bytecode.source().clone())
-                        .with_span(|| bytecode.source_map()[&cursor.last_instruction_offset()])?;
+                        .with_stack_location(|| TraceLocation::from_bytecode(&bytecode, cursor.last_instruction_offset()))?;
 
                     break;
                 }
                 Instruction::AssertTypeOrNullAndReturn => {
                     self.assert_type_or_null_and_return()
-                        .with_source(|| bytecode.source().clone())
-                        .with_span(|| bytecode.source_map()[&cursor.last_instruction_offset()])?;
+                        .with_stack_location(|| TraceLocation::from_bytecode(&bytecode, cursor.last_instruction_offset()))?;
 
                     break;
                 }
@@ -144,7 +142,7 @@ where
             };
 
             // TODO: Create a stack of errors, to help with proper stack traces.
-            result.with_stack_location(|| StackLocation::from_bytecode(&bytecode, cursor.last_instruction_offset()))?;
+            result.with_stack_location(|| TraceLocation::from_bytecode(&bytecode, cursor.last_instruction_offset()))?;
         }
 
         // NOTE: subtract 1 to compensate for the last item of the stack not yet being popped.

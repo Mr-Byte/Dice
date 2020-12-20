@@ -28,15 +28,16 @@ impl<'a> Lexer<'a> {
         &self.current
     }
 
-    pub fn next(&mut self) -> Result<Token<'a>, Error> {
-        Ok(self.tokens.next().transpose()?.unwrap_or_else(Token::end_of_input))
+    pub fn next(&mut self) -> Result<&Token<'a>, Error> {
+        self.current = self.tokens.next().transpose()?.unwrap_or_else(Token::end_of_input);
+        Ok(&self.current)
     }
 
     pub fn peek(&mut self) -> Result<Token<'a>, Error> {
         self.tokens.peek().cloned().unwrap_or_else(|| Ok(Token::end_of_input()))
     }
 
-    pub fn consume(&mut self, kind: TokenKind) -> Result<Token, Error> {
+    pub fn consume(&mut self, kind: TokenKind) -> Result<&Token, Error> {
         let next = self.next()?;
         if next.kind == kind {
             Ok(next)
@@ -48,7 +49,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    pub fn consume_ident(&mut self) -> Result<(Token, String), Error> {
+    pub fn consume_ident(&mut self) -> Result<(&Token, String), Error> {
         let next = self.next()?;
         if let TokenKind::Identifier = next.kind {
             let ident = next.slice.to_owned();
@@ -62,7 +63,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    pub fn consume_string(&mut self) -> Result<(Token, String), Error> {
+    pub fn consume_string(&mut self) -> Result<(&Token, String), Error> {
         let next = self.next()?;
         if let TokenKind::String = next.kind {
             let string = next.slice.to_owned();
@@ -75,7 +76,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    pub fn consume_one_of(&mut self, kinds: &[TokenKind]) -> Result<Token, Error> {
+    pub fn consume_one_of(&mut self, kinds: &[TokenKind]) -> Result<&Token, Error> {
         let next = self.next()?;
         if kinds.contains(&next.kind) {
             Ok(next)

@@ -23,8 +23,8 @@ pub struct Error {
     source_code: Option<Source>,
     span: Span,
     tags: Tags,
-    // NOTE: Optional stack trace.
-    stack_trace: Vec<StackLocation>,
+    // NOTE: Optional trace.
+    trace: Vec<TraceLocation>,
 }
 
 impl Error {
@@ -34,7 +34,7 @@ impl Error {
             source_code: None,
             span: Span::empty(),
             tags: Tags::new(),
-            stack_trace: Vec::new(),
+            trace: Vec::new(),
         }
     }
 
@@ -67,23 +67,17 @@ impl Display for Error {
 }
 
 #[derive(Debug, Clone)]
-pub struct StackLocation {
-    pub path: Option<String>,
-    pub function_name: Option<String>,
-    pub position: LineColumn,
+pub struct TraceLocation {
+    pub source: Source,
+    pub span: Span,
 }
 
-impl StackLocation {
+impl TraceLocation {
     pub fn from_bytecode(bytecode: &Bytecode, offset: u64) -> Self {
         let span = bytecode.source_map()[&offset];
-        let position = bytecode.source().line_index().position_of(span.start);
-        let path = bytecode.source().path().map(ToOwned::to_owned);
+        let source = bytecode.source().clone();
 
-        Self {
-            path,
-            position,
-            function_name: None,
-        }
+        Self { source, span }
     }
 }
 
@@ -91,7 +85,7 @@ pub trait ResultExt {
     fn with_source(self, source: impl Fn() -> Source) -> Self;
     fn with_span(self, span: impl Fn() -> Span) -> Self;
     fn with_tags(self, tags: Tags) -> Self;
-    fn with_stack_location(self, stack_location: impl Fn() -> StackLocation) -> Self;
+    fn with_stack_location(self, stack_location: impl Fn() -> TraceLocation) -> Self;
 }
 
 impl<T> ResultExt for Result<T, Error> {
@@ -107,9 +101,9 @@ impl<T> ResultExt for Result<T, Error> {
         self.map_err(|error| error.with_tags(tags))
     }
 
-    fn with_stack_location(self, stack_location: impl Fn() -> StackLocation) -> Self {
+    fn with_stack_location(self, stack_location: impl Fn() -> TraceLocation) -> Self {
         self.map_err(|mut error| {
-            error.stack_trace.push(stack_location());
+            error.trace.push(stack_location());
             error
         })
     }
