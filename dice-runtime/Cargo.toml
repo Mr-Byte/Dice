@@ -1,12 +1,13 @@
 [package]
-name = "dice-runtime"
-version = "0.1.0"
 authors = ["Josh Rodgers <bytemr@gmail.com>"]
 edition = "2018"
+name = "dice-runtime"
+version = "0.1.0"
 
 [dependencies]
+dunce = "1.0"
 thiserror = "1.0"
-wyhash = "0.4"
+wyhash = "0.5"
 
-dice-core = {path = "../dice-core"}
 dice-compiler = {path = "../dice-compiler"}
+dice-core = {path = "../dice-core"}

@@ -1,8 +1,10 @@
-use crate::error::{
-    localization::{localize_error_code, Locale},
-    Error,
+use crate::{
+    error::{
+        localization::{localize_error_code, Locale},
+        Error,
+    },
+    source::Source,
 };
-use crate::source::Source;
 use std::fmt::Write;
 
 pub trait ErrorFormatter {
@@ -36,15 +38,24 @@ impl ErrorFormatter for HumanReadableErrorFormatter {
                 writeln!(buffer, "     |")?;
 
                 for line in &lines {
-                    writeln!(
-                        buffer,
-                        "{:<4} | {}",
-                        position.line + 1,
-                        &source.source()[line.range()].trim_end()
-                    )?
+                    writeln!(buffer, "{:<4} | {}", position.line + 1, &source.source()[line.range()].trim_end())?
                 }
 
                 writeln!(buffer, "     |")?;
+            }
+        }
+
+        if !error.stack_trace.is_empty() {
+            writeln!(buffer)?;
+            // TODO: Should this be localized?
+            writeln!(buffer, "Stack Trace:")?;
+
+            for location in &error.stack_trace {
+                if let Some(path) = &location.path {
+                    writeln!(buffer, "{}:{}:{}", path, location.position.line + 1, location.position.column_utf16 + 1)?;
+                } else {
+                    writeln!(buffer, "<Script>:{}:{}", location.position.line + 1, location.position.column_utf16 + 1)?;
+                }
             }
         }
 
@@ -57,20 +68,9 @@ impl HumanReadableErrorFormatter {
         let position = source.line_index().position_of(error.span.start);
 
         if let Some(path) = source.path() {
-            writeln!(
-                buffer,
-                "  --> {}:{}:{}",
-                path,
-                position.line + 1,
-                position.column_utf16 + 1
-            )
+            writeln!(buffer, "  --> {}:{}:{}", path, position.line + 1, position.column_utf16 + 1)
         } else {
-            writeln!(
-                buffer,
-                "  --> <Script>:{}:{}",
-                position.line + 1,
-                position.column_utf16 + 1
-            )
+            writeln!(buffer, "  --> <Script>:{}:{}", position.line + 1, position.column_utf16 + 1)
         }
     }
 

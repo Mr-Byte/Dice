@@ -41,12 +41,10 @@ impl<'a> Lexer<'a> {
         if next.kind == kind {
             Ok(next)
         } else {
-            Err(Error::new(UNEXPECTED_TOKEN)
-                .with_span(next.span)
-                .with_tags(error_tags! {
-                    expected => kind.to_string(),
-                    actual => next.kind.to_string()
-                }))
+            Err(Error::new(UNEXPECTED_TOKEN).with_span(next.span).with_tags(error_tags! {
+                expected => kind.to_string(),
+                actual => next.kind.to_string()
+            }))
         }
     }
 
@@ -57,12 +55,10 @@ impl<'a> Lexer<'a> {
 
             Ok((next, ident))
         } else {
-            Err(Error::new(UNEXPECTED_TOKEN)
-                .with_span(next.span)
-                .with_tags(error_tags! {
-                    // TODO: Revamp tokens to be easier to list the kind of.
-                    actual => next.kind.to_string()
-                }))
+            Err(Error::new(UNEXPECTED_TOKEN).with_span(next.span).with_tags(error_tags! {
+                // TODO: Revamp tokens to be easier to list the kind of.
+                actual => next.kind.to_string()
+            }))
         }
     }
 
@@ -73,11 +69,9 @@ impl<'a> Lexer<'a> {
 
             Ok((next, string))
         } else {
-            Err(Error::new(UNEXPECTED_TOKEN)
-                .with_span(next.span)
-                .with_tags(error_tags! {
-                    actual => next.kind.to_string()
-                }))
+            Err(Error::new(UNEXPECTED_TOKEN).with_span(next.span).with_tags(error_tags! {
+                actual => next.kind.to_string()
+            }))
         }
     }
 
@@ -86,12 +80,10 @@ impl<'a> Lexer<'a> {
         if kinds.contains(&next.kind) {
             Ok(next)
         } else {
-            Err(Error::new(UNEXPECTED_TOKEN)
-                .with_span(next.span)
-                .with_tags(error_tags! {
-                    expected => kinds.iter().map(ToString::to_string).collect::<Vec<_>>().join(", "),
-                    actual => next.kind.to_string()
-                }))
+            Err(Error::new(UNEXPECTED_TOKEN).with_span(next.span).with_tags(error_tags! {
+                expected => kinds.iter().map(ToString::to_string).collect::<Vec<_>>().join(", "),
+                actual => next.kind.to_string()
+            }))
         }
     }
 }
@@ -124,10 +116,7 @@ pub mod test {
 
     #[test]
     fn tokenize_operators() {
-        let delimiters = Source::new(
-            ".. ..= -> => . ?? % - + * / ! != == > >= < <= = d && ||",
-            SourceKind::Script,
-        );
+        let delimiters = Source::new(".. ..= -> => . ?? % - + * / ! != == > >= < <= = d && ||", SourceKind::Script);
         let mut tokens = Token::tokenize(&delimiters);
 
         assert_next_token!(tokens, TokenKind::RangeInclusive);
@@ -156,10 +145,7 @@ pub mod test {
 
     #[test]
     fn tokenize_literals() {
-        let delimiters = Source::new(
-            r#"1 -1 +1 1.0 -1.0 +1.0 abc _abc _123 "abc" "abc\"abc""#,
-            SourceKind::Script,
-        );
+        let delimiters = Source::new(r#"1 -1 +1 1.0 -1.0 +1.0 abc _abc _123 "abc" "abc\"abc""#, SourceKind::Script);
         let mut tokens = Token::tokenize(&delimiters);
 
         assert_next_token!(tokens, TokenKind::Integer);

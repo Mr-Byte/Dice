@@ -3,10 +3,8 @@ mod helper;
 use crate::{module::ModuleLoader, runtime::Runtime, stack::StackFrame};
 use dice_core::{
     bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
-    error::Error,
-    protocol::operator::{
-        ADD, DICE_ROLL, DIE_ROLL, DIV, EQ, GT, GTE, LT, LTE, MUL, NEQ, RANGE_EXCLUSIVE, RANGE_INCLUSIVE, REM, SUB,
-    },
+    error::{Error, ResultExt, StackLocation},
+    protocol::operator::{ADD, DICE_ROLL, DIE_ROLL, DIV, EQ, GT, GTE, LT, LTE, MUL, NEQ, RANGE_EXCLUSIVE, RANGE_INCLUSIVE, REM, SUB},
     runtime::Runtime as _,
     upvalue::{Upvalue, UpvalueState},
     value::{Class, FnClosure, Object, Value, ValueKind},
@@ -19,56 +17,91 @@ impl<L> Runtime<L>
 where
     L: ModuleLoader,
 {
-    pub(super) fn execute_bytecode(
-        &mut self,
-        bytecode: &Bytecode,
-        stack_frame: StackFrame,
-        parent_upvalues: Option<&[Upvalue]>,
-    ) -> Result<Value, Error> {
+    pub(super) fn execute_bytecode(&mut self, bytecode: &Bytecode, stack_frame: StackFrame, parent_upvalues: Option<&[Upvalue]>) -> Result<Value, Error> {
         let initial_stack_depth = self.stack.len();
         let mut cursor = bytecode.cursor();
 
         while let Some(instruction) = cursor.read_instruction() {
-            match instruction {
-                Instruction::PushNull => self.stack.push(Value::Null),
-                Instruction::PushUnit => self.stack.push(Value::Unit),
-                Instruction::PushFalse => self.stack.push(Value::Bool(false)),
-                Instruction::PushTrue => self.stack.push(Value::Bool(true)),
-                Instruction::PushI0 => self.stack.push(Value::Int(0)),
-                Instruction::PushI1 => self.stack.push(Value::Int(1)),
-                Instruction::PushF0 => self.stack.push(Value::Float(0.0)),
-                Instruction::PushF1 => self.stack.push(Value::Float(1.0)),
-                Instruction::PushConst => self.push_const(bytecode, &mut cursor),
-                Instruction::Pop => std::mem::drop(self.stack.pop()),
-                Instruction::Swap => self.stack.swap(),
-                Instruction::Dup => self.dup(&mut cursor),
-                Instruction::CreateArray => self.create_list(&mut cursor),
-                Instruction::CreateObject => self.create_object(),
-                Instruction::InheritClass => self.inherit_class(&bytecode, &mut cursor)?,
-                Instruction::CreateClosure => {
-                    self.create_closure(bytecode, stack_frame, parent_upvalues, &mut cursor)?
+            let result = match instruction {
+                Instruction::PushNull => {
+                    self.stack.push(Value::Null);
+                    Ok(())
                 }
-                Instruction::Negate => self.neg()?,
-                Instruction::Not => self.not()?,
-                Instruction::DieRoll => self.die_roll()?,
-                Instruction::Multiply => self.mul()?,
-                Instruction::Divide => self.div()?,
-                Instruction::Remainder => self.rem()?,
-                Instruction::Add => self.add()?,
-                Instruction::Subtract => self.sub()?,
-                Instruction::GreaterThan => self.gt()?,
-                Instruction::GreaterThanOrEqual => self.gte()?,
-                Instruction::LessThan => self.lt()?,
-                Instruction::LessThanOrEqual => self.lte()?,
-                Instruction::Equal => self.eq()?,
-                Instruction::NotEqual => self.neq()?,
-                Instruction::Is => self.is()?,
-                Instruction::DiceRoll => self.dice_roll()?,
-                Instruction::RangeExclusive => self.range_exclusive()?,
-                Instruction::RangeInclusive => self.range_inclusive()?,
+                Instruction::PushUnit => {
+                    self.stack.push(Value::Unit);
+                    Ok(())
+                }
+                Instruction::PushFalse => {
+                    self.stack.push(Value::Bool(false));
+                    Ok(())
+                }
+                Instruction::PushTrue => {
+                    self.stack.push(Value::Bool(true));
+                    Ok(())
+                }
+                Instruction::PushI0 => {
+                    self.stack.push(Value::Int(0));
+                    Ok(())
+                }
+                Instruction::PushI1 => {
+                    self.stack.push(Value::Int(1));
+                    Ok(())
+                }
+                Instruction::PushF0 => {
+                    self.stack.push(Value::Float(0.0));
+                    Ok(())
+                }
+                Instruction::PushF1 => {
+                    self.stack.push(Value::Float(1.0));
+                    Ok(())
+                }
+                Instruction::PushConst => {
+                    self.push_const(bytecode, &mut cursor);
+                    Ok(())
+                }
+                Instruction::Pop => {
+                    std::mem::drop(self.stack.pop());
+                    Ok(())
+                }
+                Instruction::Swap => {
+                    self.stack.swap();
+                    Ok(())
+                }
+                Instruction::Dup => {
+                    self.dup(&mut cursor);
+                    Ok(())
+                }
+                Instruction::CreateArray => {
+                    self.create_list(&mut cursor);
+                    Ok(())
+                }
+                Instruction::CreateObject => {
+                    self.create_object();
+                    Ok(())
+                }
+                Instruction::InheritClass => self.inherit_class(&bytecode, &mut cursor),
+                Instruction::CreateClosure => self.create_closure(bytecode, stack_frame, parent_upvalues, &mut cursor),
+                Instruction::Negate => self.neg(),
+                Instruction::Not => self.not(),
+                Instruction::DieRoll => self.die_roll(),
+                Instruction::Multiply => self.mul(),
+                Instruction::Divide => self.div(),
+                Instruction::Remainder => self.rem(),
+                Instruction::Add => self.add(),
+                Instruction::Subtract => self.sub(),
+                Instruction::GreaterThan => self.gt(),
+                Instruction::GreaterThanOrEqual => self.gte(),
+                Instruction::LessThan => self.lt(),
+                Instruction::LessThanOrEqual => self.lte(),
+                Instruction::Equal => self.eq(),
+                Instruction::NotEqual => self.neq(),
+                Instruction::Is => self.is(),
+                Instruction::DiceRoll => self.dice_roll(),
+                Instruction::RangeExclusive => self.range_exclusive(),
+                Instruction::RangeInclusive => self.range_inclusive(),
                 Instruction::Jump => self.jump(&mut cursor),
-                Instruction::JumpIfFalse => self.jump_if_false(&mut cursor)?,
-                Instruction::JumpIfTrue => self.jump_if_true(&mut cursor)?,
+                Instruction::JumpIfFalse => self.jump_if_false(&mut cursor),
+                Instruction::JumpIfTrue => self.jump_if_true(&mut cursor),
                 Instruction::LoadLocal => self.load_local(stack_frame, &mut cursor),
                 Instruction::StoreLocal => self.store_local(stack_frame, &mut cursor),
                 Instruction::AssignLocal => self.assign_local(stack_frame, &mut cursor),
@@ -76,35 +109,42 @@ where
                 Instruction::StoreUpvalue => self.store_upvalue(parent_upvalues, &mut cursor),
                 Instruction::AssignUpvalue => self.assign_upvalue(parent_upvalues, &mut cursor),
                 Instruction::CloseUpvalue => self.close_upvalue(stack_frame, &mut cursor),
-                Instruction::LoadGlobal => self.load_global(bytecode, &mut cursor)?,
-                Instruction::StoreGlobal => self.store_global(bytecode, &mut cursor)?,
-                Instruction::LoadField => self.load_field(bytecode, &mut cursor)?,
-                Instruction::StoreField => self.store_field(bytecode, &mut cursor)?,
-                Instruction::AssignField => self.assign_field(bytecode, &mut cursor)?,
-                Instruction::LoadIndex => self.load_index()?,
-                Instruction::StoreIndex => self.store_index()?,
-                Instruction::AssignIndex => self.assign_index()?,
-                Instruction::LoadMethod => self.load_method(bytecode, &mut cursor)?,
-                Instruction::StoreMethod => self.store_method(bytecode, &mut cursor)?,
-                Instruction::LoadFieldToLocal => self.load_field_to_local(bytecode, stack_frame, &mut cursor)?,
-                Instruction::Call => self.call(&mut cursor)?,
-                Instruction::CallSuper => self.call_super(&mut cursor)?,
-                Instruction::AssertBool => self.assert_bool()?,
-                Instruction::AssertTypeForLocal => self.assert_type_for_local(stack_frame, &mut cursor)?,
-                Instruction::AssertTypeOrNullForLocal => {
-                    self.assert_type_or_null_for_local(stack_frame, &mut cursor)?
-                }
+                Instruction::LoadGlobal => self.load_global(bytecode, &mut cursor),
+                Instruction::StoreGlobal => self.store_global(bytecode, &mut cursor),
+                Instruction::LoadField => self.load_field(bytecode, &mut cursor),
+                Instruction::StoreField => self.store_field(bytecode, &mut cursor),
+                Instruction::AssignField => self.assign_field(bytecode, &mut cursor),
+                Instruction::LoadIndex => self.load_index(),
+                Instruction::StoreIndex => self.store_index(),
+                Instruction::AssignIndex => self.assign_index(),
+                Instruction::LoadMethod => self.load_method(bytecode, &mut cursor),
+                Instruction::StoreMethod => self.store_method(bytecode, &mut cursor),
+                Instruction::LoadFieldToLocal => self.load_field_to_local(bytecode, stack_frame, &mut cursor),
+                Instruction::Call => self.call(&mut cursor),
+                Instruction::CallSuper => self.call_super(&mut cursor),
+                Instruction::AssertBool => self.assert_bool(),
+                Instruction::AssertTypeForLocal => self.assert_type_for_local(stack_frame, &mut cursor),
+                Instruction::AssertTypeOrNullForLocal => self.assert_type_or_null_for_local(stack_frame, &mut cursor),
                 Instruction::AssertTypeAndReturn => {
-                    self.assert_type_and_return()?;
+                    self.assert_type_and_return()
+                        .with_source(|| bytecode.source().clone())
+                        .with_span(|| bytecode.source_map()[&cursor.last_instruction_offset()])?;
+
                     break;
                 }
                 Instruction::AssertTypeOrNullAndReturn => {
-                    self.assert_type_or_null_and_return()?;
+                    self.assert_type_or_null_and_return()
+                        .with_source(|| bytecode.source().clone())
+                        .with_span(|| bytecode.source_map()[&cursor.last_instruction_offset()])?;
+
                     break;
                 }
-                Instruction::LoadModule => self.load_module(&bytecode, &mut cursor)?,
+                Instruction::LoadModule => self.load_module(&bytecode, &mut cursor),
                 Instruction::Return => break,
-            }
+            };
+
+            // TODO: Create a stack of errors, to help with proper stack traces.
+            result.with_stack_location(|| StackLocation::from_bytecode(&bytecode, cursor.last_instruction_offset()))?;
         }
 
         // NOTE: subtract 1 to compensate for the last item of the stack not yet being popped.
@@ -119,9 +159,11 @@ where
         Ok(self.stack.pop())
     }
 
-    fn jump(&mut self, cursor: &mut BytecodeCursor) {
+    fn jump(&mut self, cursor: &mut BytecodeCursor) -> Result<(), Error> {
         let offset = cursor.read_offset();
         cursor.offset_position(offset);
+
+        Ok(())
     }
 
     fn dup(&mut self, cursor: &mut BytecodeCursor) {
@@ -161,11 +203,7 @@ where
         }
     }
 
-    fn assert_type_or_null_for_local(
-        &mut self,
-        stack_frame: StackFrame,
-        cursor: &mut BytecodeCursor,
-    ) -> Result<(), Error> {
+    fn assert_type_or_null_for_local(&mut self, stack_frame: StackFrame, cursor: &mut BytecodeCursor) -> Result<(), Error> {
         let class = self.stack.pop();
         let class = class.as_class()?;
         let value = &self.stack[stack_frame][cursor.read_u8() as usize];
@@ -479,31 +517,37 @@ where
         Ok(())
     }
 
-    fn load_local(&mut self, stack_frame: StackFrame, cursor: &mut BytecodeCursor) {
+    fn load_local(&mut self, stack_frame: StackFrame, cursor: &mut BytecodeCursor) -> Result<(), Error> {
         // TODO Bounds check the slot?
         let slot = cursor.read_u8() as usize;
         let frame = &self.stack[stack_frame];
         let value = frame[slot].clone();
         self.stack.push(value);
+
+        Ok(())
     }
 
-    fn store_local(&mut self, stack_frame: StackFrame, cursor: &mut BytecodeCursor) {
+    fn store_local(&mut self, stack_frame: StackFrame, cursor: &mut BytecodeCursor) -> Result<(), Error> {
         let value = self.stack.pop();
         let slot = cursor.read_u8() as usize;
 
         self.stack[stack_frame][slot] = value.clone();
         self.stack.push(value);
+
+        Ok(())
     }
 
-    fn assign_local(&mut self, stack_frame: StackFrame, cursor: &mut BytecodeCursor) {
+    fn assign_local(&mut self, stack_frame: StackFrame, cursor: &mut BytecodeCursor) -> Result<(), Error> {
         let value = self.stack.pop();
         let slot = cursor.read_u8() as usize;
 
         self.stack[stack_frame][slot] = value;
         self.stack.push(Value::Unit);
+
+        Ok(())
     }
 
-    fn load_upvalue(&mut self, parent_upvalues: Option<&[Upvalue]>, cursor: &mut BytecodeCursor) {
+    fn load_upvalue(&mut self, parent_upvalues: Option<&[Upvalue]>, cursor: &mut BytecodeCursor) -> Result<(), Error> {
         if let Some(parent_upvalues) = parent_upvalues {
             let upvalue_slot = cursor.read_u8() as usize;
             let upvalue = parent_upvalues[upvalue_slot].clone();
@@ -513,12 +557,14 @@ where
             };
 
             self.stack.push(value);
+
+            Ok(())
         } else {
             unreachable!("LoadUpvalue used in non-closure context.")
         }
     }
 
-    fn store_upvalue(&mut self, parent_upvalues: Option<&[Upvalue]>, cursor: &mut BytecodeCursor) {
+    fn store_upvalue(&mut self, parent_upvalues: Option<&[Upvalue]>, cursor: &mut BytecodeCursor) -> Result<(), Error> {
         if let Some(parent_upvalues) = parent_upvalues {
             let upvalue_slot = cursor.read_u8() as usize;
             let upvalue = parent_upvalues[upvalue_slot].clone();
@@ -534,13 +580,15 @@ where
                 }
             };
 
-            self.stack.push(result)
+            self.stack.push(result);
+
+            Ok(())
         } else {
             unreachable!("StoreUpvalue used in non-closure context.")
         }
     }
 
-    fn assign_upvalue(&mut self, parent_upvalues: Option<&[Upvalue]>, cursor: &mut BytecodeCursor) {
+    fn assign_upvalue(&mut self, parent_upvalues: Option<&[Upvalue]>, cursor: &mut BytecodeCursor) -> Result<(), Error> {
         if let Some(parent_upvalues) = parent_upvalues {
             let upvalue_slot = cursor.read_u8() as usize;
             let upvalue = parent_upvalues[upvalue_slot].clone();
@@ -550,13 +598,15 @@ where
                 UpvalueState::Closed(closed_value) => *closed_value = value,
             };
 
-            self.stack.push(Value::Unit)
+            self.stack.push(Value::Unit);
+
+            Ok(())
         } else {
             unreachable!("AssignUpvalue used in non-closure context.")
         }
     }
 
-    fn close_upvalue(&mut self, stack_frame: StackFrame, cursor: &mut BytecodeCursor) {
+    fn close_upvalue(&mut self, stack_frame: StackFrame, cursor: &mut BytecodeCursor) -> Result<(), Error> {
         let offset = cursor.read_u8() as usize;
         let value = std::mem::replace(&mut self.stack[stack_frame][offset], Value::Null);
         let offset = stack_frame.start() + offset;
@@ -567,6 +617,8 @@ where
                 upvalue.close(value);
             }
         }
+
+        Ok(())
     }
 
     fn store_global(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), Error> {
@@ -588,11 +640,7 @@ where
     fn load_global(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), Error> {
         let const_pos = cursor.read_u8() as usize;
         let global = bytecode.constants()[const_pos].as_symbol()?;
-        let value = self
-            .globals
-            .get(&global)
-            .cloned()
-            .ok_or_else(|| todo!("Variable not found."))?;
+        let value = self.globals.get(&global).cloned().ok_or_else(|| todo!("Variable not found."))?;
 
         self.stack.push(value);
 
@@ -728,12 +776,7 @@ where
         Ok(())
     }
 
-    fn load_field_to_local(
-        &mut self,
-        bytecode: &Bytecode,
-        stack_frame: StackFrame,
-        cursor: &mut BytecodeCursor,
-    ) -> Result<(), Error> {
+    fn load_field_to_local(&mut self, bytecode: &Bytecode, stack_frame: StackFrame, cursor: &mut BytecodeCursor) -> Result<(), Error> {
         let key_index = cursor.read_u8() as usize;
         let local_slot = cursor.read_u8() as usize;
         let key = bytecode.constants()[key_index].as_symbol()?;

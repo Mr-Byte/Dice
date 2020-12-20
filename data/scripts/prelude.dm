@@ -90,3 +90,11 @@ export class Err : Result {
         super(false, result)
     }
 }
+
+export fn breaks() {
+    [5][5.0]
+}
+
+export fn test() {
+    breaks()
+}

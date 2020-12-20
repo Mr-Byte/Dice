@@ -3,9 +3,7 @@ use crate::{compiler::Compiler, upvalue::UpvalueDescriptor, visitor::FnKind};
 use dice_core::{
     error::Error,
     protocol::{
-        operator::{
-            ADD, DICE_ROLL, DIE_ROLL, DIV, EQ, GT, GTE, LT, LTE, MUL, NEQ, RANGE_EXCLUSIVE, RANGE_INCLUSIVE, REM, SUB,
-        },
+        operator::{ADD, DICE_ROLL, DIE_ROLL, DIV, EQ, GT, GTE, LT, LTE, MUL, NEQ, RANGE_EXCLUSIVE, RANGE_INCLUSIVE, REM, SUB},
         ProtocolSymbol,
     },
     value::{FnScript, Symbol, Value},
@@ -68,13 +66,7 @@ impl Compiler {
 }
 
 impl Compiler {
-    fn emit_op_global(
-        &mut self,
-        op_decl: &OpDecl,
-        name: Symbol,
-        upvalues: &[UpvalueDescriptor],
-        compiled_op: Value,
-    ) -> Result<(), Error> {
+    fn emit_op_global(&mut self, op_decl: &OpDecl, name: Symbol, upvalues: &[UpvalueDescriptor], compiled_op: Value) -> Result<(), Error> {
         emit_bytecode! {
             self.assembler()?, op_decl.span => [
                 if upvalues.is_empty() => [
@@ -91,12 +83,7 @@ impl Compiler {
         Ok(())
     }
 
-    fn emit_op_method(
-        &mut self,
-        op_decl: &OpDecl,
-        upvalues: &[UpvalueDescriptor],
-        compiled_op: Value,
-    ) -> Result<(), Error> {
+    fn emit_op_method(&mut self, op_decl: &OpDecl, upvalues: &[UpvalueDescriptor], compiled_op: Value) -> Result<(), Error> {
         emit_bytecode! {
             self.assembler()?, op_decl.span => [
                 if upvalues.is_empty() => [

@@ -31,14 +31,7 @@ impl Array {
 
 impl Display for Array {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let items = self
-            .inner
-            .array
-            .borrow()
-            .iter()
-            .map(|value| value.to_string())
-            .collect::<Vec<_>>()
-            .join(", ");
+        let items = self.inner.array.borrow().iter().map(|value| value.to_string()).collect::<Vec<_>>().join(", ");
 
         write!(fmt, "[{}]", items)
     }

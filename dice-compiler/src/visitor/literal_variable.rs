@@ -15,11 +15,9 @@ impl NodeVisitor<&LitIdent> for Compiler {
             let context = self.context()?;
             if let Some(scope_variable) = context.scope_stack().local(name_symbol.clone()) {
                 if !scope_variable.is_initialized() {
-                    return Err(Error::new(VARIABLE_NOT_INITIALIZED)
-                        .with_span(*span)
-                        .with_tags(error_tags! {
-                            name => (&*scope_variable.name).to_owned()
-                        }));
+                    return Err(Error::new(VARIABLE_NOT_INITIALIZED).with_span(*span).with_tags(error_tags! {
+                        name => (&*scope_variable.name).to_owned()
+                    }));
                 }
 
                 let slot = scope_variable.slot as u8;

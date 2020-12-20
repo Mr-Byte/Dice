@@ -38,9 +38,7 @@ impl Compiler {
 
     fn compile(&mut self, kind: CompilerKind) -> Result<Bytecode, Error> {
         if let CompilerKind::Module = kind {
-            self.context()?
-                .scope_stack()
-                .add_local(&EXPORT, State::initialized(false))?;
+            self.context()?.scope_stack().add_local(&EXPORT, State::initialized(false))?;
         }
 
         self.visit(self.syntax_tree.root())?;

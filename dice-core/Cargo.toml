@@ -1,14 +1,14 @@
 [package]
-name = "dice-core"
-version = "0.1.0"
 authors = ["Josh Rodgers <bytemr@gmail.com>"]
 edition = "2018"
+name = "dice-core"
+version = "0.1.0"
 
 [dependencies]
-bytes = "0.5"
+bytes = "0.6"
 fluent-templates = "0.5.16"
 num-derive = "0.3"
 num-traits = "0.2"
 thiserror = "1.0"
-uuid = { version = "0.8", features = ["v4"] }
-wyhash = "0.4"
+uuid = {version = "0.8", features = ["v4"]}
+wyhash = "0.5"

@@ -5,10 +5,7 @@ use crate::{
 };
 use dice_core::{
     error::{
-        codes::{
-            CLASS_ALREADY_DECLARED, INTERNAL_COMPILER_ERROR, METHOD_RECEIVER_CANNOT_HAVE_TYPE,
-            NEW_METHOD_MUST_HAVE_RECEIVER,
-        },
+        codes::{CLASS_ALREADY_DECLARED, INTERNAL_COMPILER_ERROR, METHOD_RECEIVER_CANNOT_HAVE_TYPE, NEW_METHOD_MUST_HAVE_RECEIVER},
         Error,
     },
     error_tags,
@@ -36,10 +33,7 @@ impl NodeVisitor<&ClassDecl> for Compiler {
             ClassKind::Base
         };
 
-        let super_slot = self
-            .context()?
-            .scope_stack()
-            .add_local(SUPER.get(), State::initialized(true))? as u8;
+        let super_slot = self.context()?.scope_stack().add_local(SUPER.get(), State::initialized(true))? as u8;
 
         emit_bytecode! {
             self.assembler()?, node.span => [
@@ -58,11 +52,9 @@ impl NodeVisitor<&ClassDecl> for Compiler {
             // NOTE: Check if a class of the given name has already been initialized.
             if let State::Class { ref mut is_initialized } = &mut local.state {
                 if *is_initialized {
-                    return Err(Error::new(CLASS_ALREADY_DECLARED)
-                        .with_span(node.name.span)
-                        .with_tags(error_tags! {
-                            name => node.name.identifier.clone()
-                        }));
+                    return Err(Error::new(CLASS_ALREADY_DECLARED).with_span(node.name.span).with_tags(error_tags! {
+                        name => node.name.identifier.clone()
+                    }));
                 }
 
                 *is_initialized = true;
@@ -172,9 +164,7 @@ impl Compiler {
 
         for variable in scope.variables.clone() {
             if variable.is_captured {
-                self.context()?
-                    .assembler()
-                    .close_upvalue(variable.slot as u8, class.span);
+                self.context()?.assembler().close_upvalue(variable.slot as u8, class.span);
             }
         }
 

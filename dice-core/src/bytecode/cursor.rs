@@ -4,12 +4,14 @@ use std::io::Cursor;
 
 pub struct BytecodeCursor<'a> {
     cursor: Cursor<&'a [u8]>,
+    last_instruction_offset: u64,
 }
 
 impl<'a> BytecodeCursor<'a> {
     pub fn new(data: &'a [u8]) -> Self {
         Self {
             cursor: Cursor::new(data),
+            last_instruction_offset: 0,
         }
     }
 
@@ -21,6 +23,8 @@ impl<'a> BytecodeCursor<'a> {
     #[inline]
     pub fn read_instruction(&mut self) -> Option<Instruction> {
         if self.cursor.has_remaining() {
+            self.last_instruction_offset = self.position();
+
             Some(self.cursor.get_u8().into())
         } else {
             None
@@ -45,6 +49,11 @@ impl<'a> BytecodeCursor<'a> {
     #[inline]
     pub fn position(&self) -> u64 {
         self.cursor.position()
+    }
+
+    #[inline]
+    pub fn last_instruction_offset(&self) -> u64 {
+        self.last_instruction_offset
     }
 
     pub fn remaining(&self) -> u64 {

@@ -1,12 +1,12 @@
 [package]
-name = "dice-compiler"
-version = "0.1.0"
 authors = ["Josh Rodgers <bytemr@gmail.com>"]
 edition = "2018"
+name = "dice-compiler"
+version = "0.1.0"
 
 [dependencies]
+bytes = "0.6"
+dice-core = {path = "../dice-core"}
+dice-syntax = {path = "../dice-syntax"}
 thiserror = "1.0"
 uuid = {version = "0.8", features = ["v4", "wasm-bindgen"]}
-bytes = "0.5"
-dice-syntax = {path = "../dice-syntax"}
-dice-core = {path = "../dice-core"}

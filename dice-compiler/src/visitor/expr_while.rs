@@ -9,9 +9,7 @@ impl NodeVisitor<&WhileLoop> for Compiler {
             let block = block.clone();
             let loop_start = self.assembler()?.current_position();
 
-            self.context()?
-                .scope_stack()
-                .push_scope(ScopeKind::Loop, Some(loop_start as usize));
+            self.context()?.scope_stack().push_scope(ScopeKind::Loop, Some(loop_start as usize));
             self.visit(*condition)?;
 
             let loop_end = self.assembler()?.jump_if_false(*span);

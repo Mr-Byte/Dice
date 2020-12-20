@@ -16,10 +16,7 @@ impl NodeVisitor<&VarDecl> for Compiler {
 
 impl Compiler {
     fn singular_var(&mut self, var_decl: &VarDecl, name: &str) -> Result<(), Error> {
-        let slot = self
-            .context()?
-            .scope_stack()
-            .add_local(name, State::initialized(var_decl.is_mutable))? as u8;
+        let slot = self.context()?.scope_stack().add_local(name, State::initialized(var_decl.is_mutable))? as u8;
 
         emit_bytecode! {
             self.assembler()?, var_decl.span => [
@@ -36,10 +33,7 @@ impl Compiler {
         let imports: Vec<(&str, u8)> = variables
             .iter()
             .map(|item| {
-                let slot = self
-                    .context()?
-                    .scope_stack()
-                    .add_local(item.clone(), State::initialized(false))?;
+                let slot = self.context()?.scope_stack().add_local(item.clone(), State::initialized(false))?;
 
                 Ok((item.as_str(), slot as u8))
             })

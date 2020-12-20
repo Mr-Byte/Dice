@@ -4,14 +4,7 @@ use dice_core::{error::Error, span::Span};
 use dice_syntax::{Prefix, SyntaxNodeId, UnaryOperator};
 
 impl NodeVisitor<&Prefix> for Compiler {
-    fn visit(
-        &mut self,
-        Prefix {
-            operator,
-            expression,
-            span,
-        }: &Prefix,
-    ) -> Result<(), Error> {
+    fn visit(&mut self, Prefix { operator, expression, span }: &Prefix) -> Result<(), Error> {
         match operator {
             UnaryOperator::Negate => self.negate(*expression, *span),
             UnaryOperator::Not => self.not(*expression, *span),

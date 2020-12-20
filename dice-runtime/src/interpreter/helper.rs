@@ -22,11 +22,7 @@ impl<L: ModuleLoader> Runtime<L> {
     }
 
     pub(super) fn call_binary_op(&mut self, operator: impl Into<Symbol>, rhs: Value) -> Result<(), Error> {
-        fn call_binary_op<L: ModuleLoader>(
-            runtime: &mut Runtime<L>,
-            operator: Symbol,
-            rhs: Value,
-        ) -> Result<(), Error> {
+        fn call_binary_op<L: ModuleLoader>(runtime: &mut Runtime<L>, operator: Symbol, rhs: Value) -> Result<(), Error> {
             let lhs = runtime.stack.pop();
             let method = runtime.get_field(&operator, lhs.clone())?;
 
@@ -35,10 +31,7 @@ impl<L: ModuleLoader> Runtime<L> {
                 runtime.stack.push(rhs);
                 runtime.call_fn(1)?;
             } else {
-                let value = runtime
-                    .globals
-                    .get(&operator)
-                    .ok_or_else(|| todo!("No global operator defined."))?;
+                let value = runtime.globals.get(&operator).ok_or_else(|| todo!("No global operator defined."))?;
 
                 runtime.stack.push(value.clone());
                 runtime.stack.push(lhs);
@@ -61,10 +54,7 @@ impl<L: ModuleLoader> Runtime<L> {
                 runtime.stack.push(method);
                 runtime.call_fn(0)?;
             } else {
-                let value = runtime
-                    .globals
-                    .get(&operator)
-                    .ok_or_else(|| todo!("No global operator defined."))?;
+                let value = runtime.globals.get(&operator).ok_or_else(|| todo!("No global operator defined."))?;
 
                 runtime.stack.push(value.clone());
                 runtime.stack.push(operand);
@@ -123,13 +113,9 @@ impl<L: ModuleLoader> Runtime<L> {
         };
 
         let value = match &function {
-            Value::FnClosure(closure) => {
-                self.call_fn_script(arg_count, receiver, &closure.fn_script(), Some(closure.upvalues()))?
-            }
+            Value::FnClosure(closure) => self.call_fn_script(arg_count, receiver, &closure.fn_script(), Some(closure.upvalues()))?,
             Value::FnScript(fn_script) => self.call_fn_script(arg_count, receiver, &fn_script, None)?,
-            Value::Class(class) => {
-                self.call_class_constructor(arg_count, class, Value::Object(Object::new(class.clone())))?
-            }
+            Value::Class(class) => self.call_class_constructor(arg_count, class, Value::Object(Object::new(class.clone())))?,
             Value::FnNative(fn_native) => self.call_fn_native(arg_count, receiver, fn_native)?,
             _ => todo!("Not a function"),
         };
@@ -139,12 +125,7 @@ impl<L: ModuleLoader> Runtime<L> {
         Ok(())
     }
 
-    pub(crate) fn call_class_constructor(
-        &mut self,
-        arg_count: usize,
-        class: &Class,
-        mut object: Value,
-    ) -> Result<Value, Error> {
+    pub(crate) fn call_class_constructor(&mut self, arg_count: usize, class: &Class, mut object: Value) -> Result<Value, Error> {
         let class = class.clone();
 
         if let Some(new) = class.method(&NEW) {
@@ -169,12 +150,7 @@ impl<L: ModuleLoader> Runtime<L> {
         Ok(object)
     }
 
-    fn call_fn_native(
-        &mut self,
-        arg_count: usize,
-        receiver: Option<Value>,
-        fn_native: &FnNative,
-    ) -> Result<Value, Error> {
+    fn call_fn_native(&mut self, arg_count: usize, receiver: Option<Value>, fn_native: &FnNative) -> Result<Value, Error> {
         let fn_native = fn_native.clone();
         // NOTE: Include the function/receiver slot as the first parameter to the native function call.
         let mut args = self.stack.pop_count(arg_count + 1);
@@ -186,13 +162,7 @@ impl<L: ModuleLoader> Runtime<L> {
         fn_native.call(self, &args)
     }
 
-    fn call_fn_script(
-        &mut self,
-        arg_count: usize,
-        receiver: Option<Value>,
-        fn_script: &FnScript,
-        parent_upvalues: Option<&[Upvalue]>,
-    ) -> Result<Value, Error> {
+    fn call_fn_script(&mut self, arg_count: usize, receiver: Option<Value>, fn_script: &FnScript, parent_upvalues: Option<&[Upvalue]>) -> Result<Value, Error> {
         let slots = fn_script.bytecode().slot_count();
         let reserved = slots - arg_count;
         // NOTE: Reserve only the slots needed to cover locals beyond the arguments already on the stack.

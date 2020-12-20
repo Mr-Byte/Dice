@@ -2,14 +2,14 @@ mod rules;
 
 use super::{
     lexer::{Lexer, TokenKind},
-    Assignment, AssignmentOperator, Binary, BinaryOperator, Block, Break, Continue, ExportDecl, FnCall, FnDecl,
-    IfExpression, LitAnonymousFn, LitBool, LitFloat, LitIdent, LitInt, LitList, LitNull, LitObject, LitString, LitUnit,
-    Prefix, Return, SyntaxNode, SyntaxNodeId, SyntaxTree, UnaryOperator, VarDecl, WhileLoop,
+    Assignment, AssignmentOperator, Binary, BinaryOperator, Block, Break, Continue, ExportDecl, FnCall, FnDecl, IfExpression, LitAnonymousFn, LitBool,
+    LitFloat, LitIdent, LitInt, LitList, LitNull, LitObject, LitString, LitUnit, Prefix, Return, SyntaxNode, SyntaxNodeId, SyntaxTree, UnaryOperator, VarDecl,
+    WhileLoop,
 };
 use crate::{
     parser::rules::{ParseResult, ParserRules, Precedence},
-    ClassDecl, ErrorPropagate, FieldAccess, FnArg, ForLoop, ImportDecl, Index, Is, Loop, NullPropagate, OpDecl,
-    OverloadedOperator, SuperAccess, SuperCall, TypeAnnotation, VarDeclKind,
+    ClassDecl, ErrorPropagate, FieldAccess, FnArg, ForLoop, ImportDecl, Index, Is, Loop, NullPropagate, OpDecl, OverloadedOperator, SuperAccess, SuperCall,
+    TypeAnnotation, VarDeclKind,
 };
 use dice_core::{error::Error, source::Source, span::Span};
 use id_arena::Arena;
@@ -229,9 +229,7 @@ impl<'a> Parser<'a> {
         let next_token = self.lexer.next()?;
         let span_start = next_token.span;
         let lhs_expression = match next_token.kind {
-            TokenKind::Identifier => self
-                .arena
-                .alloc(SyntaxNode::LitIdent(LitIdent::synthesize(next_token.slice, span_start))),
+            TokenKind::Identifier => self.arena.alloc(SyntaxNode::LitIdent(LitIdent::synthesize(next_token.slice, span_start))),
             _ => return todo!("Unexpected token."),
         };
 
@@ -287,10 +285,9 @@ impl<'a> Parser<'a> {
             TokenKind::Let => self.var_decl()?,
             TokenKind::Function => self.fn_decl()?,
             TokenKind::Class => self.class_decl()?,
-            TokenKind::Identifier => self.arena.alloc(SyntaxNode::LitIdent(LitIdent::synthesize(
-                next.slice,
-                self.lexer.peek()?.span,
-            ))),
+            TokenKind::Identifier => self
+                .arena
+                .alloc(SyntaxNode::LitIdent(LitIdent::synthesize(next.slice, self.lexer.peek()?.span))),
             _ => unreachable!("Unsupported export type encountered."),
         };
 
@@ -319,9 +316,7 @@ impl<'a> Parser<'a> {
                 self.lexer.next()?;
                 VarDeclKind::Singular(next_token.slice.to_owned())
             }
-            TokenKind::LeftCurly => {
-                VarDeclKind::Destructured(self.parse_fields(TokenKind::LeftCurly, TokenKind::RightCurly)?)
-            }
+            TokenKind::LeftCurly => VarDeclKind::Destructured(self.parse_fields(TokenKind::LeftCurly, TokenKind::RightCurly)?),
             _ => return todo!("Unexpected token."),
         };
 
@@ -697,9 +692,7 @@ impl<'a> Parser<'a> {
         if self.lexer.peek()?.kind == TokenKind::RightParen {
             let span_end = self.lexer.consume(TokenKind::RightParen)?.span;
 
-            let node = SyntaxNode::LitUnit(LitUnit {
-                span: span_start + span_end,
-            });
+            let node = SyntaxNode::LitUnit(LitUnit { span: span_start + span_end });
             Ok(self.arena.alloc(node))
         } else {
             let expression = self.expression()?;
@@ -877,11 +870,7 @@ impl<'a> Parser<'a> {
         let next_token_kind = self.lexer.peek()?.kind;
         let is_assignment = matches!(
             next_token_kind,
-            TokenKind::Assign
-                | TokenKind::MulAssign
-                | TokenKind::DivAssign
-                | TokenKind::AddAssign
-                | TokenKind::SubAssign
+            TokenKind::Assign | TokenKind::MulAssign | TokenKind::DivAssign | TokenKind::AddAssign | TokenKind::SubAssign
         );
 
         if can_assign && is_assignment {

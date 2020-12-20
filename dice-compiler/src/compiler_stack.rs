@@ -125,9 +125,7 @@ impl CompilerStack {
                 let outer_index = self.resolve_upvalue(name, depth + 1)?;
                 let parent = self.offset(depth + 1)?;
                 let is_mutable = match parent.upvalues()[outer_index] {
-                    UpvalueDescriptor::ParentLocal { is_mutable, .. } | UpvalueDescriptor::Outer { is_mutable, .. } => {
-                        is_mutable
-                    }
+                    UpvalueDescriptor::ParentLocal { is_mutable, .. } | UpvalueDescriptor::Outer { is_mutable, .. } => is_mutable,
                 };
 
                 UpvalueDescriptor::Outer {

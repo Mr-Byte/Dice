@@ -4,12 +4,13 @@ pub mod fmt;
 mod localization;
 
 use crate::{
+    bytecode::Bytecode,
     error::{
         codes::ErrorCode,
         fmt::{ErrorFormatter, HumanReadableErrorFormatter},
         localization::Locale,
     },
-    source::Source,
+    source::{LineColumn, Source},
     span::Span,
 };
 use std::fmt::{Debug, Display, Formatter};
@@ -22,6 +23,8 @@ pub struct Error {
     source_code: Option<Source>,
     span: Span,
     tags: Tags,
+    // NOTE: Optional stack trace.
+    stack_trace: Vec<StackLocation>,
 }
 
 impl Error {
@@ -31,6 +34,7 @@ impl Error {
             source_code: None,
             span: Span::empty(),
             tags: Tags::new(),
+            stack_trace: Vec::new(),
         }
     }
 
@@ -62,10 +66,32 @@ impl Display for Error {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct StackLocation {
+    pub path: Option<String>,
+    pub function_name: Option<String>,
+    pub position: LineColumn,
+}
+
+impl StackLocation {
+    pub fn from_bytecode(bytecode: &Bytecode, offset: u64) -> Self {
+        let span = bytecode.source_map()[&offset];
+        let position = bytecode.source().line_index().position_of(span.start);
+        let path = bytecode.source().path().map(ToOwned::to_owned);
+
+        Self {
+            path,
+            position,
+            function_name: None,
+        }
+    }
+}
+
 pub trait ResultExt {
     fn with_source(self, source: impl Fn() -> Source) -> Self;
-    fn with_span(self, span: Span) -> Self;
+    fn with_span(self, span: impl Fn() -> Span) -> Self;
     fn with_tags(self, tags: Tags) -> Self;
+    fn with_stack_location(self, stack_location: impl Fn() -> StackLocation) -> Self;
 }
 
 impl<T> ResultExt for Result<T, Error> {
@@ -73,12 +99,19 @@ impl<T> ResultExt for Result<T, Error> {
         self.map_err(|error| error.with_source(source()))
     }
 
-    fn with_span(self, span: Span) -> Self {
-        self.map_err(|error| error.with_span(span))
+    fn with_span(self, span: impl Fn() -> Span) -> Self {
+        self.map_err(|error| error.with_span(span()))
     }
 
     fn with_tags(self, tags: Tags) -> Self {
         self.map_err(|error| error.with_tags(tags))
+    }
+
+    fn with_stack_location(self, stack_location: impl Fn() -> StackLocation) -> Self {
+        self.map_err(|mut error| {
+            error.stack_trace.push(stack_location());
+            error
+        })
     }
 }
 

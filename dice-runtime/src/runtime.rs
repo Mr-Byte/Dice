@@ -89,11 +89,7 @@ where
     fn new_module(&mut self, name: &str) -> Result<Object, Error> {
         let module = Object::new(None);
 
-        if self
-            .loaded_modules
-            .insert(name.into(), Value::Object(module.clone()))
-            .is_some()
-        {
+        if self.loaded_modules.insert(name.into(), Value::Object(module.clone())).is_some() {
             todo!("Module already loaded error.");
         }
 

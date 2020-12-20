@@ -65,7 +65,7 @@ impl<'a> Iterator for TokenIter<'a> {
             .extras
             .error()
             .map_or_else(|| Ok(Token { kind, span, slice }), Err)
-            .with_span(span)
+            .with_span(|| span)
             .with_source(|| self.source.clone());
 
         Some(result)
@@ -328,10 +328,9 @@ fn lex_string(lexer: &mut Lexer<TokenKind>) -> bool {
                     Some('r') => result.push('\r'),
                     Some('t') => result.push('\t'),
                     Some(next) => {
-                        *lexer.extras.0.borrow_mut() =
-                            Some(Error::new(INVALID_ESCAPE_SEQUENCE).with_tags(dice_core::error_tags! {
-                                sequence => format!("\\{}", next)
-                            }));
+                        *lexer.extras.0.borrow_mut() = Some(Error::new(INVALID_ESCAPE_SEQUENCE).with_tags(dice_core::error_tags! {
+                            sequence => format!("\\{}", next)
+                        }));
                         return false;
                     }
                     None => {

@@ -49,19 +49,14 @@ impl Compiler {
     fn emit_fn(&mut self, fn_decl: &FnDecl, upvalues: &[UpvalueDescriptor], compiled_fn: Value) -> Result<(), Error> {
         let context = self.context()?;
         let fn_name: Symbol = (&*fn_decl.name.identifier).into();
-        let local = context
-            .scope_stack()
-            .local(fn_name)
-            .ok_or_else(|| Error::new(INTERNAL_COMPILER_ERROR))?;
+        let local = context.scope_stack().local(fn_name).ok_or_else(|| Error::new(INTERNAL_COMPILER_ERROR))?;
 
         // NOTE: Check if a function of the given name has already been initialized.
         match &mut local.state {
             State::Function { ref mut is_initialized } if *is_initialized => {
-                return Err(Error::new(FUNCTION_ALREADY_DECLARE)
-                    .with_span(fn_decl.name.span)
-                    .with_tags(error_tags! {
-                        name => fn_decl.name.identifier.clone()
-                    }));
+                return Err(Error::new(FUNCTION_ALREADY_DECLARE).with_span(fn_decl.name.span).with_tags(error_tags! {
+                    name => fn_decl.name.identifier.clone()
+                }));
             }
             State::Function { ref mut is_initialized } => *is_initialized = true,
             _ => unreachable!("Unexpected non-function local state while compiling a function."),
@@ -84,12 +79,7 @@ impl Compiler {
         Ok(())
     }
 
-    fn emit_method(
-        &mut self,
-        fn_decl: &FnDecl,
-        upvalues: &[UpvalueDescriptor],
-        compiled_fn: Value,
-    ) -> Result<(), Error> {
+    fn emit_method(&mut self, fn_decl: &FnDecl, upvalues: &[UpvalueDescriptor], compiled_fn: Value) -> Result<(), Error> {
         emit_bytecode! {
             self.assembler()?, fn_decl.span => [
                 if upvalues.is_empty() => [
