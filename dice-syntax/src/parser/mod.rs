@@ -711,7 +711,7 @@ impl<'a> Parser<'a> {
         match next_token.kind {
             TokenKind::Dot | TokenKind::LeftSquare => self.super_method_access(can_assign, span_start),
             TokenKind::LeftParen => self.super_call(span_start),
-            _ => todo!("Unexpected token."),
+            kind => return self.unexpected_token(kind, &[TokenKind::Dot, TokenKind::LeftSquare, TokenKind::LeftParen], span_start),
         }
     }
 
@@ -817,10 +817,10 @@ impl<'a> Parser<'a> {
         let mut properties = Vec::new();
 
         while self.lexer.peek()?.kind != TokenKind::RightCurly {
-            let next = self.lexer.next()?;
+            let next = self.lexer.next()?.clone();
             let key = match next.kind {
                 TokenKind::String | TokenKind::Integer | TokenKind::Identifier => next.slice.to_owned(),
-                _ => todo!("Unexpected token."),
+                kind => return self.unexpected_token(kind, &[TokenKind::String, TokenKind::Integer, TokenKind::Identifier], next.span),
             };
 
             self.lexer.consume(TokenKind::Colon)?;

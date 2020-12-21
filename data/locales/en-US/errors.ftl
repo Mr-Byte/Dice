@@ -1,5 +1,7 @@
 
 E1000 = Encountered unexpected token during parsing. Found: {$actual}, Expected: {$expected}
+E1001 = Encountered unknown escape sequence '{$sequence}'.
+E1002 = Unterminated string encountered.
 
 E2000 = Internal Compiler Error (please report this as a bug with code to reproduce the issue).
 

@@ -125,7 +125,7 @@ impl<'a> ParserRules<'a> {
     }
 
     pub fn for_token(&self, kind: TokenKind) -> Result<&Rule<'a>, Error> {
-        self.rules.get(&kind).ok_or_else(|| todo!("Unexpected token."))
+        self.rules.get(&kind).ok_or_else(|| unreachable!("Unreachable token scenario reached."))
     }
 
     pub fn prefix_tokens(&self) -> &[TokenKind] {
