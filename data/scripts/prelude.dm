@@ -84,7 +84,7 @@ export class Err : Result {
 }
 
 export fn breaks() {
-    [5][5.0]
+    panic("OH NOES D:")
 }
 
 export fn test() {

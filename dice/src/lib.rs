@@ -2,6 +2,7 @@ use dice_compiler::compiler::Compiler;
 use dice_core::source::{Source, SourceKind};
 use dice_runtime::runtime;
 
+pub use dice_core::tags;
 pub use dice_core::{error, protocol, runtime::Runtime, value};
 
 pub struct Dice {

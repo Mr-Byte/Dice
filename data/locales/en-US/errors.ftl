@@ -42,4 +42,6 @@ E3300 = Global variable {$name} cannot be redefined.
 E3301 = Global variable {$name} could not be found.
 E3302 = Global operator {$name} could not be found.
 
+E4000 = A panic has occurred. {$message}
+
 # TODO: Syntax errors and variable usage errors.

@@ -853,7 +853,7 @@ impl<'a> Parser<'a> {
                 span,
             }),
             TokenKind::String => SyntaxNode::LitString(LitString {
-                value: token.slice.to_owned(),
+                value: process_string(token.slice),
                 span,
             }),
             TokenKind::False => SyntaxNode::LitBool(LitBool { value: false, span }),
@@ -905,4 +905,10 @@ impl<'a> Parser<'a> {
             Ok(lhs_expression)
         }
     }
+}
+
+// TODO: Return an error here for strings that can't be processed.
+fn process_string(input: &str) -> String {
+    // TODO: Process escape sequences.
+    input[1..input.len() - 1].to_owned()
 }

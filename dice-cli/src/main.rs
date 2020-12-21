@@ -1,5 +1,6 @@
 use dice::{
-    error::Error,
+    error::{codes::PANIC, Error},
+    tags,
     value::{NativeFn, Value},
     Dice, Runtime,
 };
@@ -11,6 +12,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut dice = Dice::default();
     dice.runtime().load_prelude("prelude.dm")?;
     dice.runtime().add_global("print", Value::with_native_fn(Rc::new(print_value) as NativeFn))?;
+    dice.runtime().add_global("panic", Value::with_native_fn(Rc::new(panic_err) as NativeFn))?;
 
     loop {
         print!("Input: ");
@@ -49,10 +51,12 @@ fn print_value(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, Error> {
     Ok(Value::Unit)
 }
 
-// fn err_panic(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, ()> {
-//     if let [_, Value::String(str), ..] = args {
-//         Err(RuntimeError::Aborted(str.to_string()))
-//     } else {
-//         Err(RuntimeError::Aborted(String::from("Panic occurred.")))
-//     }
-// }
+fn panic_err(_: &mut dyn Runtime, args: &[Value]) -> Result<Value, Error> {
+    if let [_, Value::String(message), ..] = args {
+        Err(Error::new(PANIC).with_tags(tags! {
+            message => message.to_string()
+        }))
+    } else {
+        Err(Error::new(PANIC))
+    }
+}

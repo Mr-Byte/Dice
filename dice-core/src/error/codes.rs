@@ -54,3 +54,5 @@ pub static DIVIDE_BY_ZERO: ErrorCode = "E3200";
 pub static GLOBAL_VARIABLE_ALREADY_DEFINED: ErrorCode = "E3300";
 pub static GLOBAL_VARIABLE_UNDEFINED: ErrorCode = "E3301";
 pub static GLOBAL_OPERATOR_UNDEFINED: ErrorCode = "E3302";
+
+pub static PANIC: ErrorCode = "E4000";
