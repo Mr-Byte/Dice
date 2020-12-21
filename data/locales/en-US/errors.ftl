@@ -10,11 +10,12 @@ E2101 = The maximum number of constants (256) has been exceeded for this compila
 
 E2200 = The new method cannot specify a return type.
 E2201 = The new method must specify self as the first parameter.
-E2202 = The new method must call super first when deriving from another class.
-E2203 = The new method cannot return a value.
-E2204 = The 'super' keyword can only be used inside of methods of classes.
-E2205 = The self parameter of methods cannot specify a type.
-E2206 = Function parameters must have unique names. (TODO: Include duplicate names)
+E2202 = Class operators must specify self as the first parameter.
+E2203 = The new method must call super first when deriving from another class.
+E2204 = The new method cannot return a value.
+E2205 = The 'super' keyword can only be used inside of methods of classes.
+E2206 = The self parameter of methods cannot specify a type.
+E2207 = Function parameters must have unique names. (TODO: Include duplicate names)
 
 E2300 = The class {$name} is already defined in this scope.
 E2301 = The function {$name} is already defined in this scope.
