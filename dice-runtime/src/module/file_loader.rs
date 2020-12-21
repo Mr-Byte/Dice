@@ -1,8 +1,9 @@
 use crate::module::{Module, ModuleLoader};
 use dice_compiler::compiler::Compiler;
 use dice_core::{
-    error::Error,
+    error::{context::MODULE_LOAD_ERROR, Error},
     source::{Source, SourceKind},
+    tags,
     value::Symbol,
 };
 
@@ -11,19 +12,26 @@ pub struct FileModuleLoader;
 
 impl ModuleLoader for FileModuleLoader {
     fn load_module(&mut self, name: Symbol) -> Result<Module, Error> {
-        let path = dunce::canonicalize(&*name)?;
-        let working_dir = dunce::canonicalize(std::env::current_dir()?)?;
+        (|| {
+            let path = dunce::canonicalize(&*name)?;
+            let working_dir = dunce::canonicalize(std::env::current_dir()?)?;
 
-        // TODO: Have a way to set the modules root as a part of the runtime.
-        if !path.starts_with(working_dir) {
-            todo!("Error about not being able to read outside the scripts directory.")
-        }
+            // TODO: Have a way to set the modules root as a part of the runtime.
+            if !path.starts_with(working_dir) {
+                todo!("Error about not being able to read outside the scripts directory.")
+            }
 
-        let source = std::fs::read_to_string(&path)?;
-        let source = Source::with_path(source, path.to_string_lossy(), SourceKind::Module);
-        let module = Compiler::compile_source(source)?;
-        let module = Module::new(name, module);
+            let source = std::fs::read_to_string(&path)?;
+            let source = Source::with_path(source, path.to_string_lossy(), SourceKind::Module);
+            let module = Compiler::compile_source(source)?;
+            let module = Module::new(name.clone(), module);
 
-        Ok(module)
+            Ok(module)
+        })()
+        .map_err(move |error: Error| {
+            error.with_context(MODULE_LOAD_ERROR).with_context_tags(tags! {
+                module => name.to_string()
+            })
+        })
     }
 }

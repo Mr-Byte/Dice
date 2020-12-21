@@ -5,9 +5,7 @@ pub mod tag;
 
 mod localization;
 
-use codes::IO_ERROR;
-use tag::Tags;
-
+use self::context::ContextMsgId;
 use crate::{
     bytecode::Bytecode,
     error::{
@@ -19,9 +17,9 @@ use crate::{
     span::Span,
     tags,
 };
+use codes::IO_ERROR;
 use std::fmt::{Debug, Display, Formatter};
-
-use self::context::{ContextMsgId, IO_ERROR_CONTEXT};
+use tag::Tags;
 
 #[derive(thiserror::Error, Clone)]
 pub struct Error {

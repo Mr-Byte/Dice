@@ -277,7 +277,7 @@ impl<'a> Parser<'a> {
         let node = SyntaxNode::ImportDecl(ImportDecl {
             module_import,
             item_imports,
-            relative_path,
+            relative_path: process_string(relative_path),
             span: span_start + span_end,
         });
 

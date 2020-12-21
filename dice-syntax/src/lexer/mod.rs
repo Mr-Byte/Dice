@@ -68,12 +68,12 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    pub fn consume_string(&mut self) -> Result<(&Token, String), Error> {
+    pub fn consume_string(&mut self) -> Result<(&Token, &str), Error> {
         let source = self.source.clone();
         let next = self.next()?;
 
         if let TokenKind::String = next.kind {
-            let string = next.slice.to_owned();
+            let string = next.slice;
 
             Ok((next, string))
         } else {
