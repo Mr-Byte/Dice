@@ -1,4 +1,6 @@
 
+E1000 = Encountered unexpected token during parsing. Found: {$actual}, Expected: {$expected}
+
 E2000 = Internal Compiler Error (please report this as a bug with code to reproduce the issue).
 
 E2100 = The maximum number of upvalues (256) has been exceeded for this compilation unit.

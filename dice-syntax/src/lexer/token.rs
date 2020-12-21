@@ -226,79 +226,77 @@ pub enum TokenKind {
 }
 
 impl Display for TokenKind {
-    fn fmt(&self, _f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            TokenKind::EndOfInput => {}
-            TokenKind::LeftParen => {}
-            TokenKind::RightParen => {}
-            TokenKind::LeftCurly => {}
-            TokenKind::RightCurly => {}
-            TokenKind::LeftSquare => {}
-            TokenKind::RightSquare => {}
-            TokenKind::Colon => {}
-            TokenKind::Comma => {}
-            TokenKind::Pipe => {}
-            TokenKind::RangeExclusive => {}
-            TokenKind::RangeInclusive => {}
-            TokenKind::Arrow => {}
-            TokenKind::WideArrow => {}
-            TokenKind::Dot => {}
-            TokenKind::QuestionMark => {}
-            TokenKind::ErrorPropagate => {}
-            TokenKind::Coalesce => {}
-            TokenKind::Minus => {}
-            TokenKind::Plus => {}
-            TokenKind::Remainder => {}
-            TokenKind::Star => {}
-            TokenKind::Slash => {}
-            TokenKind::Not => {}
-            TokenKind::NotEqual => {}
-            TokenKind::Equal => {}
-            TokenKind::Greater => {}
-            TokenKind::GreaterEqual => {}
-            TokenKind::Less => {}
-            TokenKind::LessEqual => {}
-            TokenKind::Assign => {}
-            TokenKind::MulAssign => {}
-            TokenKind::DivAssign => {}
-            TokenKind::AddAssign => {}
-            TokenKind::SubAssign => {}
-            TokenKind::DiceRoll => {}
-            TokenKind::LazyAnd => {}
-            TokenKind::Pipeline => {}
-            TokenKind::Object => {}
-            TokenKind::False => {}
-            TokenKind::True => {}
-            TokenKind::Null => {}
-            TokenKind::If => {}
-            TokenKind::Else => {}
-            TokenKind::While => {}
-            TokenKind::Loop => {}
-            TokenKind::For => {}
-            TokenKind::Break => {}
-            TokenKind::Continue => {}
-            TokenKind::Return => {}
-            TokenKind::Function => {}
-            TokenKind::Let => {}
-            TokenKind::Mut => {}
-            TokenKind::In => {}
-            TokenKind::Operator => {}
-            TokenKind::Class => {}
-            TokenKind::Is => {}
-            TokenKind::Import => {}
-            TokenKind::As => {}
-            TokenKind::From => {}
-            TokenKind::Export => {}
-            TokenKind::Super => {}
-            TokenKind::Reserved => {}
-            TokenKind::Identifier => {}
-            TokenKind::Integer => {}
-            TokenKind::Float => {}
-            TokenKind::String => {}
-            TokenKind::Error => {}
+            TokenKind::EndOfInput => write!(f, "EOI"),
+            TokenKind::LeftParen => write!(f, "("),
+            TokenKind::RightParen => write!(f, ")"),
+            TokenKind::LeftCurly => write!(f, "{{"),
+            TokenKind::RightCurly => write!(f, "}}"),
+            TokenKind::LeftSquare => write!(f, "["),
+            TokenKind::RightSquare => write!(f, "]"),
+            TokenKind::Colon => write!(f, ":"),
+            TokenKind::Comma => write!(f, ","),
+            TokenKind::Pipe => write!(f, "|"),
+            TokenKind::RangeExclusive => write!(f, ".."),
+            TokenKind::RangeInclusive => write!(f, "..="),
+            TokenKind::Arrow => write!(f, "->"),
+            TokenKind::WideArrow => write!(f, "=>"),
+            TokenKind::Dot => write!(f, "."),
+            TokenKind::QuestionMark => write!(f, "?"),
+            TokenKind::ErrorPropagate => write!(f, "!!"),
+            TokenKind::Coalesce => write!(f, "??"),
+            TokenKind::Minus => write!(f, "-"),
+            TokenKind::Plus => write!(f, "+"),
+            TokenKind::Remainder => write!(f, "%"),
+            TokenKind::Star => write!(f, "*"),
+            TokenKind::Slash => write!(f, "/"),
+            TokenKind::Not => write!(f, "!"),
+            TokenKind::NotEqual => write!(f, "!="),
+            TokenKind::Equal => write!(f, "=="),
+            TokenKind::Greater => write!(f, ">"),
+            TokenKind::GreaterEqual => write!(f, ">="),
+            TokenKind::Less => write!(f, "<"),
+            TokenKind::LessEqual => write!(f, "<="),
+            TokenKind::Assign => write!(f, "="),
+            TokenKind::MulAssign => write!(f, "*="),
+            TokenKind::DivAssign => write!(f, "/="),
+            TokenKind::AddAssign => write!(f, "+="),
+            TokenKind::SubAssign => write!(f, "-="),
+            TokenKind::DiceRoll => write!(f, "d"),
+            TokenKind::LazyAnd => write!(f, "&&"),
+            TokenKind::Pipeline => write!(f, "|>"),
+            TokenKind::Object => write!(f, "#"),
+            TokenKind::False => write!(f, "false"),
+            TokenKind::True => write!(f, "true"),
+            TokenKind::Null => write!(f, "null"),
+            TokenKind::If => write!(f, "if"),
+            TokenKind::Else => write!(f, "else"),
+            TokenKind::While => write!(f, "while"),
+            TokenKind::Loop => write!(f, "loop"),
+            TokenKind::For => write!(f, "for"),
+            TokenKind::Break => write!(f, "break"),
+            TokenKind::Continue => write!(f, "continue"),
+            TokenKind::Return => write!(f, "return"),
+            TokenKind::Function => write!(f, "fn"),
+            TokenKind::Let => write!(f, "let"),
+            TokenKind::Mut => write!(f, "mut"),
+            TokenKind::In => write!(f, "in"),
+            TokenKind::Operator => write!(f, "op"),
+            TokenKind::Class => write!(f, "class"),
+            TokenKind::Is => write!(f, "is"),
+            TokenKind::Import => write!(f, "import"),
+            TokenKind::As => write!(f, "as"),
+            TokenKind::From => write!(f, "from"),
+            TokenKind::Export => write!(f, "export"),
+            TokenKind::Super => write!(f, "super"),
+            TokenKind::Reserved => write!(f, "reserved"),
+            TokenKind::Identifier => write!(f, "identifier"),
+            TokenKind::Integer => write!(f, "integer"),
+            TokenKind::Float => write!(f, "float"),
+            TokenKind::String => write!(f, "string"),
+            TokenKind::Error => write!(f, "error"),
         }
-
-        todo!()
     }
 }
 

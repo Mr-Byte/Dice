@@ -11,24 +11,31 @@ use crate::{
     ClassDecl, ErrorPropagate, FieldAccess, FnArg, ForLoop, ImportDecl, Index, Is, Loop, NullPropagate, OpDecl, OverloadedOperator, SuperAccess, SuperCall,
     TypeAnnotation, VarDeclKind,
 };
-use dice_core::{error::Error, source::Source, span::Span};
+use dice_core::{
+    error::{codes::UNEXPECTED_TOKEN, Error},
+    source::Source,
+    span::Span,
+    tags,
+};
 use id_arena::Arena;
 
 pub struct Parser<'a> {
     lexer: Lexer<'a>,
     arena: Arena<SyntaxNode>,
     rules: ParserRules<'a>,
+    source: &'a Source,
 }
 
 impl<'a> Parser<'a> {
-    pub fn new(input: &'a Source) -> Self {
-        let lexer = Lexer::from_source(input);
+    pub fn new(source: &'a Source) -> Self {
+        let lexer = Lexer::from_source(source);
         let arena = Arena::new();
 
         Self {
             lexer,
             arena,
             rules: ParserRules::new(),
+            source,
         }
     }
 
@@ -211,7 +218,7 @@ impl<'a> Parser<'a> {
                     span: token.span + span_end,
                 })
             }
-            _ => return todo!("Unexpected token."),
+            kind => return self.unexpected_token(kind, &[TokenKind::Break, TokenKind::Continue, TokenKind::Return], token.span),
         };
 
         Ok(self.arena.alloc(node))
@@ -230,7 +237,7 @@ impl<'a> Parser<'a> {
         let span_start = next_token.span;
         let lhs_expression = match next_token.kind {
             TokenKind::Identifier => self.arena.alloc(SyntaxNode::LitIdent(LitIdent::synthesize(next_token.slice, span_start))),
-            _ => return todo!("Unexpected token."),
+            kind => return self.unexpected_token(kind, &[TokenKind::Identifier], span_start),
         };
 
         self.parse_assignment(lhs_expression, can_assign, span_start)
@@ -317,7 +324,7 @@ impl<'a> Parser<'a> {
                 VarDeclKind::Singular(next_token.slice.to_owned())
             }
             TokenKind::LeftCurly => VarDeclKind::Destructured(self.parse_fields(TokenKind::LeftCurly, TokenKind::RightCurly)?),
-            _ => return todo!("Unexpected token."),
+            kind => return self.unexpected_token(kind, &[TokenKind::Identifier, TokenKind::LeftCurly], next_token.span),
         };
 
         self.lexer.consume(TokenKind::Assign)?;
@@ -396,7 +403,28 @@ impl<'a> Parser<'a> {
             TokenKind::NotEqual => OverloadedOperator::NotEquals,
             TokenKind::RangeExclusive => OverloadedOperator::RangeExclusive,
             TokenKind::RangeInclusive => OverloadedOperator::RangeInclusive,
-            _ => return todo!("Unexpected token."),
+            kind => {
+                return self.unexpected_token(
+                    kind,
+                    &[
+                        TokenKind::DiceRoll,
+                        TokenKind::Star,
+                        TokenKind::Slash,
+                        TokenKind::Remainder,
+                        TokenKind::Plus,
+                        TokenKind::Minus,
+                        TokenKind::Greater,
+                        TokenKind::GreaterEqual,
+                        TokenKind::Less,
+                        TokenKind::LessEqual,
+                        TokenKind::Equal,
+                        TokenKind::NotEqual,
+                        TokenKind::RangeExclusive,
+                        TokenKind::RangeInclusive,
+                    ],
+                    span_start,
+                )
+            }
         };
         let args = self.parse_args(TokenKind::LeftParen, TokenKind::RightParen)?;
 
@@ -451,10 +479,11 @@ impl<'a> Parser<'a> {
                 span: span + self.lexer.current().span,
             });
 
-            if self.lexer.peek()?.kind == TokenKind::Comma {
+            let next = self.lexer.peek()?;
+            if next.kind == TokenKind::Comma {
                 self.lexer.next()?;
-            } else if self.lexer.peek()?.kind != close_token_kind {
-                return todo!("Unexpected token.");
+            } else if next.kind != close_token_kind {
+                return self.unexpected_token(next.kind, &[close_token_kind], next.span);
             }
         }
 
@@ -494,10 +523,11 @@ impl<'a> Parser<'a> {
             let (_, name) = self.lexer.consume_ident()?;
             args.push(name);
 
-            if self.lexer.peek()?.kind == TokenKind::Comma {
+            let next = self.lexer.peek()?;
+            if next.kind == TokenKind::Comma {
                 self.lexer.next()?;
-            } else if self.lexer.peek()?.kind != close_token_kind {
-                return todo!("Unexpected token.");
+            } else if next.kind != close_token_kind {
+                return self.unexpected_token(next.kind, &[close_token_kind], next.span);
             }
         }
 
@@ -528,7 +558,7 @@ impl<'a> Parser<'a> {
             let expression = match next_token.kind {
                 TokenKind::Function => self.fn_decl()?,
                 TokenKind::Operator => self.op_decl()?,
-                _ => return todo!("Unexpected token."),
+                kind => return self.unexpected_token(kind, &[TokenKind::Function, TokenKind::Operator], next_token.span),
             };
 
             associated_items.push(expression);
@@ -710,10 +740,11 @@ impl<'a> Parser<'a> {
             let value = self.parse_precedence(Precedence::Assignment)?;
             args.push(value);
 
-            if self.lexer.peek()?.kind == TokenKind::Comma {
+            let next = self.lexer.peek()?;
+            if next.kind == TokenKind::Comma {
                 self.lexer.next()?;
-            } else if self.lexer.peek()?.kind != TokenKind::RightParen {
-                return todo!("Unexpected token.");
+            } else if next.kind != TokenKind::RightParen {
+                return self.unexpected_token(next.kind, &[TokenKind::RightParen], next.span);
             }
         }
 
@@ -736,10 +767,11 @@ impl<'a> Parser<'a> {
             let value = self.parse_precedence(Precedence::Assignment)?;
             args.push(value);
 
-            if self.lexer.peek()?.kind == TokenKind::Comma {
+            let next = self.lexer.peek()?;
+            if next.kind == TokenKind::Comma {
                 self.lexer.next()?;
-            } else if self.lexer.peek()?.kind != TokenKind::RightParen {
-                return todo!("Unexpected token.");
+            } else if next.kind != TokenKind::RightParen {
+                return self.unexpected_token(next.kind, &[TokenKind::RightParen], next.span);
             }
         }
 
@@ -794,12 +826,12 @@ impl<'a> Parser<'a> {
             self.lexer.consume(TokenKind::Colon)?;
             let value = self.parse_precedence(Precedence::Assignment)?;
 
-            if self.lexer.peek()?.kind == TokenKind::Comma {
+            let next = self.lexer.peek()?;
+            if next.kind == TokenKind::Comma {
                 self.lexer.next()?;
-            } else if self.lexer.peek()?.kind != TokenKind::RightCurly {
-                return todo!("Unexpected token.");
+            } else if next.kind != TokenKind::RightCurly {
+                return self.unexpected_token(next.kind, &[TokenKind::RightCurly], next.span);
             }
-
             properties.push((key, value));
         }
 
@@ -821,10 +853,11 @@ impl<'a> Parser<'a> {
         while self.lexer.peek()?.kind != TokenKind::RightSquare {
             let value = self.parse_precedence(Precedence::Assignment)?;
 
-            if self.lexer.peek()?.kind == TokenKind::Comma {
+            let next = self.lexer.peek()?;
+            if next.kind == TokenKind::Comma {
                 self.lexer.next()?;
-            } else if self.lexer.peek()?.kind != TokenKind::RightSquare {
-                return todo!("Unexpected token.");
+            } else if next.kind != TokenKind::RightSquare {
+                return self.unexpected_token(next.kind, &[TokenKind::RightSquare], next.span);
             }
 
             values.push(value);
@@ -859,7 +892,20 @@ impl<'a> Parser<'a> {
             TokenKind::False => SyntaxNode::LitBool(LitBool { value: false, span }),
             TokenKind::True => SyntaxNode::LitBool(LitBool { value: true, span }),
             TokenKind::Null => SyntaxNode::LitNull(LitNull { span }),
-            _ => return todo!("Unexpected token."),
+            kind => {
+                return self.unexpected_token(
+                    kind,
+                    &[
+                        TokenKind::Integer,
+                        TokenKind::Float,
+                        TokenKind::String,
+                        TokenKind::False,
+                        TokenKind::True,
+                        TokenKind::Null,
+                    ],
+                    span,
+                )
+            }
         };
 
         Ok(self.arena.alloc(literal))
@@ -904,6 +950,17 @@ impl<'a> Parser<'a> {
         } else {
             Ok(lhs_expression)
         }
+    }
+
+    fn unexpected_token<R>(&self, actual: TokenKind, expected: &[TokenKind], span: Span) -> Result<R, Error> {
+        let mut token_list = expected.to_vec();
+        token_list.sort_by_key(|key| *key);
+        let token_list = token_list.iter().map(ToString::to_string).collect::<Vec<_>>().join(", ");
+
+        Err(Error::new(UNEXPECTED_TOKEN).with_span(span).with_source(self.source.clone()).with_tags(tags! {
+            actual => actual.to_string(),
+            expected => token_list
+        }))
     }
 }
 
