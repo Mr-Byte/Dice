@@ -4,6 +4,7 @@ use crate::lexer::token::TokenIter;
 use dice_core::{
     error::{codes::UNEXPECTED_TOKEN, Error},
     source::Source,
+    span::Span,
     tags,
 };
 use std::iter::Peekable;
@@ -22,7 +23,7 @@ impl<'a> Lexer<'a> {
         Lexer {
             tokens,
             source,
-            current: Token::end_of_input(),
+            current: Token::end_of_input(Span::empty()),
         }
     }
 
@@ -31,12 +32,19 @@ impl<'a> Lexer<'a> {
     }
 
     pub fn next(&mut self) -> Result<&Token<'a>, Error> {
-        self.current = self.tokens.next().transpose()?.unwrap_or_else(Token::end_of_input);
+        self.current = self
+            .tokens
+            .next()
+            .transpose()?
+            .unwrap_or_else(|| Token::end_of_input(self.current.span));
         Ok(&self.current)
     }
 
     pub fn peek(&mut self) -> Result<Token<'a>, Error> {
-        self.tokens.peek().cloned().unwrap_or_else(|| Ok(Token::end_of_input()))
+        self.tokens
+            .peek()
+            .cloned()
+            .unwrap_or_else(|| Ok(Token::end_of_input(self.current.span)))
     }
 
     pub fn consume(&mut self, kind: TokenKind) -> Result<&Token, Error> {

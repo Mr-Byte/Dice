@@ -700,7 +700,7 @@ where
             }
             target => {
                 let object = target.as_object()?;
-                let field = index.as_symbol()?;
+                let field = index.as_symbol().with_context(INVALID_INDEX_TYPES)?;
                 object.set_field(field, value.clone());
                 *target = value;
             }
@@ -722,7 +722,7 @@ where
             }
             target => {
                 let object = target.as_object()?;
-                let field = index.as_symbol()?;
+                let field = index.as_symbol().with_context(INVALID_INDEX_TYPES)?;
                 object.set_field(field, value);
                 *target = Value::Unit;
             }

@@ -12,7 +12,7 @@ use crate::{
     OverloadedOperator, SuperAccess, SuperCall, TypeAnnotation, VarDeclKind,
 };
 use dice_core::{
-    error::{codes::UNEXPECTED_TOKEN, Error},
+    error::{codes::UNEXPECTED_TOKEN, Error, ResultExt},
     source::Source,
     span::Span,
     tags,
@@ -94,7 +94,7 @@ impl<'a> Parser<'a> {
 
     fn parse_precedence(&mut self, precedence: Precedence) -> ParseResult {
         let next_token = self.lexer.peek()?;
-        let rule = self.rules.for_token(next_token.kind)?;
+        let rule = self.rules.for_token(&next_token).with_source(|| self.source.clone())?;
         // TODO: Handle prefix precedence.
         let mut node = rule
             .prefix
@@ -104,7 +104,7 @@ impl<'a> Parser<'a> {
         loop {
             let span_start = next_token.span;
             let next_token = self.lexer.peek()?;
-            let rule = self.rules.for_token(next_token.kind)?;
+            let rule = self.rules.for_token(&next_token).with_source(|| self.source.clone())?;
 
             if let Some((postfix, postfix_precedence)) = rule.postfix {
                 if precedence > postfix_precedence {
@@ -625,7 +625,7 @@ impl<'a> Parser<'a> {
             _ => unreachable!(),
         };
 
-        let rule = self.rules.for_token(token.kind)?;
+        let rule = self.rules.for_token(&token).with_source(|| self.source.clone())?;
         let precedence = rule.infix.expect("Invalid infix rule.").1.increment();
         let rhs = self.parse_precedence(precedence)?;
 

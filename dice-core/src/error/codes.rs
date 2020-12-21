@@ -4,6 +4,8 @@ pub type ErrorCode = &'static str;
 pub static UNEXPECTED_TOKEN: ErrorCode = "E1000";
 pub static INVALID_ESCAPE_SEQUENCE: ErrorCode = "E1001";
 pub static UNTERMINATED_STRING: ErrorCode = "E1002";
+pub static UNRECOGNIZED_INPUT: ErrorCode = "E1003";
+pub static RESERVED_KEYWORD: ErrorCode = "E1004";
 
 // Compiler errors
 pub static INTERNAL_COMPILER_ERROR: ErrorCode = "E2000";

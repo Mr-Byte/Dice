@@ -26,10 +26,10 @@ impl<'a> Token<'a> {
         TokenIter::new(input)
     }
 
-    pub const fn end_of_input() -> Token<'a> {
+    pub const fn end_of_input(span: Span) -> Token<'a> {
         Self {
             kind: TokenKind::EndOfInput,
-            span: Span::new(0..0),
+            span,
             slice: "",
         }
     }

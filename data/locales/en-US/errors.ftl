@@ -1,8 +1,11 @@
-
+# Lexing and parsing errors
 E1000 = Encountered unexpected token during parsing. Found: {$actual}, Expected: {$expected}
 E1001 = Encountered unknown escape sequence '{$sequence}'.
 E1002 = Unterminated string encountered.
+E1003 = Expected valid expression. Found invalid token: {$input}
+E1004 = Expected valid expression. Found reserved keyword: {$input}
 
+# Compiler errors
 E2000 = Internal Compiler Error (please report this as a bug with code to reproduce the issue).
 
 E2100 = The maximum number of upvalues (256) has been exceeded for this compilation unit.
@@ -25,6 +28,7 @@ E2501 = The 'break' keyword can only be used inside of loops.
 E2502 = The 'continue' keyword can only be used inside of loops.
 E2503 = The error propagate operator '!!' can only be used inside of functions or methods.
 
+# Runtime errors
 E3000 = The value cannot be converted to a boolean.
 E3001 = The value cannot be converted to an int.
 E3002 = The value cannot be converted fo a float.
@@ -47,7 +51,6 @@ E3300 = Global variable {$name} cannot be redefined.
 E3301 = Global variable {$name} could not be found.
 E3302 = Global operator {$name} could not be found.
 
+# System errors
 E4000 = A panic has occurred. {$message}
 E4001 = IO error occurred. {$message}
-
-# TODO: Syntax errors and variable usage errors.
