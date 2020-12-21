@@ -5,6 +5,7 @@ pub mod tag;
 
 mod localization;
 
+use codes::IO_ERROR;
 use tag::Tags;
 
 use crate::{
@@ -16,10 +17,11 @@ use crate::{
     },
     source::Source,
     span::Span,
+    tags,
 };
 use std::fmt::{Debug, Display, Formatter};
 
-use self::context::ContextMsgId;
+use self::context::{ContextMsgId, IO_ERROR_CONTEXT};
 
 #[derive(thiserror::Error, Clone)]
 pub struct Error {
@@ -85,6 +87,14 @@ impl Debug for Error {
 impl Display for Error {
     fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
         HumanReadableErrorFormatter.fmt_pretty(formatter, self, &Locale::US_ENGLISH)
+    }
+}
+
+impl From<std::io::Error> for Error {
+    fn from(error: std::io::Error) -> Self {
+        Error::new(IO_ERROR).with_tags(tags! {
+            message => error.to_string()
+        })
     }
 }
 

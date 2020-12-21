@@ -867,7 +867,7 @@ where
                 let export = Value::Object(Object::new(self.module_class.clone()));
                 entry.insert(export.clone());
 
-                let module = self.module_loader.load_module(module_name).expect("Error conversion.");
+                let module = self.module_loader.load_module(module_name)?;
                 self.run_module(module.bytecode, export)?
             }
         };

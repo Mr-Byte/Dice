@@ -56,3 +56,4 @@ pub static GLOBAL_VARIABLE_UNDEFINED: ErrorCode = "E3301";
 pub static GLOBAL_OPERATOR_UNDEFINED: ErrorCode = "E3302";
 
 pub static PANIC: ErrorCode = "E4000";
+pub static IO_ERROR: ErrorCode = "E4001";
