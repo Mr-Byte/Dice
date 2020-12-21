@@ -5,8 +5,8 @@ use dice_core::{
         codes::{FUNCTION_ALREADY_DECLARE, FUNCTION_CANNOT_HAVE_DUPLICATE_ARGS, INTERNAL_COMPILER_ERROR},
         Error,
     },
-    error_tags,
     span::Span,
+    tags,
     value::{FnScript, Symbol, Value},
 };
 use dice_syntax::{FnArg, FnDecl};
@@ -54,7 +54,7 @@ impl Compiler {
         // NOTE: Check if a function of the given name has already been initialized.
         match &mut local.state {
             State::Function { ref mut is_initialized } if *is_initialized => {
-                return Err(Error::new(FUNCTION_ALREADY_DECLARE).with_span(fn_decl.name.span).with_tags(error_tags! {
+                return Err(Error::new(FUNCTION_ALREADY_DECLARE).with_span(fn_decl.name.span).with_tags(tags! {
                     name => fn_decl.name.identifier.clone()
                 }));
             }

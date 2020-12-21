@@ -5,8 +5,8 @@ use dice_core::{
         codes::{CANNOT_REASSIGN_IMMUTABLE_VARIABLE, INVALID_ASSIGNMENT_TARGET, VARIABLE_NOT_DECLARED},
         Error,
     },
-    error_tags,
     span::Span,
+    tags,
     value::Symbol,
 };
 use dice_syntax::{Assignment, AssignmentOperator, FieldAccess, Index, SyntaxNode, SyntaxNodeId};
@@ -100,7 +100,7 @@ impl Compiler {
             } else if let Some(upvalue) = self.compiler_stack.resolve_upvalue(target.clone(), 0) {
                 self.assign_upvalue(target, assignment.operator, assignment.rhs_expression, assignment.span, upvalue)
             } else {
-                Err(Error::new(VARIABLE_NOT_DECLARED).with_span(assignment.span).with_tags(error_tags! {
+                Err(Error::new(VARIABLE_NOT_DECLARED).with_span(assignment.span).with_tags(tags! {
                     name => (&*target).to_owned()
                 }))
             }
@@ -109,7 +109,7 @@ impl Compiler {
 
     fn assign_upvalue(&mut self, target: Symbol, operator: AssignmentOperator, rhs_expression: SyntaxNodeId, span: Span, upvalue: usize) -> Result<(), Error> {
         if !self.context()?.upvalues()[upvalue].is_mutable() {
-            return Err(Error::new(CANNOT_REASSIGN_IMMUTABLE_VARIABLE).with_span(span).with_tags(error_tags! {
+            return Err(Error::new(CANNOT_REASSIGN_IMMUTABLE_VARIABLE).with_span(span).with_tags(tags! {
                 name => (&*target).to_owned()
             }));
         }
@@ -148,7 +148,7 @@ impl Compiler {
         let slot = local.slot as u8;
 
         if !local.is_mutable() {
-            return Err(Error::new(CANNOT_REASSIGN_IMMUTABLE_VARIABLE).with_span(span).with_tags(error_tags! {
+            return Err(Error::new(CANNOT_REASSIGN_IMMUTABLE_VARIABLE).with_span(span).with_tags(tags! {
                 name => (&*target).to_owned()
             }));
         }

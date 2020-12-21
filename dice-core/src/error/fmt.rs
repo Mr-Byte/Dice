@@ -7,6 +7,8 @@ use crate::{
 };
 use std::fmt::Write;
 
+use super::localization::localize_context_msg_id;
+
 pub trait ErrorFormatter {
     fn fmt(&self, buffer: &mut impl Write, error: &Error, locale: &Locale) -> std::fmt::Result;
     fn fmt_pretty(&self, buffer: &mut impl Write, error: &Error, locale: &Locale) -> std::fmt::Result;
@@ -16,7 +18,7 @@ pub struct HumanReadableErrorFormatter;
 
 impl ErrorFormatter for HumanReadableErrorFormatter {
     fn fmt(&self, buffer: &mut impl Write, error: &Error, locale: &Locale) -> std::fmt::Result {
-        HumanReadableErrorFormatter::fmt_message(buffer, &error, locale)?;
+        HumanReadableErrorFormatter::fmt_message(buffer, error, locale)?;
 
         if let Some(source) = &error.source_code {
             HumanReadableErrorFormatter::fmt_position(buffer, error, source)?;
@@ -26,7 +28,8 @@ impl ErrorFormatter for HumanReadableErrorFormatter {
     }
 
     fn fmt_pretty(&self, buffer: &mut impl Write, error: &Error, locale: &Locale) -> std::fmt::Result {
-        HumanReadableErrorFormatter::fmt_message(buffer, &error, locale)?;
+        HumanReadableErrorFormatter::fmt_message(buffer, error, locale)?;
+        HumanReadableErrorFormatter::fmt_context(buffer, error, locale)?;
 
         if let Some(source) = &error.source_code {
             HumanReadableErrorFormatter::fmt_position(buffer, error, source)?;
@@ -47,7 +50,7 @@ impl ErrorFormatter for HumanReadableErrorFormatter {
 
         if !error.trace.is_empty() {
             writeln!(buffer)?;
-            // TODO: Should this be localized?
+            // TODO: Should this be localized? Yes! Do it sometime PEPW.
             writeln!(buffer, "Trace:")?;
 
             for trace in error.trace.iter().rev() {
@@ -80,9 +83,19 @@ impl HumanReadableErrorFormatter {
         }
     }
 
-    fn fmt_message(buffer: &mut impl Write, error: &&Error, locale: &Locale) -> std::fmt::Result {
+    fn fmt_message(buffer: &mut impl Write, error: &Error, locale: &Locale) -> std::fmt::Result {
         let localized_message = localize_error_code(error.error_code, &error.tags, locale);
 
         writeln!(buffer, "error[{}]: {}", error.error_code, localized_message)
+    }
+
+    fn fmt_context(buffer: &mut impl Write, error: &Error, locale: &Locale) -> std::fmt::Result {
+        if let Some(context_msg_id) = error.context_msg_id {
+            let localized_message = localize_context_msg_id(context_msg_id, &error.context_tags, locale);
+
+            writeln!(buffer, "{}", localized_message)?;
+        }
+
+        Ok(())
     }
 }

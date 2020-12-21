@@ -1,7 +1,11 @@
 pub mod codes;
+pub mod context;
 pub mod fmt;
+pub mod tag;
 
 mod localization;
+
+use tag::Tags;
 
 use crate::{
     bytecode::Bytecode,
@@ -10,12 +14,12 @@ use crate::{
         fmt::{ErrorFormatter, HumanReadableErrorFormatter},
         localization::Locale,
     },
-    source::{LineColumn, Source},
+    source::Source,
     span::Span,
 };
 use std::fmt::{Debug, Display, Formatter};
 
-pub type Tags = Vec<(&'static str, String)>;
+use self::context::ContextMsgId;
 
 #[derive(thiserror::Error, Clone)]
 pub struct Error {
@@ -23,8 +27,9 @@ pub struct Error {
     source_code: Option<Source>,
     span: Span,
     tags: Tags,
-    // NOTE: Optional trace.
     trace: Vec<TraceLocation>,
+    context_msg_id: Option<ContextMsgId>,
+    context_tags: Tags,
 }
 
 impl Error {
@@ -35,6 +40,8 @@ impl Error {
             span: Span::empty(),
             tags: Tags::new(),
             trace: Vec::new(),
+            context_msg_id: None,
+            context_tags: Tags::new(),
         }
     }
 
@@ -50,6 +57,21 @@ impl Error {
 
     pub fn with_tags(mut self, tags: Tags) -> Self {
         self.tags = tags;
+        self
+    }
+
+    pub fn with_context(mut self, context_msg_id: ContextMsgId) -> Self {
+        self.context_msg_id = Some(context_msg_id);
+        self
+    }
+
+    pub fn with_context_tags(mut self, tags: Tags) -> Self {
+        self.context_tags = tags;
+        self
+    }
+
+    pub fn push_trace(mut self, trace: TraceLocation) -> Self {
+        self.trace.push(trace);
         self
     }
 }
@@ -84,8 +106,10 @@ impl TraceLocation {
 pub trait ResultExt {
     fn with_source(self, source: impl Fn() -> Source) -> Self;
     fn with_span(self, span: impl Fn() -> Span) -> Self;
-    fn with_tags(self, tags: Tags) -> Self;
-    fn with_stack_location(self, stack_location: impl Fn() -> TraceLocation) -> Self;
+    fn with_tags(self, tags: impl Fn() -> Tags) -> Self;
+    fn push_trace(self, trace: impl Fn() -> TraceLocation) -> Self;
+    fn with_context(self, id: ContextMsgId) -> Self;
+    fn with_context_tags(self, tags: impl Fn() -> Tags) -> Self;
 }
 
 impl<T> ResultExt for Result<T, Error> {
@@ -97,27 +121,19 @@ impl<T> ResultExt for Result<T, Error> {
         self.map_err(|error| error.with_span(span()))
     }
 
-    fn with_tags(self, tags: Tags) -> Self {
-        self.map_err(|error| error.with_tags(tags))
+    fn with_tags(self, tags: impl Fn() -> Tags) -> Self {
+        self.map_err(|error| error.with_tags(tags()))
     }
 
-    fn with_stack_location(self, stack_location: impl Fn() -> TraceLocation) -> Self {
-        self.map_err(|mut error| {
-            error.trace.push(stack_location());
-            error
-        })
+    fn push_trace(self, trace: impl Fn() -> TraceLocation) -> Self {
+        self.map_err(|error| error.push_trace(trace()))
     }
-}
 
-#[macro_export]
-macro_rules! error_tags {
-    ($($tag:ident => $value:expr),*) => {{
-        let mut tags = $crate::error::Tags::default();
+    fn with_context(self, id: ContextMsgId) -> Self {
+        self.map_err(|error| error.with_context(id))
+    }
 
-        $(
-            tags.push((stringify!($tag), $value));
-        )*
-
-        tags
-    }}
+    fn with_context_tags(self, tags: impl Fn() -> Tags) -> Self {
+        self.map_err(|error| error.with_context_tags(tags()))
+    }
 }

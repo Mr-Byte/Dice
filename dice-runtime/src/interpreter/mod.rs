@@ -8,11 +8,12 @@ use dice_core::{
             DIVIDE_BY_ZERO, GLOBAL_VARIABLE_ALREADY_DEFINED, GLOBAL_VARIABLE_UNDEFINED, TYPE_ASSERTION_BOOL_FAILURE, TYPE_ASSERTION_FAILURE,
             TYPE_ASSERTION_FUNCTION_FAILURE, TYPE_ASSERTION_NULLABILITY_FAILURE, TYPE_ASSERTION_NUMBER_FAILURE, TYPE_ASSERTION_SUPER_FAILURE,
         },
+        context::INVALID_INDEX_TYPES,
         Error, ResultExt, TraceLocation,
     },
-    error_tags,
     protocol::operator::{ADD, DICE_ROLL, DIE_ROLL, DIV, EQ, GT, GTE, LT, LTE, MUL, NEQ, RANGE_EXCLUSIVE, RANGE_INCLUSIVE, REM, SUB},
     runtime::Runtime as _,
+    tags,
     upvalue::{Upvalue, UpvalueState},
     value::{Class, FnClosure, Object, Value, ValueKind},
 };
@@ -132,13 +133,13 @@ where
                 Instruction::AssertTypeOrNullForLocal => self.assert_type_or_null_for_local(stack_frame, &mut cursor),
                 Instruction::AssertTypeAndReturn => {
                     self.assert_type_and_return()
-                        .with_stack_location(|| TraceLocation::from_bytecode(&bytecode, cursor.last_instruction_offset()))?;
+                        .push_trace(|| TraceLocation::from_bytecode(&bytecode, cursor.last_instruction_offset()))?;
 
                     break;
                 }
                 Instruction::AssertTypeOrNullAndReturn => {
                     self.assert_type_or_null_and_return()
-                        .with_stack_location(|| TraceLocation::from_bytecode(&bytecode, cursor.last_instruction_offset()))?;
+                        .push_trace(|| TraceLocation::from_bytecode(&bytecode, cursor.last_instruction_offset()))?;
 
                     break;
                 }
@@ -146,7 +147,7 @@ where
                 Instruction::Return => break,
             };
 
-            result.with_stack_location(|| TraceLocation::from_bytecode(&bytecode, cursor.last_instruction_offset()))?;
+            result.push_trace(|| TraceLocation::from_bytecode(&bytecode, cursor.last_instruction_offset()))?;
         }
 
         // NOTE: subtract 1 to compensate for the last item of the stack not yet being popped.
@@ -626,7 +627,7 @@ where
 
         match self.globals.entry(global_name.clone()) {
             Entry::Occupied(_) => {
-                return Err(Error::new(GLOBAL_VARIABLE_ALREADY_DEFINED).with_tags(error_tags! {
+                return Err(Error::new(GLOBAL_VARIABLE_ALREADY_DEFINED).with_tags(tags! {
                     name => global_name.to_string()
                 }))
             }
@@ -642,7 +643,7 @@ where
         let const_pos = cursor.read_u8() as usize;
         let global = bytecode.constants()[const_pos].as_symbol()?;
         let value = self.globals.get(&global).cloned().ok_or_else(|| {
-            Error::new(GLOBAL_VARIABLE_UNDEFINED).with_tags(error_tags! {
+            Error::new(GLOBAL_VARIABLE_UNDEFINED).with_tags(tags! {
                 name => global.to_string()
             })
         })?;
@@ -699,7 +700,7 @@ where
                 array.elements().get(index as usize).cloned().unwrap_or(Value::Null)
             }
             target => {
-                let field = index.as_symbol()?;
+                let field = index.as_symbol().with_context(INVALID_INDEX_TYPES)?;
                 self.get_field(&field, target.clone())?
             }
         };

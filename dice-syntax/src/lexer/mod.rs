@@ -3,8 +3,8 @@ mod token;
 use crate::lexer::token::TokenIter;
 use dice_core::{
     error::{codes::UNEXPECTED_TOKEN, Error},
-    error_tags,
     source::Source,
+    tags,
 };
 use std::iter::Peekable;
 pub use token::{Token, TokenKind};
@@ -42,7 +42,7 @@ impl<'a> Lexer<'a> {
         if next.kind == kind {
             Ok(next)
         } else {
-            Err(Error::new(UNEXPECTED_TOKEN).with_span(next.span).with_tags(error_tags! {
+            Err(Error::new(UNEXPECTED_TOKEN).with_span(next.span).with_tags(tags! {
                 expected => kind.to_string(),
                 actual => next.kind.to_string()
             }))
@@ -56,7 +56,7 @@ impl<'a> Lexer<'a> {
 
             Ok((next, ident))
         } else {
-            Err(Error::new(UNEXPECTED_TOKEN).with_span(next.span).with_tags(error_tags! {
+            Err(Error::new(UNEXPECTED_TOKEN).with_span(next.span).with_tags(tags! {
                 // TODO: Revamp tokens to be easier to list the kind of.
                 actual => next.kind.to_string()
             }))
@@ -70,7 +70,7 @@ impl<'a> Lexer<'a> {
 
             Ok((next, string))
         } else {
-            Err(Error::new(UNEXPECTED_TOKEN).with_span(next.span).with_tags(error_tags! {
+            Err(Error::new(UNEXPECTED_TOKEN).with_span(next.span).with_tags(tags! {
                 actual => next.kind.to_string()
             }))
         }
@@ -81,7 +81,7 @@ impl<'a> Lexer<'a> {
         if kinds.contains(&next.kind) {
             Ok(next)
         } else {
-            Err(Error::new(UNEXPECTED_TOKEN).with_span(next.span).with_tags(error_tags! {
+            Err(Error::new(UNEXPECTED_TOKEN).with_span(next.span).with_tags(tags! {
                 expected => kinds.iter().map(ToString::to_string).collect::<Vec<_>>().join(", "),
                 actual => next.kind.to_string()
             }))

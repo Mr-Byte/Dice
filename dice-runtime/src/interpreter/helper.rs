@@ -4,8 +4,8 @@ use dice_core::{
         codes::{GLOBAL_OPERATOR_UNDEFINED, TYPE_ASSERTION_FUNCTION_FAILURE},
         Error,
     },
-    error_tags,
     protocol::{class::NEW, ProtocolSymbol},
+    tags,
     upvalue::{Upvalue, UpvalueState},
     value::{Class, FnBound, FnNative, FnScript, Object, Symbol, Value, ValueKind},
 };
@@ -36,7 +36,7 @@ impl<L: ModuleLoader> Runtime<L> {
                 runtime.call_fn(1)?;
             } else {
                 let value = runtime.globals.get(&operator).ok_or_else(|| {
-                    Error::new(GLOBAL_OPERATOR_UNDEFINED).with_tags(error_tags! {
+                    Error::new(GLOBAL_OPERATOR_UNDEFINED).with_tags(tags! {
                         name => operator.to_string()
                     })
                 })?;
@@ -63,7 +63,7 @@ impl<L: ModuleLoader> Runtime<L> {
                 runtime.call_fn(0)?;
             } else {
                 let value = runtime.globals.get(&operator).ok_or_else(|| {
-                    Error::new(GLOBAL_OPERATOR_UNDEFINED).with_tags(error_tags! {
+                    Error::new(GLOBAL_OPERATOR_UNDEFINED).with_tags(tags! {
                         name => operator.to_string()
                     })
                 })?;

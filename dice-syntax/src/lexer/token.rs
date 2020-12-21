@@ -211,6 +211,7 @@ pub enum TokenKind {
     // Literals,
     #[regex("(d[_a-zA-Z][_a-zA-Z0-9]*)|([_a-ce-zA-Z][_a-zA-Z0-9]*)")]
     Identifier,
+    // TODO: Allow _ as digit separators.
     #[regex("[0-9]+")]
     Integer,
     #[regex(r"[0-9]+\.[0-9]+")]
@@ -328,7 +329,7 @@ fn lex_string(lexer: &mut Lexer<TokenKind>) -> bool {
                     Some('r') => result.push('\r'),
                     Some('t') => result.push('\t'),
                     Some(next) => {
-                        *lexer.extras.0.borrow_mut() = Some(Error::new(INVALID_ESCAPE_SEQUENCE).with_tags(dice_core::error_tags! {
+                        *lexer.extras.0.borrow_mut() = Some(Error::new(INVALID_ESCAPE_SEQUENCE).with_tags(dice_core::tags! {
                             sequence => format!("\\{}", next)
                         }));
                         return false;
