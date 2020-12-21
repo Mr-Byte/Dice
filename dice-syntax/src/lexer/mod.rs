@@ -12,14 +12,16 @@ pub use token::{Token, TokenKind};
 pub struct Lexer<'a> {
     current: Token<'a>,
     tokens: Peekable<TokenIter<'a>>,
+    source: &'a Source,
 }
 
 impl<'a> Lexer<'a> {
-    pub fn from_source(input: &'a Source) -> Lexer<'a> {
-        let tokens = Token::tokenize(input).peekable();
+    pub fn from_source(source: &'a Source) -> Lexer<'a> {
+        let tokens = Token::tokenize(source).peekable();
 
         Lexer {
             tokens,
+            source,
             current: Token::end_of_input(),
         }
     }
@@ -38,11 +40,13 @@ impl<'a> Lexer<'a> {
     }
 
     pub fn consume(&mut self, kind: TokenKind) -> Result<&Token, Error> {
+        let source = self.source.clone();
         let next = self.next()?;
+
         if next.kind == kind {
             Ok(next)
         } else {
-            Err(Error::new(UNEXPECTED_TOKEN).with_span(next.span).with_tags(tags! {
+            Err(Error::new(UNEXPECTED_TOKEN).with_span(next.span).with_source(source).with_tags(tags! {
                 expected => kind.to_string(),
                 actual => next.kind.to_string()
             }))
@@ -50,38 +54,43 @@ impl<'a> Lexer<'a> {
     }
 
     pub fn consume_ident(&mut self) -> Result<(&Token, String), Error> {
+        let source = self.source.clone();
         let next = self.next()?;
         if let TokenKind::Identifier = next.kind {
             let ident = next.slice.to_owned();
 
             Ok((next, ident))
         } else {
-            Err(Error::new(UNEXPECTED_TOKEN).with_span(next.span).with_tags(tags! {
-                // TODO: Revamp tokens to be easier to list the kind of.
+            Err(Error::new(UNEXPECTED_TOKEN).with_span(next.span).with_source(source).with_tags(tags! {
+                expected => TokenKind::Identifier.to_string(),
                 actual => next.kind.to_string()
             }))
         }
     }
 
     pub fn consume_string(&mut self) -> Result<(&Token, String), Error> {
+        let source = self.source.clone();
         let next = self.next()?;
+
         if let TokenKind::String = next.kind {
             let string = next.slice.to_owned();
 
             Ok((next, string))
         } else {
-            Err(Error::new(UNEXPECTED_TOKEN).with_span(next.span).with_tags(tags! {
+            Err(Error::new(UNEXPECTED_TOKEN).with_span(next.span).with_source(source).with_tags(tags! {
+                expected => TokenKind::String.to_string(),
                 actual => next.kind.to_string()
             }))
         }
     }
 
     pub fn consume_one_of(&mut self, kinds: &[TokenKind]) -> Result<&Token, Error> {
+        let source = self.source.clone();
         let next = self.next()?;
         if kinds.contains(&next.kind) {
             Ok(next)
         } else {
-            Err(Error::new(UNEXPECTED_TOKEN).with_span(next.span).with_tags(tags! {
+            Err(Error::new(UNEXPECTED_TOKEN).with_span(next.span).with_source(source).with_tags(tags! {
                 expected => kinds.iter().map(ToString::to_string).collect::<Vec<_>>().join(", "),
                 actual => next.kind.to_string()
             }))

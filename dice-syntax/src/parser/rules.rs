@@ -9,6 +9,7 @@ pub type PostfixParser<'a> = fn(&mut Parser<'a>, SyntaxNodeId, bool, Span) -> Pa
 
 pub struct ParserRules<'a> {
     rules: HashMap<TokenKind, Rule<'a>>,
+    prefix_tokens: Vec<TokenKind>,
 }
 
 impl<'a> ParserRules<'a> {
@@ -118,11 +119,17 @@ impl<'a> ParserRules<'a> {
         // End of input
         rules.insert(TokenKind::EndOfInput, Rule::new());
 
-        Self { rules }
+        let prefix_tokens = rules.iter().filter_map(|(key, value)| value.prefix.map(|_| *key)).collect::<Vec<_>>();
+
+        Self { rules, prefix_tokens }
     }
 
     pub fn for_token(&self, kind: TokenKind) -> Result<&Rule<'a>, Error> {
         self.rules.get(&kind).ok_or_else(|| todo!("Unexpected token."))
+    }
+
+    pub fn prefix_tokens(&self) -> &[TokenKind] {
+        &self.prefix_tokens
     }
 }
 

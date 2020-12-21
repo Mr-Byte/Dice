@@ -99,7 +99,7 @@ impl<'a> Parser<'a> {
         let mut node = rule
             .prefix
             .map(|(prefix, _)| prefix(self, precedence <= Precedence::Assignment))
-            .unwrap_or_else(|| todo!("Unexpected token."))?;
+            .unwrap_or_else(|| self.unexpected_token(next_token.kind, self.rules.prefix_tokens(), next_token.span))?;
 
         loop {
             let span_start = next_token.span;
