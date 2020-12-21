@@ -33,7 +33,9 @@ impl NodeVisitor<&RangeLoop> for Compiler {
 
         // NOTE: Start a new scope and define the loop variable.
         context.scope_stack().push_scope(ScopeKind::Loop, None);
-        let variable_slot = context.scope_stack().add_local(range_loop.variable.clone(), State::initialized(false))? as u8;
+        let variable_slot = context
+            .scope_stack()
+            .add_local(range_loop.variable.clone(), State::initialized(false))? as u8;
 
         // NOTE: Store the start condition and duplicate the end condition, to be consumed by the loop condition.
         // This effectively reverses the order of the end and start conditions on the stack.

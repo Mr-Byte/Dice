@@ -36,11 +36,17 @@ impl Object {
     }
 
     pub fn type_id(&self) -> TypeId {
-        self.inner.class.as_ref().map_or_else(TypeId::default, |class| class.instance_type_id())
+        self.inner
+            .class
+            .as_ref()
+            .map_or_else(TypeId::default, |class| class.instance_type_id())
     }
 
     pub fn is_instance_of(&self, class: &Class) -> bool {
-        self.inner.class.as_ref().map_or_else(|| false, |self_class| self_class.is_class(class))
+        self.inner
+            .class
+            .as_ref()
+            .map_or_else(|| false, |self_class| self_class.is_class(class))
     }
 
     pub fn name(&self) -> Option<Symbol> {

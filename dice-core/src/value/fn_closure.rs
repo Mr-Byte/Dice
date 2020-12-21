@@ -39,7 +39,8 @@ impl Debug for FnClosure {
 
 impl PartialEq for FnClosure {
     fn eq(&self, other: &Self) -> bool {
-        self.inner.fn_script == other.inner.fn_script && std::ptr::eq(self.inner.upvalues.as_ptr(), other.inner.upvalues.as_ptr())
+        self.inner.fn_script == other.inner.fn_script
+            && std::ptr::eq(self.inner.upvalues.as_ptr(), other.inner.upvalues.as_ptr())
     }
 }
 

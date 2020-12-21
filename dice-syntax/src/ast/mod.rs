@@ -14,7 +14,10 @@ pub struct SyntaxTree {
 
 impl SyntaxTree {
     pub(crate) fn new(root: SyntaxNodeId, nodes: Arena<SyntaxNode>) -> Self {
-        Self { root, nodes: Rc::new(nodes) }
+        Self {
+            root,
+            nodes: Rc::new(nodes),
+        }
     }
 
     pub fn root(&self) -> SyntaxNodeId {

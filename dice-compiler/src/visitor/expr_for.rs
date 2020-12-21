@@ -32,7 +32,9 @@ impl NodeVisitor<&ForLoop> for Compiler {
 
         // NOTE: Start a new scope and define the loop variable.
         context.scope_stack().push_scope(ScopeKind::Loop, None);
-        let variable_slot = context.scope_stack().add_local(for_loop.variable.clone(), State::initialized(false))? as u8;
+        let variable_slot = context
+            .scope_stack()
+            .add_local(for_loop.variable.clone(), State::initialized(false))? as u8;
 
         emit_bytecode! {
             context.assembler(), for_loop.span => [

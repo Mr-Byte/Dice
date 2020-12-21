@@ -86,7 +86,10 @@ pub struct ScopeStack {
 impl ScopeStack {
     pub fn new(kind: ScopeKind) -> Self {
         Self {
-            stack: vec![ScopeContext { kind, ..Default::default() }],
+            stack: vec![ScopeContext {
+                kind,
+                ..Default::default()
+            }],
             slot_count: 0,
         }
     }
@@ -148,7 +151,9 @@ impl ScopeStack {
 
     /// Push the bytecode location of an exit point to the inner most loop's scope, to later be patched.
     pub fn add_loop_exit_point(&mut self, exit_point: usize) -> Result<(), Error> {
-        let scope = self.first_of_kind_mut(ScopeKind::Loop).ok_or_else(|| Error::new(INTERNAL_COMPILER_ERROR))?;
+        let scope = self
+            .first_of_kind_mut(ScopeKind::Loop)
+            .ok_or_else(|| Error::new(INTERNAL_COMPILER_ERROR))?;
 
         scope.exit_points.push(exit_point);
 
@@ -157,9 +162,14 @@ impl ScopeStack {
 
     /// Get the entry point of the first scope to match the specified kind.
     pub fn entry_point(&mut self, kind: ScopeKind) -> Result<usize, Error> {
-        let scope = self.first_of_kind(kind).ok_or_else(|| Error::new(INTERNAL_COMPILER_ERROR))?;
+        let scope = self
+            .first_of_kind(kind)
+            .ok_or_else(|| Error::new(INTERNAL_COMPILER_ERROR))?;
 
-        scope.entry_point.clone().ok_or_else(|| Error::new(INTERNAL_COMPILER_ERROR))
+        scope
+            .entry_point
+            .clone()
+            .ok_or_else(|| Error::new(INTERNAL_COMPILER_ERROR))
     }
 
     fn first_of_kind(&self, kind: ScopeKind) -> Option<&ScopeContext> {

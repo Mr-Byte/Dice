@@ -1,4 +1,4 @@
 edition = "2018"
-max_width = 160
+max_width = 120
 merge_imports = true
 use_field_init_shorthand = true

@@ -42,18 +42,45 @@ impl<'a> ParserRules<'a> {
         rules.insert(TokenKind::Continue, Rule::new());
 
         // Literals
-        rules.insert(TokenKind::Integer, Rule::new().with_prefix(Parser::literal, Precedence::Primary));
-        rules.insert(TokenKind::Float, Rule::new().with_prefix(Parser::literal, Precedence::Primary));
-        rules.insert(TokenKind::String, Rule::new().with_prefix(Parser::literal, Precedence::Primary));
-        rules.insert(TokenKind::Null, Rule::new().with_prefix(Parser::literal, Precedence::Primary));
-        rules.insert(TokenKind::False, Rule::new().with_prefix(Parser::literal, Precedence::Primary));
-        rules.insert(TokenKind::True, Rule::new().with_prefix(Parser::literal, Precedence::Primary));
-        rules.insert(TokenKind::Identifier, Rule::new().with_prefix(Parser::variable, Precedence::Primary));
+        rules.insert(
+            TokenKind::Integer,
+            Rule::new().with_prefix(Parser::literal, Precedence::Primary),
+        );
+        rules.insert(
+            TokenKind::Float,
+            Rule::new().with_prefix(Parser::literal, Precedence::Primary),
+        );
+        rules.insert(
+            TokenKind::String,
+            Rule::new().with_prefix(Parser::literal, Precedence::Primary),
+        );
+        rules.insert(
+            TokenKind::Null,
+            Rule::new().with_prefix(Parser::literal, Precedence::Primary),
+        );
+        rules.insert(
+            TokenKind::False,
+            Rule::new().with_prefix(Parser::literal, Precedence::Primary),
+        );
+        rules.insert(
+            TokenKind::True,
+            Rule::new().with_prefix(Parser::literal, Precedence::Primary),
+        );
+        rules.insert(
+            TokenKind::Identifier,
+            Rule::new().with_prefix(Parser::variable, Precedence::Primary),
+        );
 
-        rules.insert(TokenKind::If, Rule::new().with_prefix(Parser::if_expression, Precedence::None));
+        rules.insert(
+            TokenKind::If,
+            Rule::new().with_prefix(Parser::if_expression, Precedence::None),
+        );
 
         // Objects
-        rules.insert(TokenKind::Object, Rule::new().with_prefix(Parser::object, Precedence::Primary));
+        rules.insert(
+            TokenKind::Object,
+            Rule::new().with_prefix(Parser::object, Precedence::Primary),
+        );
 
         rules.insert(
             TokenKind::LeftSquare,
@@ -61,8 +88,14 @@ impl<'a> ParserRules<'a> {
                 .with_prefix(Parser::list, Precedence::Primary)
                 .with_infix(Parser::index_access, Precedence::Call),
         );
-        rules.insert(TokenKind::Dot, Rule::new().with_infix(Parser::field_access, Precedence::Call));
-        rules.insert(TokenKind::Super, Rule::new().with_prefix(Parser::super_access, Precedence::Call));
+        rules.insert(
+            TokenKind::Dot,
+            Rule::new().with_infix(Parser::field_access, Precedence::Call),
+        );
+        rules.insert(
+            TokenKind::Super,
+            Rule::new().with_prefix(Parser::super_access, Precedence::Call),
+        );
 
         // Grouping
         rules.insert(
@@ -71,31 +104,82 @@ impl<'a> ParserRules<'a> {
                 .with_prefix(Parser::grouping, Precedence::Primary)
                 .with_infix(Parser::fn_call, Precedence::Call),
         );
-        rules.insert(TokenKind::LeftCurly, Rule::new().with_prefix(Parser::block_expression, Precedence::None));
+        rules.insert(
+            TokenKind::LeftCurly,
+            Rule::new().with_prefix(Parser::block_expression, Precedence::None),
+        );
 
         // Operators
-        rules.insert(TokenKind::Pipeline, Rule::new().with_infix(Parser::binary_operator, Precedence::Pipeline));
-        rules.insert(TokenKind::Coalesce, Rule::new().with_infix(Parser::binary_operator, Precedence::Coalesce));
-        rules.insert(TokenKind::RangeExclusive, Rule::new().with_infix(Parser::binary_operator, Precedence::Range));
-        rules.insert(TokenKind::RangeInclusive, Rule::new().with_infix(Parser::binary_operator, Precedence::Range));
-        rules.insert(TokenKind::LazyAnd, Rule::new().with_infix(Parser::binary_operator, Precedence::And));
+        rules.insert(
+            TokenKind::Pipeline,
+            Rule::new().with_infix(Parser::binary_operator, Precedence::Pipeline),
+        );
+        rules.insert(
+            TokenKind::Coalesce,
+            Rule::new().with_infix(Parser::binary_operator, Precedence::Coalesce),
+        );
+        rules.insert(
+            TokenKind::RangeExclusive,
+            Rule::new().with_infix(Parser::binary_operator, Precedence::Range),
+        );
+        rules.insert(
+            TokenKind::RangeInclusive,
+            Rule::new().with_infix(Parser::binary_operator, Precedence::Range),
+        );
+        rules.insert(
+            TokenKind::LazyAnd,
+            Rule::new().with_infix(Parser::binary_operator, Precedence::And),
+        );
         rules.insert(
             TokenKind::Pipe,
             Rule::new()
                 .with_prefix(Parser::anonymous_fn, Precedence::Primary)
                 .with_infix(Parser::binary_operator, Precedence::Or),
         );
-        rules.insert(TokenKind::Equal, Rule::new().with_infix(Parser::binary_operator, Precedence::Comparison));
-        rules.insert(TokenKind::NotEqual, Rule::new().with_infix(Parser::binary_operator, Precedence::Comparison));
-        rules.insert(TokenKind::Greater, Rule::new().with_infix(Parser::binary_operator, Precedence::Comparison));
-        rules.insert(TokenKind::GreaterEqual, Rule::new().with_infix(Parser::binary_operator, Precedence::Comparison));
-        rules.insert(TokenKind::Less, Rule::new().with_infix(Parser::binary_operator, Precedence::Comparison));
-        rules.insert(TokenKind::LessEqual, Rule::new().with_infix(Parser::binary_operator, Precedence::Comparison));
-        rules.insert(TokenKind::Is, Rule::new().with_infix(Parser::is_operator, Precedence::Comparison));
-        rules.insert(TokenKind::Star, Rule::new().with_infix(Parser::binary_operator, Precedence::Factor));
-        rules.insert(TokenKind::Slash, Rule::new().with_infix(Parser::binary_operator, Precedence::Factor));
-        rules.insert(TokenKind::Remainder, Rule::new().with_infix(Parser::binary_operator, Precedence::Factor));
-        rules.insert(TokenKind::Plus, Rule::new().with_infix(Parser::binary_operator, Precedence::Term));
+        rules.insert(
+            TokenKind::Equal,
+            Rule::new().with_infix(Parser::binary_operator, Precedence::Comparison),
+        );
+        rules.insert(
+            TokenKind::NotEqual,
+            Rule::new().with_infix(Parser::binary_operator, Precedence::Comparison),
+        );
+        rules.insert(
+            TokenKind::Greater,
+            Rule::new().with_infix(Parser::binary_operator, Precedence::Comparison),
+        );
+        rules.insert(
+            TokenKind::GreaterEqual,
+            Rule::new().with_infix(Parser::binary_operator, Precedence::Comparison),
+        );
+        rules.insert(
+            TokenKind::Less,
+            Rule::new().with_infix(Parser::binary_operator, Precedence::Comparison),
+        );
+        rules.insert(
+            TokenKind::LessEqual,
+            Rule::new().with_infix(Parser::binary_operator, Precedence::Comparison),
+        );
+        rules.insert(
+            TokenKind::Is,
+            Rule::new().with_infix(Parser::is_operator, Precedence::Comparison),
+        );
+        rules.insert(
+            TokenKind::Star,
+            Rule::new().with_infix(Parser::binary_operator, Precedence::Factor),
+        );
+        rules.insert(
+            TokenKind::Slash,
+            Rule::new().with_infix(Parser::binary_operator, Precedence::Factor),
+        );
+        rules.insert(
+            TokenKind::Remainder,
+            Rule::new().with_infix(Parser::binary_operator, Precedence::Factor),
+        );
+        rules.insert(
+            TokenKind::Plus,
+            Rule::new().with_infix(Parser::binary_operator, Precedence::Term),
+        );
         rules.insert(
             TokenKind::Minus,
             Rule::new()
@@ -108,8 +192,14 @@ impl<'a> ParserRules<'a> {
                 .with_prefix(Parser::prefix_operator, Precedence::Unary)
                 .with_infix(Parser::binary_operator, Precedence::DiceRoll),
         );
-        rules.insert(TokenKind::Not, Rule::new().with_prefix(Parser::prefix_operator, Precedence::Unary));
-        rules.insert(TokenKind::QuestionMark, Rule::new().with_postfix(Parser::null_propagate, Precedence::Propagate));
+        rules.insert(
+            TokenKind::Not,
+            Rule::new().with_prefix(Parser::prefix_operator, Precedence::Unary),
+        );
+        rules.insert(
+            TokenKind::QuestionMark,
+            Rule::new().with_postfix(Parser::null_propagate, Precedence::Propagate),
+        );
         rules.insert(
             TokenKind::ErrorPropagate,
             Rule::new().with_postfix(Parser::error_propagate, Precedence::Propagate),
@@ -119,13 +209,18 @@ impl<'a> ParserRules<'a> {
         // End of input
         rules.insert(TokenKind::EndOfInput, Rule::new());
 
-        let prefix_tokens = rules.iter().filter_map(|(key, value)| value.prefix.map(|_| *key)).collect::<Vec<_>>();
+        let prefix_tokens = rules
+            .iter()
+            .filter_map(|(key, value)| value.prefix.map(|_| *key))
+            .collect::<Vec<_>>();
 
         Self { rules, prefix_tokens }
     }
 
     pub fn for_token(&self, kind: TokenKind) -> Result<&Rule<'a>, Error> {
-        self.rules.get(&kind).ok_or_else(|| unreachable!("Unreachable token scenario reached."))
+        self.rules
+            .get(&kind)
+            .ok_or_else(|| unreachable!("Unreachable token scenario reached."))
     }
 
     pub fn prefix_tokens(&self) -> &[TokenKind] {

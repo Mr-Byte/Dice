@@ -11,8 +11,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut dice = Dice::default();
     dice.runtime().load_prelude("prelude.dm")?;
-    dice.runtime().add_global("print", Value::with_native_fn(Rc::new(print_value) as NativeFn))?;
-    dice.runtime().add_global("panic", Value::with_native_fn(Rc::new(panic_err) as NativeFn))?;
+    dice.runtime()
+        .add_global("print", Value::with_native_fn(Rc::new(print_value) as NativeFn))?;
+    dice.runtime()
+        .add_global("panic", Value::with_native_fn(Rc::new(panic_err) as NativeFn))?;
 
     loop {
         print!("Input: ");

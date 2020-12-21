@@ -49,7 +49,11 @@ impl Assembler {
     }
 
     pub fn push_bool(&mut self, into: bool, span: Span) {
-        let instruction = if into { Instruction::PushTrue } else { Instruction::PushFalse };
+        let instruction = if into {
+            Instruction::PushTrue
+        } else {
+            Instruction::PushFalse
+        };
 
         self.source_map.insert(self.data.len() as u64, span);
         self.data.put_u8(instruction.into());

@@ -23,7 +23,9 @@ impl From<String> for Symbol {
     fn from(value: String) -> Self {
         INTERNED_SYMBOLS.with(|strings| {
             if let Some(interned) = strings.borrow().get(&*value) {
-                return Self { inner: interned.clone() };
+                return Self {
+                    inner: interned.clone(),
+                };
             }
 
             let key: Rc<str> = value.into();
@@ -44,7 +46,9 @@ impl<'a> From<&'a str> for Symbol {
     fn from(value: &'a str) -> Self {
         INTERNED_SYMBOLS.with(|strings| {
             if let Some(interned) = strings.borrow().get(value) {
-                return Self { inner: interned.clone() };
+                return Self {
+                    inner: interned.clone(),
+                };
             }
 
             let key: Rc<str> = value.into();

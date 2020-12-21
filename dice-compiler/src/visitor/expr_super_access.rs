@@ -10,7 +10,14 @@ use dice_core::{
 use dice_syntax::{LitIdent, SuperAccess};
 
 impl NodeVisitor<&SuperAccess> for Compiler {
-    fn visit(&mut self, SuperAccess { field, super_class, span }: &SuperAccess) -> Result<(), Error> {
+    fn visit(
+        &mut self,
+        SuperAccess {
+            field,
+            super_class,
+            span,
+        }: &SuperAccess,
+    ) -> Result<(), Error> {
         if !matches!(self.context()?.kind(), CompilerKind::Method { .. } | CompilerKind::Constructor) {
             return Err(Error::new(INVALID_SUPER_CALL).with_span(*span));
         }

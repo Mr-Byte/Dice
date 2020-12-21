@@ -62,7 +62,9 @@ pub enum FunctionBlockKind<'args> {
 impl<'args> FunctionBlockKind<'args> {
     fn args(&self) -> &'args [FnArg] {
         match self {
-            FunctionBlockKind::Function(args) | FunctionBlockKind::Method(args) | FunctionBlockKind::Constructor(args, ..) => *args,
+            FunctionBlockKind::Function(args)
+            | FunctionBlockKind::Method(args)
+            | FunctionBlockKind::Constructor(args, ..) => *args,
         }
     }
 }
@@ -160,7 +162,9 @@ impl Compiler {
 
         for variable in scope.variables.clone() {
             if variable.is_captured {
-                self.context()?.assembler().close_upvalue(variable.slot as u8, block.span);
+                self.context()?
+                    .assembler()
+                    .close_upvalue(variable.slot as u8, block.span);
             }
         }
 

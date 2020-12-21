@@ -5,13 +5,16 @@ use dice_core::{
     bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
     error::{
         codes::{
-            DIVIDE_BY_ZERO, GLOBAL_VARIABLE_ALREADY_DEFINED, GLOBAL_VARIABLE_UNDEFINED, TYPE_ASSERTION_BOOL_FAILURE, TYPE_ASSERTION_FAILURE,
-            TYPE_ASSERTION_FUNCTION_FAILURE, TYPE_ASSERTION_NULLABILITY_FAILURE, TYPE_ASSERTION_NUMBER_FAILURE, TYPE_ASSERTION_SUPER_FAILURE,
+            DIVIDE_BY_ZERO, GLOBAL_VARIABLE_ALREADY_DEFINED, GLOBAL_VARIABLE_UNDEFINED, TYPE_ASSERTION_BOOL_FAILURE,
+            TYPE_ASSERTION_FAILURE, TYPE_ASSERTION_FUNCTION_FAILURE, TYPE_ASSERTION_NULLABILITY_FAILURE,
+            TYPE_ASSERTION_NUMBER_FAILURE, TYPE_ASSERTION_SUPER_FAILURE,
         },
         context::INVALID_INDEX_TYPES,
         Error, ResultExt, TraceLocation,
     },
-    protocol::operator::{ADD, DICE_ROLL, DIE_ROLL, DIV, EQ, GT, GTE, LT, LTE, MUL, NEQ, RANGE_EXCLUSIVE, RANGE_INCLUSIVE, REM, SUB},
+    protocol::operator::{
+        ADD, DICE_ROLL, DIE_ROLL, DIV, EQ, GT, GTE, LT, LTE, MUL, NEQ, RANGE_EXCLUSIVE, RANGE_INCLUSIVE, REM, SUB,
+    },
     runtime::Runtime as _,
     tags,
     upvalue::{Upvalue, UpvalueState},
@@ -23,7 +26,12 @@ impl<L> Runtime<L>
 where
     L: ModuleLoader,
 {
-    pub(super) fn execute_bytecode(&mut self, bytecode: &Bytecode, stack_frame: StackFrame, parent_upvalues: Option<&[Upvalue]>) -> Result<Value, Error> {
+    pub(super) fn execute_bytecode(
+        &mut self,
+        bytecode: &Bytecode,
+        stack_frame: StackFrame,
+        parent_upvalues: Option<&[Upvalue]>,
+    ) -> Result<Value, Error> {
         let initial_stack_depth = self.stack.len();
         let mut cursor = bytecode.cursor();
 
@@ -45,7 +53,9 @@ where
                     Instruction::CreateArray => self.create_list(&mut cursor),
                     Instruction::CreateObject => self.create_object(),
                     Instruction::InheritClass => self.inherit_class(&bytecode, &mut cursor)?,
-                    Instruction::CreateClosure => self.create_closure(bytecode, stack_frame, parent_upvalues, &mut cursor)?,
+                    Instruction::CreateClosure => {
+                        self.create_closure(bytecode, stack_frame, parent_upvalues, &mut cursor)?
+                    }
                     Instruction::Negate => self.neg()?,
                     Instruction::Not => self.not()?,
                     Instruction::DieRoll => self.die_roll()?,
@@ -89,7 +99,9 @@ where
                     Instruction::CallSuper => self.call_super(&mut cursor)?,
                     Instruction::AssertBool => self.assert_bool()?,
                     Instruction::AssertTypeForLocal => self.assert_type_for_local(stack_frame, &mut cursor)?,
-                    Instruction::AssertTypeOrNullForLocal => self.assert_type_or_null_for_local(stack_frame, &mut cursor)?,
+                    Instruction::AssertTypeOrNullForLocal => {
+                        self.assert_type_or_null_for_local(stack_frame, &mut cursor)?
+                    }
                     Instruction::AssertTypeAndReturn => {
                         self.assert_type_and_return()?;
                         break;
@@ -162,7 +174,11 @@ where
         }
     }
 
-    fn assert_type_or_null_for_local(&mut self, stack_frame: StackFrame, cursor: &mut BytecodeCursor) -> Result<(), Error> {
+    fn assert_type_or_null_for_local(
+        &mut self,
+        stack_frame: StackFrame,
+        cursor: &mut BytecodeCursor,
+    ) -> Result<(), Error> {
         let class = self.stack.pop();
         let class = class.as_class()?;
         let value = &self.stack[stack_frame][cursor.read_u8() as usize];
@@ -543,7 +559,11 @@ where
         }
     }
 
-    fn assign_upvalue(&mut self, parent_upvalues: Option<&[Upvalue]>, cursor: &mut BytecodeCursor) -> Result<(), Error> {
+    fn assign_upvalue(
+        &mut self,
+        parent_upvalues: Option<&[Upvalue]>,
+        cursor: &mut BytecodeCursor,
+    ) -> Result<(), Error> {
         if let Some(parent_upvalues) = parent_upvalues {
             let upvalue_slot = cursor.read_u8() as usize;
             let upvalue = parent_upvalues[upvalue_slot].clone();
@@ -740,7 +760,12 @@ where
         Ok(())
     }
 
-    fn load_field_to_local(&mut self, bytecode: &Bytecode, stack_frame: StackFrame, cursor: &mut BytecodeCursor) -> Result<(), Error> {
+    fn load_field_to_local(
+        &mut self,
+        bytecode: &Bytecode,
+        stack_frame: StackFrame,
+        cursor: &mut BytecodeCursor,
+    ) -> Result<(), Error> {
         let key_index = cursor.read_u8() as usize;
         let local_slot = cursor.read_u8() as usize;
         let key = bytecode.constants()[key_index].as_symbol()?;

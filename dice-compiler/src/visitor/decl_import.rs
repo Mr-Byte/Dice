@@ -8,7 +8,10 @@ impl NodeVisitor<&ImportDecl> for Compiler {
             .item_imports
             .iter()
             .map(|item| {
-                let slot = self.context()?.scope_stack().add_local(item.clone(), State::initialized(false))?;
+                let slot = self
+                    .context()?
+                    .scope_stack()
+                    .add_local(item.clone(), State::initialized(false))?;
 
                 Ok((item.as_str(), slot as u8))
             })
@@ -28,7 +31,10 @@ impl NodeVisitor<&ImportDecl> for Compiler {
         }
 
         if let Some(module_import) = &node.module_import {
-            let module_slot = self.context()?.scope_stack().add_local(module_import.clone(), State::initialized(false))?;
+            let module_slot = self
+                .context()?
+                .scope_stack()
+                .add_local(module_import.clone(), State::initialized(false))?;
 
             self.assembler()?.store_local(module_slot as u8, node.span);
         }

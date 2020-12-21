@@ -38,14 +38,18 @@ impl Compiler {
 
     fn scan_fn_decl(&mut self, fn_decl: FnDecl) -> Result<(), Error> {
         let name = fn_decl.name.identifier;
-        self.context()?.scope_stack().add_local(name, State::Function { is_initialized: false })?;
+        self.context()?
+            .scope_stack()
+            .add_local(name, State::Function { is_initialized: false })?;
 
         Ok(())
     }
 
     fn scan_class_decl(&mut self, class_decl: ClassDecl) -> Result<(), Error> {
         let name = class_decl.name.identifier;
-        self.context()?.scope_stack().add_local(name, State::Class { is_initialized: false })?;
+        self.context()?
+            .scope_stack()
+            .add_local(name, State::Class { is_initialized: false })?;
 
         Ok(())
     }

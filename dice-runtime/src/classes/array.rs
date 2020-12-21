@@ -110,7 +110,12 @@ fn map(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, Error> {
         [Value::Array(arr), selector, ..] => Ok(Value::Array(
             arr.elements()
                 .iter()
-                .map(|value| runtime.call_function(selector.clone(), &[(*value).clone()]).ok().unwrap_or(Value::Null))
+                .map(|value| {
+                    runtime
+                        .call_function(selector.clone(), &[(*value).clone()])
+                        .ok()
+                        .unwrap_or(Value::Null)
+                })
                 .collect::<Vec<_>>()
                 .into(),
         )),

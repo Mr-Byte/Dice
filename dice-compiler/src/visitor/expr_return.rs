@@ -26,7 +26,9 @@ impl NodeVisitor<&Return> for Compiler {
                     .slot;
                 self.assembler()?.load_local(self_slot as u8, expr_return.span);
             }
-            CompilerKind::Constructor if expr_return.result.is_some() => return Err(Error::new(NEW_RETURN_CANNOT_HAVE_EXPRESSION).with_span(expr_return.span)),
+            CompilerKind::Constructor if expr_return.result.is_some() => {
+                return Err(Error::new(NEW_RETURN_CANNOT_HAVE_EXPRESSION).with_span(expr_return.span))
+            }
             _ => return Err(Error::new(INVALID_RETURN_USAGE).with_span(expr_return.span)),
         }
 

@@ -96,22 +96,45 @@ impl Compiler {
         {
             if let Some(local) = self.context()?.scope_stack().local(target.clone()) {
                 let local = local.clone();
-                self.assign_local(target, assignment.operator, assignment.rhs_expression, assignment.span, local)
+                self.assign_local(
+                    target,
+                    assignment.operator,
+                    assignment.rhs_expression,
+                    assignment.span,
+                    local,
+                )
             } else if let Some(upvalue) = self.compiler_stack.resolve_upvalue(target.clone(), 0) {
-                self.assign_upvalue(target, assignment.operator, assignment.rhs_expression, assignment.span, upvalue)
+                self.assign_upvalue(
+                    target,
+                    assignment.operator,
+                    assignment.rhs_expression,
+                    assignment.span,
+                    upvalue,
+                )
             } else {
-                Err(Error::new(VARIABLE_NOT_DECLARED).with_span(assignment.span).with_tags(tags! {
-                    name => (&*target).to_owned()
-                }))
+                Err(Error::new(VARIABLE_NOT_DECLARED)
+                    .with_span(assignment.span)
+                    .with_tags(tags! {
+                        name => (&*target).to_owned()
+                    }))
             }
         }
     }
 
-    fn assign_upvalue(&mut self, target: Symbol, operator: AssignmentOperator, rhs_expression: SyntaxNodeId, span: Span, upvalue: usize) -> Result<(), Error> {
+    fn assign_upvalue(
+        &mut self,
+        target: Symbol,
+        operator: AssignmentOperator,
+        rhs_expression: SyntaxNodeId,
+        span: Span,
+        upvalue: usize,
+    ) -> Result<(), Error> {
         if !self.context()?.upvalues()[upvalue].is_mutable() {
-            return Err(Error::new(CANNOT_REASSIGN_IMMUTABLE_VARIABLE).with_span(span).with_tags(tags! {
-                name => (&*target).to_owned()
-            }));
+            return Err(Error::new(CANNOT_REASSIGN_IMMUTABLE_VARIABLE)
+                .with_span(span)
+                .with_tags(tags! {
+                    name => (&*target).to_owned()
+                }));
         }
         match operator {
             AssignmentOperator::Assignment => {
@@ -148,9 +171,11 @@ impl Compiler {
         let slot = local.slot as u8;
 
         if !local.is_mutable() {
-            return Err(Error::new(CANNOT_REASSIGN_IMMUTABLE_VARIABLE).with_span(span).with_tags(tags! {
-                name => (&*target).to_owned()
-            }));
+            return Err(Error::new(CANNOT_REASSIGN_IMMUTABLE_VARIABLE)
+                .with_span(span)
+                .with_tags(tags! {
+                    name => (&*target).to_owned()
+                }));
         }
 
         match operator {

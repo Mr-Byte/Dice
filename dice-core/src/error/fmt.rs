@@ -41,7 +41,12 @@ impl ErrorFormatter for HumanReadableErrorFormatter {
                 writeln!(buffer, "     |")?;
 
                 for line in &lines {
-                    writeln!(buffer, "{:<4} | {}", position.line + 1, &source.source()[line.range()].trim_end())?
+                    writeln!(
+                        buffer,
+                        "{:<4} | {}",
+                        position.line + 1,
+                        &source.source()[line.range()].trim_end()
+                    )?
                 }
 
                 writeln!(buffer, "     |")?;
@@ -57,13 +62,29 @@ impl ErrorFormatter for HumanReadableErrorFormatter {
                 let position = trace.source.line_index().position_of(trace.span.start);
 
                 if let Some(path) = &trace.source.path() {
-                    writeln!(buffer, "  Location: {}:{}:{}", path, position.line + 1, position.column_utf16 + 1)?;
+                    writeln!(
+                        buffer,
+                        "  Location: {}:{}:{}",
+                        path,
+                        position.line + 1,
+                        position.column_utf16 + 1
+                    )?;
                 } else {
-                    writeln!(buffer, "  Location: <Script>:{}:{}", position.line + 1, position.column_utf16 + 1)?;
+                    writeln!(
+                        buffer,
+                        "  Location: <Script>:{}:{}",
+                        position.line + 1,
+                        position.column_utf16 + 1
+                    )?;
                 }
 
                 for line in trace.source.line_index().lines(trace.span) {
-                    writeln!(buffer, "    {:<4} | {}", position.line + 1, &trace.source.source()[line.range()].trim())?
+                    writeln!(
+                        buffer,
+                        "    {:<4} | {}",
+                        position.line + 1,
+                        &trace.source.source()[line.range()].trim()
+                    )?
                 }
             }
         }
@@ -77,9 +98,20 @@ impl HumanReadableErrorFormatter {
         let position = source.line_index().position_of(error.span.start);
 
         if let Some(path) = source.path() {
-            writeln!(buffer, "  --> {}:{}:{}", path, position.line + 1, position.column_utf16 + 1)
+            writeln!(
+                buffer,
+                "  --> {}:{}:{}",
+                path,
+                position.line + 1,
+                position.column_utf16 + 1
+            )
         } else {
-            writeln!(buffer, "  --> <Script>:{}:{}", position.line + 1, position.column_utf16 + 1)
+            writeln!(
+                buffer,
+                "  --> <Script>:{}:{}",
+                position.line + 1,
+                position.column_utf16 + 1
+            )
         }
     }
 

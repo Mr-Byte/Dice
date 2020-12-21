@@ -22,7 +22,14 @@ pub struct Bytecode {
 }
 
 impl Bytecode {
-    pub fn new(data: Box<[u8]>, slot_count: usize, upvalue_count: usize, constants: Box<[Value]>, source: Source, source_map: HashMap<u64, Span>) -> Self {
+    pub fn new(
+        data: Box<[u8]>,
+        slot_count: usize,
+        upvalue_count: usize,
+        constants: Box<[Value]>,
+        source: Source,
+        source_map: HashMap<u64, Span>,
+    ) -> Self {
         Self {
             inner: Rc::new(BytecodeInner {
                 constants,
@@ -73,7 +80,9 @@ impl Display for Bytecode {
             write!(f, "{:6} | {:<24} | ", position, format!("{}", instruction))?;
 
             match instruction {
-                Instruction::Jump | Instruction::JumpIfFalse | Instruction::JumpIfTrue => write!(f, "offset={}", cursor.read_offset())?,
+                Instruction::Jump | Instruction::JumpIfFalse | Instruction::JumpIfTrue => {
+                    write!(f, "offset={}", cursor.read_offset())?
+                }
                 Instruction::PushConst
                 | Instruction::Dup
                 | Instruction::LoadModule

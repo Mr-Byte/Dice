@@ -19,7 +19,9 @@ impl From<std::string::String> for String {
 
 impl<'a> From<&'a std::string::String> for String {
     fn from(value: &'a std::string::String) -> Self {
-        Self { inner: value.clone().into() }
+        Self {
+            inner: value.clone().into(),
+        }
     }
 }
 
@@ -31,13 +33,17 @@ impl From<&'_ str> for String {
 
 impl From<Symbol> for String {
     fn from(value: Symbol) -> Self {
-        Self { inner: (&*value).into() }
+        Self {
+            inner: (&*value).into(),
+        }
     }
 }
 
 impl From<&'_ Symbol> for String {
     fn from(value: &Symbol) -> Self {
-        Self { inner: (&**value).into() }
+        Self {
+            inner: (&**value).into(),
+        }
     }
 }
 

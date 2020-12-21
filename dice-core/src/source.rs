@@ -185,7 +185,10 @@ impl LineIndex {
             self.utf8_len
         };
 
-        let all_lines = self.newlines[start_line..end_line].iter().copied().chain(iter::once(end_range));
+        let all_lines = self.newlines[start_line..end_line]
+            .iter()
+            .copied()
+            .chain(iter::once(end_range));
 
         all_lines
             .clone()
@@ -217,7 +220,9 @@ where
 {
     use std::cmp::Ordering::{Greater, Less};
 
-    slice.binary_search_by(|x| if predicate(x) { Less } else { Greater }).unwrap_or_else(|i| i)
+    slice
+        .binary_search_by(|x| if predicate(x) { Less } else { Greater })
+        .unwrap_or_else(|i| i)
 }
 
 #[cfg(test)]

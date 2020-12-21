@@ -9,7 +9,9 @@ impl NodeVisitor<&Loop> for Compiler {
             let block = block.clone();
             let loop_start = self.assembler()?.current_position();
 
-            self.context()?.scope_stack().push_scope(ScopeKind::Loop, Some(loop_start as usize));
+            self.context()?
+                .scope_stack()
+                .push_scope(ScopeKind::Loop, Some(loop_start as usize));
 
             self.visit((&block, BlockKind::Loop))?;
             self.assembler()?.jump_back(loop_start, *span);

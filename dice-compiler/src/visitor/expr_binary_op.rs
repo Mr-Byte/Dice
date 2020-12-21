@@ -26,7 +26,12 @@ impl NodeVisitor<&Binary> for Compiler {
 }
 
 impl Compiler {
-    fn logical_and(&mut self, lhs_expression: SyntaxNodeId, rhs_expression: SyntaxNodeId, span: Span) -> Result<(), Error> {
+    fn logical_and(
+        &mut self,
+        lhs_expression: SyntaxNodeId,
+        rhs_expression: SyntaxNodeId,
+        span: Span,
+    ) -> Result<(), Error> {
         let short_circuit_jump;
 
         emit_bytecode! {
@@ -41,14 +46,22 @@ impl Compiler {
             ]
         }
 
-        self.compiler_stack.top_mut()?.assembler().patch_jump(short_circuit_jump);
+        self.compiler_stack
+            .top_mut()?
+            .assembler()
+            .patch_jump(short_circuit_jump);
 
         Ok(())
     }
 }
 
 impl Compiler {
-    fn logical_or(&mut self, lhs_expression: SyntaxNodeId, rhs_expression: SyntaxNodeId, span: Span) -> Result<(), Error> {
+    fn logical_or(
+        &mut self,
+        lhs_expression: SyntaxNodeId,
+        rhs_expression: SyntaxNodeId,
+        span: Span,
+    ) -> Result<(), Error> {
         let short_circuit_jump;
 
         emit_bytecode! {
@@ -63,12 +76,20 @@ impl Compiler {
             ]
         }
 
-        self.compiler_stack.top_mut()?.assembler().patch_jump(short_circuit_jump);
+        self.compiler_stack
+            .top_mut()?
+            .assembler()
+            .patch_jump(short_circuit_jump);
 
         Ok(())
     }
 
-    fn pipeline(&mut self, lhs_expression: SyntaxNodeId, rhs_expression: SyntaxNodeId, span: Span) -> Result<(), Error> {
+    fn pipeline(
+        &mut self,
+        lhs_expression: SyntaxNodeId,
+        rhs_expression: SyntaxNodeId,
+        span: Span,
+    ) -> Result<(), Error> {
         self.visit(rhs_expression)?;
         self.visit(lhs_expression)?;
         self.assembler()?.call(1, span);
@@ -76,7 +97,12 @@ impl Compiler {
         Ok(())
     }
 
-    fn coalesce(&mut self, lhs_expression: SyntaxNodeId, rhs_expression: SyntaxNodeId, span: Span) -> Result<(), Error> {
+    fn coalesce(
+        &mut self,
+        lhs_expression: SyntaxNodeId,
+        rhs_expression: SyntaxNodeId,
+        span: Span,
+    ) -> Result<(), Error> {
         self.visit(lhs_expression)?;
         let coalesce_jump;
         emit_bytecode! {
@@ -95,7 +121,13 @@ impl Compiler {
         Ok(())
     }
 
-    fn binary(&mut self, operator: BinaryOperator, lhs_expression: SyntaxNodeId, rhs_expression: SyntaxNodeId, span: Span) -> Result<(), Error> {
+    fn binary(
+        &mut self,
+        operator: BinaryOperator,
+        lhs_expression: SyntaxNodeId,
+        rhs_expression: SyntaxNodeId,
+        span: Span,
+    ) -> Result<(), Error> {
         self.visit(lhs_expression)?;
         self.visit(rhs_expression)?;
 
