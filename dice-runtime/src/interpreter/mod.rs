@@ -27,128 +27,85 @@ where
         let initial_stack_depth = self.stack.len();
         let mut cursor = bytecode.cursor();
 
-        while let Some(instruction) = cursor.read_instruction() {
-            let result = match instruction {
-                Instruction::PushNull => {
-                    self.stack.push(Value::Null);
-                    Ok(())
-                }
-                Instruction::PushUnit => {
-                    self.stack.push(Value::Unit);
-                    Ok(())
-                }
-                Instruction::PushFalse => {
-                    self.stack.push(Value::Bool(false));
-                    Ok(())
-                }
-                Instruction::PushTrue => {
-                    self.stack.push(Value::Bool(true));
-                    Ok(())
-                }
-                Instruction::PushI0 => {
-                    self.stack.push(Value::Int(0));
-                    Ok(())
-                }
-                Instruction::PushI1 => {
-                    self.stack.push(Value::Int(1));
-                    Ok(())
-                }
-                Instruction::PushF0 => {
-                    self.stack.push(Value::Float(0.0));
-                    Ok(())
-                }
-                Instruction::PushF1 => {
-                    self.stack.push(Value::Float(1.0));
-                    Ok(())
-                }
-                Instruction::PushConst => {
-                    self.push_const(bytecode, &mut cursor);
-                    Ok(())
-                }
-                Instruction::Pop => {
-                    std::mem::drop(self.stack.pop());
-                    Ok(())
-                }
-                Instruction::Swap => {
-                    self.stack.swap();
-                    Ok(())
-                }
-                Instruction::Dup => {
-                    self.dup(&mut cursor);
-                    Ok(())
-                }
-                Instruction::CreateArray => {
-                    self.create_list(&mut cursor);
-                    Ok(())
-                }
-                Instruction::CreateObject => {
-                    self.create_object();
-                    Ok(())
-                }
-                Instruction::InheritClass => self.inherit_class(&bytecode, &mut cursor),
-                Instruction::CreateClosure => self.create_closure(bytecode, stack_frame, parent_upvalues, &mut cursor),
-                Instruction::Negate => self.neg(),
-                Instruction::Not => self.not(),
-                Instruction::DieRoll => self.die_roll(),
-                Instruction::Multiply => self.mul(),
-                Instruction::Divide => self.div(),
-                Instruction::Remainder => self.rem(),
-                Instruction::Add => self.add(),
-                Instruction::Subtract => self.sub(),
-                Instruction::GreaterThan => self.gt(),
-                Instruction::GreaterThanOrEqual => self.gte(),
-                Instruction::LessThan => self.lt(),
-                Instruction::LessThanOrEqual => self.lte(),
-                Instruction::Equal => self.eq(),
-                Instruction::NotEqual => self.neq(),
-                Instruction::Is => self.is(),
-                Instruction::DiceRoll => self.dice_roll(),
-                Instruction::RangeExclusive => self.range_exclusive(),
-                Instruction::RangeInclusive => self.range_inclusive(),
-                Instruction::Jump => self.jump(&mut cursor),
-                Instruction::JumpIfFalse => self.jump_if_false(&mut cursor),
-                Instruction::JumpIfTrue => self.jump_if_true(&mut cursor),
-                Instruction::LoadLocal => self.load_local(stack_frame, &mut cursor),
-                Instruction::StoreLocal => self.store_local(stack_frame, &mut cursor),
-                Instruction::AssignLocal => self.assign_local(stack_frame, &mut cursor),
-                Instruction::LoadUpvalue => self.load_upvalue(parent_upvalues, &mut cursor),
-                Instruction::StoreUpvalue => self.store_upvalue(parent_upvalues, &mut cursor),
-                Instruction::AssignUpvalue => self.assign_upvalue(parent_upvalues, &mut cursor),
-                Instruction::CloseUpvalue => self.close_upvalue(stack_frame, &mut cursor),
-                Instruction::LoadGlobal => self.load_global(bytecode, &mut cursor),
-                Instruction::StoreGlobal => self.store_global(bytecode, &mut cursor),
-                Instruction::LoadField => self.load_field(bytecode, &mut cursor),
-                Instruction::StoreField => self.store_field(bytecode, &mut cursor),
-                Instruction::AssignField => self.assign_field(bytecode, &mut cursor),
-                Instruction::LoadIndex => self.load_index(),
-                Instruction::StoreIndex => self.store_index(),
-                Instruction::AssignIndex => self.assign_index(),
-                Instruction::LoadMethod => self.load_method(bytecode, &mut cursor),
-                Instruction::StoreMethod => self.store_method(bytecode, &mut cursor),
-                Instruction::LoadFieldToLocal => self.load_field_to_local(bytecode, stack_frame, &mut cursor),
-                Instruction::Call => self.call(&mut cursor),
-                Instruction::CallSuper => self.call_super(&mut cursor),
-                Instruction::AssertBool => self.assert_bool(),
-                Instruction::AssertTypeForLocal => self.assert_type_for_local(stack_frame, &mut cursor),
-                Instruction::AssertTypeOrNullForLocal => self.assert_type_or_null_for_local(stack_frame, &mut cursor),
-                Instruction::AssertTypeAndReturn => {
-                    self.assert_type_and_return()
-                        .push_trace(|| TraceLocation::from_bytecode(&bytecode, cursor.last_instruction_offset()))?;
+        (|| {
+            while let Some(instruction) = cursor.read_instruction() {
+                match instruction {
+                    Instruction::PushNull => self.stack.push(Value::Null),
+                    Instruction::PushUnit => self.stack.push(Value::Unit),
+                    Instruction::PushFalse => self.stack.push(Value::Bool(false)),
+                    Instruction::PushTrue => self.stack.push(Value::Bool(true)),
+                    Instruction::PushI0 => self.stack.push(Value::Int(0)),
+                    Instruction::PushI1 => self.stack.push(Value::Int(1)),
+                    Instruction::PushF0 => self.stack.push(Value::Float(0.0)),
+                    Instruction::PushF1 => self.stack.push(Value::Float(1.0)),
+                    Instruction::PushConst => self.push_const(bytecode, &mut cursor),
+                    Instruction::Pop => std::mem::drop(self.stack.pop()),
+                    Instruction::Swap => self.stack.swap(),
+                    Instruction::Dup => self.dup(&mut cursor),
+                    Instruction::CreateArray => self.create_list(&mut cursor),
+                    Instruction::CreateObject => self.create_object(),
+                    Instruction::InheritClass => self.inherit_class(&bytecode, &mut cursor)?,
+                    Instruction::CreateClosure => self.create_closure(bytecode, stack_frame, parent_upvalues, &mut cursor)?,
+                    Instruction::Negate => self.neg()?,
+                    Instruction::Not => self.not()?,
+                    Instruction::DieRoll => self.die_roll()?,
+                    Instruction::Multiply => self.mul()?,
+                    Instruction::Divide => self.div()?,
+                    Instruction::Remainder => self.rem()?,
+                    Instruction::Add => self.add()?,
+                    Instruction::Subtract => self.sub()?,
+                    Instruction::GreaterThan => self.gt()?,
+                    Instruction::GreaterThanOrEqual => self.gte()?,
+                    Instruction::LessThan => self.lt()?,
+                    Instruction::LessThanOrEqual => self.lte()?,
+                    Instruction::Equal => self.eq()?,
+                    Instruction::NotEqual => self.neq()?,
+                    Instruction::Is => self.is()?,
+                    Instruction::DiceRoll => self.dice_roll()?,
+                    Instruction::RangeExclusive => self.range_exclusive()?,
+                    Instruction::RangeInclusive => self.range_inclusive()?,
+                    Instruction::Jump => self.jump(&mut cursor)?,
+                    Instruction::JumpIfFalse => self.jump_if_false(&mut cursor)?,
+                    Instruction::JumpIfTrue => self.jump_if_true(&mut cursor)?,
+                    Instruction::LoadLocal => self.load_local(stack_frame, &mut cursor)?,
+                    Instruction::StoreLocal => self.store_local(stack_frame, &mut cursor)?,
+                    Instruction::AssignLocal => self.assign_local(stack_frame, &mut cursor)?,
+                    Instruction::LoadUpvalue => self.load_upvalue(parent_upvalues, &mut cursor)?,
+                    Instruction::StoreUpvalue => self.store_upvalue(parent_upvalues, &mut cursor)?,
+                    Instruction::AssignUpvalue => self.assign_upvalue(parent_upvalues, &mut cursor)?,
+                    Instruction::CloseUpvalue => self.close_upvalue(stack_frame, &mut cursor)?,
+                    Instruction::LoadGlobal => self.load_global(bytecode, &mut cursor)?,
+                    Instruction::StoreGlobal => self.store_global(bytecode, &mut cursor)?,
+                    Instruction::LoadField => self.load_field(bytecode, &mut cursor)?,
+                    Instruction::StoreField => self.store_field(bytecode, &mut cursor)?,
+                    Instruction::AssignField => self.assign_field(bytecode, &mut cursor)?,
+                    Instruction::LoadIndex => self.load_index()?,
+                    Instruction::StoreIndex => self.store_index()?,
+                    Instruction::AssignIndex => self.assign_index()?,
+                    Instruction::LoadMethod => self.load_method(bytecode, &mut cursor)?,
+                    Instruction::StoreMethod => self.store_method(bytecode, &mut cursor)?,
+                    Instruction::LoadFieldToLocal => self.load_field_to_local(bytecode, stack_frame, &mut cursor)?,
+                    Instruction::Call => self.call(&mut cursor)?,
+                    Instruction::CallSuper => self.call_super(&mut cursor)?,
+                    Instruction::AssertBool => self.assert_bool()?,
+                    Instruction::AssertTypeForLocal => self.assert_type_for_local(stack_frame, &mut cursor)?,
+                    Instruction::AssertTypeOrNullForLocal => self.assert_type_or_null_for_local(stack_frame, &mut cursor)?,
+                    Instruction::AssertTypeAndReturn => {
+                        self.assert_type_and_return()?;
+                        break;
+                    }
+                    Instruction::AssertTypeOrNullAndReturn => {
+                        self.assert_type_or_null_and_return()?;
+                        break;
+                    }
+                    Instruction::LoadModule => self.load_module(&bytecode, &mut cursor)?,
+                    Instruction::Return => break,
+                };
+            }
 
-                    break;
-                }
-                Instruction::AssertTypeOrNullAndReturn => {
-                    self.assert_type_or_null_and_return()
-                        .push_trace(|| TraceLocation::from_bytecode(&bytecode, cursor.last_instruction_offset()))?;
-
-                    break;
-                }
-                Instruction::LoadModule => self.load_module(&bytecode, &mut cursor),
-                Instruction::Return => break,
-            };
-
-            result.push_trace(|| TraceLocation::from_bytecode(&bytecode, cursor.last_instruction_offset()))?;
-        }
+            Ok(())
+        })()
+        .push_trace(|| TraceLocation::from_bytecode(&bytecode, cursor.last_instruction_offset()))?;
 
         // NOTE: subtract 1 to compensate for the last item of the stack not yet being popped.
         let final_stack_depth = self.stack.len() - 1;
