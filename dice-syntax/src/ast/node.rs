@@ -201,7 +201,6 @@ pub enum VarDeclKind {
 
 #[derive(Debug, Clone)]
 pub struct FnDecl {
-    // TODO: Add a span for the name of the function.
     pub name: LitIdent,
     pub args: Vec<FnArg>,
     pub return_: Option<TypeAnnotation>,

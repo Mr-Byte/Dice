@@ -16,7 +16,6 @@ impl Compiler {
     ) -> Result<CompilerContext, Error> {
         // NOTE: Constructors cannot have a return type annotation.
         if matches!(kind, FnKind::Constructor(_)) && return_type.is_some() {
-            // TODO: Propagate span of the function and type annotations correctly.
             let err = Error::new(NEW_METHOD_CANNOT_HAVE_RETURN_TYPE).with_span(return_type.unwrap().span);
             return Err(err);
         }

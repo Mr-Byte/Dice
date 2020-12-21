@@ -5,7 +5,9 @@ use crate::{
 };
 use dice_core::{
     error::{
-        codes::{CLASS_ALREADY_DECLARED, INTERNAL_COMPILER_ERROR, METHOD_RECEIVER_CANNOT_HAVE_TYPE, NEW_METHOD_MUST_HAVE_RECEIVER},
+        codes::{
+            CLASS_ALREADY_DECLARED, INTERNAL_COMPILER_ERROR, METHOD_RECEIVER_CANNOT_HAVE_TYPE, NEW_METHOD_MUST_HAVE_RECEIVER, OPERATOR_MUST_HAVE_RECEIVER,
+        },
         Error,
     },
     protocol::{
@@ -110,8 +112,7 @@ impl Compiler {
             }
         } else {
             if fn_decl.name.identifier == *NEW.get() {
-                // TODO: Propagate the span of the function's name only.
-                return Err(Error::new(NEW_METHOD_MUST_HAVE_RECEIVER).with_span(fn_decl.span));
+                return Err(Error::new(NEW_METHOD_MUST_HAVE_RECEIVER).with_span(fn_decl.name.span));
             }
 
             FnKind::StaticMethod
@@ -144,7 +145,7 @@ impl Compiler {
             }
         } else {
             // TODO: Propagate the span of the operator's name only.
-            return Err(Error::new(NEW_METHOD_MUST_HAVE_RECEIVER).with_span(op_decl.span));
+            return Err(Error::new(OPERATOR_MUST_HAVE_RECEIVER).with_span(op_decl.span));
         }
 
         self.visit((&op_decl, OpKind::Method))?;

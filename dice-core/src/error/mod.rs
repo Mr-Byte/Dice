@@ -5,7 +5,7 @@ pub mod tag;
 
 mod localization;
 
-use self::context::ContextMsgId;
+use self::{codes::IO_ERROR, context::ContextMsgId};
 use crate::{
     bytecode::Bytecode,
     error::{
@@ -17,7 +17,6 @@ use crate::{
     span::Span,
     tags,
 };
-use codes::IO_ERROR;
 use std::fmt::{Debug, Display, Formatter};
 use tag::Tags;
 

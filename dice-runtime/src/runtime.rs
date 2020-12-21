@@ -109,7 +109,6 @@ where
     }
 
     fn load_prelude(&mut self, path: &str) -> Result<(), Error> {
-        // TODO: Clean this up unify module loading with the runtime's own module loading process.
         let module = self.module_loader.load_module(path.into())?;
         let prelude = Value::Object(Object::new(self.module_class.clone()));
         // NOTE: Add the loaded prelude module as a registered module.

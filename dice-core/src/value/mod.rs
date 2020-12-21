@@ -37,7 +37,6 @@ pub enum Value {
     Bool(bool),
     Int(i64),
     Float(f64),
-    // TODO: Combine these down to one function variant?
     FnClosure(FnClosure),
     FnScript(FnScript),
     FnNative(FnNative),

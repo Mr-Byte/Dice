@@ -110,10 +110,8 @@ pub enum TokenKind {
     Dot,
     #[token("?")]
     QuestionMark,
-    // TODO: Change the parser to look for a double Bang token instead of this token.
     #[token("!!")]
     ErrorPropagate,
-    // TODO: Change the parser to look for a double Question token instead of this token.
     #[token("??")]
     Coalesce,
     #[token("-")]

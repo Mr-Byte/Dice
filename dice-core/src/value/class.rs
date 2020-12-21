@@ -90,7 +90,6 @@ impl Class {
 
         if method.kind() != ValueKind::Function {
             todo!("Return error")
-            // TODO: Return error.
         }
 
         self.inner.methods.borrow_mut().insert(name.into(), method);
