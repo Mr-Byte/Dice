@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use super::{
     assembler::Assembler,
     scope_stack::{ScopeKind, ScopeStack},
@@ -18,6 +20,18 @@ pub enum CompilerKind {
     Function { return_type: Option<TypeAnnotation> },
     Method { return_type: Option<TypeAnnotation> },
     Constructor,
+}
+
+impl Display for CompilerKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            CompilerKind::Script => write!(f, "script"),
+            CompilerKind::Module => write!(f, "module"),
+            CompilerKind::Function { .. } => write!(f, "function"),
+            CompilerKind::Method { .. } => write!(f, "function"),
+            CompilerKind::Constructor => write!(f, "function"),
+        }
+    }
 }
 
 pub struct CompilerContext {

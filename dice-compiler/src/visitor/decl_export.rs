@@ -2,12 +2,11 @@ use crate::{compiler::Compiler, compiler_stack::CompilerKind, visitor::NodeVisit
 use dice_core::{
     error::{
         codes::INVALID_EXPORT_USAGE,
-        context::{
-            ErrorContext, EXPORT_ONLY_ALLOWED_IN_MODULES, EXPORT_ONLY_ALLOWED_IN_TOP_LEVEL_SCOPE, INVALID_EXPORT_ITEM,
-        },
+        context::{ErrorContext, EXPORT_ONLY_ALLOWED_IN_MODULES, EXPORT_ONLY_ALLOWED_IN_TOP_LEVEL_SCOPE},
         Error,
     },
     protocol::{module::EXPORT, ProtocolSymbol},
+    tags,
 };
 use dice_syntax::{ExportDecl, SyntaxNode, VarDecl, VarDeclKind};
 
@@ -15,7 +14,9 @@ impl NodeVisitor<&ExportDecl> for Compiler {
     fn visit(&mut self, node: &ExportDecl) -> Result<(), Error> {
         if !matches!(self.context()?.kind(), CompilerKind::Module) {
             return Err(Error::new(INVALID_EXPORT_USAGE)
-                .push_context(ErrorContext::new(EXPORT_ONLY_ALLOWED_IN_MODULES))
+                .push_context(ErrorContext::new(EXPORT_ONLY_ALLOWED_IN_MODULES).with_tags(tags! {
+                    kind => self.context()?.kind().to_string()
+                }))
                 .with_source(self.source.clone())
                 .with_span(node.span));
         }
@@ -44,12 +45,7 @@ impl NodeVisitor<&ExportDecl> for Compiler {
             SyntaxNode::FnDecl(fn_decl) => fn_decl.name.identifier.clone(),
             SyntaxNode::ClassDecl(class_decl) => class_decl.name.identifier.clone(),
             SyntaxNode::LitIdent(lit_ident) => lit_ident.identifier.clone(),
-            _ => {
-                return Err(Error::new(INVALID_EXPORT_USAGE)
-                    .push_context(ErrorContext::new(INVALID_EXPORT_ITEM))
-                    .with_source(self.source.clone())
-                    .with_span(node.span))
-            }
+            _ => unreachable!("Invalid export node type encountered."),
         };
 
         self.assembler()?.store_field(field_name, node.span)?;
