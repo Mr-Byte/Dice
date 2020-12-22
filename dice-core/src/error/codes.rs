@@ -65,3 +65,5 @@ pub static GLOBAL_OPERATOR_UNDEFINED: ErrorCode = "E3302";
 pub static PANIC: ErrorCode = "E4000";
 pub static IO_ERROR: ErrorCode = "E4001";
 pub static INVALID_SCRIPT_LOCATION: ErrorCode = "E4002";
+pub static MODULE_ALREADY_EXISTS: ErrorCode = "E4003";
+pub static GLOBAL_ALREADY_EXISTS: ErrorCode = "E4002";

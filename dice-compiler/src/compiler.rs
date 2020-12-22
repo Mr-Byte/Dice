@@ -49,7 +49,7 @@ impl Compiler {
             let exports_slot = self
                 .context()?
                 .scope_stack()
-                .local(&*EXPORT.get())
+                .local(EXPORT.get())
                 .expect("#export should always be defined for modules.")
                 .slot as u8;
 

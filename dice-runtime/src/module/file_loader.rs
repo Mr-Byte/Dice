@@ -17,7 +17,7 @@ pub struct FileModuleLoader;
 impl ModuleLoader for FileModuleLoader {
     fn load_module(&mut self, name: Symbol) -> Result<Module, Error> {
         (|| {
-            let path = dunce::canonicalize(&*name)?;
+            let path = dunce::canonicalize(name.as_string())?;
             let working_dir = dunce::canonicalize(std::env::current_dir()?)?;
 
             // TODO: Have a way to set the modules root as a part of the runtime.

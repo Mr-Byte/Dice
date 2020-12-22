@@ -43,6 +43,10 @@ impl Error {
         }
     }
 
+    pub fn error_code(&self) -> &str {
+        &self.error_code
+    }
+
     pub const fn with_span(mut self, span: Span) -> Self {
         self.span = span;
         self

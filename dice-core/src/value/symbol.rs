@@ -1,37 +1,37 @@
 use std::{
     cell::RefCell,
-    collections::HashSet,
     fmt::{Display, Formatter},
-    hash::{BuildHasherDefault, Hash, Hasher},
-    ops::Deref,
-    rc::Rc,
+    hash::Hash,
 };
-use wyhash::WyHash;
+use string_interner::{DefaultSymbol, StringInterner};
 
 // NOTE: Use a naive string interning system for now.
 thread_local! {
-    static INTERNED_SYMBOLS: RefCell<HashSet<Rc<str>, BuildHasherDefault<WyHash>>> = Default::default();
+    static INTERNED_SYMBOLS: RefCell<StringInterner> = RefCell::new(StringInterner::default());
 }
 
-#[derive(Debug, Clone, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[repr(transparent)]
 pub struct Symbol {
-    inner: Rc<str>,
+    inner: DefaultSymbol,
+}
+
+impl Symbol {
+    pub fn as_string(self) -> String {
+        INTERNED_SYMBOLS.with(|strings| {
+            strings
+                .borrow()
+                .resolve(self.inner)
+                .expect("Unable to find interned symbol.")
+                .to_owned()
+        })
+    }
 }
 
 impl From<String> for Symbol {
     fn from(value: String) -> Self {
-        INTERNED_SYMBOLS.with(|strings| {
-            if let Some(interned) = strings.borrow().get(&*value) {
-                return Self {
-                    inner: interned.clone(),
-                };
-            }
-
-            let key: Rc<str> = value.into();
-            strings.borrow_mut().insert(key.clone());
-
-            Self { inner: key }
+        INTERNED_SYMBOLS.with(|strings| Self {
+            inner: strings.borrow_mut().get_or_intern(value),
         })
     }
 }
@@ -44,17 +44,10 @@ impl Into<String> for Symbol {
 
 impl<'a> From<&'a str> for Symbol {
     fn from(value: &'a str) -> Self {
-        INTERNED_SYMBOLS.with(|strings| {
-            if let Some(interned) = strings.borrow().get(value) {
-                return Self {
-                    inner: interned.clone(),
-                };
-            }
+        let value = value.to_string();
 
-            let key: Rc<str> = value.into();
-            strings.borrow_mut().insert(key.clone());
-
-            Self { inner: key }
+        INTERNED_SYMBOLS.with(|strings| Self {
+            inner: strings.borrow_mut().get_or_intern(value),
         })
     }
 }
@@ -71,34 +64,8 @@ impl<'a> From<&'a super::String> for Symbol {
     }
 }
 
-impl PartialEq for Symbol {
-    fn eq(&self, other: &Self) -> bool {
-        self.as_ptr() == other.as_ptr()
-    }
-}
-
-impl Hash for Symbol {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.inner.hash(state)
-    }
-}
-
-impl Deref for Symbol {
-    type Target = str;
-
-    fn deref(&self) -> &Self::Target {
-        &*self.inner
-    }
-}
-
-impl AsRef<str> for Symbol {
-    fn as_ref(&self) -> &str {
-        &*self.inner
-    }
-}
-
 impl Display for Symbol {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.inner)
+        write!(f, "{}", self.as_string())
     }
 }

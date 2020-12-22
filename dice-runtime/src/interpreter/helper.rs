@@ -32,7 +32,7 @@ impl<L: ModuleLoader> Runtime<L> {
             rhs: Value,
         ) -> Result<(), Error> {
             let lhs = runtime.stack.pop();
-            let method = runtime.get_field(&operator, lhs.clone())?;
+            let method = runtime.get_field(operator, lhs.clone())?;
 
             if method != Value::Null {
                 runtime.stack.push(method);
@@ -60,7 +60,7 @@ impl<L: ModuleLoader> Runtime<L> {
     pub(super) fn call_unary_op(&mut self, operator: impl Into<Symbol>) -> Result<(), Error> {
         fn call_unary_op<L: ModuleLoader>(runtime: &mut Runtime<L>, operator: Symbol) -> Result<(), Error> {
             let operand = runtime.stack.pop();
-            let method = runtime.get_field(&operator, operand.clone())?;
+            let method = runtime.get_field(operator, operand.clone())?;
 
             if method != Value::Null {
                 runtime.stack.push(method);
@@ -83,7 +83,7 @@ impl<L: ModuleLoader> Runtime<L> {
         call_unary_op(self, operator.into())
     }
 
-    pub(super) fn get_field(&self, key: &Symbol, value: Value) -> Result<Value, Error> {
+    pub(super) fn get_field(&self, key: Symbol, value: Value) -> Result<Value, Error> {
         if value.kind() == ValueKind::Object || value.kind() == ValueKind::Class || value.kind() == ValueKind::Array {
             let object = value.as_object()?;
             let fields = object.fields();
@@ -92,7 +92,7 @@ impl<L: ModuleLoader> Runtime<L> {
             }
         }
 
-        if *key == NEW.get() {
+        if key == NEW.get() {
             todo!("TODO: the new function cannot be accessed directly.")
         }
 
@@ -109,9 +109,9 @@ impl<L: ModuleLoader> Runtime<L> {
         Ok(value)
     }
 
-    pub(super) fn get_method(&self, class: Option<&Class>, key: &Symbol, receiver: &Value) -> Value {
+    pub(super) fn get_method(&self, class: Option<&Class>, key: Symbol, receiver: &Value) -> Value {
         let value = match class {
-            Some(class) => match class.method(&**key) {
+            Some(class) => match class.method(key) {
                 Some(method) => Value::FnBound(FnBound::new(receiver.clone(), method)),
                 None => Value::Null,
             },
@@ -163,7 +163,7 @@ impl<L: ModuleLoader> Runtime<L> {
             // to override the result.
             object = self.stack.peek(0).clone();
         } else if arg_count > 0 {
-            todo!("TODO: Constructor has too many parameters error.",);
+            self.stack.pop_count(arg_count);
         } else if class.base().filter(|base| base.method(&NEW).is_some()).is_some() {
             todo!("TODO: Class must have constructor if super has constructor.",);
         }
@@ -199,7 +199,7 @@ impl<L: ModuleLoader> Runtime<L> {
         parent_upvalues: Option<&[Upvalue]>,
     ) -> Result<Value, Error> {
         let slots = fn_script.bytecode().slot_count();
-        let reserved = slots - arg_count;
+        let reserved = if arg_count < slots { slots - arg_count } else { slots };
         // NOTE: Reserve only the slots needed to cover locals beyond the arguments already on the stack.
         let stack_frame = self.stack.reserve_slots(reserved);
         // NOTE: Calling convention includes an extra parameter. This parameter is the function itself for bare functions

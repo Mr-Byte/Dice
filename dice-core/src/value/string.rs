@@ -8,7 +8,7 @@ use std::{
 #[derive(Debug, Hash, Clone, PartialEq, Eq)]
 #[repr(transparent)]
 pub struct String {
-    inner: Rc<str>,
+    inner: Rc<std::string::String>,
 }
 
 impl From<std::string::String> for String {
@@ -27,14 +27,16 @@ impl<'a> From<&'a std::string::String> for String {
 
 impl From<&'_ str> for String {
     fn from(value: &'_ str) -> Self {
-        Self { inner: value.into() }
+        Self {
+            inner: value.to_owned().into(),
+        }
     }
 }
 
 impl From<Symbol> for String {
     fn from(value: Symbol) -> Self {
         Self {
-            inner: (&*value).into(),
+            inner: value.as_string().into(),
         }
     }
 }
@@ -42,7 +44,7 @@ impl From<Symbol> for String {
 impl From<&'_ Symbol> for String {
     fn from(value: &Symbol) -> Self {
         Self {
-            inner: (&**value).into(),
+            inner: value.as_string().into(),
         }
     }
 }

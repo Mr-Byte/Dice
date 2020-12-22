@@ -31,7 +31,7 @@ impl NodeVisitor<&ExportDecl> for Compiler {
         let export_slot = self
             .context()?
             .scope_stack()
-            .local(&*EXPORT.get())
+            .local(EXPORT.get())
             .expect("#export should always be defined in modules.")
             .slot as u8;
         self.assembler()?.load_local(export_slot, node.span);

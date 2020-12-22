@@ -16,7 +16,7 @@ impl NodeVisitor<&LitIdent> for Compiler {
             if let Some(scope_variable) = context.scope_stack().local(name_symbol.clone()) {
                 if !scope_variable.is_initialized() {
                     return Err(Error::new(VARIABLE_NOT_INITIALIZED).with_span(*span).with_tags(tags! {
-                        name => (&*scope_variable.name).to_owned()
+                        name => scope_variable.name.as_string()
                     }));
                 }
 

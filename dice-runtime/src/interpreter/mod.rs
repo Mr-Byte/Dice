@@ -636,7 +636,7 @@ where
         let key = bytecode.constants()[key_index].as_symbol()?;
 
         let value = self.stack.pop();
-        let value = self.get_field(&key, value)?;
+        let value = self.get_field(key, value)?;
 
         self.stack.push(value);
 
@@ -681,7 +681,7 @@ where
                 let field = index
                     .as_symbol()
                     .push_context(|| ErrorContext::new(INVALID_INDEX_TYPES))?;
-                self.get_field(&field, target.clone())?
+                self.get_field(field, target.clone())?
             }
         };
 
@@ -749,7 +749,7 @@ where
             return Err(Error::new(TYPE_ASSERTION_SUPER_FAILURE));
         }
 
-        let method = self.get_method(Some(&class), &key, &receiver);
+        let method = self.get_method(Some(&class), key, &receiver);
         self.stack.push(method);
 
         Ok(())
@@ -777,7 +777,7 @@ where
         let local_slot = cursor.read_u8() as usize;
         let key = bytecode.constants()[key_index].as_symbol()?;
         let value = self.stack.pop();
-        let value = self.get_field(&key, value)?;
+        let value = self.get_field(key, value)?;
 
         self.stack[stack_frame][local_slot] = value.clone();
         self.stack.push(value);

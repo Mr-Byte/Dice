@@ -104,20 +104,20 @@ impl NodeVisitor<&ClassDecl> for Compiler {
 
 impl Compiler {
     fn visit_fn(&mut self, slot: u8, fn_decl: FnDecl, class_kind: ClassKind) -> Result<(), Error> {
-        let self_param = fn_decl.args.first().filter(|arg| arg.name == *SELF.get());
+        let self_param = fn_decl.args.first().filter(|arg| arg.name == SELF.get().as_string());
         let kind = if let Some(self_param) = self_param {
             // NOTE: If the self parameter has a type annotation, return an error.
             if self_param.type_.is_some() {
                 return Err(Error::new(METHOD_RECEIVER_CANNOT_HAVE_TYPE).with_span(self_param.span));
             }
 
-            if fn_decl.name.identifier == *NEW.get() {
+            if fn_decl.name.identifier == NEW.get().as_string() {
                 FnKind::Constructor(class_kind)
             } else {
                 FnKind::Method
             }
         } else {
-            if fn_decl.name.identifier == *NEW.get() {
+            if fn_decl.name.identifier == NEW.get().as_string() {
                 return Err(Error::new(NEW_METHOD_MUST_HAVE_RECEIVER).with_span(fn_decl.name.span));
             }
 
@@ -143,7 +143,7 @@ impl Compiler {
     }
 
     fn visit_op(&mut self, slot: u8, op_decl: OpDecl) -> Result<(), Error> {
-        let self_param = op_decl.args.first().filter(|arg| arg.name == *SELF.get());
+        let self_param = op_decl.args.first().filter(|arg| arg.name == SELF.get().as_string());
 
         if let Some(self_param) = self_param {
             if self_param.type_.is_some() {

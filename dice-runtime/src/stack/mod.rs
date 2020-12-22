@@ -9,7 +9,7 @@ use std::{
 };
 
 // NOTE: Allocate 1MB of stack space, this is 65,536 values when sizeof(Value) == 16
-const MAX_STACK_SIZE: usize = 16; //(1024 * 1024) / std::mem::size_of::<Value>();
+const MAX_STACK_SIZE: usize = (1024 * 1024) / std::mem::size_of::<Value>();
 
 #[derive(Debug)]
 pub struct Stack {
@@ -57,6 +57,7 @@ impl Stack {
         let new_stack_ptr = self.stack_ptr.wrapping_add(count);
 
         self.stack_ptr = new_stack_ptr;
+
         debug_assert!(self.stack_ptr < MAX_STACK_SIZE, "Stack Overflowed");
 
         StackFrame::new(start, new_stack_ptr)

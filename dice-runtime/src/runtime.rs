@@ -4,7 +4,11 @@ use crate::{
 };
 use dice_core::{
     bytecode::Bytecode,
-    error::Error,
+    error::{
+        codes::{GLOBAL_ALREADY_EXISTS, MODULE_ALREADY_EXISTS},
+        Error,
+    },
+    tags,
     upvalue::Upvalue,
     value::{Class, Object, Value, ValueKind, ValueMap},
 };
@@ -94,7 +98,9 @@ where
             .insert(name.into(), Value::Object(module.clone()))
             .is_some()
         {
-            todo!("Module already loaded error.");
+            return Err(Error::new(MODULE_ALREADY_EXISTS).with_tags(tags! {
+                name => name.to_string()
+            }));
         }
 
         Ok(module)
@@ -129,8 +135,9 @@ where
 
     fn add_global(&mut self, name: &str, value: Value) -> Result<(), Error> {
         if self.globals.insert(name.into(), value).is_some() {
-            // TODO: Create a separate error variant for this.
-            todo!("Global already exists error.")
+            return Err(Error::new(GLOBAL_ALREADY_EXISTS).with_tags(tags! {
+                name => name.to_string()
+            }));
         }
 
         Ok(())

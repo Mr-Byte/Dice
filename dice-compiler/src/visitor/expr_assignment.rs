@@ -115,7 +115,7 @@ impl Compiler {
                 Err(Error::new(VARIABLE_NOT_DECLARED)
                     .with_span(assignment.span)
                     .with_tags(tags! {
-                        name => (&*target).to_owned()
+                        name => target.as_string()
                     }))
             }
         }
@@ -133,7 +133,7 @@ impl Compiler {
             return Err(Error::new(CANNOT_REASSIGN_IMMUTABLE_VARIABLE)
                 .with_span(span)
                 .with_tags(tags! {
-                    name => (&*target).to_owned()
+                    name => target.as_string()
                 }));
         }
         match operator {
@@ -174,7 +174,7 @@ impl Compiler {
             return Err(Error::new(CANNOT_REASSIGN_IMMUTABLE_VARIABLE)
                 .with_span(span)
                 .with_tags(tags! {
-                    name => (&*target).to_owned()
+                    name => target.as_string()
                 }));
         }
 
