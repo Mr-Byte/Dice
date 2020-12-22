@@ -89,7 +89,7 @@ impl Class {
         let method = method.into();
 
         if method.kind() != ValueKind::Function {
-            todo!("Return error")
+            panic!("Provided value is not a function.");
         }
 
         self.inner.methods.borrow_mut().insert(name.into(), method);

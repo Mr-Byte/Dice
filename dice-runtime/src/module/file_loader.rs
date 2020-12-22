@@ -2,6 +2,7 @@ use crate::module::{Module, ModuleLoader};
 use dice_compiler::compiler::Compiler;
 use dice_core::{
     error::{
+        codes::INVALID_SCRIPT_LOCATION,
         context::{ErrorContext, MODULE_LOAD_ERROR},
         Error,
     },
@@ -20,8 +21,10 @@ impl ModuleLoader for FileModuleLoader {
             let working_dir = dunce::canonicalize(std::env::current_dir()?)?;
 
             // TODO: Have a way to set the modules root as a part of the runtime.
-            if !path.starts_with(working_dir) {
-                todo!("Error about not being able to read outside the scripts directory.")
+            if !path.starts_with(&working_dir) {
+                return Err(Error::new(INVALID_SCRIPT_LOCATION).with_tags(tags! {
+                    directory => working_dir.to_string_lossy().to_string()
+                }));
             }
 
             let source = std::fs::read_to_string(&path)?;

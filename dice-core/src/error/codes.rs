@@ -6,6 +6,8 @@ pub static INVALID_ESCAPE_SEQUENCE: ErrorCode = "E1001";
 pub static UNTERMINATED_STRING: ErrorCode = "E1002";
 pub static UNRECOGNIZED_INPUT: ErrorCode = "E1003";
 pub static RESERVED_KEYWORD: ErrorCode = "E1004";
+pub static FUNCTION_HAS_TOO_MANY_ARGUMENTS: ErrorCode = "E1005";
+pub static OPERATOR_HAS_INCORRECT_ARGUMENT_COUNT: ErrorCode = "E1006";
 
 // Compiler errors
 pub static INTERNAL_COMPILER_ERROR: ErrorCode = "E2000";
@@ -23,7 +25,7 @@ pub static METHOD_RECEIVER_CANNOT_HAVE_TYPE: ErrorCode = "E2206";
 pub static FUNCTION_CANNOT_HAVE_DUPLICATE_ARGS: ErrorCode = "E2207";
 
 pub static CLASS_ALREADY_DECLARED: ErrorCode = "E2300";
-pub static FUNCTION_ALREADY_DECLARE: ErrorCode = "E2301";
+pub static FUNCTION_ALREADY_DECLARED: ErrorCode = "E2301";
 
 pub static INVALID_ASSIGNMENT_TARGET: ErrorCode = "E2400";
 pub static VARIABLE_NOT_DECLARED: ErrorCode = "E2401";
@@ -35,6 +37,7 @@ pub static INVALID_BREAK_USAGE: ErrorCode = "E2501";
 pub static INVALID_CONTINUE_USAGE: ErrorCode = "E2502";
 pub static INVALID_ERROR_PROPAGATE_USAGE: ErrorCode = "E2503";
 pub static INVALID_EXPORT_USAGE: ErrorCode = "E2504";
+pub static INVALID_IMPORT_USAGE: ErrorCode = "E2505";
 
 // Runtime errors
 pub static INVALID_BOOL_CONVERSION: ErrorCode = "E3000";
@@ -61,3 +64,4 @@ pub static GLOBAL_OPERATOR_UNDEFINED: ErrorCode = "E3302";
 
 pub static PANIC: ErrorCode = "E4000";
 pub static IO_ERROR: ErrorCode = "E4001";
+pub static INVALID_SCRIPT_LOCATION: ErrorCode = "E4002";

@@ -12,7 +12,14 @@ use crate::{
     OverloadedOperator, SuperAccess, SuperCall, TypeAnnotation, VarDeclKind,
 };
 use dice_core::{
-    error::{codes::UNEXPECTED_TOKEN, Error, ResultExt},
+    error::{
+        codes::{
+            FUNCTION_HAS_TOO_MANY_ARGUMENTS, INVALID_IMPORT_USAGE, OPERATOR_HAS_INCORRECT_ARGUMENT_COUNT,
+            UNEXPECTED_TOKEN,
+        },
+        context::{ErrorContext, IMPORT_REQUIRES_ITEMS_TO_BE_IMPORTED},
+        Error, ResultExt,
+    },
     source::Source,
     span::Span,
     tags,
@@ -273,7 +280,10 @@ impl<'a> Parser<'a> {
         };
 
         if module_import.is_none() && item_imports.is_empty() {
-            todo!("Imports are required error.");
+            return Err(Error::new(INVALID_IMPORT_USAGE)
+                .with_source(self.source.clone())
+                .with_span(span_start)
+                .push_context(ErrorContext::new(IMPORT_REQUIRES_ITEMS_TO_BE_IMPORTED)));
         }
 
         self.lexer.consume(TokenKind::From)?;
@@ -362,7 +372,9 @@ impl<'a> Parser<'a> {
         let args = self.parse_args(TokenKind::Pipe, TokenKind::Pipe)?;
 
         if args.len() > (u8::MAX as usize) {
-            todo!("Too many arguments in anonymous function.")
+            return Err(Error::new(FUNCTION_HAS_TOO_MANY_ARGUMENTS)
+                .with_source(self.source.clone())
+                .with_span(span_start + self.lexer.current().span));
         }
 
         let body = self.expression()?;
@@ -385,7 +397,9 @@ impl<'a> Parser<'a> {
         let args = self.parse_args(TokenKind::LeftParen, TokenKind::RightParen)?;
 
         if args.len() > (u8::MAX as usize) {
-            todo!("Too many arguments in function.")
+            return Err(Error::new(FUNCTION_HAS_TOO_MANY_ARGUMENTS)
+                .with_source(self.source.clone())
+                .with_span(span_start + self.lexer.current().span));
         }
 
         let return_ = self.parse_return()?;
@@ -448,7 +462,9 @@ impl<'a> Parser<'a> {
         if operator == OverloadedOperator::DiceRoll && args.len() == 1 {
             operator = OverloadedOperator::DieRoll
         } else if args.len() != 2 {
-            todo!("Too many arguments")
+            return Err(Error::new(OPERATOR_HAS_INCORRECT_ARGUMENT_COUNT)
+                .with_source(self.source.clone())
+                .with_span(span_start + self.lexer.current().span));
         }
 
         let return_ = self.parse_return()?;

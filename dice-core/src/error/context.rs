@@ -26,3 +26,4 @@ pub static INVALID_INDEX_TYPES: ContextMsgId = "index-operator-types";
 pub static MODULE_LOAD_ERROR: ContextMsgId = "module-load-error";
 pub static EXPORT_ONLY_ALLOWED_IN_MODULES: ContextMsgId = "export-only-allowed-in-modules";
 pub static EXPORT_ONLY_ALLOWED_IN_TOP_LEVEL_SCOPE: ContextMsgId = "export-only-allowed-in-top-level-scope";
+pub static IMPORT_REQUIRES_ITEMS_TO_BE_IMPORTED: ContextMsgId = "import-requires-items-to-be-imported";

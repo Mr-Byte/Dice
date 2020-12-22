@@ -17,12 +17,12 @@ pub trait ErrorFormatter {
 }
 
 pub struct HumanReadableErrorFormatter {
-    should_color: bool,
+    should_colorize: bool,
 }
 
 impl HumanReadableErrorFormatter {
-    pub const fn new(should_color: bool) -> Self {
-        Self { should_color }
+    pub const fn new(should_colorize: bool) -> Self {
+        Self { should_colorize }
     }
 }
 
@@ -38,7 +38,7 @@ impl ErrorFormatter for HumanReadableErrorFormatter {
     }
 
     fn fmt_pretty(&self, buffer: &mut impl Write, error: &Error, locale: &Locale) -> std::fmt::Result {
-        if !self.should_color {
+        if !self.should_colorize {
             colored::control::set_override(false);
         }
 
@@ -52,7 +52,7 @@ impl ErrorFormatter for HumanReadableErrorFormatter {
         HumanReadableErrorFormatter::fmt_context(buffer, error, locale)?;
         HumanReadableErrorFormatter::fmt_trace(buffer, error)?;
 
-        if !self.should_color {
+        if !self.should_colorize {
             colored::control::unset_override();
         }
 
@@ -105,16 +105,15 @@ impl HumanReadableErrorFormatter {
     }
 
     fn fmt_source(buffer: &mut impl Write, error: &Error, source: &Source) -> std::fmt::Result {
-        let position = source.line_index().position_of(error.span.start);
         let lines = source.line_index().lines(error.span).collect::<Vec<_>>();
-
         let empty_line = "     |".cyan().bold();
 
         if !lines.is_empty() {
             writeln!(buffer, "{}", empty_line)?;
 
             for line in &lines {
-                let line_no = format!("{:<4} | ", position.line + 1,).cyan().bold();
+                let position = source.line_index().position_of(line.start);
+                let line_no = format!("{:<4} | ", position.line + 1).cyan().bold();
                 writeln!(buffer, "{} {}", line_no, &source.source()[line.range()].trim_end())?;
             }
 

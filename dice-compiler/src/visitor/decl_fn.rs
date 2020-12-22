@@ -2,7 +2,7 @@ use super::NodeVisitor;
 use crate::{compiler::Compiler, scope_stack::State, upvalue::UpvalueDescriptor, visitor::FnKind};
 use dice_core::{
     error::{
-        codes::{FUNCTION_ALREADY_DECLARE, FUNCTION_CANNOT_HAVE_DUPLICATE_ARGS, INTERNAL_COMPILER_ERROR},
+        codes::{FUNCTION_ALREADY_DECLARED, FUNCTION_CANNOT_HAVE_DUPLICATE_ARGS, INTERNAL_COMPILER_ERROR},
         Error,
     },
     span::Span,
@@ -57,7 +57,7 @@ impl Compiler {
         // NOTE: Check if a function of the given name has already been initialized.
         match &mut local.state {
             State::Function { ref mut is_initialized } if *is_initialized => {
-                return Err(Error::new(FUNCTION_ALREADY_DECLARE)
+                return Err(Error::new(FUNCTION_ALREADY_DECLARED)
                     .with_span(fn_decl.name.span)
                     .with_tags(tags! {
                         name => fn_decl.name.identifier.clone()

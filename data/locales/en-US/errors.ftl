@@ -4,6 +4,8 @@ E1001 = Encountered unknown escape sequence '{$sequence}'.
 E1002 = Unterminated string encountered.
 E1003 = Expected valid expression. Found invalid token: {$input}
 E1004 = Expected valid expression. Found reserved keyword: {$input}
+E1005 = Function has too many arguments (max: 255).
+E1006 = Operator has an incorrect number of arguments (1 for unary operators and 2 for binary).
 
 # Compiler errors
 E2000 = Internal Compiler Error (please report this as a bug with code to reproduce the issue).
@@ -28,6 +30,7 @@ E2501 = The 'break' keyword can only be used inside of loops.
 E2502 = The 'continue' keyword can only be used inside of loops.
 E2503 = The error propagate operator '!!' can only be used inside of functions or methods.
 E2504 = Invalid usage of the 'export' keyword.
+E2505 = Invalid usage of the 'import' keyword.
 
 # Runtime errors
 E3000 = The value cannot be converted to a boolean.
@@ -55,3 +58,4 @@ E3302 = Global operator {$name} could not be found.
 # System errors
 E4000 = A panic has occurred. {$message}
 E4001 = IO error occurred. {$message}
+E4002 = Modules cannot be loaded from outside the modules directory. Module must be inside of {$directory}
