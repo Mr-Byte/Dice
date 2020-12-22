@@ -1,4 +1,4 @@
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Tags(pub(super) Vec<(&'static str, String)>);
 
 impl Tags {

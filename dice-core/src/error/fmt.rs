@@ -29,7 +29,6 @@ impl ErrorFormatter for HumanReadableErrorFormatter {
 
     fn fmt_pretty(&self, buffer: &mut impl Write, error: &Error, locale: &Locale) -> std::fmt::Result {
         HumanReadableErrorFormatter::fmt_message(buffer, error, locale)?;
-        HumanReadableErrorFormatter::fmt_context(buffer, error, locale)?;
 
         if let Some(source) = &error.source_code {
             HumanReadableErrorFormatter::fmt_position(buffer, error, source)?;
@@ -52,6 +51,8 @@ impl ErrorFormatter for HumanReadableErrorFormatter {
                 writeln!(buffer, "     |")?;
             }
         }
+
+        HumanReadableErrorFormatter::fmt_context(buffer, error, locale)?;
 
         if !error.trace.is_empty() {
             writeln!(buffer)?;
@@ -122,8 +123,8 @@ impl HumanReadableErrorFormatter {
     }
 
     fn fmt_context(buffer: &mut impl Write, error: &Error, locale: &Locale) -> std::fmt::Result {
-        if let Some(context_msg_id) = error.context_msg_id {
-            let localized_message = localize_context_msg_id(context_msg_id, &error.context_tags, locale);
+        for context in &error.context {
+            let localized_message = localize_context_msg_id(context.msg_id, &context.tags, locale);
 
             writeln!(buffer, "{}", localized_message)?;
         }

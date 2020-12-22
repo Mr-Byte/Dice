@@ -34,6 +34,7 @@ pub static INVALID_RETURN_USAGE: ErrorCode = "E2500";
 pub static INVALID_BREAK_USAGE: ErrorCode = "E2501";
 pub static INVALID_CONTINUE_USAGE: ErrorCode = "E2502";
 pub static INVALID_ERROR_PROPAGATE_USAGE: ErrorCode = "E2503";
+pub static INVALID_EXPORT_USAGE: ErrorCode = "E2504";
 
 // Runtime errors
 pub static INVALID_BOOL_CONVERSION: ErrorCode = "E3000";

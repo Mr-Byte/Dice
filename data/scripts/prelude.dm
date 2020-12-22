@@ -82,11 +82,3 @@ export class Err : Result {
         super(false, result)
     }
 }
-
-export fn breaks() {
-    panic("OH NOES D:")
-}
-
-export fn test() {
-    breaks()
-}

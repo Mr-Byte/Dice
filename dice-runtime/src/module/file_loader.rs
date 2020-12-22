@@ -1,7 +1,10 @@
 use crate::module::{Module, ModuleLoader};
 use dice_compiler::compiler::Compiler;
 use dice_core::{
-    error::{context::MODULE_LOAD_ERROR, Error},
+    error::{
+        context::{ErrorContext, MODULE_LOAD_ERROR},
+        Error,
+    },
     source::{Source, SourceKind},
     tags,
     value::Symbol,
@@ -29,9 +32,9 @@ impl ModuleLoader for FileModuleLoader {
             Ok(module)
         })()
         .map_err(move |error: Error| {
-            error.with_context(MODULE_LOAD_ERROR).with_context_tags(tags! {
+            error.push_context(ErrorContext::new(MODULE_LOAD_ERROR).with_tags(tags! {
                 module => name.to_string()
-            })
+            }))
         })
     }
 }

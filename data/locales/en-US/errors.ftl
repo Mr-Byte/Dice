@@ -27,6 +27,7 @@ E2500 = The 'return' keyword can only be used inside of functions or methods.
 E2501 = The 'break' keyword can only be used inside of loops.
 E2502 = The 'continue' keyword can only be used inside of loops.
 E2503 = The error propagate operator '!!' can only be used inside of functions or methods.
+E2504 = Invalid usage of the 'export' keyword.
 
 # Runtime errors
 E3000 = The value cannot be converted to a boolean.

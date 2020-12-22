@@ -1,6 +1,12 @@
 use crate::{compiler::Compiler, compiler_stack::CompilerKind, visitor::NodeVisitor};
 use dice_core::{
-    error::Error,
+    error::{
+        codes::INVALID_EXPORT_USAGE,
+        context::{
+            ErrorContext, EXPORT_ONLY_ALLOWED_IN_MODULES, EXPORT_ONLY_ALLOWED_IN_TOP_LEVEL_SCOPE, INVALID_EXPORT_ITEM,
+        },
+        Error,
+    },
     protocol::{module::EXPORT, ProtocolSymbol},
 };
 use dice_syntax::{ExportDecl, SyntaxNode, VarDecl, VarDeclKind};
@@ -8,11 +14,17 @@ use dice_syntax::{ExportDecl, SyntaxNode, VarDecl, VarDeclKind};
 impl NodeVisitor<&ExportDecl> for Compiler {
     fn visit(&mut self, node: &ExportDecl) -> Result<(), Error> {
         if !matches!(self.context()?.kind(), CompilerKind::Module) {
-            todo!("Error about how exports can only be used in modules.");
+            return Err(Error::new(INVALID_EXPORT_USAGE)
+                .push_context(ErrorContext::new(EXPORT_ONLY_ALLOWED_IN_MODULES))
+                .with_source(self.source.clone())
+                .with_span(node.span));
         }
 
         if self.context()?.scope_stack().top_mut()?.depth > 1 {
-            todo!("Error about how exports can only be used as top-level declarations.");
+            return Err(Error::new(INVALID_EXPORT_USAGE)
+                .push_context(ErrorContext::new(EXPORT_ONLY_ALLOWED_IN_TOP_LEVEL_SCOPE))
+                .with_source(self.source.clone())
+                .with_span(node.span));
         }
 
         let export_slot = self
@@ -32,7 +44,12 @@ impl NodeVisitor<&ExportDecl> for Compiler {
             SyntaxNode::FnDecl(fn_decl) => fn_decl.name.identifier.clone(),
             SyntaxNode::ClassDecl(class_decl) => class_decl.name.identifier.clone(),
             SyntaxNode::LitIdent(lit_ident) => lit_ident.identifier.clone(),
-            _ => todo!("Error about invalid export type."),
+            _ => {
+                return Err(Error::new(INVALID_EXPORT_USAGE)
+                    .push_context(ErrorContext::new(INVALID_EXPORT_ITEM))
+                    .with_source(self.source.clone())
+                    .with_span(node.span))
+            }
         };
 
         self.assembler()?.store_field(field_name, node.span)?;

@@ -9,8 +9,9 @@ use dice_core::{
             TYPE_ASSERTION_FAILURE, TYPE_ASSERTION_FUNCTION_FAILURE, TYPE_ASSERTION_NULLABILITY_FAILURE,
             TYPE_ASSERTION_NUMBER_FAILURE, TYPE_ASSERTION_SUPER_FAILURE,
         },
-        context::INVALID_INDEX_TYPES,
-        Error, ResultExt, TraceLocation,
+        context::{ErrorContext, INVALID_INDEX_TYPES},
+        trace::ErrorTrace,
+        Error, ResultExt,
     },
     protocol::operator::{
         ADD, DICE_ROLL, DIE_ROLL, DIV, EQ, GT, GTE, LT, LTE, MUL, NEQ, RANGE_EXCLUSIVE, RANGE_INCLUSIVE, REM, SUB,
@@ -117,7 +118,7 @@ where
 
             Ok(())
         })()
-        .push_trace(|| TraceLocation::from_bytecode(&bytecode, cursor.last_instruction_offset()))?;
+        .push_trace(|| ErrorTrace::from_bytecode(&bytecode, cursor.last_instruction_offset()))?;
 
         // NOTE: subtract 1 to compensate for the last item of the stack not yet being popped.
         let final_stack_depth = self.stack.len() - 1;
@@ -677,7 +678,9 @@ where
                 array.elements().get(index as usize).cloned().unwrap_or(Value::Null)
             }
             target => {
-                let field = index.as_symbol().with_context(INVALID_INDEX_TYPES)?;
+                let field = index
+                    .as_symbol()
+                    .push_context(|| ErrorContext::new(INVALID_INDEX_TYPES))?;
                 self.get_field(&field, target.clone())?
             }
         };
@@ -700,7 +703,9 @@ where
             }
             target => {
                 let object = target.as_object()?;
-                let field = index.as_symbol().with_context(INVALID_INDEX_TYPES)?;
+                let field = index
+                    .as_symbol()
+                    .push_context(|| ErrorContext::new(INVALID_INDEX_TYPES))?;
                 object.set_field(field, value.clone());
                 *target = value;
             }
@@ -722,7 +727,9 @@ where
             }
             target => {
                 let object = target.as_object()?;
-                let field = index.as_symbol().with_context(INVALID_INDEX_TYPES)?;
+                let field = index
+                    .as_symbol()
+                    .push_context(|| ErrorContext::new(INVALID_INDEX_TYPES))?;
                 object.set_field(field, value);
                 *target = Value::Unit;
             }

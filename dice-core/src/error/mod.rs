@@ -2,12 +2,12 @@ pub mod codes;
 pub mod context;
 pub mod fmt;
 pub mod tag;
+pub mod trace;
 
 mod localization;
 
-use self::{codes::IO_ERROR, context::ContextMsgId};
+use self::{codes::IO_ERROR, trace::ErrorTrace};
 use crate::{
-    bytecode::Bytecode,
     error::{
         codes::ErrorCode,
         fmt::{ErrorFormatter, HumanReadableErrorFormatter},
@@ -17,6 +17,7 @@ use crate::{
     span::Span,
     tags,
 };
+use context::ErrorContext;
 use std::fmt::{Debug, Display, Formatter};
 use tag::Tags;
 
@@ -26,9 +27,8 @@ pub struct Error {
     source_code: Option<Source>,
     span: Span,
     tags: Tags,
-    trace: Vec<TraceLocation>,
-    context_msg_id: Option<ContextMsgId>,
-    context_tags: Tags,
+    trace: Vec<ErrorTrace>,
+    context: Vec<ErrorContext>,
 }
 
 impl Error {
@@ -39,8 +39,7 @@ impl Error {
             span: Span::empty(),
             tags: Tags::new(),
             trace: Vec::new(),
-            context_msg_id: None,
-            context_tags: Tags::new(),
+            context: Vec::new(),
         }
     }
 
@@ -59,18 +58,13 @@ impl Error {
         self
     }
 
-    pub fn with_context(mut self, context_msg_id: ContextMsgId) -> Self {
-        self.context_msg_id = Some(context_msg_id);
-        self
-    }
-
-    pub fn with_context_tags(mut self, tags: Tags) -> Self {
-        self.context_tags = tags;
-        self
-    }
-
-    pub fn push_trace(mut self, trace: TraceLocation) -> Self {
+    pub fn push_trace(mut self, trace: ErrorTrace) -> Self {
         self.trace.push(trace);
+        self
+    }
+
+    pub fn push_context(mut self, context: ErrorContext) -> Self {
+        self.context.push(context);
         self
     }
 }
@@ -95,28 +89,12 @@ impl From<std::io::Error> for Error {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct TraceLocation {
-    pub source: Source,
-    pub span: Span,
-}
-
-impl TraceLocation {
-    pub fn from_bytecode(bytecode: &Bytecode, offset: u64) -> Self {
-        let span = bytecode.source_map()[&offset];
-        let source = bytecode.source().clone();
-
-        Self { source, span }
-    }
-}
-
 pub trait ResultExt {
     fn with_source(self, source: impl Fn() -> Source) -> Self;
     fn with_span(self, span: impl Fn() -> Span) -> Self;
     fn with_tags(self, tags: impl Fn() -> Tags) -> Self;
-    fn push_trace(self, trace: impl Fn() -> TraceLocation) -> Self;
-    fn with_context(self, id: ContextMsgId) -> Self;
-    fn with_context_tags(self, tags: impl Fn() -> Tags) -> Self;
+    fn push_trace(self, trace: impl Fn() -> ErrorTrace) -> Self;
+    fn push_context(self, context: impl Fn() -> ErrorContext) -> Self;
 }
 
 impl<T> ResultExt for Result<T, Error> {
@@ -132,15 +110,11 @@ impl<T> ResultExt for Result<T, Error> {
         self.map_err(|error| error.with_tags(tags()))
     }
 
-    fn push_trace(self, trace: impl Fn() -> TraceLocation) -> Self {
+    fn push_trace(self, trace: impl Fn() -> ErrorTrace) -> Self {
         self.map_err(|error| error.push_trace(trace()))
     }
 
-    fn with_context(self, id: ContextMsgId) -> Self {
-        self.map_err(|error| error.with_context(id))
-    }
-
-    fn with_context_tags(self, tags: impl Fn() -> Tags) -> Self {
-        self.map_err(|error| error.with_context_tags(tags()))
+    fn push_context(self, context: impl Fn() -> ErrorContext) -> Self {
+        self.map_err(|error| error.push_context(context()))
     }
 }
