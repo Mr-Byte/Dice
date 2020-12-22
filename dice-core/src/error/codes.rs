@@ -62,6 +62,9 @@ pub static GLOBAL_VARIABLE_ALREADY_DEFINED: ErrorCode = "E3300";
 pub static GLOBAL_VARIABLE_UNDEFINED: ErrorCode = "E3301";
 pub static GLOBAL_OPERATOR_UNDEFINED: ErrorCode = "E3302";
 
+pub static NEW_FUNCTION_CANNOT_BE_ACCESS_DIRECTLY: ErrorCode = "E3400";
+pub static CLASS_MUST_HAVE_NEW_IF_SUPER_HAS_NEW: ErrorCode = "E3401";
+
 pub static PANIC: ErrorCode = "E4000";
 pub static IO_ERROR: ErrorCode = "E4001";
 pub static INVALID_SCRIPT_LOCATION: ErrorCode = "E4002";

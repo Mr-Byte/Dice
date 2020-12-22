@@ -55,6 +55,9 @@ E3300 = Global variable {$name} cannot be redefined.
 E3301 = Global variable {$name} could not be found.
 E3302 = Global operator {$name} could not be found.
 
+E3400 = The 'new' function cannot be accessed directly on class instances.  To construct a new class, use the class name as a function.
+E3401 = If a super class has a 'new' function the subclass must also have a 'new' function.
+
 # System errors
 E4000 = A panic has occurred. {$message}
 E4001 = IO error occurred. {$message}

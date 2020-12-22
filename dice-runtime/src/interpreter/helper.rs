@@ -1,7 +1,10 @@
 use crate::{module::ModuleLoader, runtime::Runtime};
 use dice_core::{
     error::{
-        codes::{GLOBAL_OPERATOR_UNDEFINED, TYPE_ASSERTION_FUNCTION_FAILURE},
+        codes::{
+            CLASS_MUST_HAVE_NEW_IF_SUPER_HAS_NEW, GLOBAL_OPERATOR_UNDEFINED, NEW_FUNCTION_CANNOT_BE_ACCESS_DIRECTLY,
+            TYPE_ASSERTION_FUNCTION_FAILURE,
+        },
         Error,
     },
     protocol::{class::NEW, ProtocolSymbol},
@@ -93,7 +96,7 @@ impl<L: ModuleLoader> Runtime<L> {
         }
 
         if key == NEW.get() {
-            todo!("TODO: the new function cannot be accessed directly.")
+            return Err(Error::new(NEW_FUNCTION_CANNOT_BE_ACCESS_DIRECTLY));
         }
 
         // NOTE: If the type is an object, try to resolve its class.  It it's not an object or has
@@ -165,7 +168,7 @@ impl<L: ModuleLoader> Runtime<L> {
         } else if arg_count > 0 {
             self.stack.pop_count(arg_count);
         } else if class.base().filter(|base| base.method(&NEW).is_some()).is_some() {
-            todo!("TODO: Class must have constructor if super has constructor.",);
+            return Err(Error::new(CLASS_MUST_HAVE_NEW_IF_SUPER_HAS_NEW));
         }
 
         // NOTE: Regardless of whether or not there was a constructor, clean up the stack.
