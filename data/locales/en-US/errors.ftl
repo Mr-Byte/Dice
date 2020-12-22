@@ -22,8 +22,13 @@ E2205 = The 'super' keyword can only be used inside of methods of classes.
 E2206 = The self parameter of methods cannot specify a type.
 E2207 = Function parameters must have unique names. (TODO: Include duplicate names)
 
-E2300 = The class {$name} is already defined in this scope.
-E2301 = The function {$name} is already defined in this scope.
+E2300 = The class '{$name}' is already defined in this scope.
+E2301 = The function '{$name}' is already defined in this scope.
+
+E2400 = Cannot assign value to the left hand side expression.
+E2401 = The variable '{$name}' is not declared.
+E2402 = The variable '{$name}' is not initialized.
+E2403 = Cannot reassign the immutable variabe '{$name}'.
 
 E2500 = The 'return' keyword can only be used inside of functions or methods.
 E2501 = The 'break' keyword can only be used inside of loops.

@@ -215,7 +215,6 @@ impl<'a> ParserRules<'a> {
             Rule::new().with_postfix(Parser::error_propagate, Precedence::Propagate),
         );
 
-        // TODO: Setup reserved keywords and sequence with a parser that returns a friendly error.
         // End of input
         rules.insert(TokenKind::EndOfInput, Rule::new());
 
