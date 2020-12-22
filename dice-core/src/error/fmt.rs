@@ -1,3 +1,5 @@
+use colored::Colorize;
+
 use crate::{
     error::{
         localization::{localize_error_code, Locale},
@@ -14,7 +16,15 @@ pub trait ErrorFormatter {
     fn fmt_pretty(&self, buffer: &mut impl Write, error: &Error, locale: &Locale) -> std::fmt::Result;
 }
 
-pub struct HumanReadableErrorFormatter;
+pub struct HumanReadableErrorFormatter {
+    should_color: bool,
+}
+
+impl HumanReadableErrorFormatter {
+    pub const fn new(should_color: bool) -> Self {
+        Self { should_color }
+    }
+}
 
 impl ErrorFormatter for HumanReadableErrorFormatter {
     fn fmt(&self, buffer: &mut impl Write, error: &Error, locale: &Locale) -> std::fmt::Result {
@@ -28,35 +38,95 @@ impl ErrorFormatter for HumanReadableErrorFormatter {
     }
 
     fn fmt_pretty(&self, buffer: &mut impl Write, error: &Error, locale: &Locale) -> std::fmt::Result {
+        if !self.should_color {
+            colored::control::set_override(false);
+        }
+
         HumanReadableErrorFormatter::fmt_message(buffer, error, locale)?;
 
         if let Some(source) = &error.source_code {
             HumanReadableErrorFormatter::fmt_position(buffer, error, source)?;
-
-            let position = source.line_index().position_of(error.span.start);
-            let lines = source.line_index().lines(error.span).collect::<Vec<_>>();
-
-            if !lines.is_empty() {
-                writeln!(buffer, "     |")?;
-
-                for line in &lines {
-                    writeln!(
-                        buffer,
-                        "{:<4} | {}",
-                        position.line + 1,
-                        &source.source()[line.range()].trim_end()
-                    )?
-                }
-
-                writeln!(buffer, "     |")?;
-            }
+            HumanReadableErrorFormatter::fmt_source(buffer, error, &source)?;
         }
 
         HumanReadableErrorFormatter::fmt_context(buffer, error, locale)?;
+        HumanReadableErrorFormatter::fmt_trace(buffer, error)?;
 
+        if !self.should_color {
+            colored::control::unset_override();
+        }
+
+        Ok(())
+    }
+}
+
+impl HumanReadableErrorFormatter {
+    fn fmt_position(buffer: &mut impl Write, error: &Error, source: &Source) -> std::fmt::Result {
+        let position = source.line_index().position_of(error.span.start);
+        let arrow = "  -->".cyan().bold();
+
+        if let Some(path) = source.path() {
+            writeln!(
+                buffer,
+                "{} {}:{}:{}",
+                arrow,
+                path,
+                position.line + 1,
+                position.column_utf16 + 1
+            )
+        } else {
+            writeln!(
+                buffer,
+                "{} <Script>:{}:{}",
+                arrow,
+                position.line + 1,
+                position.column_utf16 + 1
+            )
+        }
+    }
+
+    fn fmt_message(buffer: &mut impl Write, error: &Error, locale: &Locale) -> std::fmt::Result {
+        let localized_message = localize_error_code(error.error_code, &error.tags, locale);
+        let error_code = format!("error[{}]: ", error.error_code).red();
+        let message = format!("{}{}", error_code, localized_message).bold();
+
+        writeln!(buffer, "{}", message)
+    }
+
+    fn fmt_context(buffer: &mut impl Write, error: &Error, locale: &Locale) -> std::fmt::Result {
+        for context in &error.context {
+            let localized_message = localize_context_msg_id(context.msg_id, &context.tags, locale);
+            let note_prefix = format!("note: ").green().bold();
+
+            writeln!(buffer, "{}{}", note_prefix, localized_message)?;
+        }
+
+        Ok(())
+    }
+
+    fn fmt_source(buffer: &mut impl Write, error: &Error, source: &Source) -> std::fmt::Result {
+        let position = source.line_index().position_of(error.span.start);
+        let lines = source.line_index().lines(error.span).collect::<Vec<_>>();
+
+        let empty_line = "     |".cyan().bold();
+
+        if !lines.is_empty() {
+            writeln!(buffer, "{}", empty_line)?;
+
+            for line in &lines {
+                let line_no = format!("{:<4} | ", position.line + 1,).cyan().bold();
+                writeln!(buffer, "{} {}", line_no, &source.source()[line.range()].trim_end())?;
+            }
+
+            writeln!(buffer, "{}", empty_line)?;
+        }
+
+        Ok(())
+    }
+
+    fn fmt_trace(buffer: &mut impl Write, error: &Error) -> std::fmt::Result {
         if !error.trace.is_empty() {
             writeln!(buffer)?;
-            // TODO: Should this be localized? Yes! Do it sometime PEPW.
             writeln!(buffer, "Trace:")?;
 
             for trace in error.trace.iter().rev() {
@@ -88,45 +158,6 @@ impl ErrorFormatter for HumanReadableErrorFormatter {
                     )?
                 }
             }
-        }
-
-        Ok(())
-    }
-}
-
-impl HumanReadableErrorFormatter {
-    fn fmt_position(buffer: &mut impl Write, error: &Error, source: &Source) -> std::fmt::Result {
-        let position = source.line_index().position_of(error.span.start);
-
-        if let Some(path) = source.path() {
-            writeln!(
-                buffer,
-                "  --> {}:{}:{}",
-                path,
-                position.line + 1,
-                position.column_utf16 + 1
-            )
-        } else {
-            writeln!(
-                buffer,
-                "  --> <Script>:{}:{}",
-                position.line + 1,
-                position.column_utf16 + 1
-            )
-        }
-    }
-
-    fn fmt_message(buffer: &mut impl Write, error: &Error, locale: &Locale) -> std::fmt::Result {
-        let localized_message = localize_error_code(error.error_code, &error.tags, locale);
-
-        writeln!(buffer, "error[{}]: {}", error.error_code, localized_message)
-    }
-
-    fn fmt_context(buffer: &mut impl Write, error: &Error, locale: &Locale) -> std::fmt::Result {
-        for context in &error.context {
-            let localized_message = localize_context_msg_id(context.msg_id, &context.tags, locale);
-
-            writeln!(buffer, "{}", localized_message)?;
         }
 
         Ok(())

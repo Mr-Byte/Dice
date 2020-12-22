@@ -71,13 +71,13 @@ impl Error {
 
 impl Debug for Error {
     fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
-        HumanReadableErrorFormatter.fmt(formatter, self, &Locale::US_ENGLISH)
+        HumanReadableErrorFormatter::new(false).fmt(formatter, self, &Locale::US_ENGLISH)
     }
 }
 
 impl Display for Error {
     fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
-        HumanReadableErrorFormatter.fmt_pretty(formatter, self, &Locale::US_ENGLISH)
+        HumanReadableErrorFormatter::new(false).fmt_pretty(formatter, self, &Locale::US_ENGLISH)
     }
 }
 
