@@ -1,10 +1,9 @@
 pub mod codes;
 pub mod context;
 pub mod fmt;
+pub mod localization;
 pub mod tag;
 pub mod trace;
-
-mod localization;
 
 use self::{codes::IO_ERROR, trace::ErrorTrace};
 use crate::{

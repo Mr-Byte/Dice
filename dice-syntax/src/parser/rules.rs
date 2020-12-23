@@ -278,6 +278,7 @@ pub enum Precedence {
     None,
     Assignment,
     Pipeline,
+    // TODO: Use this precedence for the "or" operator.
     Coalesce,
     Range,
     Or,

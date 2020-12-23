@@ -1,8 +1,7 @@
+use super::context::ContextMsgId;
 use crate::error::{codes::ErrorCode, Tags};
 use fluent_templates::{fluent_bundle::FluentValue, loader::langid, LanguageIdentifier, Loader};
 use std::collections::HashMap;
-
-use super::context::ContextMsgId;
 
 #[derive(Default, Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord)]
 pub struct Locale(LanguageIdentifier);
@@ -20,7 +19,7 @@ fluent_templates::static_loader! {
     };
 }
 
-pub fn localize_error_code(error_code: ErrorCode, tags: &Tags, locale: &Locale) -> String {
+pub(crate) fn localize_error_code(error_code: ErrorCode, tags: &Tags, locale: &Locale) -> String {
     let args = tags
         .0
         .iter()
@@ -30,7 +29,7 @@ pub fn localize_error_code(error_code: ErrorCode, tags: &Tags, locale: &Locale) 
     LOCALES.lookup_with_args(&locale.0, error_code, &args)
 }
 
-pub fn localize_context_msg_id(context_msg_id: ContextMsgId, tags: &Tags, locale: &Locale) -> String {
+pub(crate) fn localize_context_msg_id(context_msg_id: ContextMsgId, tags: &Tags, locale: &Locale) -> String {
     let args = tags
         .0
         .iter()

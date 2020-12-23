@@ -203,7 +203,7 @@ pub enum TokenKind {
     Export,
     #[token("super")]
     Super,
-    #[regex("await|async|yield|do|const|match|enum|trait|type|try|when")]
+    #[regex("await|async|yield|do|const|match|enum|trait|type|try|or|when|default|switch")]
     Reserved,
 
     // Literals,
