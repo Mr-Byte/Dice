@@ -5,11 +5,12 @@ use dice_core::{
     bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
     error::{
         codes::{
-            DIVIDE_BY_ZERO, GLOBAL_VARIABLE_ALREADY_DEFINED, GLOBAL_VARIABLE_UNDEFINED, TYPE_ASSERTION_BOOL_FAILURE,
-            TYPE_ASSERTION_FAILURE, TYPE_ASSERTION_FUNCTION_FAILURE, TYPE_ASSERTION_NULLABILITY_FAILURE,
-            TYPE_ASSERTION_NUMBER_FAILURE, TYPE_ASSERTION_SUPER_FAILURE,
+            CLASS_CANNOT_INHERIT_VALUE_TYPE, DIVIDE_BY_ZERO, GLOBAL_VARIABLE_ALREADY_DEFINED,
+            GLOBAL_VARIABLE_UNDEFINED, TYPE_ASSERTION_BOOL_FAILURE, TYPE_ASSERTION_FAILURE,
+            TYPE_ASSERTION_FUNCTION_FAILURE, TYPE_ASSERTION_NULLABILITY_FAILURE, TYPE_ASSERTION_NUMBER_FAILURE,
+            TYPE_ASSERTION_SUPER_FAILURE,
         },
-        context::{ErrorContext, INVALID_INDEX_TYPES},
+        context::{Context, ContextKind, INVALID_INDEX_TYPES},
         trace::ErrorTrace,
         Error, ResultExt,
     },
@@ -455,7 +456,19 @@ where
     fn inherit_class(&mut self, bytecode: &Bytecode, cursor: &mut BytecodeCursor) -> Result<(), Error> {
         let name_slot = cursor.read_u8() as usize;
         let name = bytecode.constants()[name_slot].as_symbol()?;
-        let class = Class::with_base(name, self.stack.pop().as_class()?);
+        let base = self.stack.pop().as_class()?;
+
+        if base != self.any_class
+            && self
+                .value_class_mapping
+                .iter()
+                .find(|(_, value_class)| base == **value_class)
+                .is_some()
+        {
+            return Err(Error::new(CLASS_CANNOT_INHERIT_VALUE_TYPE));
+        }
+
+        let class = Class::with_base(name, base);
 
         self.stack.push(Value::Class(class));
 
@@ -680,7 +693,7 @@ where
             target => {
                 let field = index
                     .as_symbol()
-                    .push_context(|| ErrorContext::new(INVALID_INDEX_TYPES))?;
+                    .push_context(|| Context::new(INVALID_INDEX_TYPES, ContextKind::Note))?;
                 self.get_field(field, target.clone())?
             }
         };
@@ -705,7 +718,7 @@ where
                 let object = target.as_object()?;
                 let field = index
                     .as_symbol()
-                    .push_context(|| ErrorContext::new(INVALID_INDEX_TYPES))?;
+                    .push_context(|| Context::new(INVALID_INDEX_TYPES, ContextKind::Note))?;
                 object.set_field(field, value.clone());
                 *target = value;
             }
@@ -729,7 +742,7 @@ where
                 let object = target.as_object()?;
                 let field = index
                     .as_symbol()
-                    .push_context(|| ErrorContext::new(INVALID_INDEX_TYPES))?;
+                    .push_context(|| Context::new(INVALID_INDEX_TYPES, ContextKind::Note))?;
                 object.set_field(field, value);
                 *target = Value::Unit;
             }
@@ -744,7 +757,6 @@ where
         let receiver = self.stack.pop();
         let class = self.stack.pop().as_class()?;
 
-        // TODO: Assert sub-classing rules around value types.
         if !self.is_value_of_type(&receiver, &class)? {
             return Err(Error::new(TYPE_ASSERTION_SUPER_FAILURE));
         }

@@ -64,6 +64,7 @@ pub static GLOBAL_OPERATOR_UNDEFINED: ErrorCode = "E3302";
 
 pub static NEW_FUNCTION_CANNOT_BE_ACCESS_DIRECTLY: ErrorCode = "E3400";
 pub static CLASS_MUST_HAVE_NEW_IF_SUPER_HAS_NEW: ErrorCode = "E3401";
+pub static CLASS_CANNOT_INHERIT_VALUE_TYPE: ErrorCode = "E3402";
 
 pub static PANIC: ErrorCode = "E4000";
 pub static IO_ERROR: ErrorCode = "E4001";

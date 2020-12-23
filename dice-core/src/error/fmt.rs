@@ -9,7 +9,7 @@ use crate::{
 };
 use std::fmt::Write;
 
-use super::localization::localize_context_msg_id;
+use super::{context::ContextKind, localization::localize_context_msg_id};
 
 pub trait ErrorFormatter {
     fn fmt(&self, buffer: &mut impl Write, error: &Error, locale: &Locale) -> std::fmt::Result;
@@ -96,9 +96,12 @@ impl HumanReadableErrorFormatter {
     fn fmt_context(buffer: &mut impl Write, error: &Error, locale: &Locale) -> std::fmt::Result {
         for context in &error.context {
             let localized_message = localize_context_msg_id(context.msg_id, &context.tags, locale);
-            let note_prefix = format!("note: ").green().bold();
+            match context.kind {
+                ContextKind::Note => write!(buffer, "{}", "note: ".green().bold()),
+                ContextKind::Help => write!(buffer, "{}", "help: ".yellow().bold()),
+            }?;
 
-            writeln!(buffer, "{}{}", note_prefix, localized_message)?;
+            writeln!(buffer, "{}", localized_message)?;
         }
 
         Ok(())

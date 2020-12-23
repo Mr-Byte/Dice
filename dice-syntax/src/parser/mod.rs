@@ -17,7 +17,9 @@ use dice_core::{
             FUNCTION_HAS_TOO_MANY_ARGUMENTS, INVALID_IMPORT_USAGE, OPERATOR_HAS_INCORRECT_ARGUMENT_COUNT,
             UNEXPECTED_TOKEN,
         },
-        context::{ErrorContext, IMPORT_REQUIRES_ITEMS_TO_BE_IMPORTED},
+        context::{
+            Context, ContextKind, IMPORT_REQUIRES_ITEMS_TO_BE_IMPORTED, IMPORT_REQUIRES_ITEMS_TO_BE_IMPORTED_HELP,
+        },
         Error, ResultExt,
     },
     source::Source,
@@ -46,7 +48,6 @@ impl<'a> Parser<'a> {
         }
     }
 
-    // TODO: Have this return a collection of parse errors.
     pub fn parse(mut self) -> Result<SyntaxTree, Error> {
         let root = self.expression_sequence()?;
 
@@ -60,7 +61,6 @@ impl<'a> Parser<'a> {
         let mut trailing_expression = None;
 
         while !matches!(next_token.kind, TokenKind::EndOfInput | TokenKind::RightCurly) {
-            // TODO: Do each of these just become prefix parsers?
             let expression = match next_token.kind {
                 TokenKind::Loop => self.loop_statement()?,
                 TokenKind::While => self.while_statement()?,
@@ -283,7 +283,11 @@ impl<'a> Parser<'a> {
             return Err(Error::new(INVALID_IMPORT_USAGE)
                 .with_source(self.source.clone())
                 .with_span(span_start)
-                .push_context(ErrorContext::new(IMPORT_REQUIRES_ITEMS_TO_BE_IMPORTED)));
+                .push_context(Context::new(IMPORT_REQUIRES_ITEMS_TO_BE_IMPORTED, ContextKind::Note))
+                .push_context(Context::new(
+                    IMPORT_REQUIRES_ITEMS_TO_BE_IMPORTED_HELP,
+                    ContextKind::Help,
+                )));
         }
 
         self.lexer.consume(TokenKind::From)?;
@@ -293,7 +297,9 @@ impl<'a> Parser<'a> {
         let node = SyntaxNode::ImportDecl(ImportDecl {
             module_import,
             item_imports,
-            relative_path: process_string(relative_path),
+            relative_path: process_string(relative_path)
+                .with_source(|| self.source.clone())
+                .with_span(|| span_end)?,
             span: span_start + span_end,
         });
 
@@ -927,7 +933,9 @@ impl<'a> Parser<'a> {
                 span,
             }),
             TokenKind::String => SyntaxNode::LitString(LitString {
-                value: process_string(token.slice),
+                value: process_string(token.slice)
+                    .with_source(|| self.source.clone())
+                    .with_span(|| span)?,
                 span,
             }),
             TokenKind::False => SyntaxNode::LitBool(LitBool { value: false, span }),
@@ -1014,8 +1022,8 @@ impl<'a> Parser<'a> {
     }
 }
 
-// TODO: Return an error here for strings that can't be processed.
-fn process_string(input: &str) -> String {
+fn process_string(input: &str) -> Result<String, Error> {
     // TODO: Process escape sequences.
-    input[1..input.len() - 1].to_owned()
+
+    Ok(input[1..input.len() - 1].to_owned())
 }

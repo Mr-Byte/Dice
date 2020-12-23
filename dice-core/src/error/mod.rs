@@ -17,7 +17,7 @@ use crate::{
     span::Span,
     tags,
 };
-use context::ErrorContext;
+use context::Context;
 use std::fmt::{Debug, Display, Formatter};
 use tag::Tags;
 
@@ -28,7 +28,7 @@ pub struct Error {
     span: Span,
     tags: Tags,
     trace: Vec<ErrorTrace>,
-    context: Vec<ErrorContext>,
+    context: Vec<Context>,
 }
 
 impl Error {
@@ -67,7 +67,7 @@ impl Error {
         self
     }
 
-    pub fn push_context(mut self, context: ErrorContext) -> Self {
+    pub fn push_context(mut self, context: Context) -> Self {
         self.context.push(context);
         self
     }
@@ -98,7 +98,7 @@ pub trait ResultExt {
     fn with_span(self, span: impl Fn() -> Span) -> Self;
     fn with_tags(self, tags: impl Fn() -> Tags) -> Self;
     fn push_trace(self, trace: impl Fn() -> ErrorTrace) -> Self;
-    fn push_context(self, context: impl Fn() -> ErrorContext) -> Self;
+    fn push_context(self, context: impl Fn() -> Context) -> Self;
 }
 
 impl<T> ResultExt for Result<T, Error> {
@@ -118,7 +118,7 @@ impl<T> ResultExt for Result<T, Error> {
         self.map_err(|error| error.push_trace(trace()))
     }
 
-    fn push_context(self, context: impl Fn() -> ErrorContext) -> Self {
+    fn push_context(self, context: impl Fn() -> Context) -> Self {
         self.map_err(|error| error.push_context(context()))
     }
 }

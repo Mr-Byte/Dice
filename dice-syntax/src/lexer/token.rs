@@ -209,7 +209,6 @@ pub enum TokenKind {
     // Literals,
     #[regex("(d[_a-zA-Z][_a-zA-Z0-9]*)|([_a-ce-zA-Z][_a-zA-Z0-9]*)")]
     Identifier,
-    // TODO: Allow _ as digit separators.
     #[regex("[0-9]+")]
     Integer,
     #[regex(r"[0-9]+\.[0-9]+")]
@@ -217,7 +216,6 @@ pub enum TokenKind {
     #[regex(r#"""#, lex_string)]
     String,
 
-    // TODO: Propagate error for unexpected tokens.
     #[error]
     #[regex(r"[ \t\r\n\f]+|//[^\r\n]+", logos::skip)]
     Error,

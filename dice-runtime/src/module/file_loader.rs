@@ -3,7 +3,7 @@ use dice_compiler::compiler::Compiler;
 use dice_core::{
     error::{
         codes::INVALID_SCRIPT_LOCATION,
-        context::{ErrorContext, MODULE_LOAD_ERROR},
+        context::{Context, ContextKind, MODULE_LOAD_ERROR},
         Error,
     },
     source::{Source, SourceKind},
@@ -35,7 +35,7 @@ impl ModuleLoader for FileModuleLoader {
             Ok(module)
         })()
         .map_err(move |error: Error| {
-            error.push_context(ErrorContext::new(MODULE_LOAD_ERROR).with_tags(tags! {
+            error.push_context(Context::new(MODULE_LOAD_ERROR, ContextKind::Note).with_tags(tags! {
                 module => name.to_string()
             }))
         })
