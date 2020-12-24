@@ -162,29 +162,7 @@ where
             return Err(Error::new(TYPE_ASSERTION_NULLABILITY_FAILURE));
         }
 
-        let local_class = value
-            .as_object()
-            .ok()
-            .and_then(|object| object.class())
-            .or_else(|| self.value_class_mapping.get(&value.kind()).cloned());
-        let is_type = local_class
-            .as_ref()
-            .map_or(false, |local_class| local_class.is_class(&class));
-
-        if is_type {
-            Ok(())
-        } else {
-            let expected_type = class.name().as_string();
-            let actual_type =
-                local_class.map_or(String::from("<unknown>"), |local_class| local_class.name().as_string());
-
-            Err(Error::new(TYPE_ASSERTION_FAILURE).push_context(
-                Context::new(MISMATCHED_TYPE_ASSERTIONS, ContextKind::Note).with_tags(tags! {
-                    expected => expected_type,
-                    actual => actual_type
-                }),
-            ))
-        }
+        self.assert_type(&class, &value)
     }
 
     fn assert_type_or_null_for_local(
@@ -200,29 +178,7 @@ where
             return Ok(());
         }
 
-        let local_class = value
-            .as_object()
-            .ok()
-            .and_then(|object| object.class())
-            .or_else(|| self.value_class_mapping.get(&value.kind()).cloned());
-        let is_type = local_class
-            .as_ref()
-            .map_or(false, |local_class| local_class.is_class(&class));
-
-        if is_type {
-            Ok(())
-        } else {
-            let expected_type = class.name().as_string();
-            let actual_type =
-                local_class.map_or(String::from("<unknown>"), |local_class| local_class.name().as_string());
-
-            Err(Error::new(TYPE_ASSERTION_FAILURE).push_context(
-                Context::new(MISMATCHED_TYPE_ASSERTIONS, ContextKind::Note).with_tags(tags! {
-                    expected => expected_type,
-                    actual => actual_type
-                }),
-            ))
-        }
+        self.assert_type(&class, &value)
     }
 
     fn assert_type_and_return(&mut self) -> Result<(), Error> {
@@ -234,29 +190,7 @@ where
             return Err(Error::new(TYPE_ASSERTION_NULLABILITY_FAILURE));
         }
 
-        let local_class = value
-            .as_object()
-            .ok()
-            .and_then(|object| object.class())
-            .or_else(|| self.value_class_mapping.get(&value.kind()).cloned());
-        let is_type = local_class
-            .as_ref()
-            .map_or(false, |local_class| local_class.is_class(&class));
-
-        if is_type {
-            Ok(())
-        } else {
-            let expected_type = class.name().as_string();
-            let actual_type =
-                local_class.map_or(String::from("<unknown>"), |local_class| local_class.name().as_string());
-
-            Err(Error::new(TYPE_ASSERTION_FAILURE).push_context(
-                Context::new(MISMATCHED_TYPE_ASSERTIONS, ContextKind::Note).with_tags(tags! {
-                    expected => expected_type,
-                    actual => actual_type
-                }),
-            ))
-        }
+        self.assert_type(&class, &value)
     }
 
     fn assert_type_or_null_and_return(&mut self) -> Result<(), Error> {
@@ -268,12 +202,16 @@ where
             return Ok(());
         }
 
-        let local_class = value
+        self.assert_type(&class, &value)
+    }
+
+    fn assert_type(&self, class: &Class, value: &&Value) -> Result<(), Error> {
+        let actual_class = value
             .as_object()
             .ok()
             .and_then(|object| object.class())
             .or_else(|| self.value_class_mapping.get(&value.kind()).cloned());
-        let is_type = local_class
+        let is_type = actual_class
             .as_ref()
             .map_or(false, |local_class| local_class.is_class(&class));
 
@@ -282,7 +220,7 @@ where
         } else {
             let expected_type = class.name().as_string();
             let actual_type =
-                local_class.map_or(String::from("<unknown>"), |local_class| local_class.name().as_string());
+                actual_class.map_or(String::from("<unknown>"), |local_class| local_class.name().as_string());
 
             Err(Error::new(TYPE_ASSERTION_FAILURE).push_context(
                 Context::new(MISMATCHED_TYPE_ASSERTIONS, ContextKind::Note).with_tags(tags! {
