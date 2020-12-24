@@ -9,7 +9,7 @@ use dice::{
     value::{NativeFn, Value},
     Dice, Runtime,
 };
-use std::{io::Write, rc::Rc};
+use std::io::Write;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     std::env::set_current_dir(std::fs::canonicalize("data/scripts")?)?;
@@ -18,9 +18,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     dice.runtime().load_prelude("prelude.dm")?;
     dice.runtime()
-        .add_global("print", Value::with_native_fn(Rc::new(print_value) as NativeFn))?;
+        .add_global("print", Value::with_native_fn(Box::new(print_value) as NativeFn))?;
     dice.runtime()
-        .add_global("panic", Value::with_native_fn(Rc::new(panic_err) as NativeFn))?;
+        .add_global("panic", Value::with_native_fn(Box::new(panic_err) as NativeFn))?;
 
     loop {
         print!("Input: ");

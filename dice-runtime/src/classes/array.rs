@@ -9,7 +9,7 @@ use dice_core::{
     runtime::Runtime,
     value::{NativeFn, Symbol, Value, ValueKind},
 };
-use std::{cell::RefCell, rc::Rc};
+use std::cell::RefCell;
 
 impl<L> crate::Runtime<L>
 where
@@ -18,14 +18,14 @@ where
     pub(super) fn register_array(&mut self) {
         let class = self.any_class.derive("Array");
 
-        class.set_method(&NEW, Rc::new(construct_array) as NativeFn);
-        class.set_method("push", Rc::new(push) as NativeFn);
-        class.set_method("pop", Rc::new(pop) as NativeFn);
-        class.set_method("length", Rc::new(length) as NativeFn);
-        class.set_method("first", Rc::new(first) as NativeFn);
-        class.set_method("filter", Rc::new(filter) as NativeFn);
-        class.set_method("map", Rc::new(map) as NativeFn);
-        class.set_method("iter", Rc::new(iter) as NativeFn);
+        class.set_method(&NEW, Box::new(construct_array) as NativeFn);
+        class.set_method("push", Box::new(push) as NativeFn);
+        class.set_method("pop", Box::new(pop) as NativeFn);
+        class.set_method("length", Box::new(length) as NativeFn);
+        class.set_method("first", Box::new(first) as NativeFn);
+        class.set_method("filter", Box::new(filter) as NativeFn);
+        class.set_method("map", Box::new(map) as NativeFn);
+        class.set_method("iter", Box::new(iter) as NativeFn);
 
         self.set_value_class(ValueKind::Array, class);
     }
@@ -130,7 +130,7 @@ fn iter(runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, Error> {
             let current = RefCell::new(0);
             let value_symbol: Symbol = VALUE.get();
             let done_symbol: Symbol = DONE.get();
-            let next: NativeFn = Rc::new(move |runtime, _| {
+            let next: NativeFn = Box::new(move |runtime, _| {
                 let result = runtime.new_object()?;
 
                 if *current.borrow() < arr.elements().len() {

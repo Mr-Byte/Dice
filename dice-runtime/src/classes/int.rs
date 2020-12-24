@@ -5,7 +5,6 @@ use dice_core::{
     runtime::Runtime,
     value::{NativeFn, Value, ValueKind},
 };
-use std::rc::Rc;
 
 impl<L> crate::Runtime<L>
 where
@@ -14,9 +13,9 @@ where
     pub(super) fn register_int(&mut self) {
         let class = self.any_class.derive("Int");
 
-        class.set_method(&NEW, Rc::new(construct_int) as NativeFn);
+        class.set_method(&NEW, Box::new(construct_int) as NativeFn);
         class.set_method("abs", bind_i64_ret_i64(i64::abs));
-        class.set_method("pow", Rc::new(pow) as NativeFn);
+        class.set_method("pow", Box::new(pow) as NativeFn);
         class.set_method("is_positive", bind_i64_ret_bool(i64::is_positive));
         class.set_method("is_negative", bind_i64_ret_bool(i64::is_negative));
         class.set_method("min", bind_i64_i64_ret_i64(i64::min));
@@ -54,21 +53,21 @@ fn construct_int(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, Er
 }
 
 fn bind_i64_ret_i64(function: impl Fn(i64) -> i64 + 'static) -> NativeFn {
-    Rc::new(move |_: &mut dyn Runtime, args: &[Value]| match args {
+    Box::new(move |_: &mut dyn Runtime, args: &[Value]| match args {
         [Value::Int(this), ..] => Ok(Value::Int(function(*this))),
         _ => Ok(Value::Null),
     })
 }
 
 fn bind_i64_ret_bool(function: impl Fn(i64) -> bool + 'static) -> NativeFn {
-    Rc::new(move |_: &mut dyn Runtime, args: &[Value]| match args {
+    Box::new(move |_: &mut dyn Runtime, args: &[Value]| match args {
         [Value::Int(this), ..] => Ok(Value::Bool(function(*this))),
         _ => Ok(Value::Null),
     })
 }
 
 fn bind_i64_i64_ret_i64(function: impl Fn(i64, i64) -> i64 + 'static) -> NativeFn {
-    Rc::new(move |_: &mut dyn Runtime, args: &[Value]| match args {
+    Box::new(move |_: &mut dyn Runtime, args: &[Value]| match args {
         [Value::Int(first), Value::Int(second), ..] => Ok(Value::Int(function(*first, *second))),
         _ => Ok(Value::Null),
     })

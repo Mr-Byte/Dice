@@ -5,7 +5,6 @@ use dice_core::{
     runtime::Runtime,
     value::{NativeFn, Value, ValueKind},
 };
-use std::rc::Rc;
 
 impl<L> crate::Runtime<L>
 where
@@ -14,8 +13,8 @@ where
     pub(super) fn register_string(&mut self) {
         let class = self.any_class.derive("String");
 
-        class.set_method(&NEW, Rc::new(construct_string) as NativeFn);
-        class.set_method(&ADD, Rc::new(concat) as NativeFn);
+        class.set_method(&NEW, Box::new(construct_string) as NativeFn);
+        class.set_method(&ADD, Box::new(concat) as NativeFn);
 
         // TODO: Figure out what methods to expose for strings.
 

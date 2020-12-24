@@ -4,7 +4,6 @@ use dice_core::{
     runtime::Runtime,
     value::{NativeFn, Value, ValueKind},
 };
-use std::rc::Rc;
 
 impl<L> crate::Runtime<L>
 where
@@ -12,8 +11,8 @@ where
 {
     pub fn register_class(&mut self) {
         let class = self.any_class.derive("Class");
-        class.set_method("name", Rc::new(name) as NativeFn);
-        class.set_method("base", Rc::new(base_class) as NativeFn);
+        class.set_method("name", Box::new(name) as NativeFn);
+        class.set_method("base", Box::new(base_class) as NativeFn);
 
         self.set_value_class(ValueKind::Class, class);
     }

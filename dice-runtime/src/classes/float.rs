@@ -5,7 +5,6 @@ use dice_core::{
     runtime::Runtime,
     value::{NativeFn, Value, ValueKind},
 };
-use std::rc::Rc;
 
 impl<L> crate::Runtime<L>
 where
@@ -16,7 +15,7 @@ where
 
         // NOTE: This does not currently expose all possible functions rust has, just a subset.
         // If the need arises, this list can be further expanded.
-        class.set_method(&NEW, Rc::new(construct_float) as NativeFn);
+        class.set_method(&NEW, Box::new(construct_float) as NativeFn);
         class.set_method("abs", bind_f64_ret_f64(f64::abs));
         class.set_method("sqrt", bind_f64_ret_f64(f64::sqrt));
         class.set_method("cbrt", bind_f64_ret_f64(f64::cbrt));
@@ -80,21 +79,21 @@ fn construct_float(_runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, 
 }
 
 fn bind_f64_ret_f64(function: impl Fn(f64) -> f64 + 'static) -> NativeFn {
-    Rc::new(move |_: &mut dyn Runtime, args: &[Value]| match args {
+    Box::new(move |_: &mut dyn Runtime, args: &[Value]| match args {
         [Value::Float(this), ..] => Ok(Value::Float(function(*this))),
         _ => Ok(Value::Null),
     })
 }
 
 fn bind_f64_ret_bool(function: impl Fn(f64) -> bool + 'static) -> NativeFn {
-    Rc::new(move |_: &mut dyn Runtime, args: &[Value]| match args {
+    Box::new(move |_: &mut dyn Runtime, args: &[Value]| match args {
         [Value::Float(this), ..] => Ok(Value::Bool(function(*this))),
         _ => Ok(Value::Null),
     })
 }
 
 fn bind_f64_f64_ret_f64(function: impl Fn(f64, f64) -> f64 + 'static) -> NativeFn {
-    Rc::new(move |_: &mut dyn Runtime, args: &[Value]| match args {
+    Box::new(move |_: &mut dyn Runtime, args: &[Value]| match args {
         [Value::Float(first), Value::Float(second), ..] => Ok(Value::Float(function(*first, *second))),
         _ => Ok(Value::Null),
     })

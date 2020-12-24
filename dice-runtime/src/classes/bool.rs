@@ -5,7 +5,6 @@ use dice_core::{
     runtime::Runtime,
     value::{NativeFn, Value, ValueKind},
 };
-use std::rc::Rc;
 
 impl<L> crate::Runtime<L>
 where
@@ -14,7 +13,7 @@ where
     pub(super) fn register_bool(&mut self) {
         let class = self.any_class.derive("Bool");
 
-        class.set_method(&NEW, Rc::new(construct_bool) as NativeFn);
+        class.set_method(&NEW, Box::new(construct_bool) as NativeFn);
 
         self.set_value_class(ValueKind::Bool, class);
     }

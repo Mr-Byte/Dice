@@ -4,19 +4,23 @@ use std::{
     rc::Rc,
 };
 
-pub type NativeFn = Rc<dyn Fn(&mut dyn Runtime, &[Value]) -> Result<Value, Error>>;
+pub type NativeFn = Box<dyn Fn(&mut dyn Runtime, &[Value]) -> Result<Value, Error>>;
 
 #[derive(Clone)]
-pub struct FnNative(NativeFn);
+pub struct FnNative {
+    inner: Rc<NativeFn>,
+}
 
 impl FnNative {
     pub fn new(native_fn: NativeFn) -> Self {
-        Self(native_fn)
+        Self {
+            inner: Rc::new(native_fn),
+        }
     }
 
     #[inline]
     pub fn call(&self, runtime: &mut dyn Runtime, args: &[Value]) -> Result<Value, Error> {
-        self.0(runtime, args)
+        (*self.inner)(runtime, args)
     }
 }
 

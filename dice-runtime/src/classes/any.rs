@@ -8,7 +8,6 @@ use dice_core::{
     runtime::Runtime,
     value::{Class, NativeFn, Value},
 };
-use std::rc::Rc;
 
 impl<L> crate::Runtime<L>
 where
@@ -17,10 +16,10 @@ where
     pub fn new_any_class() -> Class {
         let class = Class::new(ANY_CLASS.get());
 
-        class.set_method(TO_STRING.get(), Rc::new(to_string) as NativeFn);
-        class.set_method("fields", Rc::new(fields) as NativeFn);
-        class.set_method("methods", Rc::new(methods) as NativeFn);
-        class.set_method("class_of", Rc::new(class_of) as NativeFn);
+        class.set_method(TO_STRING.get(), Box::new(to_string) as NativeFn);
+        class.set_method("fields", Box::new(fields) as NativeFn);
+        class.set_method("methods", Box::new(methods) as NativeFn);
+        class.set_method("class_of", Box::new(class_of) as NativeFn);
         class
     }
 }
