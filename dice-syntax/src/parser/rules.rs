@@ -129,6 +129,10 @@ impl<'a> ParserRules<'a> {
             Rule::new().with_infix(Parser::binary_operator, Precedence::Coalesce),
         );
         rules.insert(
+            TokenKind::ErrorCoalesce,
+            Rule::new().with_infix(Parser::error_coalesce, Precedence::Coalesce),
+        );
+        rules.insert(
             TokenKind::RangeExclusive,
             Rule::new().with_infix(Parser::binary_operator, Precedence::Range),
         );

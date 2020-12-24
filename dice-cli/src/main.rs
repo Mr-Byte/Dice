@@ -1,5 +1,10 @@
 use dice::{
-    error::{codes::PANIC, Error},
+    error::{
+        codes::PANIC,
+        fmt::{ErrorFormatter, HumanReadableErrorFormatter},
+        localization::Locale,
+        Error,
+    },
     tags,
     value::{NativeFn, Value},
     Dice, Runtime,
@@ -41,7 +46,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let elapsed = start.elapsed();
                 println!("Result (time={} ms): {}", (elapsed.as_micros() as f64 / 1000.0), result,);
             }
-            Err(err) => eprintln!("{}", err),
+            Err(err) => {
+                let mut buffer = String::new();
+                HumanReadableErrorFormatter::new(true)
+                    .fmt_pretty(&mut buffer, &err, &Locale::US_ENGLISH)
+                    .expect("Failed to format.");
+
+                eprintln!("{}", buffer);
+            }
         };
     }
 }

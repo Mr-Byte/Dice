@@ -22,6 +22,10 @@ use dice_core::{
         },
         Error, ResultExt,
     },
+    protocol::{
+        error::{IS_OK, RESULT},
+        ProtocolSymbol,
+    },
     source::Source,
     span::Span,
     tags,
@@ -705,6 +709,74 @@ impl<'a> Parser<'a> {
         let span_end = self.lexer.consume(TokenKind::ErrorPropagate)?.span;
         let node = SyntaxNode::ErrorPropagate(ErrorPropagate {
             expression,
+            span: span_start + span_end,
+        });
+
+        Ok(self.arena.alloc(node))
+    }
+
+    fn error_coalesce(&mut self, expression: SyntaxNodeId, _: bool, span_start: Span) -> ParseResult {
+        self.lexer.consume(TokenKind::ErrorCoalesce)?;
+        let (_, error_name) = self.lexer.consume_ident()?;
+        let block = self.block_expression(false)?;
+        let span_end = self.lexer.current().span;
+        let span = span_start + span_end;
+
+        // NOTE: The form `expr or e { ...block }` can be lowered into the form:
+        // let #result = expr
+        // if #result.is_ok {
+        //     #result.value
+        // } else {
+        //     let e = #result.value
+        //     ...block
+        // }
+        // The following code generates the corresponding AST for the lowered form.
+
+        let result_temp = SyntaxNode::VarDecl(VarDecl {
+            kind: VarDeclKind::Singular(String::from("#result")),
+            is_mutable: false,
+            expr: expression,
+            span,
+        });
+        let result_temp = self.arena.alloc(result_temp);
+        let result_lit = SyntaxNode::LitIdent(LitIdent::synthesize("#result", span));
+        let result_lit = self.arena.alloc(result_lit);
+        let condition = SyntaxNode::FieldAccess(FieldAccess {
+            expression: result_lit,
+            field: IS_OK.get().as_string(),
+            span,
+        });
+        let condition = self.arena.alloc(condition);
+        let result_access = SyntaxNode::FieldAccess(FieldAccess {
+            expression: result_lit,
+            field: RESULT.get().as_string(),
+            span,
+        });
+        let result_access = self.arena.alloc(result_access);
+        let error_var = SyntaxNode::VarDecl(VarDecl {
+            kind: VarDeclKind::Singular(error_name),
+            is_mutable: false,
+            expr: result_access,
+            span,
+        });
+        let error_var = self.arena.alloc(error_var);
+        let error_fallback = SyntaxNode::Block(Block {
+            expressions: vec![error_var],
+            trailing_expression: Some(block),
+            span,
+        });
+        let error_fallback = self.arena.alloc(error_fallback);
+        let result_unwrap = SyntaxNode::IfExpression(IfExpression {
+            condition,
+            primary: result_access,
+            secondary: Some(error_fallback),
+            span,
+        });
+        let result_unwrap = self.arena.alloc(result_unwrap);
+
+        let node = SyntaxNode::Block(Block {
+            expressions: vec![result_temp],
+            trailing_expression: Some(result_unwrap),
             span: span_start + span_end,
         });
 

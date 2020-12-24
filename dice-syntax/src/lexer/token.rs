@@ -114,6 +114,8 @@ pub enum TokenKind {
     ErrorPropagate,
     #[token("??")]
     Coalesce,
+    #[token("or")]
+    ErrorCoalesce,
     #[token("-")]
     Minus,
     #[token("+")]
@@ -203,7 +205,7 @@ pub enum TokenKind {
     Export,
     #[token("super")]
     Super,
-    #[regex("await|async|yield|do|const|match|enum|trait|type|try|or|when|default|switch")]
+    #[regex("await|async|yield|do|const|match|enum|trait|type|try|when|default|switch")]
     Reserved,
 
     // Literals,
@@ -242,6 +244,7 @@ impl Display for TokenKind {
             TokenKind::QuestionMark => write!(f, "?"),
             TokenKind::ErrorPropagate => write!(f, "!!"),
             TokenKind::Coalesce => write!(f, "??"),
+            TokenKind::ErrorCoalesce => write!(f, "or"),
             TokenKind::Minus => write!(f, "-"),
             TokenKind::Plus => write!(f, "+"),
             TokenKind::Remainder => write!(f, "%"),
