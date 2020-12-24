@@ -27,6 +27,19 @@ impl Compiler {
             ]
         }
 
+        if let Some(type_) = &var_decl.type_ {
+            emit_bytecode! {
+                self.assembler()?, var_decl.span => [
+                    {self.visit(&type_.name)?};
+                    if type_.is_nullable => [
+                        ASSERT_TYPE_OR_NULL_FOR_LOCAL slot;
+                    ] else [
+                        ASSERT_TYPE_FOR_LOCAL slot;
+                    ]
+                ]
+            }
+        }
+
         Ok(())
     }
 }

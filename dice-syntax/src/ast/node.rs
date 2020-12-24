@@ -190,6 +190,7 @@ pub struct VarDecl {
     pub kind: VarDeclKind,
     pub is_mutable: bool,
     pub expr: SyntaxNodeId,
+    pub type_: Option<TypeAnnotation>,
     pub span: Span,
 }
 

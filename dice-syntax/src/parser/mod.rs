@@ -371,6 +371,7 @@ impl<'a> Parser<'a> {
             kind,
             is_mutable,
             expr,
+            type_: None,
             span: span_start + span_end,
         });
 
@@ -732,14 +733,22 @@ impl<'a> Parser<'a> {
         // }
         // The following code generates the corresponding AST for the lowered form.
 
+        let result_ty = "Result";
+        let result_var = "#result";
+
         let result_temp = SyntaxNode::VarDecl(VarDecl {
-            kind: VarDeclKind::Singular(String::from("#result")),
+            kind: VarDeclKind::Singular(String::from(result_var)),
             is_mutable: false,
             expr: expression,
+            type_: Some(TypeAnnotation {
+                name: LitIdent::synthesize(result_ty, span_start),
+                is_nullable: false,
+                span: span_start,
+            }),
             span,
         });
         let result_temp = self.arena.alloc(result_temp);
-        let result_lit = SyntaxNode::LitIdent(LitIdent::synthesize("#result", span));
+        let result_lit = SyntaxNode::LitIdent(LitIdent::synthesize(result_var, span));
         let result_lit = self.arena.alloc(result_lit);
         let condition = SyntaxNode::FieldAccess(FieldAccess {
             expression: result_lit,
@@ -757,6 +766,7 @@ impl<'a> Parser<'a> {
             kind: VarDeclKind::Singular(error_name),
             is_mutable: false,
             expr: result_access,
+            type_: None,
             span,
         });
         let error_var = self.arena.alloc(error_var);

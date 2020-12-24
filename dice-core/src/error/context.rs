@@ -37,3 +37,4 @@ pub static EXPORT_ONLY_ALLOWED_IN_MODULES: ContextMsgId = "export-only-allowed-i
 pub static EXPORT_ONLY_ALLOWED_IN_TOP_LEVEL_SCOPE: ContextMsgId = "export-only-allowed-in-top-level-scope";
 pub static IMPORT_REQUIRES_ITEMS_TO_BE_IMPORTED: ContextMsgId = "import-requires-items-to-be-imported";
 pub static IMPORT_REQUIRES_ITEMS_TO_BE_IMPORTED_HELP: ContextMsgId = "import-requires-items-to-be-imported-help";
+pub static MISMATCHED_TYPE_ASSERTIONS: ContextMsgId = "mismatched-type-assertions";

@@ -10,7 +10,7 @@ use dice_core::{
             TYPE_ASSERTION_FUNCTION_FAILURE, TYPE_ASSERTION_NULLABILITY_FAILURE, TYPE_ASSERTION_NUMBER_FAILURE,
             TYPE_ASSERTION_SUPER_FAILURE,
         },
-        context::{Context, ContextKind, INVALID_INDEX_TYPES},
+        context::{Context, ContextKind, INVALID_INDEX_TYPES, MISMATCHED_TYPE_ASSERTIONS},
         trace::ErrorTrace,
         Error, ResultExt,
     },
@@ -162,17 +162,28 @@ where
             return Err(Error::new(TYPE_ASSERTION_NULLABILITY_FAILURE));
         }
 
-        let is_type = value
+        let local_class = value
             .as_object()
             .ok()
             .and_then(|object| object.class())
-            .or_else(|| self.value_class_mapping.get(&value.kind()).cloned())
+            .or_else(|| self.value_class_mapping.get(&value.kind()).cloned());
+        let is_type = local_class
+            .as_ref()
             .map_or(false, |local_class| local_class.is_class(&class));
 
         if is_type {
             Ok(())
         } else {
-            Err(Error::new(TYPE_ASSERTION_FAILURE))
+            let expected_type = class.name().as_string();
+            let actual_type =
+                local_class.map_or(String::from("<unknown>"), |local_class| local_class.name().as_string());
+
+            Err(Error::new(TYPE_ASSERTION_FAILURE).push_context(
+                Context::new(MISMATCHED_TYPE_ASSERTIONS, ContextKind::Note).with_tags(tags! {
+                    expected => expected_type,
+                    actual => actual_type
+                }),
+            ))
         }
     }
 
