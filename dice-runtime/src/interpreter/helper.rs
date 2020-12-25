@@ -213,7 +213,7 @@ impl<L: ModuleLoader> Runtime<L> {
             self.stack[stack_frame][0] = receiver;
         }
 
-        let result = self.execute_bytecode(fn_script.bytecode(), stack_frame, parent_upvalues)?;
+        let result = self.execute(fn_script.bytecode(), stack_frame, parent_upvalues)?;
 
         // NOTE: Release the number of reserved slots plus the number of arguments plus a slot for the function itself.
         self.stack.release_stack_frame(stack_frame);

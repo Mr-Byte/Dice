@@ -12,7 +12,7 @@ impl Dice {
     pub fn run_script(&mut self, input: impl Into<String>) -> Result<value::Value, error::Error> {
         let source = Source::new(input.into(), SourceKind::Script);
         let bytecode = Compiler::compile_source(source)?;
-        let value = self.runtime.run_bytecode(bytecode)?;
+        let value = self.runtime.run(bytecode)?;
 
         Ok(value)
     }

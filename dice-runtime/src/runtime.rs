@@ -63,9 +63,9 @@ impl<L> Runtime<L>
 where
     L: ModuleLoader + Default,
 {
-    pub fn run_bytecode(&mut self, bytecode: Bytecode) -> Result<Value, Error> {
+    pub fn run(&mut self, bytecode: Bytecode) -> Result<Value, Error> {
         let stack_frame = self.stack.reserve_slots(bytecode.slot_count());
-        let result = self.execute_bytecode(&bytecode, stack_frame, None)?;
+        let result = self.execute(&bytecode, stack_frame, None)?;
         self.stack.release_stack_frame(stack_frame);
 
         Ok(result)
@@ -74,7 +74,7 @@ where
     pub(super) fn run_module(&mut self, bytecode: Bytecode, export: Value) -> Result<Value, Error> {
         let stack_frame = self.stack.reserve_slots(bytecode.slot_count());
         self.stack[stack_frame.start()] = export;
-        let result = self.execute_bytecode(&bytecode, stack_frame, None)?;
+        let result = self.execute(&bytecode, stack_frame, None)?;
         self.stack.release_stack_frame(stack_frame);
 
         Ok(result)
