@@ -6,6 +6,8 @@ E1003 = Expected valid expression. Found invalid token: {$input}
 E1004 = Expected valid expression. Found reserved keyword: {$input}
 E1005 = Function has too many arguments (max: 255).
 E1006 = Operator has an incorrect number of arguments (1 for unary operators and 2 for binary).
+E1007 = Invalid integer value: {$message}
+E1008 = Invalid float value: {$message}
 
 # Compiler errors
 E2000 = Internal Compiler Error (please report this as a bug with code to reproduce the issue).

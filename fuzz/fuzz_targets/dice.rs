@@ -1,7 +1,12 @@
-#![no_main]
-use dice::Dice;
-use libfuzzer_sys::fuzz_target;
+#[macro_use]
+extern crate afl;
 
-fuzz_target!(|data: String| {
-    Dice::default().run_script(&data);
-});
+use dice::Dice;
+
+fn main() {
+    fuzz!(|data: &[u8]| {
+        if let Ok(data) = std::str::from_utf8(data) {
+            Dice::default().run_script(data);
+        }
+    });
+}

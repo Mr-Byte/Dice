@@ -93,6 +93,7 @@ impl Stack {
         std::mem::swap(&mut first[0], &mut second[0])
     }
 
+    #[cfg(debug_assertions)]
     #[inline]
     pub fn len(&self) -> usize {
         self.stack_ptr

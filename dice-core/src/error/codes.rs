@@ -8,6 +8,8 @@ pub static UNRECOGNIZED_INPUT: ErrorCode = "E1003";
 pub static RESERVED_KEYWORD: ErrorCode = "E1004";
 pub static FUNCTION_HAS_TOO_MANY_ARGUMENTS: ErrorCode = "E1005";
 pub static OPERATOR_HAS_INCORRECT_ARGUMENT_COUNT: ErrorCode = "E1006";
+pub static INVALID_INTEGER_VALUE: ErrorCode = "E1007";
+pub static INVALID_FLOAT_VALUE: ErrorCode = "E1008";
 
 // Compiler errors
 pub static INTERNAL_COMPILER_ERROR: ErrorCode = "E2000";

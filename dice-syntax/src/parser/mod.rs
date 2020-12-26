@@ -1,5 +1,7 @@
 mod rules;
 
+use std::num::{ParseFloatError, ParseIntError};
+
 use super::{
     lexer::{Lexer, TokenKind},
     Assignment, AssignmentOperator, Binary, BinaryOperator, Block, Break, Continue, ExportDecl, FnCall, FnDecl,
@@ -14,8 +16,8 @@ use crate::{
 use dice_core::{
     error::{
         codes::{
-            FUNCTION_HAS_TOO_MANY_ARGUMENTS, INVALID_IMPORT_USAGE, OPERATOR_HAS_INCORRECT_ARGUMENT_COUNT,
-            UNEXPECTED_TOKEN,
+            FUNCTION_HAS_TOO_MANY_ARGUMENTS, INVALID_FLOAT_VALUE, INVALID_IMPORT_USAGE, INVALID_INTEGER_VALUE,
+            OPERATOR_HAS_INCORRECT_ARGUMENT_COUNT, UNEXPECTED_TOKEN,
         },
         context::{
             Context, ContextKind, IMPORT_REQUIRES_ITEMS_TO_BE_IMPORTED, IMPORT_REQUIRES_ITEMS_TO_BE_IMPORTED_HELP,
@@ -1007,11 +1009,26 @@ impl<'a> Parser<'a> {
         let span = token.span;
         let literal = match token.kind {
             TokenKind::Integer => SyntaxNode::LitInt(LitInt {
-                value: token.slice.parse().expect("Invalid integer literal."),
+                // TODO: Better handle integer literals that can't be parsed.
+                value: token.slice.parse().map_err(|err: ParseIntError| {
+                    Error::new(INVALID_INTEGER_VALUE)
+                        .with_span(span)
+                        .with_source(self.source.clone())
+                        .with_tags(tags! {
+                            message => err.to_string()
+                        })
+                })?,
                 span,
             }),
             TokenKind::Float => SyntaxNode::LitFloat(LitFloat {
-                value: token.slice.parse().expect("Invalid float literal."),
+                value: token.slice.parse().map_err(|err: ParseFloatError| {
+                    Error::new(INVALID_FLOAT_VALUE)
+                        .with_span(span)
+                        .with_source(self.source.clone())
+                        .with_tags(tags! {
+                            message => err.to_string()
+                        })
+                })?,
                 span,
             }),
             TokenKind::String => SyntaxNode::LitString(LitString {

@@ -1,0 +1,12 @@
+class Test {
+    fn new(self, x, y) {
+        self.x = x
+        self.y = y
+    }
+
+    fn add(self) {
+        self.x + self.y
+    }
+}
+
+Test(5, 2).add()

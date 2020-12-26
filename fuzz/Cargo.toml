@@ -1,14 +1,18 @@
 [package]
-name = "fuzz"
-version = "0.1.0"
 authors = ["byte"]
 edition = "2018"
+name = "fuzz"
+version = "0.1.0"
 
 [package.metadata]
 cargo-fuzz = true
 
 [dependencies]
+afl = {version = "*", features = ["reset_lazy_static"]}
 libfuzzer-sys = "0.3"
+
+[patch.crates-io]
+lazy_static = {git = "https://github.com/rust-fuzz/resettable-lazy-static.rs"}
 
 [dependencies.dice]
 path = "../dice"
