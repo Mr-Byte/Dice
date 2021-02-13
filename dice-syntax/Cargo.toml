@@ -1,12 +1,12 @@
 [package]
-name = "dice-syntax"
-version = "0.1.0"
 authors = ["Josh Rodgers <bytemr@gmail.com>"]
 edition = "2018"
+name = "dice-syntax"
+version = "0.1.0"
 
 [dependencies]
-logos = "0.11"
+dice-core = {path = "../dice-core"}
 id-arena = "2.2"
+logos = "0.12"
 thiserror = "1"
 unicode-width = "0.1"
-dice-core = {path = "../dice-core"}

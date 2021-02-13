@@ -5,7 +5,7 @@ name = "dice-compiler"
 version = "0.1.0"
 
 [dependencies]
-bytes = "0.6"
+bytes = "1.0"
 dice-core = {path = "../dice-core"}
 dice-syntax = {path = "../dice-syntax"}
 thiserror = "1.0"
