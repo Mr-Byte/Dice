@@ -62,8 +62,6 @@ pub enum Instruction {
     Equal,
     NotEqual,
     Is,
-    DieRoll,
-    DiceRoll,
     RangeInclusive,
     RangeExclusive,
     // Control flow instructions
@@ -150,8 +148,6 @@ impl Display for Instruction {
             Instruction::Equal => "EQ",
             Instruction::NotEqual => "NEQ",
             Instruction::Is => "IS",
-            Instruction::DieRoll => "DIE_ROLL",
-            Instruction::DiceRoll => "DICE_ROLL",
             Instruction::RangeInclusive => "RANGE_INCLUSIVE",
             Instruction::RangeExclusive => "RANGE_EXCLUSIVE",
             Instruction::Jump => "JUMP",

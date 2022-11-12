@@ -10,14 +10,14 @@ use super::{
 };
 use crate::{
     parser::rules::{ParseResult, ParserRules, Precedence},
-    ClassDecl, ErrorPropagate, FieldAccess, FnArg, ForLoop, ImportDecl, Index, Is, Loop, NullPropagate, OpDecl,
-    OverloadedOperator, SuperAccess, SuperCall, TypeAnnotation, VarDeclKind,
+    ClassDecl, ErrorPropagate, FieldAccess, FnArg, ForLoop, ImportDecl, Index, Is, LitDiceRoll, Loop, NullPropagate,
+    OpDecl, OverloadedOperator, SuperAccess, SuperCall, TypeAnnotation, VarDeclKind,
 };
 use dice_core::{
     error::{
         codes::{
             FUNCTION_HAS_TOO_MANY_ARGUMENTS, INVALID_FLOAT_VALUE, INVALID_IMPORT_USAGE, INVALID_INTEGER_VALUE,
-            OPERATOR_HAS_INCORRECT_ARGUMENT_COUNT, UNEXPECTED_TOKEN,
+            UNEXPECTED_TOKEN,
         },
         context::{
             Context, ContextKind, IMPORT_REQUIRES_ITEMS_TO_BE_IMPORTED, IMPORT_REQUIRES_ITEMS_TO_BE_IMPORTED_HELP,
@@ -112,7 +112,10 @@ impl<'a> Parser<'a> {
         let mut node = rule
             .prefix
             .map(|(prefix, _)| prefix(self, precedence <= Precedence::Assignment))
-            .unwrap_or_else(|| self.unexpected_token(next_token.kind, self.rules.prefix_tokens(), next_token.span))?;
+            .unwrap_or_else({
+                let next_token = next_token.clone();
+                || self.unexpected_token(next_token.kind, self.rules.prefix_tokens(), next_token.span)
+            })?;
 
         loop {
             let span_start = next_token.span;
@@ -252,7 +255,7 @@ impl<'a> Parser<'a> {
     fn variable(&mut self, can_assign: bool) -> ParseResult {
         let next_token = self.lexer.next()?;
         let span_start = next_token.span;
-        let lhs_expression = match next_token.kind {
+        let lhs_expression = match next_token.kind.clone() {
             TokenKind::Identifier => self
                 .arena
                 .alloc(SyntaxNode::LitIdent(LitIdent::synthesize(next_token.slice, span_start))),
@@ -432,8 +435,7 @@ impl<'a> Parser<'a> {
     fn op_decl(&mut self) -> ParseResult {
         let span_start = self.lexer.consume(TokenKind::Operator)?.span;
         let operator_token = self.lexer.next()?;
-        let mut operator = match operator_token.kind {
-            TokenKind::DiceRoll => OverloadedOperator::DiceRoll,
+        let operator = match operator_token.kind.clone() {
             TokenKind::Star => OverloadedOperator::Multiply,
             TokenKind::Slash => OverloadedOperator::Divide,
             TokenKind::Remainder => OverloadedOperator::Remainder,
@@ -450,7 +452,6 @@ impl<'a> Parser<'a> {
             kind => self.unexpected_token(
                 kind,
                 &[
-                    TokenKind::DiceRoll,
                     TokenKind::Star,
                     TokenKind::Slash,
                     TokenKind::Remainder,
@@ -469,17 +470,6 @@ impl<'a> Parser<'a> {
             )?,
         };
         let args = self.parse_args(TokenKind::LeftParen, TokenKind::RightParen)?;
-
-        // NOTE: If the operator is a dice roll and only has one argument, reassign to DieRoll operator.
-        // Otherwise enforce that the operator has two arguments.
-        if operator == OverloadedOperator::DiceRoll && args.len() == 1 {
-            operator = OverloadedOperator::DieRoll
-        } else if args.len() != 2 {
-            return Err(Error::new(OPERATOR_HAS_INCORRECT_ARGUMENT_COUNT)
-                .with_source(self.source.clone())
-                .with_span(span_start + self.lexer.current().span));
-        }
-
         let return_ = self.parse_return()?;
         let body = self.block_expression(false)?;
         let span_end = self.lexer.current().span;
@@ -527,7 +517,7 @@ impl<'a> Parser<'a> {
             if next.kind == TokenKind::Comma {
                 self.lexer.next()?;
             } else if next.kind != close_token_kind {
-                self.unexpected_token(next.kind, &[close_token_kind], next.span)?;
+                self.unexpected_token(next.kind, &[close_token_kind.clone()], next.span)?;
             }
         }
 
@@ -571,7 +561,7 @@ impl<'a> Parser<'a> {
             if next.kind == TokenKind::Comma {
                 self.lexer.next()?;
             } else if next.kind != close_token_kind {
-                self.unexpected_token(next.kind, &[close_token_kind], next.span)?;
+                self.unexpected_token(next.kind, &[close_token_kind.clone()], next.span)?;
             }
         }
 
@@ -650,7 +640,6 @@ impl<'a> Parser<'a> {
             TokenKind::Star => BinaryOperator::Multiply,
             TokenKind::Slash => BinaryOperator::Divide,
             TokenKind::Remainder => BinaryOperator::Remainder,
-            TokenKind::DiceRoll => BinaryOperator::DiceRoll,
             _ => unreachable!(),
         };
 
@@ -685,7 +674,6 @@ impl<'a> Parser<'a> {
         let operator = match token.kind {
             TokenKind::Minus => UnaryOperator::Negate,
             TokenKind::Not => UnaryOperator::Not,
-            TokenKind::DiceRoll => UnaryOperator::DiceRoll,
             _ => unreachable!(),
         };
         let node = SyntaxNode::Prefix(Prefix {
@@ -1007,7 +995,7 @@ impl<'a> Parser<'a> {
     fn literal(&mut self, _: bool) -> ParseResult {
         let token = self.lexer.next()?;
         let span = token.span;
-        let literal = match token.kind {
+        let literal = match token.kind.clone() {
             TokenKind::Integer => SyntaxNode::LitInt(LitInt {
                 // TODO: Better handle integer literals that can't be parsed.
                 value: token.slice.parse().map_err(|err: ParseIntError| {
@@ -1040,6 +1028,7 @@ impl<'a> Parser<'a> {
             TokenKind::False => SyntaxNode::LitBool(LitBool { value: false, span }),
             TokenKind::True => SyntaxNode::LitBool(LitBool { value: true, span }),
             TokenKind::Null => SyntaxNode::LitNull(LitNull { span }),
+            TokenKind::DiceRoll => parse_dice_roll(span),
             kind => self.unexpected_token(
                 kind,
                 &[
@@ -1078,7 +1067,8 @@ impl<'a> Parser<'a> {
                     TokenKind::AddAssign,
                     TokenKind::SubAssign,
                 ])?
-                .kind;
+                .kind
+                .clone();
 
             let rhs_expression = self.expression()?;
             let span_end = self.lexer.current().span;
@@ -1104,7 +1094,7 @@ impl<'a> Parser<'a> {
 
     fn unexpected_token<R>(&self, actual: TokenKind, expected: &[TokenKind], span: Span) -> Result<R, Error> {
         let mut token_list = expected.to_vec();
-        token_list.sort_by_key(|key| *key);
+        token_list.sort_by_key(|key| key.clone());
         let token_list = token_list
             .iter()
             .map(ToString::to_string)
@@ -1119,6 +1109,10 @@ impl<'a> Parser<'a> {
                 expected => token_list
             }))
     }
+}
+
+fn parse_dice_roll(span: Span) -> SyntaxNode {
+    SyntaxNode::LitDiceRoll(LitDiceRoll { span })
 }
 
 fn process_string(input: &str) -> Result<String, Error> {

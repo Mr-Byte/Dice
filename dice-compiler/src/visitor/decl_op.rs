@@ -3,9 +3,7 @@ use crate::{compiler::Compiler, upvalue::UpvalueDescriptor, visitor::FnKind};
 use dice_core::{
     error::Error,
     protocol::{
-        operator::{
-            ADD, DICE_ROLL, DIE_ROLL, DIV, EQ, GT, GTE, LT, LTE, MUL, NEQ, RANGE_EXCLUSIVE, RANGE_INCLUSIVE, REM, SUB,
-        },
+        operator::{ADD, DIV, EQ, GT, GTE, LT, LTE, MUL, NEQ, RANGE_EXCLUSIVE, RANGE_INCLUSIVE, REM, SUB},
         ProtocolSymbol,
     },
     value::{FnScript, Symbol, Value},
@@ -46,8 +44,6 @@ impl NodeVisitor<(&OpDecl, OpKind)> for Compiler {
 impl Compiler {
     pub fn op_name(node: &OpDecl) -> Symbol {
         let name = match node.operator {
-            OverloadedOperator::DiceRoll => DICE_ROLL.get(),
-            OverloadedOperator::DieRoll => DIE_ROLL.get(),
             OverloadedOperator::Multiply => MUL.get(),
             OverloadedOperator::Divide => DIV.get(),
             OverloadedOperator::Remainder => REM.get(),

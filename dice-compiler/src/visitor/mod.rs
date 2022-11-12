@@ -26,6 +26,7 @@ mod expr_super_call;
 mod expr_while;
 mod literal_anonymous_fn;
 mod literal_bool;
+mod literal_dice_roll;
 mod literal_float;
 mod literal_int;
 mod literal_list;

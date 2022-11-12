@@ -51,6 +51,7 @@ pub enum SyntaxNode {
     LitBool(LitBool),
     LitList(LitList),
     LitObject(LitObject),
+    LitDiceRoll(LitDiceRoll),
     LitAnonymousFn(LitAnonymousFn),
 
     // Member access
@@ -97,6 +98,7 @@ impl SyntaxNode {
             SyntaxNode::LitFloat(LitFloat { span, .. }) => *span,
             SyntaxNode::LitString(LitString { span, .. }) => *span,
             SyntaxNode::LitBool(LitBool { span, .. }) => *span,
+            SyntaxNode::LitDiceRoll(LitDiceRoll { span, .. }) => *span,
             SyntaxNode::LitList(LitList { span, .. }) => *span,
             SyntaxNode::LitObject(LitObject { span, .. }) => *span,
             SyntaxNode::LitAnonymousFn(LitAnonymousFn { span, .. }) => *span,

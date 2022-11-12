@@ -38,6 +38,11 @@ impl LitIdent {
 }
 
 #[derive(Debug, Clone)]
+pub struct LitDiceRoll {
+    pub span: Span,
+}
+
+#[derive(Debug, Clone)]
 pub struct LitUnit {
     pub span: Span,
 }
@@ -75,7 +80,6 @@ pub struct LitBool {
 pub enum UnaryOperator {
     Negate,
     Not,
-    DiceRoll,
 }
 
 #[derive(Debug, Clone)]
@@ -148,7 +152,6 @@ pub struct Binary {
 
 #[derive(Debug, Copy, Clone)]
 pub enum BinaryOperator {
-    DiceRoll,
     Multiply,
     Divide,
     Remainder,
@@ -248,8 +251,6 @@ pub struct ImportDecl {
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum OverloadedOperator {
-    DiceRoll,
-    DieRoll,
     Multiply,
     Divide,
     Remainder,
@@ -268,8 +269,6 @@ pub enum OverloadedOperator {
 impl Display for OverloadedOperator {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            OverloadedOperator::DiceRoll => write!(f, "d"),
-            OverloadedOperator::DieRoll => write!(f, "d"),
             OverloadedOperator::Multiply => write!(f, "*"),
             OverloadedOperator::Divide => write!(f, "/"),
             OverloadedOperator::Remainder => write!(f, "%"),

@@ -14,9 +14,7 @@ use dice_core::{
         trace::ErrorTrace,
         Error, ResultExt,
     },
-    protocol::operator::{
-        ADD, DICE_ROLL, DIE_ROLL, DIV, EQ, GT, GTE, LT, LTE, MUL, NEQ, RANGE_EXCLUSIVE, RANGE_INCLUSIVE, REM, SUB,
-    },
+    protocol::operator::{ADD, DIV, EQ, GT, GTE, LT, LTE, MUL, NEQ, RANGE_EXCLUSIVE, RANGE_INCLUSIVE, REM, SUB},
     runtime::Runtime as _,
     tags,
     upvalue::{Upvalue, UpvalueState},
@@ -63,7 +61,6 @@ where
                     CreateClosure => self.create_closure(bytecode, stack_frame, parent_upvalues, &mut cursor)?,
                     Negate => self.neg()?,
                     Not => self.not()?,
-                    DieRoll => self.die_roll()?,
                     Multiply => self.mul()?,
                     Divide => self.div()?,
                     Remainder => self.rem()?,
@@ -76,7 +73,6 @@ where
                     Equal => self.eq()?,
                     NotEqual => self.neq()?,
                     Is => self.is()?,
-                    DiceRoll => self.dice_roll()?,
                     RangeExclusive => self.range_exclusive()?,
                     RangeInclusive => self.range_inclusive()?,
                     Jump => self.jump(&mut cursor)?,
@@ -240,10 +236,6 @@ where
         Ok(())
     }
 
-    fn die_roll(&mut self) -> Result<(), Error> {
-        self.call_unary_op(&DIE_ROLL)
-    }
-
     fn neg(&mut self) -> Result<(), Error> {
         match self.stack.peek_mut(0) {
             Value::Int(value) => *value = -*value,
@@ -394,11 +386,6 @@ where
         }
 
         Ok(())
-    }
-
-    fn dice_roll(&mut self) -> Result<(), Error> {
-        let rhs = self.stack.pop();
-        self.call_binary_op(&DICE_ROLL, rhs)
     }
 
     fn range_inclusive(&mut self) -> Result<(), Error> {

@@ -5,8 +5,6 @@ pub mod operator {
     use super::*;
 
     thread_local! {
-        pub static DICE_ROLL: Symbol = "#dice_roll".into();
-        pub static DIE_ROLL: Symbol = "#die_roll".into();
         pub static MUL: Symbol = "#mul".into();
         pub static DIV: Symbol = "#div".into();
         pub static REM: Symbol = "#rem".into();

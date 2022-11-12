@@ -9,7 +9,7 @@ use dice_syntax::LitAnonymousFn;
 impl NodeVisitor<&LitAnonymousFn> for Compiler {
     fn visit(&mut self, node: &LitAnonymousFn) -> Result<(), Error> {
         let id = uuid::Uuid::new_v4();
-        let name = format!("__anonymous_fn_{:X}", id.clone().to_simple());
+        let name = format!("__anonymous_fn_{id}");
         let body = self.syntax_tree.child(node.body);
         let mut fn_context = self.compile_fn(body, &node.args, node.return_.clone(), FnKind::Function)?;
         let upvalues = fn_context.upvalues().clone();

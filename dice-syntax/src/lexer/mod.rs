@@ -1,3 +1,5 @@
+mod dice_token;
+mod lexer_result;
 mod token;
 
 use crate::lexer::token::TokenIter;
@@ -125,7 +127,10 @@ pub mod test {
 
     macro_rules! assert_next_token {
         ($tokens:expr, $token:pat) => {
-            matches!($tokens.next(), Some(Ok($crate::lexer::Token { kind: $token, .. })))
+            matches!(
+                $tokens.next(),
+                Some(Ok($crate::lexer::Token { kind: $token, .. }))
+            )
         };
     }
 
@@ -147,7 +152,7 @@ pub mod test {
     #[test]
     fn tokenize_operators() {
         let delimiters = Source::new(
-            ".. ..= -> => . ?? % - + * / ! != == > >= < <= = d && ||",
+            ".. ..= -> => . ?? % - + * / ! != == > >= < <= = && ||",
             SourceKind::Script,
         );
         let mut tokens = Token::tokenize(&delimiters);
@@ -171,7 +176,6 @@ pub mod test {
         assert_next_token!(tokens, TokenKind::Less);
         assert_next_token!(tokens, TokenKind::LessEqual);
         assert_next_token!(tokens, TokenKind::Assign);
-        assert_next_token!(tokens, TokenKind::DiceRoll);
         assert_next_token!(tokens, TokenKind::LazyAnd);
         assert_next_token!(tokens, TokenKind::Pipe);
     }

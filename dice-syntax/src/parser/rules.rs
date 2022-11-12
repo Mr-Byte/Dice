@@ -65,6 +65,10 @@ impl<'a> ParserRules<'a> {
             Rule::new().with_prefix(Parser::literal, Precedence::Primary),
         );
         rules.insert(
+            TokenKind::DiceRoll,
+            Rule::new().with_prefix(Parser::literal, Precedence::Primary),
+        );
+        rules.insert(
             TokenKind::Null,
             Rule::new().with_prefix(Parser::literal, Precedence::Primary),
         );
@@ -201,12 +205,6 @@ impl<'a> ParserRules<'a> {
                 .with_infix(Parser::binary_operator, Precedence::Term),
         );
         rules.insert(
-            TokenKind::DiceRoll,
-            Rule::new()
-                .with_prefix(Parser::prefix_operator, Precedence::Unary)
-                .with_infix(Parser::binary_operator, Precedence::DiceRoll),
-        );
-        rules.insert(
             TokenKind::Not,
             Rule::new().with_prefix(Parser::prefix_operator, Precedence::Unary),
         );
@@ -224,7 +222,7 @@ impl<'a> ParserRules<'a> {
 
         let prefix_tokens = rules
             .iter()
-            .filter_map(|(key, value)| value.prefix.map(|_| *key))
+            .filter_map(|(key, value)| value.prefix.map(|_| key.clone()))
             .collect::<Vec<_>>();
 
         Self { rules, prefix_tokens }

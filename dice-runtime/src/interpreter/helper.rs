@@ -60,32 +60,6 @@ impl<L: ModuleLoader> Runtime<L> {
         call_binary_op(self, operator.into(), rhs)
     }
 
-    pub(super) fn call_unary_op(&mut self, operator: impl Into<Symbol>) -> Result<(), Error> {
-        fn call_unary_op<L: ModuleLoader>(runtime: &mut Runtime<L>, operator: Symbol) -> Result<(), Error> {
-            let operand = runtime.stack.pop();
-            let method = runtime.get_field(operator, operand.clone())?;
-
-            if method != Value::Null {
-                runtime.stack.push(method);
-                runtime.call_fn(0)?;
-            } else {
-                let value = runtime.globals.get(&operator).ok_or_else(|| {
-                    Error::new(GLOBAL_OPERATOR_UNDEFINED).with_tags(tags! {
-                        name => operator.to_string()
-                    })
-                })?;
-
-                runtime.stack.push(value.clone());
-                runtime.stack.push(operand);
-                runtime.call_fn(1)?;
-            }
-
-            Ok(())
-        }
-
-        call_unary_op(self, operator.into())
-    }
-
     pub(super) fn get_field(&self, key: Symbol, value: Value) -> Result<Value, Error> {
         if value.kind() == ValueKind::Object || value.kind() == ValueKind::Class || value.kind() == ValueKind::Array {
             let object = value.as_object()?;

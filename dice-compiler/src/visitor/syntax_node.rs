@@ -15,6 +15,7 @@ impl NodeVisitor<SyntaxNodeId> for Compiler {
             SyntaxNode::LitUnit(literal) => self.visit(literal)?,
             SyntaxNode::LitNull(literal) => self.visit(literal)?,
             SyntaxNode::LitBool(literal) => self.visit(literal)?,
+            SyntaxNode::LitDiceRoll(literal) => self.visit(literal)?,
             SyntaxNode::LitInt(literal) => self.visit(literal)?,
             SyntaxNode::LitFloat(literal) => self.visit(literal)?,
             SyntaxNode::LitString(literal) => self.visit(literal)?,

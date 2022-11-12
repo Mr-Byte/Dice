@@ -10,6 +10,7 @@ pub static FUNCTION_HAS_TOO_MANY_ARGUMENTS: ErrorCode = "E1005";
 pub static OPERATOR_HAS_INCORRECT_ARGUMENT_COUNT: ErrorCode = "E1006";
 pub static INVALID_INTEGER_VALUE: ErrorCode = "E1007";
 pub static INVALID_FLOAT_VALUE: ErrorCode = "E1008";
+pub static UNTERMINATED_DICE_ROLL: ErrorCode = "E1009";
 
 // Compiler errors
 pub static INTERNAL_COMPILER_ERROR: ErrorCode = "E2000";

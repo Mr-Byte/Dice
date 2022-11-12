@@ -1,6 +1,6 @@
 use dice_core::{
     error::{
-        codes::{INVALID_ESCAPE_SEQUENCE, UNTERMINATED_STRING},
+        codes::{INVALID_ESCAPE_SEQUENCE, UNTERMINATED_DICE_ROLL, UNTERMINATED_STRING},
         Error, ResultExt as _,
     },
     source::Source,
@@ -8,11 +8,11 @@ use dice_core::{
 };
 use logos::{Lexer, Logos};
 use std::{
-    cell::RefCell,
     fmt::{Display, Formatter},
     iter::Iterator,
-    rc::Rc,
 };
+
+use super::lexer_result::LexerResult;
 
 #[derive(Clone, Debug)]
 pub struct Token<'a> {
@@ -72,7 +72,7 @@ impl<'a> Iterator for TokenIter<'a> {
     }
 }
 
-#[derive(Logos, Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Logos, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(u16)]
 #[logos(extras = LexerResult)]
 pub enum TokenKind {
@@ -150,8 +150,6 @@ pub enum TokenKind {
     AddAssign,
     #[token("-=")]
     SubAssign,
-    #[token("d")]
-    DiceRoll,
     #[token("&&")]
     LazyAnd,
     #[token("|>")]
@@ -209,7 +207,7 @@ pub enum TokenKind {
     Reserved,
 
     // Literals,
-    #[regex("(d[_a-zA-Z][_a-zA-Z0-9]*)|([_a-ce-zA-Z][_a-zA-Z0-9]*)")]
+    #[regex("[_a-zA-Z][_a-zA-Z0-9]*")]
     Identifier,
     #[regex("[0-9]+")]
     Integer,
@@ -217,6 +215,8 @@ pub enum TokenKind {
     Float,
     #[regex(r#"""#, lex_string)]
     String,
+    #[regex(r"r\\", lex_dice_roll)]
+    DiceRoll,
 
     #[error]
     #[regex(r"[ \t\r\n\f]+|//[^\r\n]+", logos::skip)]
@@ -262,7 +262,6 @@ impl Display for TokenKind {
             TokenKind::DivAssign => write!(f, "/="),
             TokenKind::AddAssign => write!(f, "+="),
             TokenKind::SubAssign => write!(f, "-="),
-            TokenKind::DiceRoll => write!(f, "d"),
             TokenKind::LazyAnd => write!(f, "&&"),
             TokenKind::Pipeline => write!(f, "|>"),
             TokenKind::Object => write!(f, "#"),
@@ -294,18 +293,37 @@ impl Display for TokenKind {
             TokenKind::Integer => write!(f, "integer"),
             TokenKind::Float => write!(f, "float"),
             TokenKind::String => write!(f, "string"),
+            TokenKind::DiceRoll => write!(f, "dice roll"),
             TokenKind::Error => write!(f, "error"),
         }
     }
 }
 
-#[derive(Default, Clone)]
-pub struct LexerResult(Rc<RefCell<Option<Error>>>);
+fn lex_dice_roll(lexer: &mut Lexer<TokenKind>) -> bool {
+    let remainder = lexer.remainder();
+    let mut input = String::new();
+    let mut chars = remainder.chars();
+    let mut bump_count = 0;
 
-impl LexerResult {
-    fn error(&self) -> Option<Error> {
-        self.0.borrow_mut().take()
+    loop {
+        match chars.next() {
+            Some('\\') => {
+                bump_count += '\\'.len_utf8();
+                break;
+            }
+            Some(current) => {
+                bump_count += current.len_utf8();
+                input.push(current);
+            }
+            None => {
+                lexer.extras.set_error(Error::new(UNTERMINATED_DICE_ROLL));
+                return false;
+            }
+        }
     }
+
+    lexer.bump(bump_count);
+    true
 }
 
 fn lex_string(lexer: &mut Lexer<TokenKind>) -> bool {
@@ -326,14 +344,15 @@ fn lex_string(lexer: &mut Lexer<TokenKind>) -> bool {
                     Some('r') => result.push('\r'),
                     Some('t') => result.push('\t'),
                     Some(next) => {
-                        *lexer.extras.0.borrow_mut() =
-                            Some(Error::new(INVALID_ESCAPE_SEQUENCE).with_tags(dice_core::tags! {
+                        lexer
+                            .extras
+                            .set_error(Error::new(INVALID_ESCAPE_SEQUENCE).with_tags(dice_core::tags! {
                                 sequence => format!("\\{}", next)
                             }));
                         return false;
                     }
                     None => {
-                        *lexer.extras.0.borrow_mut() = Some(Error::new(UNTERMINATED_STRING));
+                        lexer.extras.set_error(Error::new(UNTERMINATED_STRING));
                         return false;
                     }
                 }
@@ -350,13 +369,12 @@ fn lex_string(lexer: &mut Lexer<TokenKind>) -> bool {
                 result.push(current);
             }
             None => {
-                *lexer.extras.0.borrow_mut() = Some(Error::new(UNTERMINATED_STRING));
+                lexer.extras.set_error(Error::new(UNTERMINATED_STRING));
                 return false;
             }
         }
     }
 
     lexer.bump(bump_count);
-
     true
 }

@@ -13,6 +13,6 @@ impl TypeId {
 
 impl Display for TypeId {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "0x{:#16X}", self.0.to_simple())
+        write!(f, "0x{:#16X}", self.0.to_u128_le())
     }
 }

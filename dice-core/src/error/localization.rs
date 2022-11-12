@@ -26,7 +26,9 @@ pub(crate) fn localize_error_code(error_code: ErrorCode, tags: &Tags, locale: &L
         .map(|(key, value)| (key.to_string(), FluentValue::String(std::borrow::Cow::Borrowed(value))))
         .collect::<HashMap<_, _>>();
 
-    LOCALES.lookup_with_args(&locale.0, error_code, &args)
+    LOCALES
+        .lookup_with_args(&locale.0, error_code, &args)
+        .unwrap_or_default()
 }
 
 pub(crate) fn localize_context_msg_id(context_msg_id: ContextMsgId, tags: &Tags, locale: &Locale) -> String {
@@ -36,5 +38,7 @@ pub(crate) fn localize_context_msg_id(context_msg_id: ContextMsgId, tags: &Tags,
         .map(|(key, value)| (key.to_string(), FluentValue::String(std::borrow::Cow::Borrowed(value))))
         .collect::<HashMap<_, _>>();
 
-    LOCALES.lookup_with_args(&locale.0, context_msg_id, &args)
+    LOCALES
+        .lookup_with_args(&locale.0, context_msg_id, &args)
+        .unwrap_or_default()
 }

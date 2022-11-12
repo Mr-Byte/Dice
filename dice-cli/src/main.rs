@@ -31,7 +31,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let mut line = String::new();
 
             std::io::stdin().read_line(&mut line)?;
-            writeln!(&mut input, "{}", line.trim_end().trim_end_matches('\\'))?;
+            writeln!(&mut input, "{}", line.trim_end())?;
 
             if !line.trim_end().ends_with('\\') {
                 break;

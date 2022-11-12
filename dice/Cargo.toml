@@ -6,16 +6,14 @@ edition = "2018"
 
 [dependencies]
 thiserror = "1.0"
-dice-syntax = {path = "../dice-syntax"}
-dice-compiler = {path = "../dice-compiler"}
-dice-runtime = {path = "../dice-runtime"}
-dice-core = {path = "../dice-core"}
-
+dice-syntax = { path = "../dice-syntax" }
+dice-compiler = { path = "../dice-compiler" }
+dice-runtime = { path = "../dice-runtime" }
+dice-core = { path = "../dice-core" }
 
 [dev-dependencies]
-criterion = "0.3"
+criterion = "0.4"
 
 [[bench]]
 harness = false
 name = "dice-bench"
-
