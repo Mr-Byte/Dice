@@ -82,3 +82,7 @@ export class Err : Result {
         super(false, result)
     }
 }
+
+export fn roll(expression: String) {
+    expression
+}

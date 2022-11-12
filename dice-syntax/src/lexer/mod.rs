@@ -1,4 +1,3 @@
-mod dice_token;
 mod lexer_result;
 mod token;
 

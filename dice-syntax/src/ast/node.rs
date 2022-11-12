@@ -38,11 +38,6 @@ impl LitIdent {
 }
 
 #[derive(Debug, Clone)]
-pub struct LitDiceRoll {
-    pub span: Span,
-}
-
-#[derive(Debug, Clone)]
 pub struct LitUnit {
     pub span: Span,
 }

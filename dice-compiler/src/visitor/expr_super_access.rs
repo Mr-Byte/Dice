@@ -18,7 +18,10 @@ impl NodeVisitor<&SuperAccess> for Compiler {
             span,
         }: &SuperAccess,
     ) -> Result<(), Error> {
-        if !matches!(self.context()?.kind(), CompilerKind::Method { .. } | CompilerKind::Constructor) {
+        if !matches!(
+            self.context()?.kind(),
+            CompilerKind::Method { .. } | CompilerKind::Constructor
+        ) {
             return Err(Error::new(INVALID_SUPER_CALL).with_span(*span));
         }
 

@@ -1,6 +1,6 @@
 use dice_core::{
     error::{
-        codes::{INVALID_ESCAPE_SEQUENCE, UNTERMINATED_DICE_ROLL, UNTERMINATED_STRING},
+        codes::{INVALID_ESCAPE_SEQUENCE, UNTERMINATED_BACKSLASH_ARG, UNTERMINATED_STRING},
         Error, ResultExt as _,
     },
     source::Source,
@@ -215,8 +215,8 @@ pub enum TokenKind {
     Float,
     #[regex(r#"""#, lex_string)]
     String,
-    #[regex(r"r\\", lex_dice_roll)]
-    DiceRoll,
+    #[regex(r"\\", lex_backslash_arg)]
+    BackslashArg,
 
     #[error]
     #[regex(r"[ \t\r\n\f]+|//[^\r\n]+", logos::skip)]
@@ -293,13 +293,13 @@ impl Display for TokenKind {
             TokenKind::Integer => write!(f, "integer"),
             TokenKind::Float => write!(f, "float"),
             TokenKind::String => write!(f, "string"),
-            TokenKind::DiceRoll => write!(f, "dice roll"),
+            TokenKind::BackslashArg => write!(f, "backslash arg"),
             TokenKind::Error => write!(f, "error"),
         }
     }
 }
 
-fn lex_dice_roll(lexer: &mut Lexer<TokenKind>) -> bool {
+fn lex_backslash_arg(lexer: &mut Lexer<TokenKind>) -> bool {
     let remainder = lexer.remainder();
     let mut input = String::new();
     let mut chars = remainder.chars();
@@ -316,7 +316,7 @@ fn lex_dice_roll(lexer: &mut Lexer<TokenKind>) -> bool {
                 input.push(current);
             }
             None => {
-                lexer.extras.set_error(Error::new(UNTERMINATED_DICE_ROLL));
+                lexer.extras.set_error(Error::new(UNTERMINATED_BACKSLASH_ARG));
                 return false;
             }
         }

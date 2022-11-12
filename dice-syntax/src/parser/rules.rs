@@ -65,10 +65,6 @@ impl<'a> ParserRules<'a> {
             Rule::new().with_prefix(Parser::literal, Precedence::Primary),
         );
         rules.insert(
-            TokenKind::DiceRoll,
-            Rule::new().with_prefix(Parser::literal, Precedence::Primary),
-        );
-        rules.insert(
             TokenKind::Null,
             Rule::new().with_prefix(Parser::literal, Precedence::Primary),
         );
@@ -117,6 +113,10 @@ impl<'a> ParserRules<'a> {
             Rule::new()
                 .with_prefix(Parser::grouping, Precedence::Primary)
                 .with_infix(Parser::fn_call, Precedence::Call),
+        );
+        rules.insert(
+            TokenKind::BackslashArg,
+            Rule::new().with_infix(Parser::fn_call, Precedence::Call),
         );
         rules.insert(
             TokenKind::LeftCurly,
@@ -288,7 +288,6 @@ pub enum Precedence {
     Comparison,
     Term,
     Factor,
-    DiceRoll,
     Unary,
     Propagate,
     Call,
@@ -308,8 +307,7 @@ impl Precedence {
             Precedence::And => Precedence::Comparison,
             Precedence::Comparison => Precedence::Term,
             Precedence::Term => Precedence::Factor,
-            Precedence::Factor => Precedence::DiceRoll,
-            Precedence::DiceRoll => Precedence::Unary,
+            Precedence::Factor => Precedence::Unary,
             Precedence::Unary => Precedence::Propagate,
             Precedence::Propagate => Precedence::Call,
             Precedence::Call => Precedence::Object,

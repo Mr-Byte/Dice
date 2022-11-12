@@ -9,9 +9,10 @@ use super::{
     Prefix, Return, SyntaxNode, SyntaxNodeId, SyntaxTree, UnaryOperator, VarDecl, WhileLoop,
 };
 use crate::{
+    lexer::Token,
     parser::rules::{ParseResult, ParserRules, Precedence},
-    ClassDecl, ErrorPropagate, FieldAccess, FnArg, ForLoop, ImportDecl, Index, Is, LitDiceRoll, Loop, NullPropagate,
-    OpDecl, OverloadedOperator, SuperAccess, SuperCall, TypeAnnotation, VarDeclKind,
+    ClassDecl, ErrorPropagate, FieldAccess, FnArg, ForLoop, ImportDecl, Index, Is, Loop, NullPropagate, OpDecl,
+    OverloadedOperator, SuperAccess, SuperCall, TypeAnnotation, VarDeclKind,
 };
 use dice_core::{
     error::{
@@ -306,7 +307,7 @@ impl<'a> Parser<'a> {
         let node = SyntaxNode::ImportDecl(ImportDecl {
             module_import,
             item_imports,
-            relative_path: process_string(relative_path)
+            relative_path: process_string(relative_path, StringMode::Raw)
                 .with_source(|| self.source.clone())
                 .with_span(|| span_end)?,
             span: span_start + span_end,
@@ -847,23 +848,40 @@ impl<'a> Parser<'a> {
     }
 
     fn fn_call(&mut self, lhs: SyntaxNodeId, _: bool, span_start: Span) -> ParseResult {
-        self.lexer.consume(TokenKind::LeftParen)?;
-
         let mut args = Vec::new();
 
-        while self.lexer.peek()?.kind != TokenKind::RightParen {
-            let value = self.parse_precedence(Precedence::Assignment)?;
-            args.push(value);
+        if self.lexer.peek()?.kind == TokenKind::BackslashArg {
+            let Token { span, slice, .. } = self.lexer.next()?;
+            let span = *span;
 
-            let next = self.lexer.peek()?;
-            if next.kind == TokenKind::Comma {
-                self.lexer.next()?;
-            } else if next.kind != TokenKind::RightParen {
-                self.unexpected_token(next.kind, &[TokenKind::RightParen], next.span)?;
+            let backslash_arg = SyntaxNode::LitString(LitString {
+                value: process_string(slice, StringMode::Raw)
+                    .with_source(|| self.source.clone())
+                    .with_span(|| span)?,
+                span,
+            });
+            let backslash_arg = self.arena.alloc(backslash_arg);
+
+            args.push(backslash_arg);
+        } else {
+            self.lexer.consume(TokenKind::LeftParen)?;
+
+            while self.lexer.peek()?.kind != TokenKind::RightParen {
+                let value = self.parse_precedence(Precedence::Assignment)?;
+                args.push(value);
+
+                let next = self.lexer.peek()?;
+                if next.kind == TokenKind::Comma {
+                    self.lexer.next()?;
+                } else if next.kind != TokenKind::RightParen {
+                    self.unexpected_token(next.kind, &[TokenKind::RightParen], next.span)?;
+                }
             }
+
+            self.lexer.consume(TokenKind::RightParen)?;
         }
 
-        let span_end = self.lexer.consume(TokenKind::RightParen)?.span;
+        let span_end = self.lexer.current().span;
         let node = SyntaxNode::FnCall(FnCall {
             target: lhs,
             args,
@@ -1020,7 +1038,7 @@ impl<'a> Parser<'a> {
                 span,
             }),
             TokenKind::String => SyntaxNode::LitString(LitString {
-                value: process_string(token.slice)
+                value: process_string(token.slice, StringMode::Escaped)
                     .with_source(|| self.source.clone())
                     .with_span(|| span)?,
                 span,
@@ -1028,7 +1046,6 @@ impl<'a> Parser<'a> {
             TokenKind::False => SyntaxNode::LitBool(LitBool { value: false, span }),
             TokenKind::True => SyntaxNode::LitBool(LitBool { value: true, span }),
             TokenKind::Null => SyntaxNode::LitNull(LitNull { span }),
-            TokenKind::DiceRoll => parse_dice_roll(span),
             kind => self.unexpected_token(
                 kind,
                 &[
@@ -1111,11 +1128,12 @@ impl<'a> Parser<'a> {
     }
 }
 
-fn parse_dice_roll(span: Span) -> SyntaxNode {
-    SyntaxNode::LitDiceRoll(LitDiceRoll { span })
+enum StringMode {
+    Raw,
+    Escaped,
 }
 
-fn process_string(input: &str) -> Result<String, Error> {
+fn process_string(input: &str, _mode: StringMode) -> Result<String, Error> {
     // TODO: Process escape sequences.
 
     Ok(input[1..input.len() - 1].to_owned())
