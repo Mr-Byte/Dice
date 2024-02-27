@@ -1,6 +1,6 @@
 use crate::span::Span;
+use ahash::AHasher;
 use std::{collections::HashMap, hash::BuildHasherDefault, iter, rc::Rc};
-use wyhash::WyHash;
 
 #[derive(Debug, Clone, Copy)]
 pub struct LineColumn {
@@ -98,7 +98,7 @@ impl Source {
     }
 }
 
-pub type Utf16LineMap = HashMap<usize, Vec<Utf16Character>, BuildHasherDefault<WyHash>>;
+pub type Utf16LineMap = HashMap<usize, Vec<Utf16Character>, BuildHasherDefault<AHasher>>;
 
 #[derive(Debug, Clone, Default)]
 pub struct LineIndex {

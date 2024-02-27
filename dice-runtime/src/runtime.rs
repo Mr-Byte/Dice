@@ -2,6 +2,7 @@ use crate::{
     module::{file_loader::FileModuleLoader, ModuleLoader},
     stack::Stack,
 };
+use ahash::AHasher;
 use dice_core::{
     bytecode::Bytecode,
     error::{
@@ -16,7 +17,6 @@ use std::{
     collections::{HashMap, VecDeque},
     hash::BuildHasherDefault,
 };
-use wyhash::WyHash;
 
 pub struct Runtime<L = FileModuleLoader>
 where
@@ -29,7 +29,7 @@ where
     pub(crate) module_loader: L,
     pub(crate) any_class: Class,
     pub(crate) module_class: Class,
-    pub(crate) value_class_mapping: HashMap<ValueKind, Class, BuildHasherDefault<WyHash>>,
+    pub(crate) value_class_mapping: HashMap<ValueKind, Class, BuildHasherDefault<AHasher>>,
 }
 
 impl<L> Default for Runtime<L>

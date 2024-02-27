@@ -7,7 +7,7 @@ version = "0.1.0"
 [dependencies]
 dunce = "1.0"
 thiserror = "1.0"
-wyhash = "0.5"
+ahash = "0.8.3"
 
-dice-compiler = {path = "../dice-compiler"}
-dice-core = {path = "../dice-core"}
+dice-compiler = { path = "../dice-compiler" }
+dice-core = { path = "../dice-core" }

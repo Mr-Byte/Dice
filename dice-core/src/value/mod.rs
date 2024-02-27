@@ -8,8 +8,8 @@ mod object;
 mod string;
 mod symbol;
 
+use ahash::AHasher;
 use std::{collections::HashMap, fmt::Display, hash::BuildHasherDefault};
-use wyhash::WyHash;
 
 use crate::error::{
     codes::{
@@ -28,7 +28,7 @@ pub use object::*;
 pub use string::*;
 pub use symbol::*;
 
-pub type ValueMap = HashMap<Symbol, Value, BuildHasherDefault<WyHash>>;
+pub type ValueMap = HashMap<Symbol, Value, BuildHasherDefault<AHasher>>;
 
 #[derive(Clone, Debug)]
 pub enum Value {

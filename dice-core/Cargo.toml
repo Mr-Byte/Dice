@@ -13,4 +13,4 @@ num-traits = "0.2"
 string-interner = "0.14"
 thiserror = "1.0"
 uuid = { version = "1.1", features = ["v4"] }
-wyhash = "0.5"
+ahash = "0.8.3"

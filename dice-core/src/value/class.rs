@@ -3,6 +3,7 @@ use crate::{
     type_id::TypeId,
     value::{symbol::Symbol, Object, Value, ValueKind, ValueMap},
 };
+use ahash::AHasher;
 use std::{
     any::Any,
     cell::RefCell,
@@ -12,7 +13,6 @@ use std::{
     ops::Deref,
     rc::Rc,
 };
-use wyhash::WyHash;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Class {
@@ -122,7 +122,7 @@ struct ClassInner {
     methods: RefCell<ValueMap>,
     object: Object,
     instance_type_id: TypeId,
-    type_ids: HashSet<TypeId, BuildHasherDefault<WyHash>>,
+    type_ids: HashSet<TypeId, BuildHasherDefault<AHasher>>,
     base: Option<Class>,
 }
 
