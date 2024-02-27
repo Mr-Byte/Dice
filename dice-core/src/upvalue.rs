@@ -1,32 +1,34 @@
-use crate::value::Value;
-use std::{
-    cell::{Ref, RefCell, RefMut},
-    rc::Rc,
-};
+use std::cell::{Ref, RefMut};
 
-#[derive(Debug)]
-pub enum UpvalueState {
+use gc_arena::{lock::RefLock, Collect, Gc};
+
+use crate::{runtime::RuntimeContext, value::Value};
+
+#[derive(Collect)]
+#[collect(no_drop)]
+pub enum UpvalueState<'gc> {
     Open(usize),
-    Closed(Value),
+    Closed(Value<'gc>),
 }
 
-#[derive(Clone, Debug)]
-pub struct Upvalue(Rc<RefCell<UpvalueState>>);
+#[derive(Clone, Collect)]
+#[collect(no_drop)]
+pub struct Upvalue<'gc>(Gc<'gc, RefLock<UpvalueState<'gc>>>);
 
-impl Upvalue {
-    pub fn new_open(slot: usize) -> Self {
-        Self(Rc::new(RefCell::new(UpvalueState::Open(slot))))
+impl<'gc> Upvalue<'gc> {
+    pub fn new_open<S>(ctx: &RuntimeContext<'gc, S>, slot: usize) -> Self {
+        Self(Gc::new(ctx.mutation, RefLock::new(UpvalueState::Open(slot))))
     }
 
-    pub fn close(&self, value: Value) {
-        *self.0.borrow_mut() = UpvalueState::Closed(value);
+    pub fn close<S>(&self, ctx: &RuntimeContext<'gc, S>, value: Value<'gc>) {
+        *self.0.borrow_mut(ctx.mutation) = UpvalueState::Closed(value);
     }
 
-    pub fn state_mut(&self) -> RefMut<'_, UpvalueState> {
-        self.0.borrow_mut()
+    pub fn state_mut<S>(&self, ctx: &RuntimeContext<'gc, S>) -> RefMut<'gc, UpvalueState> {
+        self.0.borrow_mut(ctx.mutation)
     }
 
-    pub fn state(&self) -> Ref<'_, UpvalueState> {
+    pub fn state(&self) -> Ref<'gc, UpvalueState> {
         self.0.borrow()
     }
 }

@@ -1,89 +1,55 @@
-use crate::value::Symbol;
 use std::thread::LocalKey;
 
 pub mod operator {
-    use super::*;
-
-    thread_local! {
-        pub static MUL: Symbol = "#mul".into();
-        pub static DIV: Symbol = "#div".into();
-        pub static REM: Symbol = "#rem".into();
-        pub static ADD: Symbol = "#add".into();
-        pub static SUB: Symbol = "#sub".into();
-        pub static GT: Symbol = "#gt".into();
-        pub static GTE: Symbol = "#gte".into();
-        pub static LT: Symbol = "#lt".into();
-        pub static LTE: Symbol = "#lte".into();
-        pub static EQ: Symbol = "#eq".into();
-        pub static NEQ: Symbol = "#neq".into();
-        pub static RANGE_INCLUSIVE: Symbol = "#range_inclusive".into();
-        pub static RANGE_EXCLUSIVE: Symbol = "#range_exclusive".into();
-    }
+    pub static MUL: &str = "#mul";
+    pub static DIV: &str = "#div";
+    pub static REM: &str = "#rem";
+    pub static ADD: &str = "#add";
+    pub static SUB: &str = "#sub";
+    pub static GT: &str = "#gt";
+    pub static GTE: &str = "#gte";
+    pub static LT: &str = "#lt";
+    pub static LTE: &str = "#lte";
+    pub static EQ: &str = "#eq";
+    pub static NEQ: &str = "#neq";
+    pub static RANGE_INCLUSIVE: &str = "#range_inclusive";
+    pub static RANGE_EXCLUSIVE: &str = "#range_exclusive";
 }
 
 pub mod module {
-    use super::*;
-
-    thread_local! {
-        pub static EXPORT: Symbol = "#export".into();
-    }
+    pub static EXPORT: &str = "#export";
 }
 
 pub mod class {
-    use super::*;
-
-    thread_local! {
-        pub static SELF: Symbol = "self".into();
-        pub static SUPER: Symbol = "super".into();
-        pub static NEW: Symbol = "new".into();
-    }
+    pub static SELF: &str = "self";
+    pub static SUPER: &str = "super";
+    pub static NEW: &str = "new";
 }
 
 pub mod iterator {
-    use super::*;
-
-    thread_local! {
-        pub static NEXT: Symbol = "next".into();
-        pub static VALUE: Symbol = "value".into();
-        pub static DONE: Symbol = "is_done".into();
-        pub static ITER: Symbol = "iter".into();
-    }
+    pub static NEXT: &str = "next";
+    pub static VALUE: &str = "value";
+    pub static DONE: &str = "is_done";
+    pub static ITER: &str = "iter";
 }
 
 pub mod object {
-    use super::*;
-
-    thread_local! {
-        pub static TO_STRING: Symbol = "to_string".into();
-        pub static ANY_CLASS: Symbol = "Any".into();
-        pub static MODULE_CLASS: Symbol = "Module".into();
-    }
+    pub static TO_STRING: &str = "to_string";
+    pub static ANY_CLASS: &str = "Any";
+    pub static MODULE_CLASS: &str = "Module";
 }
 
 pub mod error {
-    use super::*;
-
-    thread_local! {
-        pub static IS_OK: Symbol = "is_ok".into();
-        pub static RESULT: Symbol = "result".into();
-    }
+    pub static IS_OK: &str = "is_ok";
+    pub static RESULT: &str = "result";
 }
 
 pub trait ProtocolSymbol {
-    fn get(&'static self) -> Symbol;
+    fn get(&'static self) -> &str;
 }
 
-impl ProtocolSymbol for LocalKey<Symbol> {
-    fn get(&'static self) -> Symbol {
+impl ProtocolSymbol for LocalKey<&str> {
+    fn get(&'static self) -> &str {
         self.with(Clone::clone)
-    }
-}
-
-impl<S> From<&'static S> for Symbol
-where
-    S: ProtocolSymbol + 'static,
-{
-    fn from(value: &'static S) -> Self {
-        value.get()
     }
 }

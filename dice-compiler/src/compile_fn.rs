@@ -6,7 +6,7 @@ use crate::{
 use dice_core::error::{codes::NEW_METHOD_CANNOT_HAVE_RETURN_TYPE, Error};
 use dice_syntax::{Block, FnArg, SyntaxNode, SyntaxTree, TypeAnnotation};
 
-impl Compiler {
+impl<'gc> Compiler {
     pub(crate) fn compile_fn(
         &mut self,
         syntax_tree: SyntaxTree,

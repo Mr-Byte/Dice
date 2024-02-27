@@ -1,4 +1,4 @@
-use crate::{bytecode::Bytecode, source::Source, span::Span};
+use dice_bytecode::{source::Source, span::Span, Bytecode};
 
 #[derive(Debug, Clone)]
 pub struct ErrorTrace {

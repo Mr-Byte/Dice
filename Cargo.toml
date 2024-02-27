@@ -1,17 +1,16 @@
 [workspace]
+resolver = "2"
 members = [
     "dice",
+    "dice-bytecode",
     "dice-cli",
     "dice-compiler",
     "dice-core",
     "dice-runtime",
-    "dice-syntax"
+    "dice-syntax",
 ]
 
-default-members = [
-    "dice",
-    "dice-cli"
-]
+default-members = ["dice", "dice-cli"]
 
 [profile.release]
 codegen-units = 1

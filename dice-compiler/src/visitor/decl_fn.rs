@@ -1,13 +1,14 @@
 use super::NodeVisitor;
 use crate::{compiler::Compiler, scope_stack::State, upvalue::UpvalueDescriptor, visitor::FnKind};
 use dice_core::{
+    bytecode::ConstantValue,
     error::{
         codes::{FUNCTION_ALREADY_DECLARED, FUNCTION_CANNOT_HAVE_DUPLICATE_ARGS, INTERNAL_COMPILER_ERROR},
         Error,
     },
     span::Span,
     tags,
-    value::{FnScript, Symbol, Value},
+    value::{FnScript, Symbol},
 };
 use dice_syntax::{FnArg, FnDecl};
 use std::collections::HashSet;
@@ -20,7 +21,8 @@ impl NodeVisitor<(&FnDecl, FnKind)> for Compiler {
         let mut fn_context = self.compile_fn(body, &fn_decl.args, fn_decl.return_.clone(), fn_kind)?;
         let upvalues = fn_context.upvalues().clone();
         let bytecode = fn_context.finish(self.source.clone());
-        let compiled_fn = Value::FnScript(FnScript::new(&*fn_decl.name.identifier, bytecode, uuid::Uuid::new_v4()));
+        let compiled_fn =
+            ConstantValue::Function(FnScript::new(&*fn_decl.name.identifier, bytecode, uuid::Uuid::new_v4()));
 
         if fn_kind == FnKind::Function {
             self.emit_fn(fn_decl, &upvalues, compiled_fn)?;
@@ -46,7 +48,12 @@ impl Compiler {
         Ok(())
     }
 
-    fn emit_fn(&mut self, fn_decl: &FnDecl, upvalues: &[UpvalueDescriptor], compiled_fn: Value) -> Result<(), Error> {
+    fn emit_fn(
+        &mut self,
+        fn_decl: &FnDecl,
+        upvalues: &[UpvalueDescriptor],
+        compiled_fn: ConstantValue,
+    ) -> Result<(), Error> {
         let context = self.context()?;
         let fn_name: Symbol = (&*fn_decl.name.identifier).into();
         let local = context
@@ -88,7 +95,7 @@ impl Compiler {
         &mut self,
         fn_decl: &FnDecl,
         upvalues: &[UpvalueDescriptor],
-        compiled_fn: Value,
+        compiled_fn: ConstantValue,
     ) -> Result<(), Error> {
         emit_bytecode! {
             self.assembler()?, fn_decl.span => [

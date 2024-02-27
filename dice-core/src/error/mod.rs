@@ -12,11 +12,10 @@ use crate::{
         fmt::{ErrorFormatter, HumanReadableErrorFormatter},
         localization::Locale,
     },
-    source::Source,
-    span::Span,
     tags,
 };
 use context::Context;
+use dice_bytecode::{source::Source, span::Span};
 use std::fmt::{Debug, Display, Formatter};
 use tag::Tags;
 

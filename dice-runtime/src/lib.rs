@@ -1,7 +1,7 @@
 pub mod module;
 pub mod runtime;
 
-mod classes;
+// mod classes;
 mod interpreter;
 mod stack;
 

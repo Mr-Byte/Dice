@@ -1,16 +1,18 @@
-use crate::{source::Source, span::Span, value::Value};
+use crate::{source::Source, span::Span};
 pub use cursor::BytecodeCursor;
 use instruction::Instruction;
 use std::{collections::HashMap, fmt::Display, rc::Rc};
 
 mod cursor;
 pub mod instruction;
+pub mod source;
+pub mod span;
 
 #[derive(Debug)]
 struct BytecodeInner {
     slot_count: usize,
     upvalue_count: usize,
-    constants: Box<[Value]>,
+    constants: Box<[ConstantValue]>,
     data: Box<[u8]>,
     source: Source,
     source_map: HashMap<u64, Span>,
@@ -21,12 +23,43 @@ pub struct Bytecode {
     inner: Rc<BytecodeInner>,
 }
 
+// TODO: Change Symbol and Function to store constant data that isn't dependent on runtime values.
+#[derive(Debug, Clone, PartialEq)]
+pub enum ConstantValue {
+    Int(i64),
+    Float(f64),
+    String(String),
+    Symbol(String),
+    Function(FunctionBytecode),
+}
+
+#[derive(Debug, Clone)]
+pub struct FunctionBytecode {
+    pub bytecode: Bytecode,
+    pub name: String,
+    // TODO: Figure out a better way to allow for functions with the same name?
+    // Is this even needed??
+    pub id: uuid::Uuid,
+}
+
+impl FunctionBytecode {
+    pub fn new(bytecode: Bytecode, name: String, id: uuid::Uuid) -> Self {
+        Self { bytecode, name, id }
+    }
+}
+
+impl PartialEq for FunctionBytecode {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+
 impl Bytecode {
     pub fn new(
         data: Box<[u8]>,
         slot_count: usize,
         upvalue_count: usize,
-        constants: Box<[Value]>,
+        constants: Box<[ConstantValue]>,
         source: Source,
         source_map: HashMap<u64, Span>,
     ) -> Self {
@@ -51,7 +84,7 @@ impl Bytecode {
         &self.inner.source_map
     }
 
-    pub fn constants(&self) -> &[Value] {
+    pub fn constants(&self) -> &[ConstantValue] {
         &self.inner.constants
     }
 
@@ -112,10 +145,10 @@ impl Display for Bytecode {
                     let function = &self.constants()[const_index];
 
                     match function {
-                        Value::FnScript(fn_script) => {
+                        ConstantValue::Function(function) => {
                             write!(f, "const={:<8} |", const_index)?;
 
-                            for _ in 0..fn_script.bytecode().upvalue_count() {
+                            for _ in 0..function.bytecode.upvalue_count() {
                                 let kind = match cursor.read_u8() {
                                     1 => "parent_local",
                                     _ => "upvalue",
@@ -139,10 +172,10 @@ impl Display for Bytecode {
         writeln!(f)?;
 
         for const_value in self.constants() {
-            if let Value::FnScript(fn_script) = const_value {
-                writeln!(f, "Function: {:?}", fn_script.name())?;
+            if let ConstantValue::Function(function) = const_value {
+                writeln!(f, "Function: {:?}", function.name)?;
                 writeln!(f, "--------")?;
-                fn_script.bytecode().fmt(f)?;
+                function.bytecode.fmt(f)?;
             }
         }
 

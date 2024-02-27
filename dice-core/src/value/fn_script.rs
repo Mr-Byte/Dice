@@ -1,7 +1,10 @@
-use crate::{bytecode::Bytecode, value::Symbol};
-use std::{fmt::Display, rc::Rc};
+use super::Symbol;
+use dice_bytecode::Bytecode;
+use gc_arena::Collect;
+use std::rc::Rc;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Collect)]
+#[collect(no_drop)]
 pub struct FnScript {
     inner: Rc<FnScriptInner>,
 }
@@ -32,15 +35,18 @@ impl PartialEq for FnScript {
     }
 }
 
-impl Display for FnScript {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.inner.name)
-    }
-}
+// impl Display for FnScript {
+//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+//         write!(f, "{}", self.inner.name)
+//     }
+// }
 
-#[derive(Debug)]
+#[derive(Debug, Collect)]
+#[collect(no_drop)]
 struct FnScriptInner {
     name: Symbol,
+    #[collect(require_static)]
     bytecode: Bytecode,
+    #[collect(require_static)]
     id: uuid::Uuid,
 }

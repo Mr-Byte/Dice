@@ -1,37 +1,43 @@
+use gc_arena::{lock::RefLock, Collect, Gc, Mutation};
+
 use crate::{
+    runtime::RuntimeContext,
     type_id::TypeId,
     value::{Class, Symbol, Value, ValueMap},
 };
-use std::{
-    cell::{Ref, RefCell},
-    fmt::{Display, Formatter},
-    rc::Rc,
-};
+use std::cell::Ref;
 
-#[derive(Default, Clone, Debug)]
-pub struct Object {
-    inner: Rc<ObjectInner>,
+#[derive(Clone, Collect)]
+#[collect(no_drop)]
+pub struct Object<'gc> {
+    inner: Gc<'gc, ObjectInner<'gc>>,
 }
 
-impl Object {
-    pub fn new<N>(class: N) -> Self
+impl<'gc> Object<'gc> {
+    pub fn new<S, N>(ctx: &RuntimeContext<'gc, S>, class: N) -> Self
     where
-        N: Into<Option<Class>>,
+        N: Into<Option<Class<'gc>>>,
     {
         Self {
-            inner: Rc::new(ObjectInner {
-                class: class.into(),
-                fields: Default::default(),
-            }),
+            inner: Gc::new(
+                ctx.mutation,
+                ObjectInner {
+                    class: class.into(),
+                    fields: Gc::new(ctx.mutation, RefLock::new(ValueMap::default())),
+                },
+            ),
         }
     }
 
-    pub fn deep_clone(&self) -> Self {
+    pub fn deep_clone<S>(&self, ctx: &RuntimeContext<'gc, S>) -> Self {
         Self {
-            inner: Rc::new(ObjectInner {
-                class: self.inner.class.clone(),
-                fields: self.inner.fields.clone(),
-            }),
+            inner: Gc::new(
+                ctx.mutation,
+                ObjectInner {
+                    class: self.inner.class.clone(),
+                    fields: self.inner.fields.clone(),
+                },
+            ),
         }
     }
 
@@ -53,24 +59,27 @@ impl Object {
         self.inner.class.as_ref().map(Class::name)
     }
 
-    pub fn class(&self) -> Option<Class> {
+    pub fn class(&self) -> Option<Class<'gc>> {
         self.inner.class.clone()
     }
 
-    pub fn set_field(&self, field_name: impl Into<Symbol>, value: impl Into<Value>) {
-        self.inner.fields.borrow_mut().insert(field_name.into(), value.into());
+    pub fn set_field(&self, mutation: &Mutation<'gc>, field_name: impl Into<Symbol>, value: impl Into<Value<'gc>>) {
+        self.inner
+            .fields
+            .borrow_mut(mutation)
+            .insert(field_name.into(), value.into());
     }
 
-    pub fn field(&self, field_name: Symbol) -> Option<Value> {
+    pub fn field(&self, field_name: Symbol) -> Option<Value<'gc>> {
         self.inner.fields.borrow().get(&field_name).cloned()
     }
 
-    pub fn fields(&self) -> Ref<'_, ValueMap> {
+    pub fn fields(&self) -> Ref<'_, ValueMap<'gc>> {
         self.inner.fields.borrow()
     }
 }
 
-impl PartialEq for Object {
+impl PartialEq for Object<'_> {
     fn eq(&self, other: &Self) -> bool {
         std::ptr::eq(
             &*self.inner as *const ObjectInner as *const u8,
@@ -79,26 +88,27 @@ impl PartialEq for Object {
     }
 }
 
-impl Display for Object {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Object")?;
+// impl Display for Object<'_> {
+//     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+//         write!(f, "Object")?;
 
-        if let Some(ref class) = self.inner.class {
-            write!(f, "<{}>", class.name())?;
-        }
+//         if let Some(ref class) = self.inner.class {
+//             write!(f, "<{}>", class.name())?;
+//         }
 
-        write!(f, " {{ ")?;
-        for (name, field) in self.inner.fields.borrow().iter() {
-            write!(f, "{}: {}, ", name, field)?;
-        }
-        write!(f, "}}")?;
+//         write!(f, " {{ ")?;
+//         for (name, field) in self.inner.fields.borrow().iter() {
+//             write!(f, "{}: {}, ", name, field)?;
+//         }
+//         write!(f, "}}")?;
 
-        Ok(())
-    }
-}
+//         Ok(())
+//     }
+// }
 
-#[derive(Default, Debug)]
-struct ObjectInner {
-    class: Option<Class>,
-    fields: RefCell<ValueMap>,
+#[derive(Collect)]
+#[collect(no_drop)]
+struct ObjectInner<'gc> {
+    class: Option<Class<'gc>>,
+    fields: Gc<'gc, RefLock<ValueMap<'gc>>>,
 }

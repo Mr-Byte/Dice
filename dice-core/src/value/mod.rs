@@ -9,14 +9,18 @@ mod string;
 mod symbol;
 
 use ahash::AHasher;
-use std::{collections::HashMap, fmt::Display, hash::BuildHasherDefault};
+use gc_arena_derive::Collect;
+use std::{collections::HashMap, hash::BuildHasherDefault};
 
-use crate::error::{
-    codes::{
-        INVALID_ARRAY_CONVERSION, INVALID_BOOL_CONVERSION, INVALID_CLASS_CONVERSION, INVALID_FLOAT_CONVERSION,
-        INVALID_INT_CONVERSION, INVALID_OBJECT_CONVERSION, INVALID_STRING_CONVERSION, INVALID_SYMBOL_CONVERSION,
+use crate::{
+    error::{
+        codes::{
+            INVALID_ARRAY_CONVERSION, INVALID_BOOL_CONVERSION, INVALID_CLASS_CONVERSION, INVALID_FLOAT_CONVERSION,
+            INVALID_INT_CONVERSION, INVALID_OBJECT_CONVERSION, INVALID_STRING_CONVERSION, INVALID_SYMBOL_CONVERSION,
+        },
+        Error,
     },
-    Error,
+    runtime::RuntimeContext,
 };
 pub use array::*;
 pub use class::*;
@@ -28,27 +32,28 @@ pub use object::*;
 pub use string::*;
 pub use symbol::*;
 
-pub type ValueMap = HashMap<Symbol, Value, BuildHasherDefault<AHasher>>;
+pub type ValueMap<'gc> = HashMap<Symbol, Value<'gc>, BuildHasherDefault<AHasher>>;
 
-#[derive(Clone, Debug)]
-pub enum Value {
+#[derive(Clone, Collect)]
+#[collect(no_drop)]
+pub enum Value<'gc> {
     Null,
     Unit,
     Bool(bool),
     Int(i64),
     Float(f64),
-    FnClosure(FnClosure),
     FnScript(FnScript),
-    FnNative(FnNative),
-    FnBound(FnBound),
-    Array(Array),
+    FnClosure(FnClosure<'gc>),
+    FnNative(FnNative<'static>),
+    FnBound(FnBound<'gc>),
+    Array(Array<'gc>),
     String(String),
     Symbol(Symbol),
-    Object(Object),
-    Class(Class),
+    Object(Object<'gc>),
+    Class(Class<'gc>),
 }
 
-impl Value {
+impl<'gc> Value<'gc> {
     pub fn with_string(string: impl Into<String>) -> Self {
         Self::String(string.into())
     }
@@ -57,12 +62,12 @@ impl Value {
         Self::Symbol(string.into())
     }
 
-    pub fn with_native_fn(native_fn: impl Into<NativeFn>) -> Self {
+    pub fn with_native_fn(native_fn: impl Into<NativeFn<'static>>) -> Self {
         Self::FnNative(FnNative::new(native_fn.into()))
     }
 
-    pub fn with_vec(vec: Vec<Value>) -> Self {
-        Value::Array(vec.into())
+    pub fn with_vec<S>(ctx: &RuntimeContext<'gc, S>, vec: Vec<Value<'gc>>) -> Self {
+        Value::Array(Array::from_vec(ctx, vec))
     }
 
     pub fn as_bool(&self) -> Result<bool, Error> {
@@ -86,7 +91,7 @@ impl Value {
         }
     }
 
-    pub fn as_array(&self) -> Result<&Array, Error> {
+    pub fn as_array(&self) -> Result<&Array<'gc>, Error> {
         match self {
             Value::Array(list) => Ok(list),
             _ => Err(Error::new(INVALID_ARRAY_CONVERSION)),
@@ -103,12 +108,12 @@ impl Value {
     pub fn as_symbol(&self) -> Result<Symbol, Error> {
         match self {
             Value::Symbol(symbol) => Ok(symbol.clone()),
-            Value::String(string) => Ok(string.into()),
+            // Value::String(string) => Ok(string.into()),
             _ => Err(Error::new(INVALID_SYMBOL_CONVERSION)),
         }
     }
 
-    pub fn as_object(&self) -> Result<&Object, Error> {
+    pub fn as_object(&self) -> Result<&Object<'gc>, Error> {
         match self {
             Value::Object(object) => Ok(object),
             Value::Class(class) => Ok(&(**class)),
@@ -117,7 +122,7 @@ impl Value {
         }
     }
 
-    pub fn as_class(&self) -> Result<Class, Error> {
+    pub fn as_class(&self) -> Result<Class<'gc>, Error> {
         match self {
             Value::Class(class) => Ok(class.clone()),
             _ => Err(Error::new(INVALID_CLASS_CONVERSION)),
@@ -144,13 +149,13 @@ impl Value {
     }
 }
 
-impl Default for Value {
+impl<'gc> Default for Value<'gc> {
     fn default() -> Self {
         Value::Null
     }
 }
 
-impl PartialEq for Value {
+impl<'gc> PartialEq for Value<'gc> {
     #[inline(always)]
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
@@ -171,34 +176,35 @@ impl PartialEq for Value {
     }
 }
 
-impl From<NativeFn> for Value {
-    fn from(value: NativeFn) -> Self {
+impl<'gc> From<NativeFn<'static>> for Value<'gc> {
+    fn from(value: NativeFn<'static>) -> Self {
         Value::with_native_fn(value)
     }
 }
 
-impl Display for Value {
-    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Value::Null => write!(fmt, "null"),
-            Value::Unit => write!(fmt, "Unit"),
-            Value::Bool(bool) => bool.fmt(fmt),
-            Value::Int(int) => int.fmt(fmt),
-            Value::Float(float) => float.fmt(fmt),
-            Value::FnClosure(func) => func.fmt(fmt),
-            Value::FnScript(func) => func.fmt(fmt),
-            Value::FnNative(func) => func.fmt(fmt),
-            Value::FnBound(func) => func.fmt(fmt),
-            Value::Array(list) => list.fmt(fmt),
-            Value::String(string) => string.fmt(fmt),
-            Value::Symbol(string) => string.fmt(fmt),
-            Value::Object(object) => object.fmt(fmt),
-            Value::Class(class) => class.fmt(fmt),
-        }
-    }
-}
+// impl<'gc> Display for Value<'gc> {
+//     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+//         match self {
+//             Value::Null => write!(fmt, "null"),
+//             Value::Unit => write!(fmt, "Unit"),
+//             Value::Bool(bool) => bool.fmt(fmt),
+//             Value::Int(int) => int.fmt(fmt),
+//             Value::Float(float) => float.fmt(fmt),
+//             Value::FnClosure(func) => func.fmt(fmt),
+//             Value::FnScript(func) => func.fmt(fmt),
+//             Value::FnNative(func) => func.fmt(fmt),
+//             Value::FnBound(func) => func.fmt(fmt),
+//             Value::Array(list) => list.fmt(fmt),
+//             Value::String(string) => string.fmt(fmt),
+//             Value::Symbol(string) => string.fmt(fmt),
+//             Value::Object(object) => object.fmt(fmt),
+//             Value::Class(class) => class.fmt(fmt),
+//         }
+//     }
+// }
 
-#[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Hash, Eq, PartialEq, Collect)]
+#[collect(require_static)]
 #[repr(u8)]
 pub enum ValueKind {
     Null,

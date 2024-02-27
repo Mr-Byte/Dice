@@ -1,8 +1,8 @@
 use super::NodeVisitor;
 use crate::{compiler::Compiler, visitor::FnKind};
 use dice_core::{
+    bytecode::{ConstantValue, FunctionBytecode},
     error::Error,
-    value::{FnScript, Value},
 };
 use dice_syntax::LitAnonymousFn;
 
@@ -14,7 +14,7 @@ impl NodeVisitor<&LitAnonymousFn> for Compiler {
         let mut fn_context = self.compile_fn(body, &node.args, node.return_.clone(), FnKind::Function)?;
         let upvalues = fn_context.upvalues().clone();
         let bytecode = fn_context.finish(self.source.clone());
-        let value = Value::FnScript(FnScript::new(name, bytecode, id));
+        let value = ConstantValue::Function(FunctionBytecode::new(bytecode, name, id));
         let context = self.context()?;
 
         if upvalues.is_empty() {

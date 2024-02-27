@@ -1,15 +1,17 @@
 pub mod file_loader;
 
 use dice_core::{bytecode::Bytecode, error::Error, value::Symbol};
+use gc_arena::Collect;
 
-#[derive(Clone)]
-pub struct Module {
+#[derive(Clone, Collect)]
+#[collect(no_drop)]
+pub struct Module<'gc> {
     pub id: Symbol,
-    pub bytecode: Bytecode,
+    pub bytecode: Bytecode<'gc>,
 }
 
-impl Module {
-    pub fn new(id: Symbol, bytecode: Bytecode) -> Self {
+impl<'gc> Module<'gc> {
+    pub fn new(id: Symbol, bytecode: Bytecode<'gc>) -> Self {
         Module { id, bytecode }
     }
 }

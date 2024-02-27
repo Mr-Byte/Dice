@@ -3,6 +3,7 @@ mod frame;
 pub use frame::*;
 
 use dice_core::value::Value;
+use gc_arena::Collect;
 use std::{
     fmt::{Display, Formatter},
     ops::{Index, IndexMut},
@@ -11,20 +12,21 @@ use std::{
 // NOTE: Allocate 1MB of stack space, this is 65,536 values when sizeof(Value) == 16
 const MAX_STACK_SIZE: usize = (1024 * 1024) / std::mem::size_of::<Value>();
 
-#[derive(Debug)]
-pub struct Stack {
-    values: Vec<Value>,
+#[derive(Debug, Collect)]
+#[collect(no_drop)]
+pub struct Stack<'gc> {
+    values: Vec<Value<'gc>>,
     stack_ptr: usize,
 }
 
-impl Stack {
+impl<'gc> Stack<'gc> {
     #[inline]
-    pub fn push(&mut self, value: Value) {
+    pub fn push(&mut self, value: Value<'gc>) {
         self.values[self.stack_ptr] = value;
         self.stack_ptr = self.stack_ptr.wrapping_add(1);
     }
 
-    pub fn push_multiple(&mut self, values: &[Value]) {
+    pub fn push_multiple(&mut self, values: &[Value<'gc>]) {
         let stack_ptr_start = self.stack_ptr;
         self.stack_ptr += values.len();
         let splice_range = (stack_ptr_start..self.stack_ptr).zip(values).rev();
@@ -35,12 +37,12 @@ impl Stack {
     }
 
     #[inline]
-    pub fn pop(&mut self) -> Value {
+    pub fn pop(&mut self) -> Value<'gc> {
         self.stack_ptr = self.stack_ptr.wrapping_sub(1);
         std::mem::replace(&mut self.values[self.stack_ptr], Value::Null)
     }
 
-    pub fn pop_count(&mut self, count: usize) -> Vec<Value> {
+    pub fn pop_count(&mut self, count: usize) -> Vec<Value<'gc>> {
         let mut result = vec![Value::Null; count];
         let items_to_pop = &mut self.values[self.stack_ptr.wrapping_sub(count)..self.stack_ptr];
         self.stack_ptr = self.stack_ptr.wrapping_sub(count);
@@ -100,35 +102,35 @@ impl Stack {
     }
 }
 
-impl Index<usize> for Stack {
-    type Output = Value;
+impl<'gc> Index<usize> for Stack<'gc> {
+    type Output = Value<'gc>;
 
     fn index(&self, index: usize) -> &Self::Output {
         &self.values[index]
     }
 }
 
-impl IndexMut<usize> for Stack {
+impl IndexMut<usize> for Stack<'_> {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         &mut self.values[index]
     }
 }
 
-impl Index<StackFrame> for Stack {
-    type Output = [Value];
+impl<'gc> Index<StackFrame> for Stack<'gc> {
+    type Output = [Value<'gc>];
 
     fn index(&self, index: StackFrame) -> &Self::Output {
         &self.values[index.range()]
     }
 }
 
-impl IndexMut<StackFrame> for Stack {
+impl IndexMut<StackFrame> for Stack<'_> {
     fn index_mut(&mut self, index: StackFrame) -> &mut Self::Output {
         &mut self.values[index.range()]
     }
 }
 
-impl Default for Stack {
+impl Default for Stack<'_> {
     fn default() -> Self {
         Self {
             values: vec![Value::Null; MAX_STACK_SIZE],
@@ -137,7 +139,7 @@ impl Default for Stack {
     }
 }
 
-impl Display for Stack {
+impl Display for Stack<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "Stack = [")?;
 

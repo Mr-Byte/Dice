@@ -1,12 +1,13 @@
 use super::NodeVisitor;
 use crate::{compiler::Compiler, upvalue::UpvalueDescriptor, visitor::FnKind};
 use dice_core::{
+    bytecode::ConstantValue,
     error::Error,
     protocol::{
         operator::{ADD, DIV, EQ, GT, GTE, LT, LTE, MUL, NEQ, RANGE_EXCLUSIVE, RANGE_INCLUSIVE, REM, SUB},
         ProtocolSymbol,
     },
-    value::{FnScript, Symbol, Value},
+    value::{FnScript, Symbol},
 };
 use dice_syntax::{OpDecl, OverloadedOperator};
 
@@ -30,7 +31,7 @@ impl NodeVisitor<(&OpDecl, OpKind)> for Compiler {
 
         let upvalues = op_context.upvalues().clone();
         let bytecode = op_context.finish(self.source.clone());
-        let value = Value::FnScript(FnScript::new(name.clone(), bytecode, uuid::Uuid::new_v4()));
+        let value = ConstantValue::Function(FnScript::new(name.clone(), bytecode, uuid::Uuid::new_v4()));
 
         match kind {
             OpKind::Global => self.emit_op_global(node, name, &upvalues, value)?,
@@ -68,7 +69,7 @@ impl Compiler {
         op_decl: &OpDecl,
         name: Symbol,
         upvalues: &[UpvalueDescriptor],
-        compiled_op: Value,
+        compiled_op: ConstantValue,
     ) -> Result<(), Error> {
         emit_bytecode! {
             self.assembler()?, op_decl.span => [
@@ -90,7 +91,7 @@ impl Compiler {
         &mut self,
         op_decl: &OpDecl,
         upvalues: &[UpvalueDescriptor],
-        compiled_op: Value,
+        compiled_op: ConstantValue,
     ) -> Result<(), Error> {
         emit_bytecode! {
             self.assembler()?, op_decl.span => [

@@ -1,11 +1,13 @@
-use crate::value::Symbol;
+use gc_arena::Collect;
+
 use std::{
     fmt::{Display, Formatter},
     ops::Deref,
     rc::Rc,
 };
 
-#[derive(Debug, Hash, Clone, PartialEq, Eq)]
+#[derive(Debug, Hash, Clone, PartialEq, Eq, Collect)]
+#[collect(require_static)]
 #[repr(transparent)]
 pub struct String {
     inner: Rc<std::string::String>,
@@ -29,22 +31,6 @@ impl From<&'_ str> for String {
     fn from(value: &'_ str) -> Self {
         Self {
             inner: value.to_owned().into(),
-        }
-    }
-}
-
-impl From<Symbol> for String {
-    fn from(value: Symbol) -> Self {
-        Self {
-            inner: value.as_string().into(),
-        }
-    }
-}
-
-impl From<&'_ Symbol> for String {
-    fn from(value: &Symbol) -> Self {
-        Self {
-            inner: value.as_string().into(),
         }
     }
 }

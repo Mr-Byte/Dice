@@ -1,4 +1,4 @@
-use crate::bytecode::instruction::Instruction;
+use crate::instruction::Instruction;
 use bytes::Buf as _;
 use std::io::Cursor;
 

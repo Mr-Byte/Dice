@@ -1,49 +1,50 @@
-use crate::value::Value;
-use std::{
-    fmt::{Debug, Display, Formatter},
-    rc::Rc,
-};
+use gc_arena::{Collect, Gc, Mutation};
 
-#[derive(Clone, Debug)]
-pub struct FnBound {
-    inner: Rc<FnBoundInner>,
+use crate::value::Value;
+
+#[derive(Clone, Collect)]
+#[collect(no_drop)]
+pub struct FnBound<'gc> {
+    inner: Gc<'gc, FnBoundInner<'gc>>,
 }
 
-impl FnBound {
-    pub fn new(receiver: Value, function: Value) -> Self {
+impl<'gc> FnBound<'gc> {
+    pub fn new(mutation: &Mutation<'gc>, receiver: Value<'gc>, function: Value<'gc>) -> Self {
         Self {
-            inner: Rc::new(FnBoundInner { receiver, function }),
+            inner: Gc::new(mutation, FnBoundInner { receiver, function }),
         }
     }
 
-    pub fn receiver(&self) -> Value {
+    pub fn receiver(&self) -> Value<'gc> {
         self.inner.receiver.clone()
     }
 
-    pub fn function(&self) -> Value {
+    pub fn function(&self) -> Value<'gc> {
         self.inner.function.clone()
     }
 }
 
-impl PartialEq for FnBound {
+impl PartialEq for FnBound<'_> {
     fn eq(&self, other: &Self) -> bool {
         self.inner.receiver == other.inner.receiver && self.inner.function == other.inner.function
     }
 }
 
-impl Display for FnBound {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "FnBound{{{}}}", self.inner.function)
-    }
+// impl Display for FnBound<'_> {
+//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+//         write!(f, "FnBound{{{}}}", self.inner.function)
+//     }
+// }
+
+#[derive(Collect)]
+#[collect(no_drop)]
+struct FnBoundInner<'gc> {
+    receiver: Value<'gc>,
+    function: Value<'gc>,
 }
 
-struct FnBoundInner {
-    receiver: Value,
-    function: Value,
-}
-
-impl Debug for FnBoundInner {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        std::fmt::Debug::fmt(&self.function, f)
-    }
-}
+// impl Debug for FnBoundInner<'_> {
+//     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+//         std::fmt::Debug::fmt(&self.function, f)
+//     }
+// }

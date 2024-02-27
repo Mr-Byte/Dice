@@ -1,19 +1,18 @@
 use super::upvalue::UpvalueDescriptor;
 use bytes::BufMut as _;
 use dice_core::{
-    bytecode::{instruction::Instruction, Bytecode},
+    bytecode::{instruction::Instruction, Bytecode, ConstantValue},
     error::{
         codes::{TOO_MANY_CONSTANTS, TOO_MANY_UPVALUES},
         Error,
     },
     source::Source,
     span::Span,
-    value::{Symbol, Value},
 };
 use std::collections::HashMap;
 
 pub struct Assembler {
-    constants: Vec<Value>,
+    constants: Vec<ConstantValue>,
     source_map: HashMap<u64, Span>,
     data: Vec<u8>,
 }
@@ -79,7 +78,7 @@ impl Assembler {
         self.data.put_u8(Instruction::PushF1.into());
     }
 
-    pub fn push_const(&mut self, value: Value, span: Span) -> Result<(), Error> {
+    pub fn push_const(&mut self, value: ConstantValue, span: Span) -> Result<(), Error> {
         self.source_map.insert(self.data.len() as u64, span);
         self.data.put_u8(Instruction::PushConst.into());
 
@@ -90,7 +89,7 @@ impl Assembler {
         Ok(())
     }
 
-    pub fn closure(&mut self, value: Value, upvalues: &[UpvalueDescriptor], span: Span) -> Result<(), Error> {
+    pub fn closure(&mut self, value: ConstantValue, upvalues: &[UpvalueDescriptor], span: Span) -> Result<(), Error> {
         self.source_map.insert(self.data.len() as u64, span);
         self.data.put_u8(Instruction::CreateClosure.into());
         let fn_pos = self.make_constant(value, span)?;
@@ -140,7 +139,7 @@ impl Assembler {
     pub fn inherit_class(&mut self, name: &str, span: Span) -> Result<(), Error> {
         self.source_map.insert(self.data.len() as u64, span);
         self.data.put_u8(Instruction::InheritClass.into());
-        let name_slot = self.make_constant(Value::with_symbol(name), span)? as u8;
+        let name_slot = self.make_constant(ConstantValue::Symbol(name.into()), span)? as u8;
         self.data.put_u8(name_slot);
 
         Ok(())
@@ -315,54 +314,54 @@ impl Assembler {
         self.data.put_u8(index);
     }
 
-    pub fn store_field(&mut self, field: impl Into<Symbol>, span: Span) -> Result<(), Error> {
+    pub fn store_field(&mut self, field: impl Into<String>, span: Span) -> Result<(), Error> {
         self.source_map.insert(self.data.len() as u64, span);
-        let const_slot = self.make_constant(Value::Symbol(field.into()), span)?;
+        let const_slot = self.make_constant(ConstantValue::Symbol(field.into()), span)?;
         self.data.put_u8(Instruction::StoreField.into());
         self.data.put_u8(const_slot);
 
         Ok(())
     }
 
-    pub fn assign_field(&mut self, field: impl Into<Symbol>, span: Span) -> Result<(), Error> {
+    pub fn assign_field(&mut self, field: impl Into<String>, span: Span) -> Result<(), Error> {
         self.source_map.insert(self.data.len() as u64, span);
-        let const_slot = self.make_constant(Value::Symbol(field.into()), span)?;
+        let const_slot = self.make_constant(ConstantValue::Symbol(field.into()), span)?;
         self.data.put_u8(Instruction::AssignField.into());
         self.data.put_u8(const_slot);
 
         Ok(())
     }
 
-    pub fn load_method(&mut self, method: impl Into<Symbol>, span: Span) -> Result<(), Error> {
+    pub fn load_method(&mut self, method: impl Into<String>, span: Span) -> Result<(), Error> {
         self.source_map.insert(self.data.len() as u64, span);
-        let const_slot = self.make_constant(Value::Symbol(method.into()), span)?;
+        let const_slot = self.make_constant(ConstantValue::Symbol(method.into()), span)?;
         self.data.put_u8(Instruction::LoadMethod.into());
         self.data.put_u8(const_slot);
 
         Ok(())
     }
 
-    pub fn store_method(&mut self, method: impl Into<Symbol>, span: Span) -> Result<(), Error> {
+    pub fn store_method(&mut self, method: impl Into<String>, span: Span) -> Result<(), Error> {
         self.source_map.insert(self.data.len() as u64, span);
-        let const_slot = self.make_constant(Value::Symbol(method.into()), span)?;
+        let const_slot = self.make_constant(ConstantValue::Symbol(method.into()), span)?;
         self.data.put_u8(Instruction::StoreMethod.into());
         self.data.put_u8(const_slot);
 
         Ok(())
     }
 
-    pub fn load_field(&mut self, field: impl Into<Symbol>, span: Span) -> Result<(), Error> {
+    pub fn load_field(&mut self, field: impl Into<String>, span: Span) -> Result<(), Error> {
         self.source_map.insert(self.data.len() as u64, span);
-        let const_slot = self.make_constant(Value::Symbol(field.into()), span)?;
+        let const_slot = self.make_constant(ConstantValue::Symbol(field.into()), span)?;
         self.data.put_u8(Instruction::LoadField.into());
         self.data.put_u8(const_slot);
 
         Ok(())
     }
 
-    pub fn store_global(&mut self, global: impl Into<Symbol>, span: Span) -> Result<(), Error> {
-        fn store_global_impl(assembler: &mut Assembler, global: Symbol, span: Span) -> Result<(), Error> {
-            let const_slot = assembler.make_constant(Value::with_symbol(global), span)?;
+    pub fn store_global(&mut self, global: impl Into<String>, span: Span) -> Result<(), Error> {
+        fn store_global_impl(assembler: &mut Assembler, global: String, span: Span) -> Result<(), Error> {
+            let const_slot = assembler.make_constant(ConstantValue::Symbol(global), span)?;
 
             assembler.source_map.insert(assembler.data.len() as u64, span);
             assembler.data.put_u8(Instruction::StoreGlobal.into());
@@ -374,9 +373,9 @@ impl Assembler {
         store_global_impl(self, global.into(), span)
     }
 
-    pub fn load_global(&mut self, global: impl Into<Symbol>, span: Span) -> Result<(), Error> {
-        fn load_global_impl(assembler: &mut Assembler, global: Symbol, span: Span) -> Result<(), Error> {
-            let const_slot = assembler.make_constant(Value::with_symbol(global), span)?;
+    pub fn load_global(&mut self, global: impl Into<String>, span: Span) -> Result<(), Error> {
+        fn load_global_impl(assembler: &mut Assembler, global: String, span: Span) -> Result<(), Error> {
+            let const_slot = assembler.make_constant(ConstantValue::Symbol(global), span)?;
 
             assembler.source_map.insert(assembler.data.len() as u64, span);
             assembler.data.put_u8(Instruction::LoadGlobal.into());
@@ -388,9 +387,9 @@ impl Assembler {
         load_global_impl(self, global.into(), span)
     }
 
-    pub fn load_module(&mut self, path: impl Into<Symbol>, span: Span) -> Result<(), Error> {
-        fn load_module_impl(assembler: &mut Assembler, path: Symbol, span: Span) -> Result<(), Error> {
-            let const_slot = assembler.make_constant(Value::with_symbol(path), span)?;
+    pub fn load_module(&mut self, path: impl Into<String>, span: Span) -> Result<(), Error> {
+        fn load_module_impl(assembler: &mut Assembler, path: String, span: Span) -> Result<(), Error> {
+            let const_slot = assembler.make_constant(ConstantValue::Symbol(path), span)?;
 
             assembler.source_map.insert(assembler.data.len() as u64, span);
             assembler.data.put_u8(Instruction::LoadModule.into());
@@ -418,9 +417,9 @@ impl Assembler {
         self.data.put_u8(Instruction::AssignIndex.into());
     }
 
-    pub fn load_field_to_local(&mut self, field: impl Into<Symbol>, local_slot: u8, span: Span) -> Result<(), Error> {
+    pub fn load_field_to_local(&mut self, field: impl Into<String>, local_slot: u8, span: Span) -> Result<(), Error> {
         self.source_map.insert(self.data.len() as u64, span);
-        let const_slot = self.make_constant(Value::Symbol(field.into()), span)?;
+        let const_slot = self.make_constant(ConstantValue::Symbol(field.into()), span)?;
         self.data.put_u8(Instruction::LoadFieldToLocal.into());
         self.data.put_u8(const_slot);
         self.data.put_u8(local_slot);
@@ -472,7 +471,7 @@ impl Assembler {
         self.data.put_u8(Instruction::AssertTypeOrNullAndReturn.into());
     }
 
-    fn make_constant(&mut self, into: Value, span: Span) -> Result<u8, Error> {
+    fn make_constant(&mut self, into: ConstantValue, span: Span) -> Result<u8, Error> {
         let position = if let Some(position) = self.constants.iter().position(|current| *current == into) {
             position
         } else {

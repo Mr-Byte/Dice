@@ -8,7 +8,10 @@ use dice_syntax::ErrorPropagate;
 
 impl NodeVisitor<&ErrorPropagate> for Compiler {
     fn visit(&mut self, ErrorPropagate { expression, span }: &ErrorPropagate) -> Result<(), Error> {
-        if !matches!(self.context()?.kind(), CompilerKind::Function { .. } | CompilerKind::Method { .. }) {
+        if !matches!(
+            self.context()?.kind(),
+            CompilerKind::Function { .. } | CompilerKind::Method { .. }
+        ) {
             return Err(Error::new(INVALID_ERROR_PROPAGATE_USAGE).with_span(*span));
         }
 

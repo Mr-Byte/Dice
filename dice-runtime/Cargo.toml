@@ -11,3 +11,4 @@ ahash = "0.8.3"
 
 dice-compiler = { path = "../dice-compiler" }
 dice-core = { path = "../dice-core" }
+gc-arena = "0.5.0"

@@ -1,6 +1,6 @@
 use super::NodeVisitor;
 use crate::compiler::Compiler;
-use dice_core::{error::Error, value::Value};
+use dice_core::{bytecode::ConstantValue, error::Error};
 use dice_syntax::LitFloat;
 
 impl NodeVisitor<&LitFloat> for Compiler {
@@ -12,7 +12,7 @@ impl NodeVisitor<&LitFloat> for Compiler {
         } else if *value == 1.0 {
             context.assembler().push_f1(*span);
         } else {
-            context.assembler().push_const(Value::Float(*value), *span)?;
+            context.assembler().push_const(ConstantValue::Float(*value), *span)?;
         }
 
         Ok(())

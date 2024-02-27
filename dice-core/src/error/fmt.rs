@@ -1,11 +1,9 @@
 use colored::Colorize;
+use dice_bytecode::source::Source;
 
-use crate::{
-    error::{
-        localization::{localize_error_code, Locale},
-        Error,
-    },
-    source::Source,
+use crate::error::{
+    localization::{localize_error_code, Locale},
+    Error,
 };
 use std::fmt::Write;
 
