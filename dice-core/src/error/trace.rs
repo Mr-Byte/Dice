@@ -1,4 +1,5 @@
-use dice_bytecode::{source::Source, span::Span, Bytecode};
+use crate::source::Source;
+use crate::span::Span;
 
 #[derive(Debug, Clone)]
 pub struct ErrorTrace {
@@ -7,10 +8,12 @@ pub struct ErrorTrace {
 }
 
 impl ErrorTrace {
-    pub fn from_bytecode(bytecode: &Bytecode, offset: u64) -> Self {
-        let span = bytecode.source_map()[&offset];
-        let source = bytecode.source().clone();
+    // pub fn from_bytecode(bytecode: &Bytecode, offset: u64) -> Self {
+    //     todo!();
 
-        Self { source, span }
-    }
+    //     // let span = bytecode.source_map()[&offset];
+    //     // let source = bytecode.source().clone();
+
+    //     // Self { source, span }
+    // }
 }

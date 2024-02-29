@@ -1,15 +1,17 @@
-mod lexer_result;
-mod token;
+use std::iter::Peekable;
 
-use crate::lexer::token::TokenIter;
 use dice_core::{
     error::{codes::UNEXPECTED_TOKEN, Error},
     source::Source,
     span::Span,
     tags,
 };
-use std::iter::Peekable;
 pub use token::{Token, TokenKind};
+
+use crate::lexer::token::TokenIter;
+
+mod lexer_result;
+mod token;
 
 pub struct Lexer<'a> {
     current: Token<'a>,
@@ -121,8 +123,9 @@ impl<'a> Lexer<'a> {
 
 #[cfg(test)]
 pub mod test {
-    use super::*;
     use dice_core::source::SourceKind;
+
+    use super::*;
 
     macro_rules! assert_next_token {
         ($tokens:expr, $token:pat) => {

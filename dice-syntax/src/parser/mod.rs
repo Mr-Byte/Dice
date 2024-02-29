@@ -1,39 +1,35 @@
-mod rules;
-
 use std::num::{ParseFloatError, ParseIntError};
 
+use id_arena::Arena;
+
+use dice_core::error::{
+    codes::{
+        FUNCTION_HAS_TOO_MANY_ARGUMENTS, INVALID_FLOAT_VALUE, INVALID_IMPORT_USAGE, INVALID_INTEGER_VALUE,
+        UNEXPECTED_TOKEN,
+    },
+    context::{Context, ContextKind, IMPORT_REQUIRES_ITEMS_TO_BE_IMPORTED, IMPORT_REQUIRES_ITEMS_TO_BE_IMPORTED_HELP},
+    Error, ResultExt,
+};
+use dice_core::protocol::error::{IS_OK, RESULT};
+use dice_core::source::Source;
+use dice_core::span::Span;
+use dice_core::tags;
+
+use crate::{
+    ClassDecl,
+    ErrorPropagate,
+    FieldAccess, FnArg, ForLoop, ImportDecl, Index, Is, lexer::Token, Loop, NullPropagate, OpDecl, OverloadedOperator,
+    parser::rules::{ParseResult, ParserRules, Precedence}, SuperAccess, SuperCall, TypeAnnotation, VarDeclKind,
+};
+
 use super::{
-    lexer::{Lexer, TokenKind},
-    Assignment, AssignmentOperator, Binary, BinaryOperator, Block, Break, Continue, ExportDecl, FnCall, FnDecl,
-    IfExpression, LitAnonymousFn, LitBool, LitFloat, LitIdent, LitInt, LitList, LitNull, LitObject, LitString, LitUnit,
+    Assignment,
+    AssignmentOperator, Binary, BinaryOperator, Block, Break, Continue, ExportDecl, FnCall, FnDecl, IfExpression,
+    lexer::{Lexer, TokenKind}, LitAnonymousFn, LitBool, LitFloat, LitIdent, LitInt, LitList, LitNull, LitObject, LitString, LitUnit,
     Prefix, Return, SyntaxNode, SyntaxNodeId, SyntaxTree, UnaryOperator, VarDecl, WhileLoop,
 };
-use crate::{
-    lexer::Token,
-    parser::rules::{ParseResult, ParserRules, Precedence},
-    ClassDecl, ErrorPropagate, FieldAccess, FnArg, ForLoop, ImportDecl, Index, Is, Loop, NullPropagate, OpDecl,
-    OverloadedOperator, SuperAccess, SuperCall, TypeAnnotation, VarDeclKind,
-};
-use dice_core::{
-    error::{
-        codes::{
-            FUNCTION_HAS_TOO_MANY_ARGUMENTS, INVALID_FLOAT_VALUE, INVALID_IMPORT_USAGE, INVALID_INTEGER_VALUE,
-            UNEXPECTED_TOKEN,
-        },
-        context::{
-            Context, ContextKind, IMPORT_REQUIRES_ITEMS_TO_BE_IMPORTED, IMPORT_REQUIRES_ITEMS_TO_BE_IMPORTED_HELP,
-        },
-        Error, ResultExt,
-    },
-    protocol::{
-        error::{IS_OK, RESULT},
-        ProtocolSymbol,
-    },
-    source::Source,
-    span::Span,
-    tags,
-};
-use id_arena::Arena;
+
+mod rules;
 
 pub struct Parser<'a> {
     lexer: Lexer<'a>,
@@ -743,13 +739,13 @@ impl<'a> Parser<'a> {
         let result_lit = self.arena.alloc(result_lit);
         let condition = SyntaxNode::FieldAccess(FieldAccess {
             expression: result_lit,
-            field: IS_OK.get().as_string(),
+            field: IS_OK.to_owned(),
             span,
         });
         let condition = self.arena.alloc(condition);
         let result_access = SyntaxNode::FieldAccess(FieldAccess {
             expression: result_lit,
-            field: RESULT.get().as_string(),
+            field: RESULT.to_owned(),
             span,
         });
         let result_access = self.arena.alloc(result_access);

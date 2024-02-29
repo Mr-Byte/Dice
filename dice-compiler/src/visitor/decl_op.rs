@@ -1,15 +1,13 @@
-use super::NodeVisitor;
-use crate::{compiler::Compiler, upvalue::UpvalueDescriptor, visitor::FnKind};
+use dice_bytecode::{ConstantValue, FunctionBytecode};
 use dice_core::{
-    bytecode::ConstantValue,
     error::Error,
-    protocol::{
-        operator::{ADD, DIV, EQ, GT, GTE, LT, LTE, MUL, NEQ, RANGE_EXCLUSIVE, RANGE_INCLUSIVE, REM, SUB},
-        ProtocolSymbol,
-    },
-    value::{FnScript, Symbol},
+    protocol::operator::{ADD, DIV, EQ, GT, GTE, LT, LTE, MUL, NEQ, RANGE_EXCLUSIVE, RANGE_INCLUSIVE, REM, SUB},
 };
 use dice_syntax::{OpDecl, OverloadedOperator};
+
+use crate::{compiler::Compiler, upvalue::UpvalueDescriptor, visitor::FnKind};
+
+use super::NodeVisitor;
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum OpKind {
@@ -31,7 +29,7 @@ impl NodeVisitor<(&OpDecl, OpKind)> for Compiler {
 
         let upvalues = op_context.upvalues().clone();
         let bytecode = op_context.finish(self.source.clone());
-        let value = ConstantValue::Function(FnScript::new(name.clone(), bytecode, uuid::Uuid::new_v4()));
+        let value = ConstantValue::Function(FunctionBytecode::new(bytecode, name, uuid::Uuid::new_v4()));
 
         match kind {
             OpKind::Global => self.emit_op_global(node, name, &upvalues, value)?,
@@ -43,21 +41,21 @@ impl NodeVisitor<(&OpDecl, OpKind)> for Compiler {
 }
 
 impl Compiler {
-    pub fn op_name(node: &OpDecl) -> Symbol {
+    pub fn op_name(node: &OpDecl) -> &str {
         let name = match node.operator {
-            OverloadedOperator::Multiply => MUL.get(),
-            OverloadedOperator::Divide => DIV.get(),
-            OverloadedOperator::Remainder => REM.get(),
-            OverloadedOperator::Add => ADD.get(),
-            OverloadedOperator::Subtract => SUB.get(),
-            OverloadedOperator::GreaterThan => GT.get(),
-            OverloadedOperator::LessThan => LT.get(),
-            OverloadedOperator::GreaterThanEquals => GTE.get(),
-            OverloadedOperator::LessThanEquals => LTE.get(),
-            OverloadedOperator::Equals => EQ.get(),
-            OverloadedOperator::NotEquals => NEQ.get(),
-            OverloadedOperator::RangeInclusive => RANGE_INCLUSIVE.get(),
-            OverloadedOperator::RangeExclusive => RANGE_EXCLUSIVE.get(),
+            OverloadedOperator::Multiply => MUL,
+            OverloadedOperator::Divide => DIV,
+            OverloadedOperator::Remainder => REM,
+            OverloadedOperator::Add => ADD,
+            OverloadedOperator::Subtract => SUB,
+            OverloadedOperator::GreaterThan => GT,
+            OverloadedOperator::LessThan => LT,
+            OverloadedOperator::GreaterThanEquals => GTE,
+            OverloadedOperator::LessThanEquals => LTE,
+            OverloadedOperator::Equals => EQ,
+            OverloadedOperator::NotEquals => NEQ,
+            OverloadedOperator::RangeInclusive => RANGE_INCLUSIVE,
+            OverloadedOperator::RangeExclusive => RANGE_EXCLUSIVE,
         };
         name
     }
@@ -67,7 +65,7 @@ impl Compiler {
     fn emit_op_global(
         &mut self,
         op_decl: &OpDecl,
-        name: Symbol,
+        name: impl Into<String>,
         upvalues: &[UpvalueDescriptor],
         compiled_op: ConstantValue,
     ) -> Result<(), Error> {
@@ -79,7 +77,7 @@ impl Compiler {
                     CREATE_CLOSURE compiled_op, &upvalues;
                 ]
 
-                STORE_GLOBAL name;
+                STORE_GLOBAL name.into();
                 PUSH_UNIT;
             ]
         }

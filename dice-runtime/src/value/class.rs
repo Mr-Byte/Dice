@@ -1,16 +1,19 @@
-use crate::{
-    protocol::class::NEW,
-    runtime::RuntimeContext,
-    type_id::TypeId,
-    value::{symbol::Symbol, Object, Value, ValueKind, ValueMap},
-};
-use ahash::AHasher;
-use gc_arena::{lock::RefLock, Collect, Gc, Mutation};
 use std::{
     collections::{HashMap, HashSet},
     hash::BuildHasherDefault,
     ops::Deref,
 };
+
+use ahash::AHasher;
+use gc_arena::{Collect, Gc, lock::RefLock};
+
+use dice_core::protocol::class::NEW;
+
+use crate::{
+    runtime::RuntimeContext,
+    value::{Object, symbol::Symbol, Value, ValueKind, ValueMap},
+};
+use crate::type_id::TypeId;
 
 #[derive(Clone, PartialEq, Eq, Collect)]
 #[collect(no_drop)]
@@ -19,7 +22,7 @@ pub struct Class<'gc> {
 }
 
 impl<'gc> Class<'gc> {
-    pub fn new<S>(ctx: &RuntimeContext<'gc, S>, name: Symbol) -> Self {
+    pub fn new(ctx: &RuntimeContext<'gc>, name: Symbol) -> Self {
         let instance_type_id = TypeId::new();
         let mut type_ids: HashSet<_, _> = Default::default();
         type_ids.insert(instance_type_id);
@@ -38,7 +41,7 @@ impl<'gc> Class<'gc> {
         }
     }
 
-    pub fn with_base<S>(ctx: &RuntimeContext<'gc, S>, name: Symbol, base: Class<'gc>) -> Self {
+    pub fn with_base(ctx: &RuntimeContext<'gc>, name: Symbol, base: Class<'gc>) -> Self {
         let methods = base
             .inner
             .methods
@@ -65,7 +68,7 @@ impl<'gc> Class<'gc> {
         }
     }
 
-    pub fn derive<S>(&self, ctx: &RuntimeContext<'gc, S>, name: impl Into<Symbol>) -> Self {
+    pub fn derive(&self, ctx: &RuntimeContext<'gc>, name: impl Into<Symbol>) -> Self {
         Self::with_base(ctx, name.into(), self.clone())
     }
 
@@ -88,14 +91,14 @@ impl<'gc> Class<'gc> {
         self.inner.methods.borrow().get(&name).cloned()
     }
 
-    pub fn set_method(&self, mutation: &Mutation<'gc>, name: impl Into<Symbol>, method: impl Into<Value<'gc>>) {
+    pub fn set_method(&self, ctx: RuntimeContext<'gc>, name: impl Into<Symbol>, method: impl Into<Value<'gc>>) {
         let method = method.into();
 
         if method.kind() != ValueKind::Function {
             panic!("Provided value is not a function.");
         }
 
-        self.inner.methods.borrow_mut(mutation).insert(name.into(), method);
+        self.inner.methods.borrow_mut(ctx.mutation).insert(name.into(), method);
     }
 
     pub fn methods(&self) -> Vec<(Symbol, Value<'gc>)> {
@@ -119,7 +122,9 @@ struct ClassInner<'gc> {
     name: Symbol,
     methods: Gc<'gc, RefLock<ValueMap<'gc>>>,
     object: Object<'gc>,
+    #[collect(require_static)]
     instance_type_id: TypeId,
+    #[collect(require_static)]
     type_ids: HashSet<TypeId, BuildHasherDefault<AHasher>>,
     base: Option<Class<'gc>>,
 }

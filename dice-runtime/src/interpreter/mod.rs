@@ -1,8 +1,7 @@
-mod helper;
+use std::collections::hash_map::Entry;
 
-use crate::{module::ModuleLoader, runtime::Runtime, stack::StackFrame};
+use dice_bytecode::{Bytecode, BytecodeCursor, Instruction};
 use dice_core::{
-    bytecode::{instruction::Instruction, Bytecode, BytecodeCursor},
     error::{
         codes::{
             CLASS_CANNOT_INHERIT_VALUE_TYPE, DIVIDE_BY_ZERO, GLOBAL_VARIABLE_ALREADY_DEFINED,
@@ -11,16 +10,20 @@ use dice_core::{
             TYPE_ASSERTION_SUPER_FAILURE,
         },
         context::{Context, ContextKind, INVALID_INDEX_TYPES, MISMATCHED_TYPE_ASSERTIONS},
-        trace::ErrorTrace,
-        Error, ResultExt,
+        Error,
+        ResultExt, trace::ErrorTrace,
     },
     protocol::operator::{ADD, DIV, EQ, GT, GTE, LT, LTE, MUL, NEQ, RANGE_EXCLUSIVE, RANGE_INCLUSIVE, REM, SUB},
-    runtime::Runtime as _,
     tags,
+};
+
+use crate::{module::ModuleLoader, runtime::Runtime, stack::StackFrame};
+use crate::{
     upvalue::{Upvalue, UpvalueState},
     value::{Class, FnClosure, Object, Value, ValueKind},
 };
-use std::collections::hash_map::Entry;
+
+mod helper;
 
 impl<L> Runtime<L>
 where

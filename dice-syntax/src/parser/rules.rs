@@ -1,16 +1,12 @@
+use std::collections::HashMap;
+
+use dice_core::error::Error;
+use dice_core::span::Span;
+
 use crate::{
     lexer::{Token, TokenKind},
     Parser, SyntaxNodeId,
 };
-use dice_core::{
-    error::{
-        codes::{RESERVED_KEYWORD, UNRECOGNIZED_INPUT},
-        Error,
-    },
-    span::Span,
-    tags,
-};
-use std::collections::HashMap;
 
 pub type ParseResult = Result<SyntaxNodeId, Error>;
 pub type PrefixParser<'a> = fn(&mut Parser<'a>, bool) -> ParseResult;
@@ -230,15 +226,16 @@ impl<'a> ParserRules<'a> {
 
     pub fn for_token(&self, token: &Token) -> Result<&Rule<'a>, Error> {
         self.rules.get(&token.kind).ok_or_else(|| {
-            let error = if token.kind == TokenKind::Reserved {
-                RESERVED_KEYWORD
-            } else {
-                UNRECOGNIZED_INPUT
-            };
+            todo!()
+            // let error = if token.kind == TokenKind::Reserved {
+            //     RESERVED_KEYWORD
+            // } else {
+            //     UNRECOGNIZED_INPUT
+            // };
 
-            Error::new(error).with_span(token.span).with_tags(tags! {
-                input => token.slice.to_string()
-            })
+            // Error::new(error).with_span(token.span).with_tags(tags! {
+            //     input => token.slice.to_string()
+            // })
         })
     }
 

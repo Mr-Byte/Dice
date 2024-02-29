@@ -1,12 +1,16 @@
-use gc_arena::Collect;
-
-use crate::{error::Error, runtime::Runtime, value::Value};
 use std::{
     fmt::{Debug, Display},
     rc::Rc,
 };
 
-pub type NativeFn<'gc> = Box<dyn Fn(&mut dyn Runtime<'gc>, &[Value]) -> Result<Value<'gc>, Error>>;
+use gc_arena::Collect;
+
+use dice_core::error::Error;
+
+use crate::value::Value;
+
+// pub type NativeFn<'gc> = Box<dyn Fn(&mut dyn Runtime<'gc>, &[Value]) -> Result<Value<'gc>, Error>>;
+pub type NativeFn<'gc> = Box<dyn Fn(&[Value]) -> Result<Value<'gc>, Error>>;
 
 #[derive(Clone, Collect)]
 #[collect(require_static)]
@@ -22,8 +26,8 @@ impl<'gc> FnNative<'gc> {
     }
 
     #[inline]
-    pub fn call(&self, runtime: &mut dyn Runtime<'gc>, args: &[Value]) -> Result<Value<'gc>, Error> {
-        (*self.inner)(runtime, args)
+    pub fn call(&self, args: &[Value]) -> Result<Value<'gc>, Error> {
+        (*self.inner)(args)
     }
 }
 

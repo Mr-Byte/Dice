@@ -1,16 +1,18 @@
-use super::NodeVisitor;
+use dice_core::{
+    error::{codes::NEW_MUST_CALL_SUPER_FROM_SUBCLASS, Error},
+    protocol::class::SELF,
+    span::Span,
+};
+use dice_syntax::{Block, FnArg, SyntaxNode};
+
 use crate::{
     compiler::Compiler,
     compiler_stack::CompilerKind,
     scope_stack::{ScopeKind, State},
     visitor::ClassKind,
 };
-use dice_core::{
-    error::{codes::NEW_MUST_CALL_SUPER_FROM_SUBCLASS, Error},
-    protocol::{class::SELF, ProtocolSymbol},
-    span::Span,
-};
-use dice_syntax::{Block, FnArg, SyntaxNode};
+
+use super::NodeVisitor;
 
 impl NodeVisitor<&Block> for Compiler {
     fn visit(&mut self, block: &Block) -> Result<(), Error> {
@@ -88,7 +90,7 @@ impl<'args> NodeVisitor<(&Block, FunctionBlockKind<'args>)> for Compiler {
             let local_slot = self
                 .context()?
                 .scope_stack()
-                .local(SELF.get())
+                .local(SELF)
                 .expect("Methods should always have a self.")
                 .slot as u8;
 

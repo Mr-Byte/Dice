@@ -1,20 +1,19 @@
-use super::NodeVisitor;
-use crate::compiler::Compiler;
 use dice_core::{
     error::Error,
-    protocol::{
-        class::{SELF, SUPER},
-        ProtocolSymbol,
-    },
+    protocol::class::{SELF, SUPER},
 };
 use dice_syntax::{LitIdent, SuperCall};
+
+use crate::compiler::Compiler;
+
+use super::NodeVisitor;
 
 impl NodeVisitor<&SuperCall> for Compiler {
     fn visit(&mut self, node: &SuperCall) -> Result<(), Error> {
         let local_slot = self
             .context()?
             .scope_stack()
-            .local(SELF.get())
+            .local(SELF)
             .expect("self should always be declared in constructors.")
             .slot as u8;
         self.assembler()?.load_local(local_slot, node.span);
@@ -36,7 +35,7 @@ impl NodeVisitor<&SuperCall> for Compiler {
         *self.context()?.temporary_count() = original_temporary_count;
 
         self.visit(&LitIdent {
-            identifier: SUPER.get().to_string(),
+            identifier: SUPER.to_owned(),
             span: node.span,
         })?;
         self.assembler()?.call_super(node.args.len() as u8, node.span);

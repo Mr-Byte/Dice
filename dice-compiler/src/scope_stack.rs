@@ -1,11 +1,8 @@
-use dice_core::{
-    error::{codes::INTERNAL_COMPILER_ERROR, Error},
-    value::Symbol,
-};
+use dice_core::error::{codes::INTERNAL_COMPILER_ERROR, Error};
 
 #[derive(Clone)]
 pub struct ScopeVariable {
-    pub name: Symbol,
+    pub name: String,
     pub slot: usize,
     pub is_captured: bool,
     pub state: State,
@@ -111,11 +108,11 @@ impl ScopeStack {
         self.first_of_kind(kind).is_some()
     }
 
-    pub fn add_local(&mut self, name: impl Into<Symbol>, state: State) -> Result<usize, Error> {
+    pub fn add_local(&mut self, name: impl Into<String>, state: State) -> Result<usize, Error> {
         self.add_local_impl(name.into(), state)
     }
 
-    fn add_local_impl(&mut self, name: Symbol, state: State) -> Result<usize, Error> {
+    fn add_local_impl(&mut self, name: String, state: State) -> Result<usize, Error> {
         self.top_mut()?.slot_count += 1;
 
         let slot_count = self.stack.iter().rev().map(|scope| scope.slot_count).sum();
@@ -136,7 +133,7 @@ impl ScopeStack {
         Ok(slot)
     }
 
-    pub fn local(&mut self, name: impl Into<Symbol>) -> Option<&mut ScopeVariable> {
+    pub fn local(&mut self, name: impl Into<String>) -> Option<&mut ScopeVariable> {
         let name = name.into();
         self.stack
             .iter_mut()

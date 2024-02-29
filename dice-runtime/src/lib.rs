@@ -1,8 +1,11 @@
+pub use runtime::Runtime;
+
 pub mod module;
 pub mod runtime;
 
 // mod classes;
 mod interpreter;
 mod stack;
-
-pub use runtime::Runtime;
+pub mod type_id;
+mod upvalue;
+mod value;

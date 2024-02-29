@@ -5,6 +5,7 @@ name = "dice-syntax"
 version = "0.1.0"
 
 [dependencies]
+ahash = "0.8.10"
 dice-core = {path = "../dice-core"}
 id-arena = "2.2"
 logos = "0.12"

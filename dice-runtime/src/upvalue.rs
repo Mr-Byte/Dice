@@ -16,15 +16,15 @@ pub enum UpvalueState<'gc> {
 pub struct Upvalue<'gc>(Gc<'gc, RefLock<UpvalueState<'gc>>>);
 
 impl<'gc> Upvalue<'gc> {
-    pub fn new_open<S>(ctx: &RuntimeContext<'gc, S>, slot: usize) -> Self {
+    pub fn new_open(ctx: &RuntimeContext<'gc>, slot: usize) -> Self {
         Self(Gc::new(ctx.mutation, RefLock::new(UpvalueState::Open(slot))))
     }
 
-    pub fn close<S>(&self, ctx: &RuntimeContext<'gc, S>, value: Value<'gc>) {
+    pub fn close(&self, ctx: &RuntimeContext<'gc>, value: Value<'gc>) {
         *self.0.borrow_mut(ctx.mutation) = UpvalueState::Closed(value);
     }
 
-    pub fn state_mut<S>(&self, ctx: &RuntimeContext<'gc, S>) -> RefMut<'gc, UpvalueState> {
+    pub fn state_mut(&self, ctx: &RuntimeContext<'gc>) -> RefMut<'gc, UpvalueState> {
         self.0.borrow_mut(ctx.mutation)
     }
 

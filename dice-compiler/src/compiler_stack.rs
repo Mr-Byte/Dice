@@ -1,17 +1,17 @@
 use std::fmt::Display;
 
+use dice_bytecode::Bytecode;
+use dice_core::{
+    error::{codes::INTERNAL_COMPILER_ERROR, Error},
+    source::Source,
+};
+use dice_syntax::TypeAnnotation;
+
 use super::{
     assembler::Assembler,
     scope_stack::{ScopeKind, ScopeStack},
     upvalue::UpvalueDescriptor,
 };
-use dice_core::{
-    bytecode::Bytecode,
-    error::{codes::INTERNAL_COMPILER_ERROR, Error},
-    source::Source,
-    value::Symbol,
-};
-use dice_syntax::TypeAnnotation;
 
 #[derive(Debug, Clone)]
 pub enum CompilerKind {
@@ -124,7 +124,7 @@ impl CompilerStack {
         self.stack.get_mut(index)
     }
 
-    pub fn resolve_upvalue(&mut self, name: Symbol, depth: usize) -> Option<usize> {
+    pub fn resolve_upvalue(&mut self, name: String, depth: usize) -> Option<usize> {
         let parent_local = self.offset(depth + 1)?.scope_stack().local(name.clone());
         let descriptor = match parent_local {
             Some(parent_local) => {

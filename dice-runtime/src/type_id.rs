@@ -1,9 +1,8 @@
-use gc_arena::Collect;
 use std::fmt::{Debug, Display, Formatter};
+
 use uuid::Uuid;
 
-#[derive(Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Debug, Hash, Collect)]
-#[collect(require_static)]
+#[derive(Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Debug, Hash)]
 #[repr(transparent)]
 pub struct TypeId(Uuid);
 

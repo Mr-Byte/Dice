@@ -1,17 +1,18 @@
+use dice_bytecode::Bytecode;
+use dice_core::{
+    error::{Error, ResultExt as _},
+    protocol::module::EXPORT,
+    source::{Source, SourceKind},
+    span::Span,
+};
+use dice_syntax::{Parser, SyntaxTree};
+
 use crate::{
     assembler::Assembler,
     compiler_stack::{CompilerContext, CompilerKind, CompilerStack},
     scope_stack::State,
     visitor::NodeVisitor,
 };
-use dice_core::{
-    bytecode::Bytecode,
-    error::{Error, ResultExt as _},
-    protocol::{module::EXPORT, ProtocolSymbol},
-    source::{Source, SourceKind},
-    span::Span,
-};
-use dice_syntax::{Parser, SyntaxTree};
 
 pub struct Compiler {
     pub(crate) syntax_tree: SyntaxTree,
@@ -40,7 +41,7 @@ impl Compiler {
         if let CompilerKind::Module = kind {
             self.context()?
                 .scope_stack()
-                .add_local(&EXPORT, State::initialized(false))?;
+                .add_local(EXPORT, State::initialized(false))?;
         }
 
         self.visit(self.syntax_tree.root())?;
@@ -49,7 +50,7 @@ impl Compiler {
             let exports_slot = self
                 .context()?
                 .scope_stack()
-                .local(EXPORT.get())
+                .local(EXPORT)
                 .expect("#export should always be defined for modules.")
                 .slot as u8;
 
@@ -58,7 +59,7 @@ impl Compiler {
                     POP;
                     LOAD_LOCAL exports_slot;
                 ]
-            };
+            }
         }
 
         let compiler_context = self.compiler_stack.pop()?;

@@ -1,7 +1,10 @@
-use super::NodeVisitor;
-use crate::compiler::Compiler;
-use dice_core::{bytecode::ConstantValue, error::Error};
+use dice_bytecode::ConstantValue;
+use dice_core::error::Error;
 use dice_syntax::LitFloat;
+
+use crate::compiler::Compiler;
+
+use super::NodeVisitor;
 
 impl NodeVisitor<&LitFloat> for Compiler {
     fn visit(&mut self, LitFloat { value, span }: &LitFloat) -> Result<(), Error> {

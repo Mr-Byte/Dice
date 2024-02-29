@@ -1,7 +1,10 @@
-use super::upvalue::UpvalueDescriptor;
+use std::collections::HashMap;
+
 use bytes::BufMut as _;
+
+use dice_bytecode::Instruction;
+use dice_bytecode::{Bytecode, ConstantValue};
 use dice_core::{
-    bytecode::{instruction::Instruction, Bytecode, ConstantValue},
     error::{
         codes::{TOO_MANY_CONSTANTS, TOO_MANY_UPVALUES},
         Error,
@@ -9,7 +12,8 @@ use dice_core::{
     source::Source,
     span::Span,
 };
-use std::collections::HashMap;
+
+use super::upvalue::UpvalueDescriptor;
 
 pub struct Assembler {
     constants: Vec<ConstantValue>,
@@ -26,14 +30,14 @@ impl Assembler {
         }
     }
 
-    pub fn generate(self, slot_count: usize, upvalue_count: usize, source: Source) -> Bytecode {
+    pub fn generate(self, slot_count: usize, upvalue_count: usize, _source: Source) -> Bytecode {
         Bytecode::new(
             self.data.into(),
             slot_count,
             upvalue_count,
             self.constants.into_boxed_slice(),
-            source,
-            self.source_map,
+            // source,
+            // self.source_map,
         )
     }
 

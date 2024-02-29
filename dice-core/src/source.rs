@@ -1,6 +1,6 @@
-use crate::span::Span;
 use ahash::AHasher;
 use std::{collections::HashMap, hash::BuildHasherDefault, iter, rc::Rc};
+use crate::span::Span;
 
 #[derive(Debug, Clone, Copy)]
 pub struct LineColumn {

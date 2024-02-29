@@ -1,18 +1,18 @@
-mod frame;
+use std::ops::{Index, IndexMut};
+
+use gc_arena::Collect;
 
 pub use frame::*;
 
-use dice_core::value::Value;
-use gc_arena::Collect;
-use std::{
-    fmt::{Display, Formatter},
-    ops::{Index, IndexMut},
-};
+use crate::value::Value;
+
+mod frame;
 
 // NOTE: Allocate 1MB of stack space, this is 65,536 values when sizeof(Value) == 16
 const MAX_STACK_SIZE: usize = (1024 * 1024) / std::mem::size_of::<Value>();
+const MAX_STACK_COUNT: () = assert_eq!(MAX_STACK_SIZE, 65536);
 
-#[derive(Debug, Collect)]
+#[derive(Collect)]
 #[collect(no_drop)]
 pub struct Stack<'gc> {
     values: Vec<Value<'gc>>,
@@ -139,19 +139,19 @@ impl Default for Stack<'_> {
     }
 }
 
-impl Display for Stack<'_> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "Stack = [")?;
-
-        for (index, value) in self.values.iter().enumerate() {
-            if index >= self.stack_ptr {
-                break;
-            }
-
-            writeln!(f, "\t[{:#06X}] = {},", index, value)?;
-        }
-
-        write!(f, "]")?;
-        Ok(())
-    }
-}
+// impl Display for Stack<'_> {
+//     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+//         writeln!(f, "Stack = [")?;
+//
+//         for (index, value) in self.values.iter().enumerate() {
+//             if index >= self.stack_ptr {
+//                 break;
+//             }
+//
+//             writeln!(f, "\t[{:#06X}] = {},", index, value)?;
+//         }
+//
+//         write!(f, "]")?;
+//         Ok(())
+//     }
+// }

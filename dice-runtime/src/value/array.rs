@@ -1,12 +1,13 @@
-use crate::{
-    runtime::RuntimeContext,
-    value::{Object, Value},
-};
-use gc_arena::{lock::RefLock, Gc};
-use gc_arena_derive::Collect;
 use std::{
     cell::{Ref, RefMut},
     ops::Deref,
+};
+
+use gc_arena::{Collect, Gc, lock::RefLock};
+
+use crate::{
+    runtime::RuntimeContext,
+    value::{Object, Value},
 };
 
 #[derive(Clone, PartialEq, Collect)]
@@ -20,19 +21,19 @@ impl<'gc> Array<'gc> {
         Ref::map(self.inner.array.borrow(), |array| array.as_slice())
     }
 
-    pub fn elements_mut<S>(&self, ctx: &RuntimeContext<'gc, S>) -> RefMut<'gc, [Value]> {
+    pub fn elements_mut(&self, ctx: &RuntimeContext<'gc>) -> RefMut<'gc, [Value]> {
         RefMut::map(self.inner.array.borrow_mut(ctx.mutation), |array| array.as_mut_slice())
     }
 
-    pub fn push<S>(&self, ctx: &RuntimeContext<'gc, S>, value: Value<'gc>) {
+    pub fn push(&self, ctx: &RuntimeContext<'gc>, value: Value<'gc>) {
         self.inner.array.borrow_mut(ctx.mutation).push(value)
     }
 
-    pub fn pop<S>(&self, ctx: &RuntimeContext<'gc, S>) -> Option<Value<'gc>> {
+    pub fn pop(&self, ctx: &RuntimeContext<'gc>) -> Option<Value<'gc>> {
         self.inner.array.borrow_mut(ctx.mutation).pop()
     }
 
-    pub fn from_vec<S>(ctx: &RuntimeContext<'gc, S>, value: Vec<Value<'gc>>) -> Self {
+    pub fn from_vec(ctx: &RuntimeContext<'gc>, value: Vec<Value<'gc>>) -> Self {
         Self {
             inner: Gc::new(
                 ctx.mutation,

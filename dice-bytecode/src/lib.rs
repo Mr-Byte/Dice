@@ -1,12 +1,12 @@
-use crate::{source::Source, span::Span};
+extern crate core;
+
+use std::{fmt::Display, rc::Rc};
+
 pub use cursor::BytecodeCursor;
-use instruction::Instruction;
-use std::{collections::HashMap, fmt::Display, rc::Rc};
+pub use instruction::Instruction;
 
 mod cursor;
-pub mod instruction;
-pub mod source;
-pub mod span;
+mod instruction;
 
 #[derive(Debug)]
 struct BytecodeInner {
@@ -14,8 +14,8 @@ struct BytecodeInner {
     upvalue_count: usize,
     constants: Box<[ConstantValue]>,
     data: Box<[u8]>,
-    source: Source,
-    source_map: HashMap<u64, Span>,
+    // source: Source,
+    // source_map: HashMap<u64, Span>,
 }
 
 #[derive(Debug, Clone)]
@@ -43,8 +43,12 @@ pub struct FunctionBytecode {
 }
 
 impl FunctionBytecode {
-    pub fn new(bytecode: Bytecode, name: String, id: uuid::Uuid) -> Self {
-        Self { bytecode, name, id }
+    pub fn new(bytecode: Bytecode, name: impl Into<String>, id: uuid::Uuid) -> Self {
+        Self {
+            bytecode,
+            name: name.into(),
+            id,
+        }
     }
 }
 
@@ -60,29 +64,29 @@ impl Bytecode {
         slot_count: usize,
         upvalue_count: usize,
         constants: Box<[ConstantValue]>,
-        source: Source,
-        source_map: HashMap<u64, Span>,
+        // source: Source,
+        // source_map: HashMap<u64, Span>,
     ) -> Self {
         Self {
             inner: Rc::new(BytecodeInner {
                 constants,
                 slot_count,
                 upvalue_count,
-                source,
-                source_map,
+                // source,
+                // source_map,
                 data,
             }),
         }
     }
 
-    pub fn source(&self) -> &Source {
-        &self.inner.source
-    }
+    // pub fn source(&self) -> &Source {
+    //     &self.inner.source
+    // }
 
-    #[allow(dead_code)]
-    pub fn source_map(&self) -> &HashMap<u64, Span> {
-        &self.inner.source_map
-    }
+    // #[allow(dead_code)]
+    // pub fn source_map(&self) -> &HashMap<u64, Span> {
+    //     &self.inner.source_map
+    // }
 
     pub fn constants(&self) -> &[ConstantValue] {
         &self.inner.constants

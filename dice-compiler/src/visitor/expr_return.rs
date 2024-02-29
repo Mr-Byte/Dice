@@ -1,5 +1,3 @@
-use super::NodeVisitor;
-use crate::{compiler::Compiler, compiler_stack::CompilerKind};
 use dice_core::{
     error::{
         codes::{INVALID_RETURN_USAGE, NEW_RETURN_CANNOT_HAVE_EXPRESSION},
@@ -8,6 +6,10 @@ use dice_core::{
     protocol::class::SELF,
 };
 use dice_syntax::Return;
+
+use crate::{compiler::Compiler, compiler_stack::CompilerKind};
+
+use super::NodeVisitor;
 
 impl NodeVisitor<&Return> for Compiler {
     fn visit(&mut self, expr_return: &Return) -> Result<(), Error> {
@@ -21,7 +23,7 @@ impl NodeVisitor<&Return> for Compiler {
             CompilerKind::Constructor if expr_return.result.is_none() => {
                 let self_slot = context
                     .scope_stack()
-                    .local(&SELF)
+                    .local(SELF)
                     .expect("The self parameter should always be declared in constructors.")
                     .slot;
                 self.assembler()?.load_local(self_slot as u8, expr_return.span);

@@ -1,6 +1,8 @@
-use crate::SyntaxNodeId;
-use dice_core::span::Span;
 use std::fmt::{Display, Formatter};
+
+use dice_core::span::Span;
+
+use crate::SyntaxNodeId;
 
 #[derive(Debug, Clone)]
 pub struct LitAnonymousFn {

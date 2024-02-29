@@ -8,7 +8,9 @@ version = "0.1.0"
 dunce = "1.0"
 thiserror = "1.0"
 ahash = "0.8.3"
-
+uuid = { version = "1.7", features = ["v4"] }
 dice-compiler = { path = "../dice-compiler" }
 dice-core = { path = "../dice-core" }
 gc-arena = "0.5.0"
+dice-bytecode = { version = "0.1.0", path = "../dice-bytecode" }
+string-interner = "0.15.0"

@@ -1,10 +1,12 @@
-use super::NodeVisitor;
-use crate::{compiler::Compiler, compiler_stack::CompilerKind};
 use dice_core::{
     error::{codes::INVALID_ERROR_PROPAGATE_USAGE, Error},
     protocol::error::{IS_OK, RESULT},
 };
 use dice_syntax::ErrorPropagate;
+
+use crate::{compiler::Compiler, compiler_stack::CompilerKind};
+
+use super::NodeVisitor;
 
 impl NodeVisitor<&ErrorPropagate> for Compiler {
     fn visit(&mut self, ErrorPropagate { expression, span }: &ErrorPropagate) -> Result<(), Error> {
@@ -22,7 +24,7 @@ impl NodeVisitor<&ErrorPropagate> for Compiler {
         emit_bytecode! {
             self.assembler()?, *span => [
                 DUP 0;
-                LOAD_FIELD &IS_OK;
+                LOAD_FIELD IS_OK;
                 JUMP_IF_TRUE -> error_propagate_jump;
                 for _ in 0..temporary_count => [
                     SWAP;
@@ -30,7 +32,7 @@ impl NodeVisitor<&ErrorPropagate> for Compiler {
                 ]
                 {self.visit_return(*span)?};
                 PATCH_JUMP <- error_propagate_jump;
-                LOAD_FIELD &RESULT;
+                LOAD_FIELD RESULT;
             ]
         }
 

@@ -1,8 +1,3 @@
-use crate::{
-    compiler::Compiler,
-    scope_stack::{ScopeKind, State},
-    visitor::{decl_op::OpKind, ClassKind, FnKind, NodeVisitor},
-};
 use dice_core::{
     error::{
         codes::{
@@ -14,12 +9,16 @@ use dice_core::{
     protocol::{
         class::{NEW, SELF, SUPER},
         object::ANY_CLASS,
-        ProtocolSymbol,
     },
     tags,
-    value::Symbol,
 };
 use dice_syntax::{ClassDecl, FnDecl, LitIdent, OpDecl, SyntaxNode};
+
+use crate::{
+    compiler::Compiler,
+    scope_stack::{ScopeKind, State},
+    visitor::{decl_op::OpKind, ClassKind, FnKind, NodeVisitor},
+};
 
 impl NodeVisitor<&ClassDecl> for Compiler {
     fn visit(&mut self, node: &ClassDecl) -> Result<(), Error> {
@@ -30,7 +29,7 @@ impl NodeVisitor<&ClassDecl> for Compiler {
             ClassKind::Derived
         } else {
             self.visit(&LitIdent {
-                identifier: ANY_CLASS.get().to_string(),
+                identifier: ANY_CLASS.to_owned(),
                 span: node.span,
             })?;
             ClassKind::Base
@@ -39,7 +38,7 @@ impl NodeVisitor<&ClassDecl> for Compiler {
         let super_slot = self
             .context()?
             .scope_stack()
-            .add_local(SUPER.get(), State::initialized(true))? as u8;
+            .add_local(SUPER, State::initialized(true))? as u8;
 
         emit_bytecode! {
             self.assembler()?, node.span => [
@@ -48,7 +47,7 @@ impl NodeVisitor<&ClassDecl> for Compiler {
         }
 
         let slot = {
-            let class_name: Symbol = (&*node.name.identifier).into();
+            let class_name: String = (&*node.name.identifier).into();
             let local = self
                 .context()?
                 .scope_stack()
@@ -104,20 +103,20 @@ impl NodeVisitor<&ClassDecl> for Compiler {
 
 impl Compiler {
     fn visit_fn(&mut self, slot: u8, fn_decl: FnDecl, class_kind: ClassKind) -> Result<(), Error> {
-        let self_param = fn_decl.args.first().filter(|arg| arg.name == SELF.get().as_string());
+        let self_param = fn_decl.args.first().filter(|arg| arg.name == SELF);
         let kind = if let Some(self_param) = self_param {
             // NOTE: If the self parameter has a type annotation, return an error.
             if self_param.type_.is_some() {
                 return Err(Error::new(METHOD_RECEIVER_CANNOT_HAVE_TYPE).with_span(self_param.span));
             }
 
-            if fn_decl.name.identifier == NEW.get().as_string() {
+            if fn_decl.name.identifier == NEW {
                 FnKind::Constructor(class_kind)
             } else {
                 FnKind::Method
             }
         } else {
-            if fn_decl.name.identifier == NEW.get().as_string() {
+            if fn_decl.name.identifier == NEW {
                 return Err(Error::new(NEW_METHOD_MUST_HAVE_RECEIVER).with_span(fn_decl.name.span));
             }
 
@@ -143,7 +142,7 @@ impl Compiler {
     }
 
     fn visit_op(&mut self, slot: u8, op_decl: OpDecl) -> Result<(), Error> {
-        let self_param = op_decl.args.first().filter(|arg| arg.name == SELF.get().as_string());
+        let self_param = op_decl.args.first().filter(|arg| arg.name == SELF);
 
         if let Some(self_param) = self_param {
             if self_param.type_.is_some() {

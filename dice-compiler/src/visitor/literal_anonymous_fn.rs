@@ -1,10 +1,10 @@
-use super::NodeVisitor;
-use crate::{compiler::Compiler, visitor::FnKind};
-use dice_core::{
-    bytecode::{ConstantValue, FunctionBytecode},
-    error::Error,
-};
+use dice_bytecode::{ConstantValue, FunctionBytecode};
+use dice_core::error::Error;
 use dice_syntax::LitAnonymousFn;
+
+use crate::{compiler::Compiler, visitor::FnKind};
+
+use super::NodeVisitor;
 
 impl NodeVisitor<&LitAnonymousFn> for Compiler {
     fn visit(&mut self, node: &LitAnonymousFn) -> Result<(), Error> {

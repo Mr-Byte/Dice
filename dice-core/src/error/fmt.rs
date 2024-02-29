@@ -1,11 +1,13 @@
 use colored::Colorize;
-use dice_bytecode::source::Source;
 
-use crate::error::{
-    localization::{localize_error_code, Locale},
-    Error,
+use crate::{
+    error::{
+        localization::{localize_error_code, Locale},
+        Error,
+    },
 };
 use std::fmt::Write;
+use crate::source::Source;
 
 use super::{context::ContextKind, localization::localize_context_msg_id};
 
@@ -37,7 +39,7 @@ impl ErrorFormatter for HumanReadableErrorFormatter {
 
     fn fmt_pretty(&self, buffer: &mut impl Write, error: &Error, locale: &Locale) -> std::fmt::Result {
         if !self.should_colorize {
-            colored::control::set_override(false);
+            // colored::control::set_override(false);
         }
 
         HumanReadableErrorFormatter::fmt_message(buffer, error, locale)?;
@@ -51,7 +53,7 @@ impl ErrorFormatter for HumanReadableErrorFormatter {
         HumanReadableErrorFormatter::fmt_trace(buffer, error)?;
 
         if !self.should_colorize {
-            colored::control::unset_override();
+            // colored::control::unset_override();
         }
 
         Ok(())

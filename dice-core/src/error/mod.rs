@@ -12,12 +12,13 @@ use crate::{
         fmt::{ErrorFormatter, HumanReadableErrorFormatter},
         localization::Locale,
     },
-    tags,
+    tags
 };
 use context::Context;
-use dice_bytecode::{source::Source, span::Span};
 use std::fmt::{Debug, Display, Formatter};
 use tag::Tags;
+use crate::source::Source;
+use crate::span::Span;
 
 #[derive(thiserror::Error, Clone)]
 pub struct Error {

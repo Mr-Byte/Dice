@@ -1,15 +1,18 @@
-use dice_core::{
-    error::{
-        codes::{INVALID_ESCAPE_SEQUENCE, UNTERMINATED_BACKSLASH_ARG, UNTERMINATED_STRING},
-        Error, ResultExt as _,
-    },
-    source::Source,
-    span::Span,
-};
-use logos::{Lexer, Logos};
 use std::{
     fmt::{Display, Formatter},
     iter::Iterator,
+};
+
+use logos::{Lexer, Logos};
+
+use dice_core::{
+    error::{
+        codes::{INVALID_ESCAPE_SEQUENCE, UNTERMINATED_STRING},
+        Error, ResultExt,
+    },
+    source::Source,
+    span::Span,
+    tags,
 };
 
 use super::lexer_result::LexerResult;
@@ -316,7 +319,7 @@ fn lex_backslash_arg(lexer: &mut Lexer<TokenKind>) -> bool {
                 input.push(current);
             }
             None => {
-                lexer.extras.set_error(Error::new(UNTERMINATED_BACKSLASH_ARG));
+                // lexer.extras.set_error(Error::new(UNTERMINATED_BACKSLASH_ARG));
                 return false;
             }
         }
@@ -346,7 +349,7 @@ fn lex_string(lexer: &mut Lexer<TokenKind>) -> bool {
                     Some(next) => {
                         lexer
                             .extras
-                            .set_error(Error::new(INVALID_ESCAPE_SEQUENCE).with_tags(dice_core::tags! {
+                            .set_error(Error::new(INVALID_ESCAPE_SEQUENCE).with_tags(tags! {
                                 sequence => format!("\\{}", next)
                             }));
                         return false;
@@ -369,7 +372,7 @@ fn lex_string(lexer: &mut Lexer<TokenKind>) -> bool {
                 result.push(current);
             }
             None => {
-                lexer.extras.set_error(Error::new(UNTERMINATED_STRING));
+                //   lexer.extras.set_error(Error::new(UNTERMINATED_STRING));
                 return false;
             }
         }

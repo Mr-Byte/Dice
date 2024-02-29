@@ -1,11 +1,12 @@
-use gc_arena::{lock::RefLock, Collect, Gc, Mutation};
+use std::cell::Ref;
+
+use gc_arena::{Collect, Gc, lock::RefLock, Mutation};
 
 use crate::{
     runtime::RuntimeContext,
-    type_id::TypeId,
     value::{Class, Symbol, Value, ValueMap},
 };
-use std::cell::Ref;
+use crate::type_id::TypeId;
 
 #[derive(Clone, Collect)]
 #[collect(no_drop)]
@@ -14,7 +15,7 @@ pub struct Object<'gc> {
 }
 
 impl<'gc> Object<'gc> {
-    pub fn new<S, N>(ctx: &RuntimeContext<'gc, S>, class: N) -> Self
+    pub fn new<N>(ctx: &RuntimeContext<'gc>, class: N) -> Self
     where
         N: Into<Option<Class<'gc>>>,
     {
@@ -29,7 +30,7 @@ impl<'gc> Object<'gc> {
         }
     }
 
-    pub fn deep_clone<S>(&self, ctx: &RuntimeContext<'gc, S>) -> Self {
+    pub fn deep_clone(&self, ctx: &RuntimeContext<'gc>) -> Self {
         Self {
             inner: Gc::new(
                 ctx.mutation,

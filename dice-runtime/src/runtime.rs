@@ -1,29 +1,33 @@
-use crate::{
-    module::{file_loader::FileModuleLoader, ModuleLoader},
-    stack::Stack,
-};
-use ahash::AHasher;
-use dice_core::{
-    bytecode::Bytecode,
-    error::{
-        codes::{GLOBAL_ALREADY_EXISTS, MODULE_ALREADY_EXISTS},
-        Error,
-    },
-    tags,
-    upvalue::Upvalue,
-    value::{Class, Object, Value, ValueKind, ValueMap},
-};
-use gc_arena::{Arena, Collect, Mutation, Rootable};
 use std::{
     collections::{HashMap, VecDeque},
     hash::BuildHasherDefault,
 };
 
+use ahash::AHasher;
+use gc_arena::{Arena, Collect, Mutation, Rootable};
+
+use dice_bytecode::Bytecode;
+use dice_core::error::Error;
+
+use crate::upvalue::Upvalue;
+use crate::value::{Class, SymbolInterner, Value, ValueKind, ValueMap};
+use crate::{
+    module::{file_loader::FileModuleLoader, ModuleLoader},
+    stack::Stack,
+};
+
+pub struct RuntimeContext<'gc> {
+    pub mutation: &'gc Mutation<'gc>,
+    pub interner: &'gc SymbolInterner,
+    pub state: &'gc State<'gc>,
+}
+
 pub struct Runtime<L = FileModuleLoader>
 where
     L: ModuleLoader + 'static,
 {
-    state: Arena<Rootable![State<'_, L>]>,
+    pub(crate) state: Arena<Rootable![State<'_, L>]>,
+    pub(crate) interner: SymbolInterner,
 }
 
 #[derive(Collect)]
@@ -71,6 +75,7 @@ where
     fn default() -> Self {
         let mut runtime = Self {
             state: Arena::<Rootable![State<'_, L>]>::new(State::new),
+            interner: Default::default(),
         };
 
         // runtime.register_known_types();
@@ -83,7 +88,7 @@ where
     L: ModuleLoader + Default,
 {
     pub fn run(&mut self, bytecode: Bytecode) -> Result<Value, Error> {
-        self.state.mutate(|ctx, state| {
+        self.state.mutate_root(|ctx, mut state| {
             let stack_frame = state.stack.reserve_slots(bytecode.slot_count());
             let result = self.execute(&bytecode, stack_frame, None)?;
 
@@ -94,7 +99,7 @@ where
     }
 
     pub(super) fn run_module(&mut self, bytecode: Bytecode, export: Value) -> Result<Value, Error> {
-        self.state.mutate(|ctx, state| {
+        self.state.mutate_root(|ctx, mut state| {
             let stack_frame = state.stack.reserve_slots(bytecode.slot_count());
             state.stack[stack_frame.start()] = export;
             let result = self.execute(&bytecode, stack_frame, None)?;

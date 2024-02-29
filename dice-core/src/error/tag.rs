@@ -6,8 +6,8 @@ impl Tags {
         Self(Vec::new())
     }
 
-    pub fn push(&mut self, key: &'static str, value: String) {
-        self.0.push((key, value));
+    pub fn push(&mut self, key: &'static str, value: impl Into<String>) {
+        self.0.push((key, value.into()));
     }
 }
 

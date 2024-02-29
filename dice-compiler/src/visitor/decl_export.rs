@@ -1,14 +1,15 @@
-use crate::{compiler::Compiler, compiler_stack::CompilerKind, visitor::NodeVisitor};
 use dice_core::{
     error::{
         codes::INVALID_EXPORT_USAGE,
         context::{Context, ContextKind, EXPORT_ONLY_ALLOWED_IN_MODULES, EXPORT_ONLY_ALLOWED_IN_TOP_LEVEL_SCOPE},
         Error,
     },
-    protocol::{module::EXPORT, ProtocolSymbol},
+    protocol::module::EXPORT,
     tags,
 };
 use dice_syntax::{ExportDecl, SyntaxNode, VarDecl, VarDeclKind};
+
+use crate::{compiler::Compiler, compiler_stack::CompilerKind, visitor::NodeVisitor};
 
 impl NodeVisitor<&ExportDecl> for Compiler {
     fn visit(&mut self, node: &ExportDecl) -> Result<(), Error> {
@@ -33,7 +34,7 @@ impl NodeVisitor<&ExportDecl> for Compiler {
         let export_slot = self
             .context()?
             .scope_stack()
-            .local(EXPORT.get())
+            .local(EXPORT)
             .expect("#export should always be defined in modules.")
             .slot as u8;
         self.assembler()?.load_local(export_slot, node.span);

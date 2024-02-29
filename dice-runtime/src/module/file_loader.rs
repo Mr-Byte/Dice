@@ -1,4 +1,3 @@
-use crate::module::{Module, ModuleLoader};
 use dice_compiler::compiler::Compiler;
 use dice_core::{
     error::{
@@ -8,16 +7,21 @@ use dice_core::{
     },
     source::{Source, SourceKind},
     tags,
-    value::Symbol,
 };
+
+use crate::module::{Module, ModuleLoader};
+use crate::runtime::RuntimeContext;
+use crate::value::Symbol;
 
 #[derive(Default)]
 pub struct FileModuleLoader;
 
 impl ModuleLoader for FileModuleLoader {
-    fn load_module(&mut self, name: Symbol) -> Result<Module, Error> {
+    fn load_module(&mut self, ctx: &RuntimeContext, name: Symbol) -> Result<Module, Error> {
+        let name_str = ctx.interner.resolve(name).expect("symbol not found");
+
         (|| {
-            let path = dunce::canonicalize(name.as_string())?;
+            let path = dunce::canonicalize(name_str)?;
             let working_dir = dunce::canonicalize(std::env::current_dir()?)?;
 
             // TODO: Have a way to set the modules root as a part of the runtime.
@@ -36,7 +40,7 @@ impl ModuleLoader for FileModuleLoader {
         })()
         .map_err(move |error: Error| {
             error.push_context(Context::new(MODULE_LOAD_ERROR, ContextKind::Note).with_tags(tags! {
-                module => name.to_string()
+                module => name_str
             }))
         })
     }

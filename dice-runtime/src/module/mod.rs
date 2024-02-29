@@ -1,21 +1,26 @@
-pub mod file_loader;
-
-use dice_core::{bytecode::Bytecode, error::Error, value::Symbol};
 use gc_arena::Collect;
 
+use dice_bytecode::Bytecode;
+use dice_core::error::Error;
+
+use crate::runtime::RuntimeContext;
+use crate::value::Symbol;
+
+pub mod file_loader;
+
 #[derive(Clone, Collect)]
-#[collect(no_drop)]
-pub struct Module<'gc> {
+#[collect(require_static)]
+pub struct Module {
     pub id: Symbol,
-    pub bytecode: Bytecode<'gc>,
+    pub bytecode: Bytecode,
 }
 
-impl<'gc> Module<'gc> {
-    pub fn new(id: Symbol, bytecode: Bytecode<'gc>) -> Self {
+impl Module {
+    pub fn new(id: Symbol, bytecode: Bytecode) -> Self {
         Module { id, bytecode }
     }
 }
 
 pub trait ModuleLoader: Default {
-    fn load_module(&mut self, name: Symbol) -> Result<Module, Error>;
+    fn load_module(&mut self, ctx: &RuntimeContext<'_>, name: Symbol) -> Result<Module, Error>;
 }

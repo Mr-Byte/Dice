@@ -1,5 +1,3 @@
-use super::NodeVisitor;
-use crate::{compiler::Compiler, scope_stack::ScopeVariable};
 use dice_core::{
     error::{
         codes::{CANNOT_REASSIGN_IMMUTABLE_VARIABLE, INVALID_ASSIGNMENT_TARGET, VARIABLE_NOT_DECLARED},
@@ -7,9 +5,12 @@ use dice_core::{
     },
     span::Span,
     tags,
-    value::Symbol,
 };
 use dice_syntax::{Assignment, AssignmentOperator, FieldAccess, Index, SyntaxNode, SyntaxNodeId};
+
+use crate::{compiler::Compiler, scope_stack::ScopeVariable};
+
+use super::NodeVisitor;
 
 impl NodeVisitor<&Assignment> for Compiler {
     fn visit(&mut self, assignment: &Assignment) -> Result<(), Error> {
@@ -17,7 +18,7 @@ impl NodeVisitor<&Assignment> for Compiler {
 
         match lhs {
             SyntaxNode::LitIdent(lit_ident) => {
-                let target: Symbol = (&*lit_ident.identifier).into();
+                let target: String = (&*lit_ident.identifier).into();
                 self.assign_ident(target, assignment)
             }
             SyntaxNode::FieldAccess(field_access) => {
@@ -92,7 +93,7 @@ impl Compiler {
         Ok(())
     }
 
-    fn assign_ident(&mut self, target: Symbol, assignment: &Assignment) -> Result<(), Error> {
+    fn assign_ident(&mut self, target: String, assignment: &Assignment) -> Result<(), Error> {
         {
             if let Some(local) = self.context()?.scope_stack().local(target.clone()) {
                 let local = local.clone();
@@ -115,7 +116,7 @@ impl Compiler {
                 Err(Error::new(VARIABLE_NOT_DECLARED)
                     .with_span(assignment.span)
                     .with_tags(tags! {
-                        name => target.as_string()
+                        name => target
                     }))
             }
         }
@@ -123,7 +124,7 @@ impl Compiler {
 
     fn assign_upvalue(
         &mut self,
-        target: Symbol,
+        target: String,
         operator: AssignmentOperator,
         rhs_expression: SyntaxNodeId,
         span: Span,
@@ -133,7 +134,7 @@ impl Compiler {
             return Err(Error::new(CANNOT_REASSIGN_IMMUTABLE_VARIABLE)
                 .with_span(span)
                 .with_tags(tags! {
-                    name => target.as_string()
+                    name => target
                 }));
         }
         match operator {
@@ -143,7 +144,7 @@ impl Compiler {
                         {self.visit(rhs_expression)?};
                         ASSIGN_UPVALUE upvalue as u8;
                     ]
-                };
+                }
             }
             operator => {
                 emit_bytecode! {
@@ -153,7 +154,7 @@ impl Compiler {
                         {self.visit_operator(operator, span)?};
                         ASSIGN_UPVALUE upvalue as u8;
                     ]
-                };
+                }
             }
         }
 
@@ -162,7 +163,7 @@ impl Compiler {
 
     fn assign_local(
         &mut self,
-        target: Symbol,
+        target: String,
         operator: AssignmentOperator,
         rhs_expression: SyntaxNodeId,
         span: Span,
@@ -174,7 +175,7 @@ impl Compiler {
             return Err(Error::new(CANNOT_REASSIGN_IMMUTABLE_VARIABLE)
                 .with_span(span)
                 .with_tags(tags! {
-                    name => target.as_string()
+                    name => target
                 }));
         }
 

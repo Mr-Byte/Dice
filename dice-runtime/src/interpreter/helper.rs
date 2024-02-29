@@ -1,4 +1,3 @@
-use crate::{module::ModuleLoader, runtime::Runtime};
 use dice_core::{
     error::{
         codes::{
@@ -9,6 +8,10 @@ use dice_core::{
     },
     protocol::{class::NEW, ProtocolSymbol},
     tags,
+};
+
+use crate::{module::ModuleLoader, runtime::Runtime};
+use crate::{
     upvalue::{Upvalue, UpvalueState},
     value::{Class, FnBound, FnNative, FnScript, Object, Symbol, Value, ValueKind},
 };
@@ -17,7 +20,7 @@ impl<L: ModuleLoader> Runtime<L> {
     pub(super) fn find_open_upvalue(&self, offset: usize) -> Option<(usize, Upvalue)> {
         let mut found_upvalue = None;
 
-        for (index, upvalue) in self.open_upvalues.iter().enumerate() {
+        for (index, upvalue) in self.state.open_upvalues.iter().enumerate() {
             if let UpvalueState::Open(upvalue_offset) = &*upvalue.state() {
                 if *upvalue_offset == offset {
                     found_upvalue = Some((index, upvalue.clone()));

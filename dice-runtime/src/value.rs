@@ -1,3 +1,27 @@
+use std::{collections::HashMap, hash::BuildHasherDefault};
+
+use ahash::AHasher;
+use gc_arena::Collect;
+
+pub use array::*;
+pub use class::*;
+use dice_core::error::{
+    codes::{
+        INVALID_ARRAY_CONVERSION, INVALID_BOOL_CONVERSION, INVALID_CLASS_CONVERSION, INVALID_FLOAT_CONVERSION,
+        INVALID_INT_CONVERSION, INVALID_OBJECT_CONVERSION, INVALID_STRING_CONVERSION, INVALID_SYMBOL_CONVERSION,
+    },
+    Error,
+};
+pub use fn_bound::*;
+pub use fn_closure::*;
+pub use fn_native::*;
+pub use fn_script::*;
+pub use object::*;
+pub use string::*;
+pub use symbol::*;
+
+use crate::runtime::RuntimeContext;
+
 mod array;
 mod class;
 mod fn_bound;
@@ -7,30 +31,6 @@ mod fn_script;
 mod object;
 mod string;
 mod symbol;
-
-use ahash::AHasher;
-use gc_arena_derive::Collect;
-use std::{collections::HashMap, hash::BuildHasherDefault};
-
-use crate::{
-    error::{
-        codes::{
-            INVALID_ARRAY_CONVERSION, INVALID_BOOL_CONVERSION, INVALID_CLASS_CONVERSION, INVALID_FLOAT_CONVERSION,
-            INVALID_INT_CONVERSION, INVALID_OBJECT_CONVERSION, INVALID_STRING_CONVERSION, INVALID_SYMBOL_CONVERSION,
-        },
-        Error,
-    },
-    runtime::RuntimeContext,
-};
-pub use array::*;
-pub use class::*;
-pub use fn_bound::*;
-pub use fn_closure::*;
-pub use fn_native::*;
-pub use fn_script::*;
-pub use object::*;
-pub use string::*;
-pub use symbol::*;
 
 pub type ValueMap<'gc> = HashMap<Symbol, Value<'gc>, BuildHasherDefault<AHasher>>;
 
@@ -66,7 +66,7 @@ impl<'gc> Value<'gc> {
         Self::FnNative(FnNative::new(native_fn.into()))
     }
 
-    pub fn with_vec<S>(ctx: &RuntimeContext<'gc, S>, vec: Vec<Value<'gc>>) -> Self {
+    pub fn with_vec(ctx: &RuntimeContext<'gc>, vec: Vec<Value<'gc>>) -> Self {
         Value::Array(Array::from_vec(ctx, vec))
     }
 
